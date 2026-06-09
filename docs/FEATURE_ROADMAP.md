@@ -266,14 +266,15 @@ Primary feature:
 
 Work:
 
-- Implement teacher dashboard.
-- Implement assignment creation.
-- Implement submission review.
-- Add class progress summaries.
+- Teacher dashboard is implemented with class metrics, class progress entry points, active assignments, submission queue, and coaching-safety framing.
+- Class progress is implemented with skill trends, instructional groups, support watchlist, and student progress rows.
+- Assignment creation is implemented with validation for title, prompt, grade, class, skill focus, due date, rubric criteria, and canvas attachments.
+- Submissions tab and submission review detail are implemented with rubric scoring, bounded student-writing previews, next revision task, and teacher comment save state.
+- Loading, empty, error, offline cached, and success states are present across teacher surfaces.
 
 Risks:
 
-- Backend contracts and authorization model are not selected yet.
+- Teacher data currently uses local deterministic mock API data validated with Zod. Backend persistence, class roster sync, authorization enforcement, assignment publication, and cross-device feedback comments remain future work.
 
 ## Phase 11: Subscriptions and Release Readiness
 
@@ -298,4 +299,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/18_teacher_experience.md` next. Parent reporting and visibility now exist locally; the next gap is teacher dashboard, assignment management, and submission review.
+Use `prompts/19_subscription_and_paywall.md` next. Teacher dashboard, assignment creation, class progress, and submission review now exist locally; the next gap is subscription entitlement and paywall behavior.

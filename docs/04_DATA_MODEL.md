@@ -630,3 +630,82 @@ interface ClassStudent {
   joinedAt: string;
 }
 ```
+
+Teacher experience screens currently use local mobile API contracts in
+`apps/mobile/src/features/teacher/types.ts`; these are not database tables yet.
+The current contracts include:
+
+```ts
+interface TeacherClassSummary {
+  id: string;
+  name: string;
+  gradeLevel: GradeLevel;
+  studentCount: number;
+  activeAssignmentCount: number;
+  submissionsNeedingReview: number;
+  averageCompletionPercent: number;
+  averageSkillScore: number;
+  weeklyWritingMinutes: number;
+  trendLabel: string;
+}
+
+interface TeacherAssignmentSummary {
+  id: string;
+  title: string;
+  prompt: string;
+  assignmentType: AssignmentType;
+  classId: string;
+  className: string;
+  gradeLevel: GradeLevel;
+  skillFocus: WritingSkill[];
+  dueDate: string;
+  dueLabel: string;
+  rubric: { id: string; label: string; description: string; maxScore: number }[];
+  allowCanvas: boolean;
+  status: "draft" | "active" | "closed";
+  submissionsCount: number;
+  completionPercent: number;
+  createdAt: string;
+}
+
+interface TeacherStudentProgress {
+  id: string;
+  displayName: string;
+  gradeLevel: GradeLevel;
+  assignmentCompletionPercent: number;
+  averageRubricScore: number;
+  revisionRatePercent: number;
+  lastSubmissionLabel: string;
+  needsSupport: boolean;
+  focusSkill: WritingSkill;
+}
+
+interface TeacherSubmissionReview {
+  id: string;
+  assignmentTitle: string;
+  assignmentPrompt: string;
+  className: string;
+  studentName: string;
+  gradeLevel: GradeLevel;
+  submittedLabel: string;
+  wordCount: number;
+  writingPreview: string;
+  canvasPreview: { title: string; pageCount: number } | null;
+  rubric: {
+    criterionId: string;
+    label: string;
+    score: number;
+    maxScore: number;
+    coachingNote: string;
+  }[];
+  revisionTask: string;
+  teacherComment: string;
+  safetyNote: string;
+}
+```
+
+Teacher assignment creation is validated locally before publication with title,
+prompt, grade, class, due date, one to three skill-focus values, at least two
+rubric criteria, and a canvas attachment toggle. The current facade is
+deterministic mock data; backend persistence, authorization, class roster sync,
+and cross-device comment persistence remain future work.

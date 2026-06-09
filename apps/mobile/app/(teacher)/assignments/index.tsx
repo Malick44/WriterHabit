@@ -1,3 +1,3 @@
-import { CreateAssignmentScreen } from "@/features/teacher/screens/CreateAssignmentScreen";
+import { TeacherAssignmentsScreen } from "@/features/teacher/screens/TeacherAssignmentsScreen";
 
-export default CreateAssignmentScreen;
+export default TeacherAssignmentsScreen;

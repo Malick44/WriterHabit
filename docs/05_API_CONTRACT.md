@@ -199,6 +199,26 @@ PATCH /parents/:parentId/settings
 
 ## Teacher
 
+Current mobile facade:
+
+```ts
+teacherApi.getDashboard({ teacherId })
+teacherApi.getAssignments({ teacherId })
+teacherApi.createAssignment({ teacherId, title, prompt, gradeLevel, classId, skillFocus, dueDate, rubric, allowCanvas })
+teacherApi.getClassProgress({ teacherId, classId })
+teacherApi.getSubmissions({ teacherId })
+teacherApi.getSubmissionReview({ teacherId, submissionId })
+teacherApi.updateSubmissionComment({ teacherId, submissionId, comment })
+```
+
+These methods live in `apps/mobile/src/features/teacher/api/teacherApi.ts` and
+currently return deterministic Zod-validated mock data for success, empty,
+error, and offline scenarios. The assignment creation form validates title,
+prompt, grade, class, skill focus, due date, rubric criteria, and canvas
+attachment settings before calling the local facade.
+
+Planned backend endpoints:
+
 ```txt
 GET  /teachers/:teacherId/dashboard
 GET  /teachers/:teacherId/classes

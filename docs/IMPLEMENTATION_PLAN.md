@@ -74,7 +74,8 @@ Each audited route file imports and exports a feature screen, which aligns with 
 
 The app is scaffolded but not feature-complete:
 
-- Teacher and subscription screens still include placeholder or partial surfaces.
+- Subscription screens still include placeholder or partial surfaces.
+- `apps/mobile/src/features/teacher/` now includes teacher dashboard, assignments list, assignment creation, class progress, submissions queue, submission review, Zod-validated mock API contracts, query hooks, and teacher view-model tests.
 - Remaining placeholder APIs and hooks are concentrated in teacher, subscription, and backend-dependent work.
 - `apps/mobile/src/features/parent/` now includes parent home, student selector, detailed student report, assignment review, parent settings, Zod-validated mock API contracts, query hooks, and parent view-model tests.
 - `apps/mobile/src/features/progress/` now includes a local progress dashboard, skill detail, badges, weekly review, streak service, badge unlock service, and focused progress tests.
@@ -235,7 +236,7 @@ Deliverables:
 
 - Progress calculations and badges.
 - Parent reports.
-- Teacher dashboard and assignment workflows.
+- Maintain the implemented teacher dashboard, assignment creation, class progress, and submission review workflows.
 - Subscription entitlement checks and paywall.
 
 Definition of done:

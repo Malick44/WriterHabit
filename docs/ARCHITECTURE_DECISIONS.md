@@ -532,6 +532,34 @@ Consequences:
 - Parent settings include AI coach access, report email, assignment alerts, practice reminders, digest frequency, teacher sharing, and quiet-hour copy.
 - Backend authorization, parent/student linking persistence, cross-device settings sync, and real report delivery remain future work.
 
+## ADR-024: Teacher Experience Uses Local Classroom Contracts Until Backend Exists
+
+Status: accepted
+
+Teacher experience lives in `apps/mobile/src/features/teacher/`. Prompt 18 adds
+teacher dashboard, class progress, assignment creation, submissions, and
+submission review without introducing backend persistence or direct imports from
+student feature implementations.
+
+Current evidence:
+
+- API facade: `apps/mobile/src/features/teacher/api/teacherApi.ts`
+- Query hooks and mutations: `apps/mobile/src/features/teacher/hooks/useTeacher.ts`
+- Screens: `apps/mobile/src/features/teacher/screens/`
+- Components: `apps/mobile/src/features/teacher/components/`
+- Zod contracts: `apps/mobile/src/features/teacher/types.ts`
+- View-model and validation services: `apps/mobile/src/features/teacher/services/teacherViewModel.ts` and `apps/mobile/src/features/teacher/services/teacherAssignmentValidation.ts`
+- Tests: `apps/mobile/src/features/teacher/services/teacherViewModel.test.ts`
+
+Consequences:
+
+- Teacher route files under `apps/mobile/app/(teacher)/` remain thin feature exports.
+- Teacher surfaces support loading, empty, error, offline cached, and success states.
+- Class progress uses grade-band adaptation so elementary classes show fewer metrics while high-school classes can show fuller rubric detail.
+- Assignment creation validates title, prompt, grade, class, skill focus, due date, rubric criteria, and canvas attachment settings before publication.
+- Teacher feedback is framed as coaching: rubric signals, bounded student-writing preview, one next revision task, and a teacher comment. It must not rewrite student work.
+- Backend persistence, assignment publication, roster sync, authorization enforcement, and cross-device teacher comments remain future work.
+
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 
 Status: proposed

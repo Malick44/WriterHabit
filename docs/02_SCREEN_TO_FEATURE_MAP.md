@@ -69,6 +69,7 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Teacher dashboard | `apps/mobile/app/(teacher)/dashboard.tsx` | teacher |
 | Assignments tab | `apps/mobile/app/(teacher)/assignments/index.tsx` | teacher |
 | Create assignment | `apps/mobile/app/(teacher)/assignments/create.tsx` | teacher |
+| Class progress detail | `apps/mobile/app/(teacher)/classes/[classId]/progress.tsx` | teacher |
 | Submissions tab | `apps/mobile/app/(teacher)/submissions/index.tsx` | teacher |
 | Submission review detail | `apps/mobile/app/(teacher)/submissions/[submissionId].tsx` | teacher |
 

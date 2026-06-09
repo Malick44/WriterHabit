@@ -20,6 +20,7 @@ export const deepLinkRoutes = {
   writingWorkspace: "/(student)/write/[assignmentId]",
   parentAssignmentReview: "/(parent)/assignments/[submissionId]",
   parentStudentReport: "/(parent)/students/[studentId]/report",
+  teacherClassProgress: "/(teacher)/classes/[classId]/progress",
   teacherSubmissionReview: "/(teacher)/submissions/[submissionId]",
   paywall: routes.paywall,
 } as const;
@@ -125,5 +126,12 @@ export function getTeacherSubmissionReviewRoute(submissionId: string): Href {
   return {
     pathname: "/(teacher)/submissions/[submissionId]",
     params: { submissionId },
+  };
+}
+
+export function getTeacherClassProgressRoute(classId: string): Href {
+  return {
+    pathname: "/(teacher)/classes/[classId]/progress",
+    params: { classId },
   };
 }

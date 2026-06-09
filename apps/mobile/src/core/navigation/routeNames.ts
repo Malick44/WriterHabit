@@ -26,6 +26,7 @@ export const routes = {
   parentSettings: "/(parent)/settings" as Href,
   teacherDashboard: "/(teacher)/dashboard" as Href,
   teacherAssignments: "/(teacher)/assignments" as Href,
+  teacherCreateAssignment: "/(teacher)/assignments/create" as Href,
   teacherSubmissions: "/(teacher)/submissions" as Href,
   paywall: "/paywall" as Href,
 } as const;

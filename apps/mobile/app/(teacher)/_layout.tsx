@@ -35,6 +35,7 @@ export default function TeacherLayout() {
           }}
         />
         <Tabs.Screen name="assignments/create" options={{ href: null }} />
+        <Tabs.Screen name="classes/[classId]/progress" options={{ href: null }} />
         <Tabs.Screen name="submissions/[submissionId]" options={{ href: null }} />
       </Tabs>
     </RouteGate>

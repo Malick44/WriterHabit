@@ -1,3 +1,3 @@
-import { TeacherSubmissionReviewScreen } from "@/features/teacher/screens/TeacherSubmissionReviewScreen";
+import { TeacherSubmissionsScreen } from "@/features/teacher/screens/TeacherSubmissionsScreen";
 
-export default TeacherSubmissionReviewScreen;
+export default TeacherSubmissionsScreen;

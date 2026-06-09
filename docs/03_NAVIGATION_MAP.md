@@ -75,6 +75,7 @@ apps/mobile/app/
     dashboard.tsx
     assignments/index.tsx
     assignments/create.tsx
+    classes/[classId]/progress.tsx
     submissions/index.tsx
     submissions/[submissionId].tsx
 ```
@@ -197,10 +198,16 @@ Assignments -> /(teacher)/assignments
 Submissions -> /(teacher)/submissions
 ```
 
+Teacher tab screens export feature screens from `apps/mobile/src/features/teacher/screens/`.
+The dashboard opens class progress details, the assignments tab opens the hidden
+assignment creation flow, and the submissions tab opens individual review
+details.
+
 Teacher detail routes are hidden from the tab bar:
 
 ```txt
 /(teacher)/assignments/create
+/(teacher)/classes/[classId]/progress
 /(teacher)/submissions/[submissionId]
 ```
 
@@ -219,6 +226,7 @@ writewise://student/review/submission_123/rubric
 writewise://student/review/submission_123/revision
 writewise://student/review/submission_123/complete
 writewise://parent/students/student_123/report
+writewise://teacher/classes/class_123/progress
 writewise://teacher/submissions/submission_123
 ```
 
@@ -235,6 +243,7 @@ These helpers return Expo Router `Href` objects for:
 - Student completion celebration
 - Writing workspace
 - Parent student report
+- Teacher class progress
 - Teacher submission review
 - Paywall
 

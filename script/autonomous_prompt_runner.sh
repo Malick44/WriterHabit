@@ -244,6 +244,22 @@ main() {
 
   local from
   from="$(resolve_from)"
+
+  if ! [[ "$from" =~ ^[0-9]+$ && "$TO" =~ ^[0-9]+$ ]]; then
+    echo "Prompt range must be numeric or --from auto." >&2
+    exit 2
+  fi
+
+  if (( TO < 1 || TO > 27 )); then
+    echo "Invalid prompt range: ${from}-${TO}. Valid range is 1-27." >&2
+    exit 2
+  fi
+
+  if [[ "$FROM" == "auto" ]] && (( from > TO )); then
+    echo "No autonomous prompts remain. Latest completed prompt is Prompt $((from - 1)); requested --to ${TO}."
+    exit 0
+  fi
+
   validate_range "$from" "$TO"
 
   echo "Planned autonomous prompt range: ${from}-${TO}"

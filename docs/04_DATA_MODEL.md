@@ -567,6 +567,46 @@ interface ParentStudentLink {
 }
 ```
 
+Parent reporting is currently represented by local mobile API contracts in
+`apps/mobile/src/features/parent/types.ts`; these are not database tables yet.
+The current contracts include:
+
+```ts
+interface ParentStudentSummary {
+  id: string;
+  displayName: string;
+  gradeLevel: GradeLevel;
+  schoolLabel: string;
+  relationshipLabel: string;
+  avatarInitials: string;
+}
+
+interface ParentWeeklyProgress {
+  weekLabel: string;
+  minutesCompleted: number;
+  minutesGoal: number;
+  sessionsCompleted: number;
+  completedAssignments: number;
+  assignedAssignments: number;
+  streakDays: number;
+  skillImprovementPercent: number;
+  areaToPractice: WritingSkill;
+  areaToPracticeLabel: string;
+  areaToPracticeDescription: string;
+  celebration: string;
+}
+
+interface ParentSettings {
+  aiCoachAccess: "hints_and_revision" | "restricted";
+  assignmentAlertsEnabled: boolean;
+  digestFrequency: "weekly" | "twice_weekly";
+  practiceReminderEnabled: boolean;
+  quietHoursLabel: string;
+  shareWeeklySummaryWithTeacher: boolean;
+  weeklyReportEmailEnabled: boolean;
+}
+```
+
 ### Class
 
 ```ts

@@ -18,6 +18,7 @@ export const deepLinkRoutes = {
   studentProgressSkill: "/(student)/progress/skills/[skillId]",
   studentProgressWeeklyReview: "/(student)/progress/weekly-review",
   writingWorkspace: "/(student)/write/[assignmentId]",
+  parentAssignmentReview: "/(parent)/assignments/[submissionId]",
   parentStudentReport: "/(parent)/students/[studentId]/report",
   teacherSubmissionReview: "/(teacher)/submissions/[submissionId]",
   paywall: routes.paywall,
@@ -110,6 +111,13 @@ export function getParentStudentReportRoute(studentId: string): Href {
   return {
     pathname: "/(parent)/students/[studentId]/report",
     params: { studentId },
+  };
+}
+
+export function getParentAssignmentReviewRoute(submissionId: string): Href {
+  return {
+    pathname: "/(parent)/assignments/[submissionId]",
+    params: { submissionId },
   };
 }
 

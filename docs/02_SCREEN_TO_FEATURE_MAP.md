@@ -60,7 +60,7 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Student report detail | `apps/mobile/app/(parent)/students/[studentId]/report.tsx` | parent |
 | Assignments tab | `apps/mobile/app/(parent)/assignments/index.tsx` | parent |
 | Assignment review detail | `apps/mobile/app/(parent)/assignments/[submissionId].tsx` | parent |
-| Parent settings tab | `apps/mobile/app/(parent)/settings.tsx` | profile-settings |
+| Parent settings tab | `apps/mobile/app/(parent)/settings.tsx` | parent |
 
 ## Teacher
 

@@ -248,14 +248,15 @@ Primary feature:
 
 Work:
 
-- Implement parent home.
-- Implement student report.
-- Implement assignment review.
-- Add weekly progress summary states.
+- Parent home is implemented with a linked-student selector, weekly progress, skill improvement, area to practice, recent assignment review cards, and settings summary.
+- Student report is implemented with strengths, practice focus, next family steps, skill progress, and reviewed assignments.
+- Assignment review is implemented with student work, canvas preview, AI coaching feedback, rubric scoring, parent guidance, and safety framing.
+- Parent settings are implemented with report, reminder, sharing, and AI coach access controls.
+- Loading, empty, error, offline cached, and success states are present across parent surfaces.
 
 Risks:
 
-- Parent reporting depends on assignment, progress, notification, and weekly report contracts that are still local/mobile-only or backend-planned.
+- Parent reporting currently uses local deterministic mock API data validated with Zod. Backend persistence, cross-device sync, authorization enforcement, and real weekly report delivery remain future work.
 
 ## Phase 10: Teacher Experience
 
@@ -297,4 +298,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/17_parent_experience.md` next. Daily assignment selection and provider-free notification preparation now exist locally; the next gap is parent reporting and visibility.
+Use `prompts/18_teacher_experience.md` next. Parent reporting and visibility now exist locally; the next gap is teacher dashboard, assignment management, and submission review.

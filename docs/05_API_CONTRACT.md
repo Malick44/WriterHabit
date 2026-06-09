@@ -172,12 +172,29 @@ parent/teacher weekly report generation remain future work.
 
 ## Parent
 
+Current mobile facade:
+
+```ts
+parentApi.getDashboard({ parentId, selectedStudentId })
+parentApi.getStudentReport({ parentId, studentId })
+parentApi.getAssignmentReview({ parentId, submissionId })
+parentApi.getSettings({ parentId })
+parentApi.updateSettings({ parentId, settings })
+```
+
+These methods live in `apps/mobile/src/features/parent/api/parentApi.ts` and
+currently return deterministic Zod-validated mock data for success, empty,
+error, and offline scenarios.
+
+Planned backend endpoints:
+
 ```txt
 GET  /parents/:parentId/dashboard
 GET  /parents/:parentId/students
 GET  /parents/:parentId/students/:studentId/report
 GET  /parents/:parentId/submissions/:submissionId
-POST /parents/:parentId/submissions/:submissionId/comment
+GET  /parents/:parentId/settings
+PATCH /parents/:parentId/settings
 ```
 
 ## Teacher

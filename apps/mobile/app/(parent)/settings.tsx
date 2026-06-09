@@ -1,3 +1,3 @@
-import { AppSettingsScreen } from "@/features/profile-settings/screens/AppSettingsScreen";
+import { ParentSettingsScreen } from "@/features/parent/screens/ParentSettingsScreen";
 
-export default AppSettingsScreen;
+export default ParentSettingsScreen;

@@ -178,6 +178,8 @@ Assignments -> /(parent)/assignments
 Settings    -> /(parent)/settings
 ```
 
+Parent tab screens export feature screens from `apps/mobile/src/features/parent/screens/`. The assignments tab is a list surface, and individual assignment reviews are opened through the hidden submission route.
+
 Parent detail routes are hidden from the tab bar:
 
 ```txt

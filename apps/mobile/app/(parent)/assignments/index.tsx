@@ -1,3 +1,3 @@
-import { ParentAssignmentReviewScreen } from "@/features/parent/screens/ParentAssignmentReviewScreen";
+import { ParentAssignmentsScreen } from "@/features/parent/screens/ParentAssignmentsScreen";
 
-export default ParentAssignmentReviewScreen;
+export default ParentAssignmentsScreen;

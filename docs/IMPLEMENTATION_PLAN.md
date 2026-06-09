@@ -74,8 +74,9 @@ Each audited route file imports and exports a feature screen, which aligns with 
 
 The app is scaffolded but not feature-complete:
 
-- Parent, teacher, and subscription screens still include placeholder or partial surfaces.
-- Remaining placeholder APIs and hooks are concentrated in parent, teacher, subscription, and backend-dependent work.
+- Teacher and subscription screens still include placeholder or partial surfaces.
+- Remaining placeholder APIs and hooks are concentrated in teacher, subscription, and backend-dependent work.
+- `apps/mobile/src/features/parent/` now includes parent home, student selector, detailed student report, assignment review, parent settings, Zod-validated mock API contracts, query hooks, and parent view-model tests.
 - `apps/mobile/src/features/progress/` now includes a local progress dashboard, skill detail, badges, weekly review, streak service, badge unlock service, and focused progress tests.
 - `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts` now selects daily assignments from grade, goals, history, weak skills, daily minutes, repeat avoidance, inactivity, and gradual difficulty adjustment.
 - `apps/mobile/src/core/notifications/notificationService.ts` and `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts` now provide provider-free notification preparation and local notification preferences.
@@ -262,4 +263,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/17_parent_experience.md`.
+Proceed to `prompts/18_teacher_experience.md`.

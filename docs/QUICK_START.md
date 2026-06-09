@@ -47,7 +47,7 @@ Follow prompts/15_progress_tracking_and_badges.md.
 Follow prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/17_parent_experience.md.
+Next unfinished MVP prompt: prompts/18_teacher_experience.md.
 ```
 
 ## 6. Production Readiness

@@ -143,15 +143,16 @@ Definition of done:
 
 Deliverables:
 
-- Parent dashboard
-- Student report
-- Assignment review
-- Parent settings
+- Parent dashboard: implemented locally in `apps/mobile/src/features/parent/screens/ParentHomeScreen.tsx`
+- Student report: implemented locally in `apps/mobile/src/features/parent/screens/ParentStudentReportScreen.tsx`
+- Assignment review: implemented locally in `apps/mobile/src/features/parent/screens/ParentAssignmentReviewScreen.tsx`
+- Parent settings: implemented locally in `apps/mobile/src/features/parent/screens/ParentSettingsScreen.tsx`
 
 Definition of done:
 
 - Parent can view child progress
 - Parent can review assignments and feedback
+- Parent can switch linked students and adjust local parent controls
 
 ## Phase 9 — Teacher Experience
 

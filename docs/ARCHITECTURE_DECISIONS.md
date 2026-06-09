@@ -125,7 +125,7 @@ Current evidence:
 
 - `apps/mobile/package.json` includes `jest-expo`, `@types/jest`, and `react-test-renderer`.
 - `apps/mobile/jest.config.js` runs `apps/mobile/src/**/*.test.ts` and `apps/mobile/src/**/*.test.tsx`.
-- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home view-model decisions, assignment status transitions, writing draft persistence, writing metrics, canvas persistence/stroke behavior, and AI coach policy/context/prompt/mock API behavior.
+- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home view-model decisions, assignment status transitions, writing draft persistence, writing metrics, canvas persistence/stroke behavior, AI coach policy/context/prompt/mock API behavior, and parent view-model adaptation/rubric totals.
 
 Recommended first tests:
 
@@ -477,7 +477,7 @@ Consequences:
 - Progress routes under `apps/mobile/app/(student)/progress/` remain thin feature exports.
 - The dashboard tracks assignments, streaks, weekly minutes, words, revisions, rubric improvement, AI feedback applied, handwriting time, skills, badges, and weekly review.
 - Grade-band adaptation controls metric density and rubric detail for elementary, middle, and high school students.
-- Backend progress persistence, cross-device sync, parent reports, and teacher analytics remain future work.
+- Backend progress persistence, cross-device sync, and teacher analytics remain future work. Parent reports currently exist as local mobile reporting surfaces backed by deterministic mock data.
 
 ## ADR-022: Notification Preparation Is Provider-Free Until Native Push Setup
 
@@ -504,6 +504,33 @@ Consequences:
 - Payloads use localization keys and route target metadata instead of raw provider-specific messages.
 - No `expo-notifications` dependency, native permission prompt, push token registration, APNs/FCM configuration, or backend provider call exists yet.
 - Adding real local or remote push delivery later will require a new native build and likely store resubmission.
+
+## ADR-023: Parent Experience Uses Local Reporting Contracts Until Backend Exists
+
+Status: accepted
+
+Parent experience lives in `apps/mobile/src/features/parent/`. Prompt 17 adds
+parent home, student selector, detailed student report, assignment review, and
+parent settings without introducing backend persistence or direct imports from
+student feature implementations.
+
+Current evidence:
+
+- Dashboard/report/review/settings API facade: `apps/mobile/src/features/parent/api/parentApi.ts`
+- Query hooks and settings mutation: `apps/mobile/src/features/parent/hooks/useParent.ts`
+- Screens: `apps/mobile/src/features/parent/screens/`
+- Components: `apps/mobile/src/features/parent/components/`
+- Zod contracts: `apps/mobile/src/features/parent/types.ts`
+- View-model service and tests: `apps/mobile/src/features/parent/services/parentViewModel.ts` and `apps/mobile/src/features/parent/services/parentViewModel.test.ts`
+
+Consequences:
+
+- Parent route files under `apps/mobile/app/(parent)/` remain thin feature exports.
+- Parent reporting surfaces support loading, empty, error, offline cached, and success states.
+- Grade-band adaptation controls metric density and rubric detail for parent-visible student work.
+- AI feedback is shown as coaching signals only: one strength, one improvement, and one revision task.
+- Parent settings include AI coach access, report email, assignment alerts, practice reminders, digest frequency, teacher sharing, and quiet-hour copy.
+- Backend authorization, parent/student linking persistence, cross-device settings sync, and real report delivery remain future work.
 
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 

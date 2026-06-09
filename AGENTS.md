@@ -176,6 +176,7 @@ Project-local Codex files:
 
 ```txt
 .codex/TASK_STARTUP.md
+.codex/AUTONOMOUS_PROMPTS.md
 .codex/EXECUTION_STATE.md
 .codex/README.md
 .codex/PROMPTS.md
@@ -184,6 +185,7 @@ Project-local Codex files:
 .codex/environments/environment.toml
 script/build_and_run.sh
 script/review_agent.sh
+script/autonomous_prompt_runner.sh
 ```
 
 Use `.codex/EXECUTION_STATE.md` as the handoff/memory file. It should remain concise and non-secret.
@@ -196,6 +198,8 @@ Codex actions currently include:
 - `Typecheck`
 - `Test`
 - `Supabase Health`
+- `Autonomous: Plan Prompts`
+- `Autonomous: Continue Prompts`
 - `Review: AI Safety`
 - `Generate: Assets`
 - `Review: Backend`
@@ -209,6 +213,14 @@ Codex actions currently include:
 - `List Skills`
 
 Do not put secrets in `.codex/`.
+
+Autonomous prompt runner:
+
+- Use `./script/autonomous_prompt_runner.sh --dry-run` to preview the prompt sequence.
+- Use `./script/autonomous_prompt_runner.sh --from auto --to 27` to run remaining prompts.
+- The runner requires a clean Git worktree, runs validation after each prompt, and commits each prompt result.
+- The runner does not push commits.
+- The runner must never commit local env files, `node_modules/`, `.expo/`, or generated native folders.
 
 ## Prompt Workflow
 

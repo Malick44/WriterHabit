@@ -17,6 +17,7 @@ Last updated: 2026-06-09
 - Prompt 13 AI coach feature is complete.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
+- Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
 - Git is initialized on branch `main`; implementation commits exist.
 - Expo mobile app lives at `apps/mobile/`.
 - Supabase mobile client is configured with public Expo env variables.
@@ -49,6 +50,9 @@ Last updated: 2026-06-09
   - `script/build_and_run.sh`
 - Added automated review action runner:
   - `script/review_agent.sh`
+- Added autonomous prompt runner:
+  - `script/autonomous_prompt_runner.sh`
+  - `.codex/AUTONOMOUS_PROMPTS.md`
 - Added asset generation setup:
   - `prompts/specialists/asset_generation_agent.md`
   - `docs/assets/ASSET_GENERATION_PLAN.md`

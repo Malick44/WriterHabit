@@ -36,6 +36,16 @@ icon = "database"
 command = "node scripts/supabase-admin.mjs health"
 
 [[actions]]
+name = "Autonomous: Plan Prompts"
+icon = "tool"
+command = "./script/autonomous_prompt_runner.sh --dry-run"
+
+[[actions]]
+name = "Autonomous: Continue Prompts"
+icon = "tool"
+command = "./script/autonomous_prompt_runner.sh --from auto --to 27"
+
+[[actions]]
 name = "Review: AI Safety"
 icon = "tool"
 command = "./script/review_agent.sh ai-safety exec"

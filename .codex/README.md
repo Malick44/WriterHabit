@@ -23,6 +23,8 @@ Codex app actions are defined in `.codex/environments/environment.toml`.
 - `Typecheck`: runs the mobile TypeScript check.
 - `Test`: runs the mobile Jest suite.
 - `Supabase Health`: checks the local development Supabase admin connection.
+- `Autonomous: Plan Prompts`: previews the next implementation prompt sequence.
+- `Autonomous: Continue Prompts`: runs remaining implementation prompts with `codex exec`, checks, and commits.
 - `Review: AI Safety`: runs the AI safety and academic-integrity review agent.
 - `Generate: Assets`: runs the asset generation agent.
 - `Review: Backend`: runs the backend architecture review agent.
@@ -41,6 +43,8 @@ Review and specialist generation actions are backed by `script/review_agent.sh`.
 ./script/review_agent.sh design print
 ./script/review_agent.sh assets print
 ```
+
+Autonomous implementation actions are backed by `script/autonomous_prompt_runner.sh`; see `.codex/AUTONOMOUS_PROMPTS.md`.
 
 ## Prompt Library
 

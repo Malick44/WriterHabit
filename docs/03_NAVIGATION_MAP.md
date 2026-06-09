@@ -146,6 +146,17 @@ creates the same local `source: "mock"` session shape used by the env fallback,
 then normal route guards send the account to onboarding, student, parent, or
 teacher areas.
 
+The same panel also exposes onboarding screen previews backed by
+`apps/mobile/src/features/onboarding/services/onboardingPreviewService.ts`.
+These previews sign in the setup demo student, seed the local onboarding
+progress required for the selected step, and route directly to role selection,
+grade selection, writing goals, writing confidence, daily practice, or plan
+summary.
+
+Completed sessions also expose a development-only floating `Dev` button on
+student, parent, and teacher home screens. The button opens the same demo panel
+without sending the user back to the sign-in screen.
+
 This is public demo state only. Demo sessions use `source: "mock"` and skip Supabase auth subscriptions so a persisted Supabase event does not override the selected demo user. Do not put service-role Supabase keys or other secrets in Expo public env vars, app code, docs, or `.codex` files.
 
 ## Student Bottom Tabs

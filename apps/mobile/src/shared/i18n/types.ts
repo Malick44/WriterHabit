@@ -23,5 +23,6 @@ export type TFunction = (key: TranslationKey, params?: TranslationParams) => str
 
 export type I18nContextValue = {
   locale: Locale;
+  setLocale: (locale: Locale) => void;
   t: TFunction;
 };

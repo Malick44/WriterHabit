@@ -18,6 +18,17 @@ export const en = {
     fallbackDisplayName: "Writer",
     fallbackUserName: "WriteWise user",
   },
+  modal: {
+    close: "Close",
+    closeHint: "Dismiss this dialog.",
+    confirm: "Confirm",
+    cancel: "Cancel",
+    examples: {
+      deleteDescription: "This action cannot be undone.",
+      deleteTitle: "Delete file?",
+      selectionCount: "{count, plural, one {# selected item} other {# selected items}}",
+    },
+  },
   themeTuner: {
     title: "Glacier Theme Tuner",
     openAccessibility: "Open theme tuning panel",
@@ -29,6 +40,24 @@ export const en = {
     glowIntensity: "Glow Intensity",
     typographyScale: "Typography Scale",
     resetDefaults: "Reset Defaults",
+    decreaseAccessibility: "Decrease {label}",
+    increaseAccessibility: "Increase {label}",
+    presetAccessibility: "Select {label}",
+    presets: {
+      background: {
+        absoluteVoid: "Absolute Void",
+        cyberSlate: "Cyber Slate",
+        deepNavy: "Deep Navy",
+        obsidian: "Obsidian",
+      },
+      primary: {
+        cyberPurple: "Cyber Purple",
+        emerald: "Emerald",
+        iceBlue: "Ice Blue",
+        neonCyan: "Neon Cyan",
+        ruby: "Ruby",
+      },
+    },
   },
   states: {
     loading: {
@@ -173,9 +202,52 @@ export const en = {
       description: "Pick a local profile to enter the app without a Supabase sign-in.",
       devOnlyBadge: "DEV ONLY",
       optionHint: "Select this demo user for local development sign-in.",
+      onboardingDescription: "Open a specific onboarding step with sample saved choices already prepared.",
+      onboardingOptionHint: "Select this onboarding preview step.",
+      onboardingSubtitle: "Preview setup routes without creating another account.",
+      onboardingTitle: "Onboarding previews",
+      openOnboardingCta: "Open {{screen}}",
       panelAccessibility: "Developer demo user login panel",
       signInCta: "Log in as {{user}}",
       toggleAccessibility: "Toggle developer demo user panel",
+      closePanelAccessibility: "Close developer demo panel",
+      closePanelHint: "Dismiss the developer demo panel.",
+      floatingAccessibility: "Open developer demo panel",
+      floatingHint: "Open demo users and onboarding screen previews.",
+      floatingLabel: "Dev",
+      floatingTitle: "Developer panel",
+      onboardingScreens: {
+        role: {
+          label: "Role selection",
+          description: "Start at the Student, Parent, and Teacher role picker.",
+          accessibility: "Preview the onboarding role selection screen.",
+        },
+        grade: {
+          label: "Grade selection",
+          description: "Open the grade-level picker with the student role seeded.",
+          accessibility: "Preview the onboarding grade selection screen.",
+        },
+        goals: {
+          label: "Writing goals",
+          description: "Open the writing-goals screen with Grade 5 seeded.",
+          accessibility: "Preview the onboarding writing goals screen.",
+        },
+        confidence: {
+          label: "Confidence check",
+          description: "Open the legacy confidence step with sample goals seeded.",
+          accessibility: "Preview the onboarding writing confidence screen.",
+        },
+        dailyPractice: {
+          label: "Daily practice",
+          description: "Open the daily practice screen with sample goals and steady coaching seeded.",
+          accessibility: "Preview the onboarding daily practice screen.",
+        },
+        planSummary: {
+          label: "Plan summary",
+          description: "Open the personalized plan screen with a complete Grade 5 setup.",
+          accessibility: "Preview the onboarding personalized plan summary screen.",
+        },
+      },
       elementaryStudent: {
         label: "Mira, Grade 4 student",
         description: "Elementary student workspace with onboarding complete.",

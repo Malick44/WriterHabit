@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
+import { onboardingPreviewTargets, prepareOnboardingPreview } from "@/features/onboarding";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Screen } from "@/shared/components/layout/Screen";
@@ -39,8 +40,21 @@ export function SignInScreen() {
         />
         <DemoUserPanel
           disabled={isBusy}
+          onboardingPreviewOptions={onboardingPreviewTargets}
           onSelectDemoUser={async (demoUserId) => {
             await signInWithDemoUser(demoUserId);
+          }}
+          onSelectOnboardingPreview={async (targetId) => {
+            clearError();
+            const result = await signInWithDemoUser("student_needs_onboarding");
+            const userId = result.session?.user.id;
+
+            if (!userId) {
+              return;
+            }
+
+            const route = await prepareOnboardingPreview(userId, targetId);
+            router.replace(route);
           }}
         />
       </Stack>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Modal } from "react-native";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -8,6 +8,7 @@ import { colors, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
+import { Modal as AppModal } from "@/shared/components/modals";
 import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
@@ -456,31 +457,21 @@ export function RevisionScreen() {
             ) : null}
           </View>
 
-          {/* Comparison Modal Overlay */}
-          <Modal
-            animationType="slide"
-            transparent={true}
+          <AppModal
+            backdropOpacity={glassOpacity}
+            gradeBand={state.gradeBand}
+            mode="bottomSheet"
+            onClose={() => setIsCompareOpen(false)}
+            testID="revision-comparison-modal"
+            titleKey="feedbackReview.revision.compareSectionTitle"
             visible={isCompareOpen}
-            onRequestClose={() => setIsCompareOpen(false)}
           >
-            <View style={[styles.modalOverlay, { backgroundColor: `rgba(11, 28, 48, ${glassOpacity})` }]}>
-              <View style={[styles.modalContent, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}>
-                <View style={styles.modalHeader}>
-                  <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
-                    {t("feedbackReview.revision.compareSectionTitle")}
-                  </Text>
-                  <TouchableOpacity onPress={() => setIsCompareOpen(false)}>
-                    <Ionicons name="close" size={24} color={primaryColor} />
-                  </TouchableOpacity>
-                </View>
-                <RevisionComparisonCard
-                  gradeBand={state.gradeBand}
-                  originalExcerpt={state.viewModel.review.revisionTask.originalExcerpt}
-                  revisedText={revisedText}
-                />
-              </View>
-            </View>
-          </Modal>
+            <RevisionComparisonCard
+              gradeBand={state.gradeBand}
+              originalExcerpt={state.viewModel.review.revisionTask.originalExcerpt}
+              revisedText={revisedText}
+            />
+          </AppModal>
         </Stack>
       ) : null}
     </Screen>
@@ -588,22 +579,5 @@ const styles = StyleSheet.create({
   },
   footerButtonDisabled: {
     opacity: 0.5,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    borderWidth: 1,
-    padding: spacing.lg,
-    width: "100%",
-  },
-  modalHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.md,
   },
 });

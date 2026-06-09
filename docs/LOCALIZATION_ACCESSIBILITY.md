@@ -32,11 +32,27 @@ Existing route layouts may still import `useI18n` from `@/i18n`; that path re-ex
 
 - Do not hardcode new user-facing strings in JSX.
 - Add keys to `apps/mobile/src/shared/i18n/en.ts`.
+- Shared modals require at least `modal.close`, `modal.confirm`, and `modal.cancel`; close hints and example keys are also grouped under `modal`.
 - Keep keys grouped by feature area, such as `assignments`, `writingWorkspace`, `canvas`, `aiCoach`, `parent`, `teacher`, and `accessibility`.
 - Keep AI coaching copy learning-oriented. Do not add CTAs such as "Write my essay", "Finish for me", "Give me the answer", "Generate final draft", or "Do my homework".
 - Prefer screen-owned copy keys over shared component-owned copy. Shared components should receive labels and messages as props.
 - The Jest guard at `apps/mobile/src/shared/i18n/noHardcodedJsxText.test.ts` scans `apps/mobile/src/` and `apps/mobile/app/` TSX files for direct `<Text>` copy and common user-facing literal props. Use translation keys for those values so the normal test suite catches regressions.
 - Service-generated user-facing labels, fallback names, and seeded form text should also resolve through translation keys. Protocol strings such as routes, enum values, IDs, API paths, and test IDs are not localization copy.
+
+The formatter supports both existing `{{name}}` templates and ICU-style variables, plurals, and selects. New modal copy may use ICU plural formatting, for example:
+
+```ts
+modal: {
+  close: "Close",
+  confirm: "Confirm",
+  cancel: "Cancel",
+  examples: {
+    selectionCount: "{count, plural, one {# selected item} other {# selected items}}",
+  },
+}
+```
+
+Modal props accept `TranslationKey` values, so invalid modal copy keys fail TypeScript compilation.
 
 ## Accessibility Settings
 

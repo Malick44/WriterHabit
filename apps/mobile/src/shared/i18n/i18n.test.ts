@@ -10,4 +10,9 @@ describe("shared i18n", () => {
       "The current account role is student.",
     );
   });
+
+  it("formats ICU placeholders and plural messages", () => {
+    expect(translate("en", "modal.examples.selectionCount", { count: 1 })).toBe("1 selected item");
+    expect(translate("en", "modal.examples.selectionCount", { count: 3 })).toBe("3 selected items");
+  });
 });

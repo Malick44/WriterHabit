@@ -4,29 +4,48 @@ import { StyleSheet, Text, View } from "react-native";
 import type { DemoUserId } from "@/core/auth/authTypes";
 import { demoUsers } from "@/core/auth/demoUsers";
 import { colors, radius, spacing, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { ChoiceCard } from "@/shared/components/forms";
 import { Stack } from "@/shared/components/layout";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
+export type DemoPanelPreviewOption = {
+  id: string;
+  labelKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  accessibilityKey: TranslationKey;
+};
+
 type DemoUserPanelProps = {
   disabled?: boolean;
   onSelectDemoUser: (demoUserId: DemoUserId) => Promise<void> | void;
+  onboardingPreviewOptions?: readonly DemoPanelPreviewOption[];
+  onSelectOnboardingPreview?: (targetId: string) => Promise<void> | void;
 };
 
 const defaultDemoUserId: DemoUserId = "middle_school_student";
 
-export function DemoUserPanel({ disabled = false, onSelectDemoUser }: DemoUserPanelProps) {
+export function DemoUserPanel({
+  disabled = false,
+  onSelectDemoUser,
+  onboardingPreviewOptions = [],
+  onSelectOnboardingPreview,
+}: DemoUserPanelProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands.middle;
   const [selectedDemoUserId, setSelectedDemoUserId] = useState<DemoUserId>(defaultDemoUserId);
+  const [selectedPreviewId, setSelectedPreviewId] = useState(onboardingPreviewOptions[0]?.id ?? "");
 
   const selectedDemoUser = useMemo(
     () => demoUsers.find((user) => user.id === selectedDemoUserId) ?? demoUsers[0],
     [selectedDemoUserId],
+  );
+  const selectedPreview = useMemo(
+    () => onboardingPreviewOptions.find((option) => option.id === selectedPreviewId) ?? onboardingPreviewOptions[0],
+    [onboardingPreviewOptions, selectedPreviewId],
   );
 
   if (!__DEV__) {
@@ -63,7 +82,7 @@ export function DemoUserPanel({ disabled = false, onSelectDemoUser }: DemoUserPa
           {t("auth.demoUsers.description")}
         </Text>
 
-        <Stack gap="sm">
+        <Stack gap="sm" style={styles.optionList}>
           {demoUsers.map((demoUser) => (
             <ChoiceCard
               accessibilityHint={t("auth.demoUsers.optionHint")}
@@ -91,6 +110,64 @@ export function DemoUserPanel({ disabled = false, onSelectDemoUser }: DemoUserPa
           testID="demo-user-sign-in-button"
           variant="secondary"
         />
+
+        {selectedPreview && onSelectOnboardingPreview ? (
+          <View style={[styles.previewSection, { borderColor: accessibleColors.border }]}>
+            <Stack gap="md">
+              <View style={styles.sectionHeader}>
+                <Text
+                  accessibilityRole="header"
+                  selectable
+                  style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}
+                >
+                  {t("auth.demoUsers.onboardingTitle")}
+                </Text>
+                <Text
+                  selectable
+                  style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}
+                >
+                  {t("auth.demoUsers.onboardingSubtitle")}
+                </Text>
+              </View>
+
+              <Text
+                selectable
+                style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}
+              >
+                {t("auth.demoUsers.onboardingDescription")}
+              </Text>
+
+              <Stack gap="sm" style={styles.optionList}>
+                {onboardingPreviewOptions.map((option) => (
+                  <ChoiceCard
+                    accessibilityHint={t("auth.demoUsers.onboardingOptionHint")}
+                    accessibilityLabel={t(option.accessibilityKey)}
+                    disabled={disabled}
+                    key={option.id}
+                    label={t(option.labelKey)}
+                    description={t(option.descriptionKey)}
+                    onPress={() => {
+                      setSelectedPreviewId(option.id);
+                    }}
+                    selected={option.id === selectedPreview.id}
+                    testID={`onboarding-preview-option-${option.id}`}
+                  />
+                ))}
+              </Stack>
+
+              <Button
+                disabled={disabled}
+                fullWidth
+                label={t("auth.demoUsers.openOnboardingCta", { screen: t(selectedPreview.labelKey) })}
+                onPress={() => {
+                  void onSelectOnboardingPreview(selectedPreview.id);
+                }}
+                testID="open-onboarding-preview-button"
+                variant="secondary"
+              />
+            </Stack>
+          </View>
+        ) : null}
       </Stack>
     </View>
   );
@@ -118,5 +195,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     justifyContent: "space-between",
+  },
+  optionList: {
+    width: "100%",
+  },
+  previewSection: {
+    borderTopWidth: 1,
+    marginTop: spacing.sm,
+    paddingTop: spacing.md,
+  },
+  sectionHeader: {
+    gap: spacing.xs,
   },
 });

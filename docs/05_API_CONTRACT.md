@@ -38,8 +38,10 @@ local device persistence:
 | Subscriptions | `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` |
 
 The backend scaffold is framework-neutral and lives in
-`services/api/src/features/`. It currently contains endpoint boundary stubs only.
-Draft Supabase/Postgres migrations now live in `services/api/migrations/`.
+`services/api/src/features/`. It contains endpoint boundary stubs plus
+framework-neutral AI coaching/review services in
+`services/api/src/features/ai/`. Draft Supabase/Postgres migrations now live in
+`services/api/migrations/`.
 
 ## Planned Endpoint Groups
 

@@ -422,7 +422,7 @@ Consequences:
 - Visible actions remain approved learning actions only: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
 - Coach requests carry assignment metadata, grade level, skill focus, rubric criteria, writing metrics, optional canvas summary, and a bounded draft excerpt rather than the full draft.
 - TanStack Query mutation state uses a short garbage-collection window for coach responses; full drafts and canvas documents remain owned by their source features.
-- Backend AI calls, usage limits, audit-safe metadata logging, and feedback review generation remain future work.
+- Backend runtime wiring, external provider calls, persistent usage logs, and audit-safe metadata storage remain future work. Framework-neutral backend AI usage limits and mock service boundaries now exist under `services/api/src/features/ai/`.
 
 ## ADR-020: Feedback Review Uses Bounded Local Review Results
 
@@ -562,14 +562,48 @@ Consequences:
 - Teacher feedback is framed as coaching: rubric signals, bounded student-writing preview, one next revision task, and a teacher comment. It must not rewrite student work.
 - Backend persistence, assignment publication, roster sync, authorization enforcement, and cross-device teacher comments remain future work.
 
+## ADR-025: AI Backend Services Stay Framework-Neutral And Mock-Backed
+
+Status: accepted
+
+Prompt 22 adds backend AI service scaffolding without choosing a runtime
+framework or external model provider. The implementation lives under
+`services/api/src/features/ai/` and keeps provider calls behind a typed mock
+provider.
+
+Current evidence:
+
+- Contracts and shared helpers: `services/api/src/features/ai/contracts.ts`
+- Coach orchestration: `services/api/src/features/ai/coach/ai-coach.service.ts`
+- Review orchestration: `services/api/src/features/ai/review/ai-review.service.ts`
+- Structured feedback parser: `services/api/src/features/ai/review/structured-feedback-parser.ts`
+- Prompt builder: `services/api/src/features/ai/prompts/ai-prompt-builder.service.ts`
+- Academic integrity and policy checks: `services/api/src/features/ai/safety/`
+- Deterministic moderation placeholders: `services/api/src/features/ai/moderation/ai-moderation.service.ts`
+- Usage limits and token-budget estimates: `services/api/src/features/ai/usage/ai-usage-limit.service.ts`
+- Mock provider: `services/api/src/features/ai/providers/mock-ai-provider.ts`
+
+Consequences:
+
+- AI backend behavior can be unit-tested and reviewed before a server framework
+  or model SDK is selected.
+- Input/output moderation, academic-integrity policy, usage limits, prompt
+  construction, provider calls, and structured feedback parsing are separate
+  boundaries.
+- The mock provider returns localization-ready coaching and feedback packets
+  with one strength, one improvement, and one next revision task.
+- No model-provider credentials, service-role keys, running API server,
+  persistence adapter, or production queue exists yet.
+
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 
 Status: accepted
 
 `services/api/docs/` now defines the planned backend API contract, error
 catalog, and authorization rules. `services/api/src/features/` contains
-framework-neutral feature boundary stubs. The backend still does not choose
-NestJS, Spring Boot, or another runtime framework.
+framework-neutral feature boundary stubs plus AI coaching/review service
+scaffolding in `services/api/src/features/ai/`. The backend still does not
+choose NestJS, Spring Boot, or another runtime framework.
 
 Decision needed before implementation:
 
@@ -585,6 +619,8 @@ Backend responsibilities currently documented:
 - Draft persistence.
 - Canvas file storage.
 - AI review queue.
+- AI coaching/review safety, prompt, moderation, usage, structured parsing, and
+  mock provider boundaries.
 - Progress calculation.
 - Parent and teacher reporting.
 - Subscription entitlement sync. The mobile app currently uses local deterministic subscription mocks in `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts`.

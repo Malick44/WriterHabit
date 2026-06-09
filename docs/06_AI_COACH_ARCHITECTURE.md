@@ -32,6 +32,8 @@ It should help students think, plan, revise, and improve. It should not complete
 
 ## AI Services
 
+Mobile feature modules:
+
 ```txt
 features/ai-coach/
   api/
@@ -76,6 +78,35 @@ returns bounded excerpts, and renders structured feedback with one strength, one
 improvement, one revision task, rubric scores, grammar suggestion cards, and a
 completion celebration. It does not rewrite the student's assignment or persist
 progress to a backend yet.
+
+Framework-neutral backend AI services now live in:
+
+```txt
+services/api/src/features/ai/
+  coach/
+    ai-coach.service.ts
+  review/
+    ai-review.service.ts
+    structured-feedback-parser.ts
+  safety/
+    academic-integrity.service.ts
+    ai-safety-policy.service.ts
+  prompts/
+    ai-prompt-builder.service.ts
+  moderation/
+    ai-moderation.service.ts
+  usage/
+    ai-usage-limit.service.ts
+  providers/
+    mock-ai-provider.ts
+  contracts.ts
+```
+
+These backend services are not a running API server yet. They provide the future
+handler boundary: bounded request normalization, grade-aware prompt building,
+academic-integrity checks, deterministic input/output moderation placeholders,
+usage limits and token-budget estimates, structured feedback parsing, and a mock
+provider.
 
 ## Grade-Level Tone
 
@@ -233,12 +264,17 @@ Current mock scenarios can be selected with
 
 ## AI Usage Cost Controls
 
-- Cache rubric feedback when submission does not change.
-- Use smaller model for hints.
-- Use larger model only for full review.
-- Limit daily AI coach interactions on free plan.
-- Queue long feedback jobs.
-- Summarize canvas text before review if too long.
+- Backend usage policy lives in
+  `services/api/src/features/ai/usage/ai-usage-limit.service.ts`.
+- Free, plus, and school plans have separate daily coach, review, and token
+  budgets.
+- Coach requests are estimated from the prompt and bounded context before the
+  provider is called.
+- Review requests use larger output budgets but have lower daily job limits.
+- Long single requests are rejected before provider work.
+- Canvas-recognized text is bounded before prompt construction.
+- Future persistence should cache rubric feedback when a submission does not
+  change and queue long feedback jobs.
 
 ## Important UI Rule
 

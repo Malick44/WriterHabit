@@ -14,8 +14,9 @@ framework is selected:
 | `assignments` | Daily assignment, assignment listing, detail, start, submit entry points. |
 | `submissions` | Draft persistence, submission lifecycle, and revisions. |
 | `canvas` | Canvas metadata, signed upload URLs, export, attachment, recognition. |
-| `ai-coach` | Policy-safe coaching actions and usage limits. |
-| `ai-review` | Review jobs, feedback storage, and progress update boundary. |
+| `ai` | Framework-neutral AI coaching/review services, safety, moderation, prompt building, usage controls, structured feedback parsing, and mock provider. |
+| `ai-coach` | Compatibility re-export for policy-safe coaching endpoints and `AiCoachService`. |
+| `ai-review` | Compatibility re-export for review endpoints and `AiReviewService`. |
 | `progress` | Progress dashboard, skill trends, badges, weekly review. |
 | `parents` | Parent dashboards, linked student reports, settings. |
 | `teachers` | Teacher dashboards, classes, assignments, submissions, comments. |

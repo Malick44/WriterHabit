@@ -197,8 +197,8 @@ Work:
 
 Risks:
 
-- AI coach currently uses deterministic local mock responses; backend AI service calls, usage limits, and audit-safe metadata logging remain future work.
-- AI feedback review currently uses deterministic local mock responses and local progress earned payloads; backend AI review jobs, feedback persistence, and progress sync remain future work.
+- AI coach currently uses deterministic local mock responses on mobile; backend AI service scaffolding exists in `services/api/src/features/ai/` but is not wired to a running API server.
+- AI feedback review currently uses deterministic local mock responses and local progress earned payloads; backend AI review service scaffolding exists, but feedback persistence and progress sync remain future work.
 - AI feedback must not rewrite student assignments.
 
 ## Phase 7: Progress
@@ -297,4 +297,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/22_ai_backend_services.md` next. The backend API contract, framework-neutral feature boundary scaffold, PostgreSQL schema docs, relationship docs, migration drafts, indexes, and privacy-aware RLS patterns now exist; the next gap is backend AI service behavior.
+Use `prompts/23_canvas_storage_and_sync.md` next. The backend API contract, framework-neutral feature boundary scaffold, PostgreSQL schema docs, migration drafts, privacy-aware RLS patterns, and AI backend service scaffolding now exist; the next gap is canvas storage and sync behavior.

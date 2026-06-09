@@ -16,6 +16,12 @@ Draft Supabase/Postgres migrations live in `services/api/migrations/`.
 
 Feature boundary stubs live in `services/api/src/features/`.
 
+Framework-neutral AI backend services live in `services/api/src/features/ai/`.
+They include safe coaching and review orchestration, grade-aware prompt builders,
+academic-integrity policy checks, deterministic moderation placeholders, usage
+limit/cost controls, a structured feedback parser, and a mock provider. They do
+not call an external model provider or require provider credentials yet.
+
 Recommended backend responsibilities:
 
 - Authentication integration
@@ -25,6 +31,7 @@ Recommended backend responsibilities:
 - Draft persistence
 - Canvas file storage
 - AI review queue
+- AI coaching and review service orchestration
 - Progress calculation
 - Parent and teacher reporting
 - Subscription entitlement sync

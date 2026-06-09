@@ -1,5 +1,4 @@
-export { aiCoachEndpoints, allowedAiCoachActions } from "./ai-coach/ai-coach.service";
-export { aiReviewEndpoints } from "./ai-review/ai-review.service";
+export * from "./ai";
 export { assignmentEndpoints } from "./assignments/assignments.controller";
 export { authEndpoints } from "./auth/auth.controller";
 export { canvasEndpoints } from "./canvas/canvas.service";

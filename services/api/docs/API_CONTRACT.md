@@ -593,7 +593,20 @@ Canvas recognition response:
 ## AI Coach
 
 Current mobile AI coach responses are deterministic mocks guarded by local policy
-checks. Backend AI calls and usage limits are planned here.
+checks. Framework-neutral backend service scaffolding now exists under
+`services/api/src/features/ai/coach/` and shared AI support folders:
+
+- `services/api/src/features/ai/contracts.ts`
+- `services/api/src/features/ai/prompts/ai-prompt-builder.service.ts`
+- `services/api/src/features/ai/safety/`
+- `services/api/src/features/ai/moderation/`
+- `services/api/src/features/ai/usage/`
+- `services/api/src/features/ai/providers/mock-ai-provider.ts`
+
+The backend scaffold builds bounded grade-aware prompts, checks academic
+integrity, runs deterministic input/output moderation placeholders, evaluates
+usage limits, and returns mock coaching responses. It does not call an external
+model provider yet.
 
 Allowed coaching actions:
 
@@ -687,7 +700,11 @@ Coach response example:
 
 The current mobile feedback review feature uses a deterministic local mock
 facade. Backend AI review jobs, feedback persistence, and progress sync are
-planned here.
+planned here. Framework-neutral backend review service scaffolding now exists in
+`services/api/src/features/ai/review/`; it creates review job responses, parses
+structured feedback from the mock provider, validates output policy, and returns
+one strength, one improvement, one next revision task, rubric scores, grammar
+suggestions, and progress-earned metadata.
 
 ```txt
 POST /ai/review/submissions/:submissionId

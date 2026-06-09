@@ -18,7 +18,7 @@ After that, read the task-specific implementation prompt, screen prompt, project
 ## Current Status
 
 - Primary app: `apps/mobile/` (Expo SDK 56, React Native, Expo Router, TypeScript strict).
-- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, teacher experience, local subscription/paywall entitlement flow, backend API contract/service-boundary scaffold, and database schema/migration drafts exist.
+- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, teacher experience, local subscription/paywall entitlement flow, backend API contract/service-boundary scaffold, database schema/migration drafts, and framework-neutral AI backend services exist.
 - Prompt 02 audit/planning is complete.
 - Prompt 04 design system/shared UI is complete.
 - Prompt 05 navigation/role routing is complete.
@@ -38,7 +38,8 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 19 subscription and paywall flow is complete.
 - Prompt 20 backend API contract is complete.
 - Prompt 21 database schema and migrations is complete.
-- Next recommended prompt: `prompts/22_ai_backend_services.md`.
+- Prompt 22 AI backend services is complete.
+- Next recommended prompt: `prompts/23_canvas_storage_and_sync.md`.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -71,7 +72,7 @@ writewise/
 
 Important current facts:
 
-- `services/api/` now has framework-neutral contract docs in `services/api/docs/`, database schema and relationship docs in `services/api/docs/`, migration drafts in `services/api/migrations/`, and feature boundary stubs in `services/api/src/features/`; no backend runtime framework, package manifest, production migration runner, or running API server exists yet.
+- `services/api/` now has framework-neutral contract docs in `services/api/docs/`, database schema and relationship docs in `services/api/docs/`, migration drafts in `services/api/migrations/`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; no backend runtime framework, package manifest, production migration runner, or running API server exists yet.
 - `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@writewise/shared`.
 - No native `apps/mobile/ios/` or `apps/mobile/android/` folders should be kept unless the workflow intentionally changes from Expo CNG/prebuild.
 
@@ -248,7 +249,7 @@ Prompt order is maintained in:
 Current next prompt:
 
 ```txt
-prompts/22_ai_backend_services.md
+prompts/23_canvas_storage_and_sync.md
 ```
 
 Screen design prompt workflow:

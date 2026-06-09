@@ -264,4 +264,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/22_ai_backend_services.md`.
+Proceed to `prompts/23_canvas_storage_and_sync.md`.

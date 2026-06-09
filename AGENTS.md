@@ -39,7 +39,8 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 20 backend API contract is complete.
 - Prompt 21 database schema and migrations is complete.
 - Prompt 22 AI backend services is complete.
-- Next recommended prompt: `prompts/23_canvas_storage_and_sync.md`.
+- Prompt 23 canvas storage and sync is complete.
+- Next recommended prompt: `prompts/24_testing_strategy_implementation.md`.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -249,7 +250,7 @@ Prompt order is maintained in:
 Current next prompt:
 
 ```txt
-prompts/23_canvas_storage_and_sync.md
+prompts/24_testing_strategy_implementation.md
 ```
 
 Screen design prompt workflow:

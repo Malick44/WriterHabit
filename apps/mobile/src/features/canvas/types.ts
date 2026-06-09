@@ -5,6 +5,7 @@ export const MAX_CANVAS_STROKES = 240;
 export const MAX_CANVAS_POINTS_PER_STROKE = 16;
 export const MAX_CANVAS_DOCUMENTS = 24;
 export const MAX_CANVAS_UNDO_STEPS = 12;
+export const INITIAL_CANVAS_CLIENT_VERSION = 1;
 
 export const canvasToolSchema = z.enum(["pen", "eraser", "highlighter"]);
 export type CanvasTool = z.infer<typeof canvasToolSchema>;
@@ -48,11 +49,16 @@ export type CanvasStroke = z.infer<typeof canvasStrokeSchema>;
 export const canvasDocumentSchema = z.object({
   assignmentId: z.string().min(1).optional(),
   attachedAt: z.string().datetime().optional(),
+  clientVersion: z.number().int().nonnegative().optional(),
   createdAt: z.string().datetime(),
+  exportStatus: z.enum(["not_requested", "queued", "ready", "failed"]).optional(),
   id: z.string().min(1),
+  lastSyncedAt: z.string().datetime().optional(),
   previewImageUrl: z.string().optional(),
   recognizedText: z.string().optional(),
+  serverVersion: z.number().int().nonnegative().optional(),
   studentId: z.string().min(1),
+  storageObjectPath: z.string().min(1).optional(),
   strokes: z.array(canvasStrokeSchema).max(MAX_CANVAS_STROKES),
   syncStatus: canvasSyncStatusSchema,
   template: canvasTemplateSchema,

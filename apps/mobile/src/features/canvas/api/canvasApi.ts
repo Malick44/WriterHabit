@@ -3,20 +3,15 @@ import type { GradeLevel } from "@writewise/shared";
 import {
   canvasDetailResponseSchema,
   canvasListResponseSchema,
-  canvasScenarioSchema,
   type CanvasDetailResponse,
   type CanvasDocument,
   type CanvasDocumentSummary,
   type CanvasListResponse,
-  type CanvasScenario,
   type CanvasTemplate,
 } from "../types";
-import {
-  attachCanvasToAssignment,
-  createCanvasDocument,
-  getCanvasDocumentSummary,
-} from "../services/canvasDocumentService";
+import { createCanvasDocument, getCanvasDocumentSummary } from "../services/canvasDocumentService";
 import { canvasPersistenceService } from "../services/canvasPersistenceService";
+import { canvasSyncService, readCanvasScenario } from "../services/canvasSyncService";
 
 interface CanvasRequestInput {
   gradeLevel?: GradeLevel;
@@ -40,63 +35,38 @@ interface AttachCanvasInput extends CanvasDetailRequestInput {
   assignmentId: string;
 }
 
-function readScenario(): CanvasScenario {
-  const parsed = canvasScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO);
-
-  return parsed.success ? parsed.data : "success";
-}
-
-function getConnectionStatus(scenario: CanvasScenario) {
-  return scenario === "offline" ? "offline_cached" : "online";
-}
-
-function getNextSyncStatus(scenario: CanvasScenario) {
-  if (scenario === "sync_failed") {
-    return "sync_failed" as const;
-  }
-
-  if (scenario === "offline") {
-    return "local_only" as const;
-  }
-
-  return "saved" as const;
-}
-
 async function saveCanvasDocument(input: SaveCanvasInput): Promise<CanvasDocument> {
-  const scenario = readScenario();
+  const result = await canvasSyncService.saveLocalFirst(input);
 
-  return canvasPersistenceService.saveDocument({
-    ...input.document,
-    syncStatus: getNextSyncStatus(scenario),
-  });
+  return result.document;
 }
 
 export const canvasApi = {
   async attachCanvasToAssignment(input: AttachCanvasInput): Promise<CanvasDocument> {
-    const document = await canvasPersistenceService.getDocument(input.studentId, input.canvasId);
+    const result = await canvasSyncService.attachCanvasToAssignment(input);
 
-    if (!document) {
-      throw new Error("Canvas document not found");
-    }
-
-    return saveCanvasDocument({
-      ...input,
-      document: attachCanvasToAssignment(document, input.assignmentId),
-    });
+    return result.document;
   },
 
   async createCanvas(input: CreateCanvasInput): Promise<CanvasDocument> {
-    const scenario = readScenario();
+    const scenario = readCanvasScenario();
     const document = createCanvasDocument({
       assignmentId: input.assignmentId,
       studentId: input.studentId,
       template: input.template,
     });
 
-    return canvasPersistenceService.saveDocument({
-      ...document,
-      syncStatus: getNextSyncStatus(scenario),
+    if (scenario === "offline") {
+      return canvasPersistenceService.saveDocument(document);
+    }
+
+    const result = await canvasSyncService.saveLocalFirst({
+      document,
+      gradeLevel: input.gradeLevel,
+      studentId: input.studentId,
     });
+
+    return result.document;
   },
 
   async getAttachedCanvasSummary(input: CanvasRequestInput & { assignmentId: string }): Promise<CanvasDocumentSummary | null> {
@@ -106,37 +76,15 @@ export const canvasApi = {
   },
 
   async getCanvas(input: CanvasDetailRequestInput): Promise<CanvasDetailResponse> {
-    const scenario = readScenario();
+    const response = await canvasSyncService.getCanvas(input);
 
-    if (scenario === "error") {
-      throw new Error("Canvas detail mock error");
-    }
-
-    const document = await canvasPersistenceService.getDocument(input.studentId, input.canvasId);
-
-    return canvasDetailResponseSchema.parse({
-      connectionStatus: getConnectionStatus(scenario),
-      document,
-      generatedAt: new Date().toISOString(),
-      studentId: input.studentId,
-    });
+    return canvasDetailResponseSchema.parse(response);
   },
 
   async getCanvases(input: CanvasRequestInput): Promise<CanvasListResponse> {
-    const scenario = readScenario();
+    const response = await canvasSyncService.getCanvases(input);
 
-    if (scenario === "error") {
-      throw new Error("Canvas list mock error");
-    }
-
-    const documents = scenario === "empty" ? [] : await canvasPersistenceService.getDocuments(input.studentId);
-
-    return canvasListResponseSchema.parse({
-      connectionStatus: getConnectionStatus(scenario),
-      documents,
-      generatedAt: new Date().toISOString(),
-      studentId: input.studentId,
-    });
+    return canvasListResponseSchema.parse(response);
   },
 
   async saveCanvas(input: SaveCanvasInput): Promise<CanvasDocument> {

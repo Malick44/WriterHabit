@@ -47,7 +47,7 @@ Follow prompts/15_progress_tracking_and_badges.md.
 Follow prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/23_canvas_storage_and_sync.md.
+Next unfinished MVP prompt: prompts/24_testing_strategy_implementation.md.
 ```
 
 ## 6. Production Readiness

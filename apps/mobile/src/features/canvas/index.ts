@@ -6,4 +6,5 @@ export * from "./screens/CanvasTemplatePickerScreen";
 export * from "./screens/HandwritingCanvasScreen";
 export * from "./screens/CanvasAttachmentScreen";
 export * from "./services/canvasDocumentService";
+export * from "./services/canvasSyncService";
 export * from "./types";

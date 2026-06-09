@@ -315,8 +315,13 @@ interface CanvasDocument {
   strokes: CanvasStroke[];
   syncStatus: "local_only" | "saving" | "saved" | "sync_failed";
   attachedAt?: string;
+  clientVersion?: number;
+  exportStatus?: "not_requested" | "queued" | "ready" | "failed";
+  lastSyncedAt?: string;
   previewImageUrl?: string;
   recognizedText?: string;
+  serverVersion?: number;
+  storageObjectPath?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -327,8 +332,15 @@ and are persisted locally through
 `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`. The
 implementation stores compact stroke arrays, not base64 images. Documents are
 indexed per student, capped at 24 local documents, and each document is capped at
-240 strokes with 16 points per stroke before persistence. Preview image export,
-PDF export, object storage sync, and handwriting recognition are future work.
+240 strokes with 16 points per stroke before persistence.
+
+Canvas sync orchestration lives in
+`apps/mobile/src/features/canvas/services/canvasSyncService.ts`. It saves local
+work before any backend attempt, tracks client/backend versions, records a
+placeholder object-storage path, and preserves the local document with
+`sync_failed` when backend sync fails. Deterministic signed upload and preview
+export placeholders exist; actual image/PDF generation, object upload execution,
+and handwriting recognition are future work.
 
 Canvas attachment currently sets `assignmentId` locally and exposes a compact
 summary to the typed writing workspace so the assignment preview can show the

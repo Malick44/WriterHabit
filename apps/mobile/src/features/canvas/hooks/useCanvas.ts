@@ -11,7 +11,13 @@ import {
   eraseNearestStroke,
   getCanvasGradeAdaptation,
   pushUndoSnapshot,
+  replaceCanvasStrokes,
 } from "../services/canvasDocumentService";
+import {
+  CANVAS_AUTOSAVE_DEBOUNCE_MS,
+  createCanvasAutosaveScheduler,
+  type CanvasAutosaveScheduler,
+} from "../services/canvasSyncService";
 import type {
   CanvasDocument,
   CanvasHomeViewModel,
@@ -144,7 +150,8 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
   const undoHistoryRef = useRef<CanvasDocument["strokes"][]>([]);
   const redoHistoryRef = useRef<CanvasDocument["strokes"][]>([]);
   const latestDocumentRef = useRef<CanvasDocument | null>(null);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveSchedulerRef = useRef<CanvasAutosaveScheduler | null>(null);
+  const saveDocumentRef = useRef<(nextDocument?: CanvasDocument) => Promise<boolean>>(async () => false);
   const query = useQuery({
     enabled: Boolean(session && canvasId),
     queryFn: () => canvasApi.getCanvas({ canvasId: canvasId ?? "", gradeLevel, studentId }),
@@ -204,18 +211,20 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     },
     [gradeLevel, studentId],
   );
+  saveDocumentRef.current = saveDocument;
+
+  if (!autosaveSchedulerRef.current) {
+    autosaveSchedulerRef.current = createCanvasAutosaveScheduler({
+      delayMs: CANVAS_AUTOSAVE_DEBOUNCE_MS,
+      save: (nextDocument) => saveDocumentRef.current(nextDocument),
+    });
+  }
 
   const queueAutosave = useCallback(
     (nextDocument: CanvasDocument) => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      saveTimeoutRef.current = setTimeout(() => {
-        void saveDocument(nextDocument);
-      }, 700);
+      autosaveSchedulerRef.current?.schedule(nextDocument);
     },
-    [saveDocument],
+    [],
   );
 
   const setNextDocument = useCallback(
@@ -266,12 +275,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     redoHistoryRef.current = pushUndoSnapshot(redoHistoryRef.current, currentDocument.strokes);
     setUndoCount(undoHistoryRef.current.length);
     setRedoCount(redoHistoryRef.current.length);
-    setNextDocument({
-      ...currentDocument,
-      strokes: previousStrokes,
-      syncStatus: "local_only",
-      updatedAt: new Date().toISOString(),
-    });
+    setNextDocument(replaceCanvasStrokes(currentDocument, previousStrokes));
   }, [setNextDocument]);
 
   const redo = useCallback(() => {
@@ -286,12 +290,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     undoHistoryRef.current = pushUndoSnapshot(undoHistoryRef.current, currentDocument.strokes);
     setUndoCount(undoHistoryRef.current.length);
     setRedoCount(redoHistoryRef.current.length);
-    setNextDocument({
-      ...currentDocument,
-      strokes: nextStrokes,
-      syncStatus: "local_only",
-      updatedAt: new Date().toISOString(),
-    });
+    setNextDocument(replaceCanvasStrokes(currentDocument, nextStrokes));
   }, [setNextDocument]);
 
   const attach = useCallback(
@@ -311,7 +310,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
         });
         latestDocumentRef.current = attachedDocument;
         setDocument(attachedDocument);
-        return true;
+        return attachedDocument.syncStatus !== "sync_failed";
       } catch {
         const failedDocument: CanvasDocument = {
           ...currentDocument,
@@ -327,9 +326,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
 
   useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
+      autosaveSchedulerRef.current?.cancel();
 
       const documentToSave = latestDocumentRef.current;
 
@@ -338,6 +335,12 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
       }
     };
   }, [gradeLevel, studentId]);
+
+  const saveNow = useCallback(() => {
+    autosaveSchedulerRef.current?.cancel();
+
+    return saveDocument();
+  }, [saveDocument]);
 
   const viewModel = useMemo(() => {
     if (!query.data) {
@@ -373,7 +376,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     isRefreshing: query.isFetching,
     redo,
     refetch,
-    saveNow: () => saveDocument(),
+    saveNow,
     status: "success",
     undo,
     viewModel,

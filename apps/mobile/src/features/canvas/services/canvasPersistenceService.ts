@@ -71,10 +71,13 @@ export const canvasPersistenceService = {
     );
   },
 
-  async saveDocument(document: CanvasDocument): Promise<CanvasDocument> {
+  async saveDocument(
+    document: CanvasDocument,
+    options: { touchUpdatedAt?: boolean } = {},
+  ): Promise<CanvasDocument> {
     const nextDocument = normalizeCanvasDocument({
       ...document,
-      updatedAt: new Date().toISOString(),
+      updatedAt: options.touchUpdatedAt === false ? document.updatedAt : new Date().toISOString(),
     });
     const summaries = await readIndex(nextDocument.studentId);
     const nextSummary = getCanvasDocumentSummary(nextDocument);

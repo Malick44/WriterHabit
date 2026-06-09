@@ -91,6 +91,8 @@ Deliverables:
 - Toolbar implemented
 - Bounded undo/redo implemented
 - Local canvas autosave implemented
+- Local-first canvas sync scaffold implemented
+- Backend metadata, signed upload, attach, and export placeholders implemented
 - Attach canvas to assignment implemented
 - Typed writing workspace preview integration implemented
 
@@ -99,7 +101,8 @@ Definition of done:
 - Student can create a canvas
 - Student can attach canvas to assignment
 - Student can continue writing after attachment
-- Backend file export/sync remains future work
+- Sync failure preserves local canvas work
+- Actual backend runtime, object upload execution, file export generation, and handwriting recognition remain future work
 
 ## Phase 6 — AI Coach and Feedback
 

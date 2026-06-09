@@ -205,12 +205,15 @@ Deliverables:
 - Canvas home.
 - Template picker.
 - Handwriting canvas.
-- Local artifact persistence through `apps/mobile/src/services/fileSystem.ts`.
+- Local artifact persistence through `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`.
+- Local-first sync orchestration through `apps/mobile/src/features/canvas/services/canvasSyncService.ts`.
+- Backend metadata, signed upload, attach, and export placeholders under `services/api/src/features/canvas/`.
 - Assignment attachment flow.
 
 Definition of done:
 
 - Student can create, save, reopen, and attach a canvas artifact.
+- Sync failure preserves local canvas work and surfaces a retryable error state.
 - File handling avoids reading large files fully into JS memory.
 
 ### Phase 6: AI Coach and Feedback Review
@@ -264,4 +267,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/23_canvas_storage_and_sync.md`.
+Proceed to `prompts/24_testing_strategy_implementation.md`.

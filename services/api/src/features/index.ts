@@ -1,7 +1,8 @@
 export * from "./ai";
 export { assignmentEndpoints } from "./assignments/assignments.controller";
 export { authEndpoints } from "./auth/auth.controller";
-export { canvasEndpoints } from "./canvas/canvas.service";
+export * from "./canvas/canvas.contracts";
+export { CanvasService, canvasEndpoints } from "./canvas/canvas.service";
 export { onboardingEndpoints } from "./onboarding/onboarding.controller";
 export { parentEndpoints } from "./parents/parents.controller";
 export { progressEndpoints } from "./progress/progress.controller";

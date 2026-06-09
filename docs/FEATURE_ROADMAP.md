@@ -130,7 +130,7 @@ Work:
 Risks:
 
 - Assignment APIs are deterministic mock data until backend contracts exist.
-- Canvas screens are implemented with local stroke autosave; backend sync and export remain future work.
+- Canvas screens are implemented with local stroke autosave, local-first sync orchestration, and backend metadata/upload/export placeholders.
 - Cross-feature contracts between dashboard and assignments should be shared without importing feature internals.
 
 ## Phase 4: Writing Workspace
@@ -173,12 +173,14 @@ Work:
 - Maintain the implemented canvas home, template picker, and handwriting canvas screens.
 - Maintain bounded stroke documents, undo/redo history, tool store behavior, and local autosave.
 - Maintain assignment attachment and typed workspace preview integration.
-- Implement future file export/object storage when backend and file-system contracts are ready.
+- Maintain local-first sync failure recovery so student work remains on device when backend sync fails.
+- Implement actual file export/object upload execution when backend runtime and file-system contracts are ready.
 
 Risks:
 
 - File system facade currently has TODO implementations.
 - Current canvas rendering uses a local React Native stroke adapter rather than a production drawing engine.
+- Canvas backend sync is scaffolded but disabled unless `EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`.
 - Canvas artifacts can become memory-sensitive; keep stroke and undo bounds in place and operate on URIs for future exports.
 
 ## Phase 6: AI Coach and Feedback Review
@@ -297,4 +299,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/23_canvas_storage_and_sync.md` next. The backend API contract, framework-neutral feature boundary scaffold, PostgreSQL schema docs, migration drafts, privacy-aware RLS patterns, and AI backend service scaffolding now exist; the next gap is canvas storage and sync behavior.
+Use `prompts/24_testing_strategy_implementation.md` next. Canvas storage and sync scaffolding now exists; the next gap is broadening the automated test strategy across implemented features.

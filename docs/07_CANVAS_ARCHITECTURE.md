@@ -40,6 +40,7 @@ features/canvas/
   services/
     canvasDocumentService.ts
     canvasPersistenceService.ts
+    canvasSyncService.ts
   stores/
     canvasToolStore.ts
   types.ts
@@ -77,10 +78,23 @@ Flow:
 ```txt
 User draws stroke
   -> Update local canvas state
-  -> Debounced local JSON autosave
-  -> Surface sync status
-  -> Future backend sync / preview export
+  -> Debounced local JSON autosave through canvasSyncService
+  -> Attempt backend metadata/upload/export placeholders when enabled
+  -> Preserve local document and surface sync status if backend sync fails
 ```
+
+Current implementation:
+
+- `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`
+  stores bounded editable stroke documents in local JSON storage.
+- `apps/mobile/src/features/canvas/services/canvasSyncService.ts` saves
+  locally first, debounces autosave scheduling, creates deterministic signed
+  upload/export placeholders by default, and can call future backend endpoints
+  only when `EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`.
+- Backend sync is scaffolded in
+  `services/api/src/features/canvas/canvas.service.ts` and
+  `services/api/src/features/canvas/canvas.contracts.ts`. There is still no
+  running backend API server in this repository.
 
 ## Sync States
 
@@ -132,10 +146,12 @@ MVP:
 Current app implementation:
 
 - Save compact editable strokes locally.
-- Attach the canvas document id to the assignment locally.
+- Attach the canvas document id to the assignment locally before sync.
 - Show attached canvas summary in the typed writing workspace.
+- Prepare signed upload and preview export placeholders for backend storage.
 
-Image export, object storage, and parent/teacher review previews remain future work.
+Actual image/PDF generation, object upload execution, and parent/teacher review
+previews remain future work.
 
 Post-MVP:
 

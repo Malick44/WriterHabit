@@ -29,7 +29,7 @@ local device persistence:
 | Student home | `apps/mobile/src/features/student-home/api/studentHomeApi.ts` |
 | Assignments | `apps/mobile/src/features/assignments/api/assignmentsApi.ts` |
 | Writing drafts | `apps/mobile/src/features/writing-workspace/` |
-| Canvas | `apps/mobile/src/features/canvas/` |
+| Canvas | `apps/mobile/src/features/canvas/`, including local-first sync in `apps/mobile/src/features/canvas/services/canvasSyncService.ts` |
 | AI coach | `apps/mobile/src/features/ai-coach/api/aiCoachApi.ts` |
 | Feedback review | `apps/mobile/src/features/feedback-review/api/feedbackreviewApi.ts` |
 | Progress | `apps/mobile/src/features/progress/api/progressApi.ts` |
@@ -38,7 +38,8 @@ local device persistence:
 | Subscriptions | `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` |
 
 The backend scaffold is framework-neutral and lives in
-`services/api/src/features/`. It contains endpoint boundary stubs plus
+`services/api/src/features/`. It contains endpoint boundary stubs, typed canvas
+metadata/upload/export placeholders in `services/api/src/features/canvas/`, plus
 framework-neutral AI coaching/review services in
 `services/api/src/features/ai/`. Draft Supabase/Postgres migrations now live in
 `services/api/migrations/`.

@@ -380,6 +380,7 @@ Current evidence:
   - `apps/mobile/src/features/canvas/api/canvasApi.ts`
   - `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`
   - `apps/mobile/src/features/canvas/services/canvasDocumentService.ts`
+  - `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
 - State:
   - `apps/mobile/src/features/canvas/hooks/useCanvas.ts`
   - `apps/mobile/src/features/canvas/stores/canvasToolStore.ts`
@@ -392,7 +393,9 @@ Consequences:
 - Route files under `apps/mobile/app/(student)/canvas/` remain thin feature exports.
 - Canvas documents are local, non-secret student work persisted through the shared local JSON storage facade.
 - Canvas storage is bounded: 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots.
-- Current sync states are local/device states. Backend sync, preview image generation, file export, object storage, and handwriting recognition remain future work.
+- Canvas saves are local-first: backend failures preserve the local document and surface `sync_failed`.
+- Backend sync is scaffolded with typed metadata, signed upload, attach, and export placeholders under `services/api/src/features/canvas/`.
+- Actual image/PDF generation, object upload execution, and handwriting recognition remain future work.
 - The typed writing workspace reads attached canvas summaries through the canvas feature API, so an attached page can appear without importing canvas screen internals.
 
 ## ADR-019: AI Coach Uses a Local Policy-Safe Service Boundary

@@ -503,8 +503,20 @@ Submission example:
 
 ## Canvas
 
-The mobile canvas currently stores compact stroke documents locally. Backend
-metadata, object storage, export, and recognition are planned here.
+The mobile canvas stores compact stroke documents locally and saves locally
+before any backend attempt. `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
+now scaffolds backend sync with deterministic signed upload and export
+placeholders by default. It only calls these planned API routes when
+`EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`; this repository still
+does not contain a running backend server.
+
+Backend canvas storage splits editable payloads from metadata:
+
+- Stroke JSON is uploaded through a signed URL and referenced by object path.
+- Metadata endpoints store template, title, stroke count, client/server version,
+  assignment attachment, preview/export state, and sync timestamps.
+- Export and recognition endpoints queue placeholder jobs until runtime workers
+  exist.
 
 ```txt
 GET    /students/:studentId/canvas-documents
@@ -533,48 +545,85 @@ interface CanvasPoint {
   x: number;
   y: number;
   pressure?: number;
-  timestamp: number;
 }
 
 interface CanvasStroke {
   id: string;
-  tool: "pen" | "marker" | "eraser";
+  tool: "pen" | "highlighter" | "eraser";
   color: string;
   width: number;
   points: CanvasPoint[];
+  createdAt: string;
 }
 
-interface CanvasDocumentResponse {
+interface CanvasDocumentMetadataResponse {
   id: string;
   studentId: string;
   assignmentId: string | null;
   template: CanvasTemplate;
   title: string;
-  strokes: CanvasStroke[];
+  strokeCount: number;
   syncStatus: "local_only" | "saving" | "saved" | "sync_failed";
   attachedAt: string | null;
   previewImageUrl: string | null;
   recognizedText: string | null;
+  clientVersion: number;
+  serverVersion: number;
+  storageObjectPath: string | null;
+  exportStatus: "not_requested" | "queued" | "ready" | "failed";
+  lastSyncedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface SaveCanvasDocumentRequest {
+interface CanvasDocumentResponse extends CanvasDocumentMetadataResponse {
+  strokes?: CanvasStroke[];
+}
+
+interface UpsertCanvasMetadataRequest {
   title: string;
   template: CanvasTemplate;
-  strokes: CanvasStroke[];
+  strokeCount: number;
   clientVersion: number;
+  storageObjectPath: string;
+  previewImageUrl?: string | null;
+  updatedAt: string;
 }
 
 interface AttachCanvasRequest {
-  studentAssignmentId: string;
+  assignmentId: string;
+  clientVersion: number;
+}
+
+interface SignedUploadUrlRequest {
+  clientVersion: number;
+  contentType: "application/json" | "image/png" | "application/pdf";
+  fileKind: "stroke-document" | "preview-image" | "export";
+  sizeBytes?: number;
 }
 
 interface SignedUploadUrlResponse {
   uploadUrl: string;
   objectPath: string;
   expiresAt: string;
+  method: "PUT";
+  contentType: string;
   requiredHeaders: Record<string, string>;
+}
+
+interface CanvasExportRequest {
+  clientVersion: number;
+  format: "preview_png" | "pdf";
+  sourceObjectPath: string;
+}
+
+interface CanvasExportResponse {
+  canvasDocumentId: string;
+  exportId: string;
+  format: "preview_png" | "pdf";
+  status: "queued" | "ready" | "failed";
+  previewImageUrl: string | null;
+  generatedAt: string;
 }
 ```
 

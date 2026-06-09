@@ -1,6 +1,7 @@
 import { typography } from "@/design/tokens";
 
 import {
+  INITIAL_CANVAS_CLIENT_VERSION,
   MAX_CANVAS_POINTS_PER_STROKE,
   MAX_CANVAS_STROKES,
   MAX_CANVAS_UNDO_STEPS,
@@ -74,6 +75,10 @@ function clampPoint(point: CanvasPoint): CanvasPoint {
   };
 }
 
+function getNextClientVersion(document: CanvasDocument): number {
+  return (document.clientVersion ?? INITIAL_CANVAS_CLIENT_VERSION) + 1;
+}
+
 export function getCanvasGradeAdaptation(gradeLevel = 7): CanvasGradeAdaptation {
   const band = typography.getGradeBandForGrade(gradeLevel);
 
@@ -104,13 +109,19 @@ export function getCanvasGradeAdaptation(gradeLevel = 7): CanvasGradeAdaptation 
 }
 
 export function normalizeCanvasDocument(document: CanvasDocument): CanvasDocument {
-  return canvasDocumentSchema.parse({
+  const parsedDocument = canvasDocumentSchema.parse({
     ...document,
     strokes: document.strokes.slice(-MAX_CANVAS_STROKES).map((stroke) => ({
       ...stroke,
       points: stroke.points.slice(-MAX_CANVAS_POINTS_PER_STROKE).map(clampPoint),
     })),
   });
+
+  return {
+    ...parsedDocument,
+    clientVersion: parsedDocument.clientVersion ?? INITIAL_CANVAS_CLIENT_VERSION,
+    exportStatus: parsedDocument.exportStatus ?? "not_requested",
+  };
 }
 
 export function createCanvasDocument(input: {
@@ -124,7 +135,9 @@ export function createCanvasDocument(input: {
 
   return normalizeCanvasDocument({
     assignmentId: input.assignmentId,
+    clientVersion: INITIAL_CANVAS_CLIENT_VERSION,
     createdAt: timestamp,
+    exportStatus: "not_requested",
     id: createCanvasId(),
     studentId: input.studentId,
     strokes: [],
@@ -164,6 +177,7 @@ export function createCanvasStroke(input: {
 export function addCanvasStroke(document: CanvasDocument, stroke: CanvasStroke): CanvasDocument {
   return normalizeCanvasDocument({
     ...document,
+    clientVersion: getNextClientVersion(document),
     strokes: [...document.strokes, stroke],
     syncStatus: "local_only",
     updatedAt: new Date().toISOString(),
@@ -196,7 +210,18 @@ export function eraseNearestStroke(document: CanvasDocument, point: CanvasPoint)
 
   return normalizeCanvasDocument({
     ...document,
+    clientVersion: getNextClientVersion(document),
     strokes: document.strokes.filter((_, index) => index !== nearestIndex),
+    syncStatus: "local_only",
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export function replaceCanvasStrokes(document: CanvasDocument, strokes: CanvasStroke[]): CanvasDocument {
+  return normalizeCanvasDocument({
+    ...document,
+    clientVersion: getNextClientVersion(document),
+    strokes,
     syncStatus: "local_only",
     updatedAt: new Date().toISOString(),
   });
@@ -209,6 +234,7 @@ export function attachCanvasToAssignment(document: CanvasDocument, assignmentId:
     ...document,
     assignmentId,
     attachedAt: timestamp,
+    clientVersion: getNextClientVersion(document),
     syncStatus: "local_only",
     updatedAt: timestamp,
   });

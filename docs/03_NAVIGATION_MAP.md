@@ -140,7 +140,13 @@ parent
 teacher
 ```
 
-This is public demo state only. Demo sessions use `source: "mock"` and skip Supabase auth subscriptions so a persisted Supabase event does not override the selected demo role. Do not put service-role Supabase keys or other secrets in Expo public env vars, app code, docs, or `.codex` files.
+In development builds, the sign-in screen also exposes a developer demo-user
+panel backed by `apps/mobile/src/core/auth/demoUsers.ts`. Selecting a demo user
+creates the same local `source: "mock"` session shape used by the env fallback,
+then normal route guards send the account to onboarding, student, parent, or
+teacher areas.
+
+This is public demo state only. Demo sessions use `source: "mock"` and skip Supabase auth subscriptions so a persisted Supabase event does not override the selected demo user. Do not put service-role Supabase keys or other secrets in Expo public env vars, app code, docs, or `.codex` files.
 
 ## Student Bottom Tabs
 
@@ -281,6 +287,8 @@ Student onboarding routes currently include:
 /(onboarding)/daily-practice-goal
 /(onboarding)/plan-summary
 ```
+
+The primary student setup flow is `role-selection -> grade-selection -> writing-goals -> daily-practice-goal -> plan-summary`. `writing-confidence` remains a route for existing deep links and older prompt coverage, but the current UI stores the default steady coaching pace when writing goals are confirmed.
 
 Onboarding progress is validated and persisted by:
 

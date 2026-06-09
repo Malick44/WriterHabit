@@ -69,6 +69,10 @@ export const dailyPracticeCopyKeys: Record<
   DailyPracticeMinutes,
   { label: TranslationKey; description: TranslationKey }
 > = {
+  5: {
+    description: "onboarding.dailyPracticeGoal.options.five.description",
+    label: "onboarding.dailyPracticeGoal.options.five.label",
+  },
   10: {
     description: "onboarding.dailyPracticeGoal.options.ten.description",
     label: "onboarding.dailyPracticeGoal.options.ten.label",

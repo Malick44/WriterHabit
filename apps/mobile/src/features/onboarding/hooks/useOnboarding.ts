@@ -9,6 +9,7 @@ import {
   getFirstIncompleteOnboardingStep,
   getOnboardingValidationError,
   onboardingStepRoutes,
+  type OnboardingRole,
 } from "../types";
 
 export function useOnboarding() {
@@ -23,7 +24,7 @@ export function useOnboarding() {
     }
 
     void onboarding.hydrateProgress(userId, {
-      defaultRole: session.user.role === "student" ? "student" : undefined,
+      defaultRole: session.user.role === "admin" ? undefined : session.user.role,
     });
   }, [onboarding, session?.user.role, userId]);
 
@@ -34,6 +35,26 @@ export function useOnboarding() {
     ...onboarding,
     authOperationStatus: auth.operationStatus,
     signOut: auth.signOut,
+    completeRoleOnlyOnboarding: async (role: OnboardingRole) => {
+      await onboarding.setRole(role);
+
+      const result = await auth.completeOnboarding({ role });
+
+      if (result.errorCode) {
+        onboarding.setErrorCode("completion_failed");
+        return {
+          ok: false as const,
+        };
+      }
+
+      if (userId) {
+        await onboarding.resetProgress();
+      }
+
+      return {
+        ok: true as const,
+      };
+    },
     completeOnboarding: async () => {
       const profile = getCompletedOnboardingProfile(onboarding.progress);
 

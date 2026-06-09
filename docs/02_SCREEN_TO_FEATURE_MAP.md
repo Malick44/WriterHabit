@@ -23,6 +23,8 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Daily practice goal | `apps/mobile/app/(onboarding)/daily-practice-goal.tsx` | onboarding |
 | Personalized plan summary | `apps/mobile/app/(onboarding)/plan-summary.tsx` | onboarding |
 
+Current primary setup path skips the writing confidence screen and stores the default steady coaching pace from `apps/mobile/src/features/onboarding/screens/WritingGoalsScreen.tsx`. The route remains mapped for existing deep links and prior prompt coverage.
+
 ## Student App
 
 | Screen | Route file | Feature |

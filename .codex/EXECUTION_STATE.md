@@ -37,6 +37,8 @@ Last updated: 2026-06-09
 - Expo mobile app lives at `apps/mobile/`.
 - Supabase mobile client is configured with public Expo env variables.
 - Supabase local admin CLI is configured for development-only use.
+- Configured development Supabase has the 38-table app schema and RLS policy
+  draft applied from `services/api/migrations/`.
 - Every task should start by reading `AGENTS.md`, `docs/00_CONTEXT_BRIEF.md`, `prompts/01_master_agent_rules.md`, and `.codex/EXECUTION_STATE.md`.
 
 ## Completed Work

@@ -35,7 +35,7 @@ interface StudentProfile {
   gradeLevel: GradeLevel;
   writingLevel: "getting_started" | "building" | "steady" | "confident";
   writingGoals: WritingGoal[];
-  dailyGoalMinutes: 10 | 15 | 20 | 30;
+  dailyGoalMinutes: 5 | 10 | 15 | 20 | 30;
   language: string;
   accessibilitySettings: AccessibilitySettings;
   parentUserIds: string[];

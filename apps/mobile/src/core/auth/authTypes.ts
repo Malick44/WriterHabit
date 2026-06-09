@@ -42,6 +42,14 @@ export type MockSessionScenario =
 
 export type MockSessionRole = Exclude<NavigableUserRole, "admin">;
 
+export type DemoUserId =
+  | "elementary_student"
+  | "middle_school_student"
+  | "high_school_student"
+  | "student_needs_onboarding"
+  | "parent_reviewer"
+  | "teacher_coach";
+
 export type AuthSignInInput = {
   email: string;
   password: string;
@@ -55,11 +63,11 @@ export type AuthSignUpInput = {
 };
 
 export type AuthOnboardingCompletionInput = {
-  role: MockSessionRole;
-  gradeLevel: GradeLevel;
-  writingGoals: WritingGoal[];
-  confidenceLevel: "getting_started" | "building" | "steady" | "confident";
-  dailyPracticeMinutes: 10 | 15 | 20 | 30;
+  role?: MockSessionRole;
+  gradeLevel?: GradeLevel;
+  writingGoals?: WritingGoal[];
+  confidenceLevel?: "getting_started" | "building" | "steady" | "confident";
+  dailyPracticeMinutes?: 5 | 10 | 15 | 20 | 30;
 };
 
 export type AuthActionResult = {

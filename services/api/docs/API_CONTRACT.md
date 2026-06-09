@@ -235,7 +235,7 @@ interface StudentProfileResponse {
   gradeBand: GradeBand;
   writingLevel: "getting_started" | "building" | "steady" | "confident";
   writingGoals: WritingGoal[];
-  dailyGoalMinutes: 10 | 15 | 20 | 30;
+  dailyGoalMinutes: 5 | 10 | 15 | 20 | 30;
   language: string;
   parentUserIds: string[];
   teacherUserIds: string[];
@@ -246,7 +246,7 @@ interface UpdateStudentProfileRequest {
   displayName?: string;
   gradeLevel?: GradeLevel;
   writingGoals?: WritingGoal[];
-  dailyGoalMinutes?: 10 | 15 | 20 | 30;
+  dailyGoalMinutes?: 5 | 10 | 15 | 20 | 30;
   language?: string;
 }
 
@@ -302,7 +302,7 @@ interface OnboardingProgress {
   gradeLevel: GradeLevel | null;
   writingGoals: WritingGoal[];
   confidenceLevel: "getting_started" | "building" | "steady" | "confident" | null;
-  dailyPracticeMinutes: 10 | 15 | 20 | 30 | null;
+  dailyPracticeMinutes: 5 | 10 | 15 | 20 | 30 | null;
   completedAt: string | null;
   updatedAt: string;
 }
@@ -312,14 +312,14 @@ interface SaveOnboardingRequest {
   gradeLevel?: GradeLevel;
   writingGoals?: WritingGoal[];
   confidenceLevel?: "getting_started" | "building" | "steady" | "confident";
-  dailyPracticeMinutes?: 10 | 15 | 20 | 30;
+  dailyPracticeMinutes?: 5 | 10 | 15 | 20 | 30;
 }
 
 interface PersonalizedPlanResponse {
   studentId: string;
   gradeBand: GradeBand;
   headline: LocalizedCopy;
-  practiceMinutes: 10 | 15 | 20 | 30;
+  practiceMinutes: 5 | 10 | 15 | 20 | 30;
   focusSkills: WritingSkill[];
   firstWeekGoals: LocalizedCopy[];
   recommendedAssignmentTypes: AssignmentType[];

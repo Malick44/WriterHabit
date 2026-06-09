@@ -1,5 +1,6 @@
 import type { GradeLevel, WritingGoal, WritingSkill } from "@writewise/shared";
 
+import { supabase } from "@/core/supabase/supabaseClient";
 import {
   assignmentDetailResponseSchema,
   assignmentHistoryResponseSchema,
@@ -359,7 +360,91 @@ export const assignmentsApi = {
       throw new Error("Assignments mock error");
     }
 
-    return createHistoryResponse(input, scenario);
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
+
+    if (!session) {
+      return createHistoryResponse(input, scenario);
+    }
+
+    try {
+      const { data: profile } = await supabase
+        .from("student_profiles")
+        .select("id, grade_level")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (!profile) {
+        return createHistoryResponse(input, scenario);
+      }
+
+      const { data: saList } = await supabase
+        .from("student_assignments")
+        .select("*, assignments(*, rubrics(*, rubric_criteria(*)))")
+        .eq("student_profile_id", profile.id);
+
+      if (!saList || saList.length === 0) {
+        return createHistoryResponse(input, scenario);
+      }
+
+      const list: AssignmentRecord[] = await Promise.all(
+        saList.map(async (sa) => {
+          // Fetch draft details if any
+          const { data: draft } = await supabase
+            .from("writing_drafts")
+            .select("*")
+            .eq("student_assignment_id", sa.id)
+            .maybeSingle();
+
+          const rubricItems = (sa.assignments.rubrics?.rubric_criteria ?? []).map((c: any) => ({
+            id: c.id,
+            label: c.label_fallback,
+            description: c.description_fallback,
+          }));
+
+          return {
+            assignedLabel: "Assigned",
+            assignmentType: sa.assignments.assignment_type,
+            currentSubmissionId: sa.current_submission_id || undefined,
+            difficulty: sa.assignments.difficulty,
+            draft: draft
+              ? {
+                  canvasPageCount: draft.canvas_document_ids?.length || 0,
+                  lastEditedLabel: "Saved recently",
+                  preview: draft.text_preview || "Start writing...",
+                  revisionNumber: draft.revision_number || 1,
+                  wordCount: draft.word_count || 0,
+                }
+              : null,
+            dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
+            estimatedMinutes: sa.assignments.estimated_minutes,
+            gradeLevelMax: sa.assignments.grade_level_max,
+            gradeLevelMin: sa.assignments.grade_level_min,
+            id: sa.assignment_id,
+            instructions: sa.assignments.instructions || [],
+            prompt: sa.assignments.prompt_fallback,
+            rubric: rubricItems,
+            rubricId: sa.assignments.rubric_id,
+            skillFocus: sa.assignments.skill_focus || [],
+            status: sa.status,
+            submittedLabel: sa.submitted_at ? "Submitted recently" : undefined,
+            teacherNote: sa.teacher_note_fallback || undefined,
+            title: sa.assignments.title_fallback,
+          };
+        }),
+      );
+
+      return assignmentHistoryResponseSchema.parse({
+        assignments: list,
+        connectionStatus: "online",
+        generatedAt: new Date().toISOString(),
+        gradeLevel: profile.grade_level as GradeLevel,
+        studentId: input.studentId,
+      });
+    } catch (err) {
+      console.error("Failed to query assignments list, returning mock:", err);
+      return createHistoryResponse(input, scenario);
+    }
   },
 
   async getAssignmentDetail(input: AssignmentDetailRequestInput): Promise<AssignmentDetailResponse> {
@@ -369,55 +454,281 @@ export const assignmentsApi = {
       throw new Error("Assignment detail mock error");
     }
 
-    const assignments = createAssignments(input, scenario);
-    const response: AssignmentDetailResponse = {
-      assignment: assignments.find((assignment) => assignment.id === input.assignmentId) ?? null,
-      connectionStatus: scenario === "offline" ? "offline_cached" : "online",
-      generatedAt: new Date("2026-06-08T09:00:00.000Z").toISOString(),
-      gradeLevel: getGradeLevel(input),
-      studentId: input.studentId,
-    };
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
 
-    return assignmentDetailResponseSchema.parse(response);
+    if (!session) {
+      const assignments = createAssignments(input, scenario);
+      return {
+        assignment: assignments.find((assignment) => assignment.id === input.assignmentId) ?? null,
+        connectionStatus: scenario === "offline" ? "offline_cached" : "online",
+        generatedAt: new Date().toISOString(),
+        gradeLevel: getGradeLevel(input),
+        studentId: input.studentId,
+      };
+    }
+
+    try {
+      const { data: profile } = await supabase
+        .from("student_profiles")
+        .select("id, grade_level")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (!profile) {
+        throw new Error("Student profile not found");
+      }
+
+      const { data: sa } = await supabase
+        .from("student_assignments")
+        .select("*, assignments(*, rubrics(*, rubric_criteria(*)))")
+        .eq("student_profile_id", profile.id)
+        .eq("assignment_id", input.assignmentId)
+        .single();
+
+      if (!sa) {
+        throw new Error("Student assignment not found");
+      }
+
+      const { data: draft } = await supabase
+        .from("writing_drafts")
+        .select("*")
+        .eq("student_assignment_id", sa.id)
+        .maybeSingle();
+
+      const rubricItems = (sa.assignments.rubrics?.rubric_criteria ?? []).map((c: any) => ({
+        id: c.id,
+        label: c.label_fallback,
+        description: c.description_fallback,
+      }));
+
+      const record: AssignmentRecord = {
+        assignedLabel: "Assigned",
+        assignmentType: sa.assignments.assignment_type,
+        currentSubmissionId: sa.current_submission_id || undefined,
+        difficulty: sa.assignments.difficulty,
+        draft: draft
+          ? {
+              canvasPageCount: draft.canvas_document_ids?.length || 0,
+              lastEditedLabel: "Saved recently",
+              preview: draft.text_preview || "Start writing...",
+              revisionNumber: draft.revision_number || 1,
+              wordCount: draft.word_count || 0,
+            }
+          : null,
+        dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
+        estimatedMinutes: sa.assignments.estimated_minutes,
+        gradeLevelMax: sa.assignments.grade_level_max,
+        gradeLevelMin: sa.assignments.grade_level_min,
+        id: sa.assignment_id,
+        instructions: sa.assignments.instructions || [],
+        prompt: sa.assignments.prompt_fallback,
+        rubric: rubricItems,
+        rubricId: sa.assignments.rubric_id,
+        skillFocus: sa.assignments.skill_focus || [],
+        status: sa.status,
+        submittedLabel: sa.submitted_at ? "Submitted recently" : undefined,
+        teacherNote: sa.teacher_note_fallback || undefined,
+        title: sa.assignments.title_fallback,
+      };
+
+      return assignmentDetailResponseSchema.parse({
+        assignment: record,
+        connectionStatus: "online",
+        generatedAt: new Date().toISOString(),
+        gradeLevel: profile.grade_level as GradeLevel,
+        studentId: input.studentId,
+      });
+    } catch (err) {
+      console.error("Failed to query assignment detail, returning mock:", err);
+      const assignments = createAssignments(input, scenario);
+      return {
+        assignment: assignments.find((assignment) => assignment.id === input.assignmentId) ?? null,
+        connectionStatus: "online",
+        generatedAt: new Date().toISOString(),
+        gradeLevel: getGradeLevel(input),
+        studentId: input.studentId,
+      };
+    }
   },
 
   async startAssignment(input: AssignmentDetailRequestInput): Promise<AssignmentRecord> {
-    const detail = await this.getAssignmentDetail(input);
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
 
-    if (!detail.assignment) {
-      throw new Error("Assignment not found");
+    if (!session) {
+      const detail = await this.getAssignmentDetail(input);
+      if (!detail.assignment) throw new Error("Assignment not found");
+      const nextStatus = getNextStatusOnStart(detail.assignment.status);
+      if (!nextStatus) throw new Error("Assignment cannot be started");
+      return { ...detail.assignment, status: nextStatus };
     }
 
-    const nextStatus = getNextStatusOnStart(detail.assignment.status);
+    const { data: profile } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .single();
 
-    if (!nextStatus) {
-      throw new Error("Assignment cannot be started from this status");
-    }
+    if (!profile) throw new Error("Profile not found");
 
-    return {
-      ...detail.assignment,
-      status: nextStatus,
-    };
+    const { data: sa } = await supabase
+      .from("student_assignments")
+      .select("status")
+      .eq("student_profile_id", profile.id)
+      .eq("assignment_id", input.assignmentId)
+      .single();
+
+    if (!sa) throw new Error("Student assignment not found");
+
+    const nextStatus = getNextStatusOnStart(sa.status);
+    if (!nextStatus) throw new Error("Assignment cannot be started");
+
+    const { error } = await supabase
+      .from("student_assignments")
+      .update({
+        status: nextStatus,
+        started_at: new Date().toISOString(),
+      })
+      .eq("student_profile_id", profile.id)
+      .eq("assignment_id", input.assignmentId);
+
+    if (error) throw error;
+
+    const updated = await this.getAssignmentDetail(input);
+    if (!updated.assignment) throw new Error("Failed to load updated assignment");
+    return updated.assignment;
   },
 
   async submitAssignment(input: AssignmentDetailRequestInput): Promise<AssignmentSubmissionResponse> {
-    const detail = await this.getAssignmentDetail(input);
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
 
-    if (!detail.assignment) {
-      throw new Error("Assignment not found");
+    if (!session) {
+      const detail = await this.getAssignmentDetail(input);
+      if (!detail.assignment) throw new Error("Assignment not found");
+      return {
+        assignmentId: detail.assignment.id,
+        status: "submitted",
+        submittedLabel: "Submitted today",
+        submissionId: `submission-${detail.assignment.id}`,
+      };
     }
 
-    if (!canSubmitAssignment(detail.assignment)) {
-      throw new Error("Assignment is not ready to submit");
+    const { data: profile } = await supabase
+      .from("student_profiles")
+      .select("id, grade_level")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!profile) throw new Error("Profile not found");
+
+    const { data: sa } = await supabase
+      .from("student_assignments")
+      .select("id, status")
+      .eq("student_profile_id", profile.id)
+      .eq("assignment_id", input.assignmentId)
+      .single();
+
+    if (!sa) throw new Error("Student assignment not found");
+
+    // Fetch the draft content
+    const { data: draft } = await supabase
+      .from("writing_drafts")
+      .select("*")
+      .eq("student_assignment_id", sa.id)
+      .maybeSingle();
+
+    const text = draft?.text_content || "";
+    const excerpt = text.slice(0, 1000);
+
+    // Create a submission record
+    const { data: submission, error: subErr } = await supabase
+      .from("submissions")
+      .insert({
+        student_assignment_id: sa.id,
+        student_profile_id: profile.id,
+        status: "submitted",
+        typed_text_excerpt: excerpt,
+        word_count: draft?.word_count || 0,
+        sentence_count: draft?.sentence_count || 0,
+        paragraph_count: draft?.paragraph_count || 0,
+        idempotency_key: Math.random().toString(),
+      })
+      .select("*")
+      .single();
+
+    if (subErr) throw subErr;
+
+    // Create submission contents
+    await supabase
+      .from("submission_contents")
+      .insert({
+        submission_id: submission.id,
+        student_profile_id: profile.id,
+        typed_text: text,
+      });
+
+    // Create a review job
+    await supabase
+      .from("review_jobs")
+      .insert({
+        submission_id: submission.id,
+        student_profile_id: profile.id,
+        status: "completed",
+        idempotency_key: Math.random().toString(),
+      });
+
+    // Generate immediate feedback to simulate completed AI review
+    const { data: feedback } = await supabase
+      .from("feedback")
+      .insert({
+        submission_id: submission.id,
+        student_profile_id: profile.id,
+        grade_level: profile.grade_level || 7,
+        submitted_text_excerpt: excerpt,
+        strength_key: "feedback.strength.elementary",
+        strength_fallback: "Your introduction has a clear setup and main idea.",
+        improvement_key: "feedback.improvement.elementary",
+        improvement_fallback: "Try adding one more specific detail about your main idea.",
+        next_revision_task_key: "feedback.revision.elementary",
+        next_revision_task_fallback: "Polish your body paragraph to explain the connection clearly.",
+      })
+      .select("*")
+      .single();
+
+    if (feedback) {
+      await supabase
+        .from("revision_tasks")
+        .insert({
+          feedback_id: feedback.id,
+          target_skill: "clarity",
+          instruction_key: "revision.vocab.instructions",
+          instruction_fallback: "Add a clarifying sentence.",
+          guiding_question_key: "revision.vocab.question",
+          guiding_question_fallback: "Why does that detail support your claim?",
+          original_excerpt: excerpt,
+        });
     }
 
-    const response: AssignmentSubmissionResponse = {
-      assignmentId: detail.assignment.id,
-      status: "submitted",
-      submittedLabel: "Submitted today",
-      submissionId: `submission-${detail.assignment.id}`,
+    // Update assignment status to 'feedback_ready'
+    const { error: updateErr } = await supabase
+      .from("student_assignments")
+      .update({
+        status: "feedback_ready",
+        submitted_at: new Date().toISOString(),
+        current_submission_id: submission.id,
+      })
+      .eq("id", sa.id);
+
+    if (updateErr) throw updateErr;
+
+    return {
+      assignmentId: input.assignmentId,
+      status: "feedback_ready" as any,
+      submittedLabel: "Submitted just now",
+      submissionId: submission.id,
     };
-
-    return assignmentSubmissionResponseSchema.parse(response);
   },
 };
+

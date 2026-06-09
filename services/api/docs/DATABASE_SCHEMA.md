@@ -1,8 +1,9 @@
 # WriteWise Database Schema
 
-Status: planned Supabase/Postgres schema draft. The current mobile app still uses
-Supabase auth, feature-owned deterministic mock APIs, and local device storage.
-The migration drafts live in:
+Status: Supabase/Postgres schema draft, applied to the configured development
+Supabase instance on 2026-06-09. The current mobile app still uses Supabase
+auth, feature-owned deterministic mock APIs, and local device storage. The
+migration drafts live in:
 
 - `services/api/migrations/202606090001_initial_writewise_schema.sql`
 - `services/api/migrations/202606090002_privacy_rls_policies.sql`
@@ -155,12 +156,13 @@ relationship columns to keep access checks bounded.
 
 ## Migration Notes
 
-These migrations are drafts for the future backend. Before production use:
+These migrations are applied to the configured development Supabase instance and
+remain drafts for the future backend. Before production use:
 
 1. Select the backend runtime and migration runner.
 2. Decide whether public app clients will query these tables directly or only
    through backend API handlers.
-3. Run the migrations against a disposable Supabase branch or local Supabase
-   project.
+3. Re-run the migrations against a disposable Supabase branch or local Supabase
+   project as a production-readiness rehearsal.
 4. Add seed data for catalog rubrics, badges, and assignment templates.
 5. Add integration tests for student, parent, teacher, and admin access paths.

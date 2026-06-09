@@ -1,13 +1,16 @@
 import { useMemo } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
-import { colors } from "@/design/tokens";
+import { colors, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { Button } from "@/shared/components/buttons";
-import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
-import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { Screen } from "@/shared/components/layout";
+import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
+import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+import { useAuthStore } from "@/core/auth/authStore";
 
-import { ProgressEarnedCard } from "../components";
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
@@ -20,14 +23,18 @@ export function CompletionCelebrationScreen() {
   const params = useLocalSearchParams<{ submissionId?: string | string[] }>();
   const submissionId = useMemo(() => getParamValue(params.submissionId), [params.submissionId]);
   const state = useFeedbackReview(submissionId);
+  const session = useAuthStore((state) => state.session);
+  const studentName = session?.user?.displayName || t("common.fallbackDisplayName");
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
+  const { fontSizeScale, primaryColor, tertiaryColor } = useGlacierThemeStore();
+  const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
 
   return (
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("feedbackReview.completion.subtitle")}
       testID="feedback-completion-screen"
-      title={t("feedbackReview.celebrationTitle")}
     >
       {state.status === "loading" ? (
         <LoadingState
@@ -73,41 +80,286 @@ export function CompletionCelebrationScreen() {
       ) : null}
 
       {state.status === "success" ? (
-        <Stack gap="lg">
-          <SuccessState
-            accessibilityLabel={t("feedbackReview.completion.successAccessibility")}
-            description={t("feedbackReview.completion.successDescription")}
-            gradeBand={state.gradeBand}
-            title={t("feedbackReview.completion.successTitle")}
-          />
+        <View style={styles.container}>
+          {/* Confetti Dots Decoration */}
+          <View style={[styles.confetti, { backgroundColor: tertiaryColor, left: 30, top: 40, width: 8, height: 8 }]} />
+          <View style={[styles.confetti, { backgroundColor: primaryColor, left: 140, top: 10, width: 6, height: 6 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.feedback.success.text, right: 60, top: 50, width: 10, height: 10 }]} />
+          <View style={[styles.confetti, { backgroundColor: tertiaryColor, right: 20, top: 120, width: 6, height: 6 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.feedback.success.text, left: 40, bottom: 250, width: 8, height: 8 }]} />
+          <View style={[styles.confetti, { backgroundColor: primaryColor, right: 80, bottom: 200, width: 10, height: 10 }]} />
 
-          <PageSection
-            gradeBand={state.gradeBand}
-            subtitle={t("feedbackReview.completion.progressSubtitle")}
-            title={t("feedbackReview.completion.progressSectionTitle")}
+          {/* Header Text */}
+          <View style={styles.header}>
+            <Text
+              accessibilityRole="header"
+              style={[
+                getAccessibleTextStyle(type.heading, settings),
+                styles.title,
+                { color: accessibleColors.text, fontSize: type.heading.fontSize * fontSizeScale },
+              ]}
+            >
+              {t("feedbackReview.completion.headerTitlePersonalized", { name: studentName })}{" "}
+              <Ionicons name="gift-outline" size={24} color={tertiaryColor} />
+            </Text>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.body, settings),
+                styles.subtitle,
+                { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+              ]}
+            >
+              {t("feedbackReview.completion.headerSubtitle")}
+            </Text>
+          </View>
+
+          {/* Central Trophy */}
+          <View style={styles.trophyWrapper}>
+            <Image
+              source={require("../../../../assets/generated/badges/completion-trophy.png")}
+              style={styles.trophyImage}
+              alt="Gold Trophy Celebration"
+            />
+          </View>
+
+          {/* Status Badge */}
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: colors.feedback.success.background,
+                borderColor: colors.feedback.success.border,
+              },
+            ]}
           >
-            <ProgressEarnedCard gradeBand={state.gradeBand} progress={state.viewModel.review.progressEarned} />
-          </PageSection>
+            <Ionicons name="checkmark-circle" size={18} color={colors.feedback.success.text} />
+            <Text
+              style={[
+                getAccessibleTextStyle(type.bodyStrong, settings),
+                { color: colors.feedback.success.text, fontSize: type.bodyStrong.fontSize * fontSizeScale, fontWeight: "bold" },
+              ]}
+            >
+              {t("feedbackReview.completion.statusBadgeLabel")}
+            </Text>
+          </View>
 
-          <Button
-            accessibilityHint={t("feedbackReview.completion.homeHint")}
-            accessibilityLabel={t("feedbackReview.completion.homeAccessibility")}
-            gradeBand={state.gradeBand}
-            label={t("feedbackReview.completion.homeCta")}
-            onPress={() => router.replace("/(student)/home")}
-            size={state.gradeBand === "elementary" ? "lg" : "md"}
-          />
-          <Button
-            accessibilityHint={t("feedbackReview.completion.progressHint")}
-            accessibilityLabel={t("feedbackReview.completion.progressCtaAccessibility")}
-            gradeBand={state.gradeBand}
-            label={t("feedbackReview.completion.progressCta")}
-            onPress={() => router.push("/(student)/progress")}
-            size={state.gradeBand === "elementary" ? "lg" : "md"}
-            variant="secondary"
-          />
-        </Stack>
+          {/* Rewards Grid */}
+          <View style={styles.rewardsContainer}>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.caption, settings),
+                styles.rewardsLabel,
+                { color: accessibleColors.mutedText },
+              ]}
+            >
+              {t("feedbackReview.completion.youEarnedLabel").toUpperCase()}
+            </Text>
+
+            <View style={styles.grid}>
+              {/* Card 1: Points */}
+              <View style={[styles.rewardCard, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}>
+                <Ionicons name="star" size={28} color={tertiaryColor} style={styles.rewardIcon} />
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.heading, settings),
+                    styles.rewardValue,
+                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                  ]}
+                >
+                  +25
+                </Text>
+                <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
+                  {t("feedbackReview.completion.pointsLabel")}
+                </Text>
+              </View>
+
+              {/* Card 2: Streak */}
+              <View style={[styles.rewardCard, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}>
+                <Ionicons name="flame" size={28} color={colors.feedback.error.text} style={styles.rewardIcon} />
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.heading, settings),
+                    styles.rewardValue,
+                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                  ]}
+                >
+                  +1 Day
+                </Text>
+                <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
+                  {t("feedbackReview.completion.streakLabel")}
+                </Text>
+              </View>
+
+              {/* Card 3: Grammar */}
+              <View style={[styles.rewardCard, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}>
+                <Ionicons name="bar-chart" size={28} color={colors.feedback.success.text} style={styles.rewardIcon} />
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.heading, settings),
+                    styles.rewardValue,
+                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                  ]}
+                >
+                  +10%
+                </Text>
+                <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
+                  {t("feedbackReview.completion.grammarLabel")}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Encouragement */}
+          <View style={styles.encouragementContainer}>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.bodyStrong, settings),
+                { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+              ]}
+            >
+              {t("feedbackReview.completion.keepItUp")}
+            </Text>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.body, settings),
+                styles.encouragementText,
+                { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+              ]}
+            >
+              {t("feedbackReview.completion.strongWritingHabits")}
+            </Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              accessibilityLabel={t("feedbackReview.completion.progressCta")}
+              style={[styles.actionButton, styles.actionButtonPrimary, { backgroundColor: primaryColor }]}
+              onPress={() => router.push("/(student)/progress")}
+            >
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: colors.text.inverse }]}>
+                {t("feedbackReview.completion.progressCta")}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessibilityLabel={t("feedbackReview.completion.homeCta")}
+              style={[styles.actionButton, styles.actionButtonSecondary]}
+              onPress={() => router.replace("/(student)/home")}
+            >
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: primaryColor }]}>
+                {t("feedbackReview.completion.homeCta")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       ) : null}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    flex: 1,
+    paddingTop: spacing.md,
+    position: "relative",
+    width: "100%",
+  },
+  confetti: {
+    borderRadius: radius.full,
+    opacity: 0.6,
+    position: "absolute",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: spacing.md,
+    marginTop: spacing.md,
+  },
+  title: {
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  subtitle: {
+    marginTop: spacing.xs,
+    textAlign: "center",
+  },
+  trophyWrapper: {
+    alignItems: "center",
+    height: 224,
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    width: 224,
+  },
+  trophyImage: {
+    height: "100%",
+    resizeMode: "contain",
+    width: "100%",
+  },
+  statusBadge: {
+    alignItems: "center",
+    borderRadius: radius.full,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  rewardsContainer: {
+    marginBottom: spacing.lg,
+    width: "100%",
+  },
+  rewardsLabel: {
+    fontWeight: "600",
+    letterSpacing: 1,
+    marginBottom: spacing.md,
+    textAlign: "center",
+  },
+  grid: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    width: "100%",
+  },
+  rewardCard: {
+    alignItems: "center",
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+  },
+  rewardIcon: {
+    marginBottom: spacing.xs,
+  },
+  rewardValue: {
+    fontWeight: "bold",
+  },
+  encouragementContainer: {
+    alignItems: "center",
+    marginBottom: spacing.xl,
+    marginTop: spacing.sm,
+  },
+  encouragementText: {
+    marginTop: spacing.xs,
+    textAlign: "center",
+  },
+  actions: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    width: "100%",
+  },
+  actionButton: {
+    alignItems: "center",
+    borderRadius: radius.full,
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    width: "100%",
+  },
+  actionButtonPrimary: {
+    borderWidth: 0,
+  },
+  actionButtonSecondary: {
+    borderWidth: 0,
+  },
+});

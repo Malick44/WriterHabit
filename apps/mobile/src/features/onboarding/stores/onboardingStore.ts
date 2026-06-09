@@ -41,7 +41,7 @@ type OnboardingStore = {
 };
 
 function getDefaultRole(role?: MockSessionRole): OnboardingRole | undefined {
-  return role === "student" ? "student" : undefined;
+  return role === "student" || role === "parent" || role === "teacher" ? role : undefined;
 }
 
 function mergeProgress(

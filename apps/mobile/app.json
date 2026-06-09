@@ -1,10 +1,19 @@
 {
+  "icon": "./assets/images/logo.png",
   "scheme": "writewise",
   "plugins": [
     "expo-font",
     "expo-sqlite"
   ],
   "ios": {
-    "bundleIdentifier": "com.writewise"
+    "bundleIdentifier": "com.writewise",
+    "icon": "./assets/images/logo.png"
+  },
+  "android": {
+    "package": "com.writewise",
+    "adaptiveIcon": {
+      "foregroundImage": "./assets/images/logo.png",
+      "backgroundColor": "#FFFFFF"
+    }
   }
 }

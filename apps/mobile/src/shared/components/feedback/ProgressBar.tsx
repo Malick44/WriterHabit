@@ -8,6 +8,7 @@ export interface ProgressBarProps {
   showValue?: boolean;
   gradeBand?: GradeBand;
   style?: StyleProp<ViewStyle>;
+  progressColor?: string;
   testID?: string;
 }
 
@@ -15,7 +16,7 @@ function clampProgress(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-export function ProgressBar({ value, label, showValue = false, gradeBand = "middle", style, testID }: ProgressBarProps) {
+export function ProgressBar({ value, label, showValue = false, gradeBand = "middle", style, progressColor, testID }: ProgressBarProps) {
   const progress = clampProgress(value);
   const percent = Math.round(progress * 100);
   const type = typography.gradeBands[gradeBand];
@@ -48,7 +49,7 @@ export function ProgressBar({ value, label, showValue = false, gradeBand = "midd
       >
         <View
           style={{
-            backgroundColor: colors.gradeBand[gradeBand].accentStrong,
+            backgroundColor: progressColor ?? colors.gradeBand[gradeBand].accentStrong,
             borderRadius: radius.full,
             height: "100%",
             width: `${percent}%`,

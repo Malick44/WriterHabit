@@ -23,9 +23,9 @@ Current status: no generated app assets have been produced yet.
 
 | Category | Destination | Status |
 | --- | --- | --- |
-| Onboarding illustrations | `apps/mobile/assets/generated/onboarding/` | Not started |
-| Empty states | `apps/mobile/assets/generated/empty-states/` | Not started |
-| Badges and rewards | `apps/mobile/assets/generated/badges/` | Not started |
+| Onboarding illustrations | `apps/mobile/assets/generated/onboarding/` | Partially complete (welcome-onboarding.png) |
+| Empty states | `apps/mobile/assets/generated/empty-states/` | Partially complete (ai-coach-avatar.png) |
+| Badges and rewards | `apps/mobile/assets/generated/badges/` | Partially complete (completion-trophy.png) |
 | Canvas/template thumbnails | `apps/mobile/assets/generated/canvas-templates/` | Not started |
 | Paywall visuals | `apps/mobile/assets/generated/paywall/` | Not started |
 | Store screenshot support | `apps/mobile/assets/generated/store/` | Not started |

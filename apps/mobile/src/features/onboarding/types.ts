@@ -5,9 +5,9 @@ import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import type { GradeBand } from "@/design/tokens";
 import type { TranslationKey } from "@/i18n";
 
-export type OnboardingRole = "student";
+export type OnboardingRole = "student" | "parent" | "teacher";
 export type WritingConfidenceLevel = "getting_started" | "building" | "steady" | "confident";
-export type DailyPracticeMinutes = 10 | 15 | 20 | 30;
+export type DailyPracticeMinutes = 5 | 10 | 15 | 20 | 30;
 export type OnboardingStep =
   | "role"
   | "grade"
@@ -39,7 +39,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   "planSummary",
 ];
 
-export const ONBOARDING_ROLE_OPTIONS = ["student"] as const satisfies readonly OnboardingRole[];
+export const ONBOARDING_ROLE_OPTIONS = ["student", "parent", "teacher"] as const satisfies readonly OnboardingRole[];
 
 export const GRADE_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const satisfies readonly GradeLevel[];
 
@@ -90,7 +90,7 @@ export const CONFIDENCE_OPTIONS = [
   "confident",
 ] as const satisfies readonly WritingConfidenceLevel[];
 
-export const DAILY_PRACTICE_OPTIONS = [10, 15, 20, 30] as const satisfies readonly DailyPracticeMinutes[];
+export const DAILY_PRACTICE_OPTIONS = [5, 10, 15, 20, 30] as const satisfies readonly DailyPracticeMinutes[];
 
 const gradeLevelSchema = z.custom<GradeLevel>(
   (value) => GRADE_LEVELS.includes(value as GradeLevel),
@@ -105,7 +105,7 @@ const dailyPracticeSchema = z.custom<DailyPracticeMinutes>(
 );
 
 export const onboardingProgressSchema = z.object({
-  role: z.literal("student").optional(),
+  role: z.enum(ONBOARDING_ROLE_OPTIONS).optional(),
   gradeLevel: gradeLevelSchema.optional(),
   writingGoals: z.array(writingGoalSchema).max(MAX_WRITING_GOALS).catch([]),
   confidenceLevel: confidenceSchema.optional(),

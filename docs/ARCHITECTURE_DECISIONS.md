@@ -242,7 +242,7 @@ Consequences:
 - Mobile code may use only `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the compatibility fallback `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 - Service-role keys and admin credentials must not appear in app code, docs, screenshots, `.codex` files, committed files, or CI logs.
 - Route files remain thin; auth UI and validation live under `apps/mobile/src/features/auth/`.
-- Demo sessions remain available through `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` and welcome-screen role shortcuts, but use `source: "mock"` and skip Supabase auth subscriptions.
+- Demo sessions remain available through `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` and the development-only demo-user panel on sign-in, but use `source: "mock"` and skip Supabase auth subscriptions.
 - `apps/mobile/src/shared/state/session.ts` is only a compatibility wrapper over `apps/mobile/src/core/auth/useAuthSession.ts`.
 
 ## ADR-014: Student Onboarding Progress Is Feature-Owned And Locally Recoverable

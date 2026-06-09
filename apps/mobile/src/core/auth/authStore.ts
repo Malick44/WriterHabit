@@ -8,9 +8,11 @@ import type {
   AuthSession,
   AuthSignInInput,
   AuthSignUpInput,
+  DemoUserId,
   MockSessionRole,
   MockSessionScenario,
 } from "./authTypes";
+import { getDefaultDemoUserForRole, getDemoUserById, type DemoUserProfile } from "./demoUsers";
 
 type AuthStoreState = {
   status: "hydrating" | "ready";
@@ -23,6 +25,7 @@ type AuthStoreActions = {
   hydrateSession: () => Promise<void>;
   signInWithEmail: (input: AuthSignInInput) => Promise<AuthActionResult>;
   signUpWithEmail: (input: AuthSignUpInput) => Promise<AuthActionResult>;
+  signInWithDemoUser: (demoUserId: DemoUserId) => Promise<AuthActionResult>;
   signInWithMockRole: (role: MockSessionRole, options?: { onboardingComplete?: boolean }) => Promise<AuthActionResult>;
   completeOnboarding: (input?: AuthOnboardingCompletionInput) => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
@@ -33,36 +36,24 @@ type AuthStoreActions = {
 
 export type AuthStore = AuthStoreState & AuthStoreActions;
 
-const mockUsers = {
-  student: {
-    id: "mock-student-1",
-    email: "student@example.test",
-    displayName: "Student Writer",
-    role: "student",
-    gradeLevel: 7,
-  },
-  parent: {
-    id: "mock-parent-1",
-    email: "parent@example.test",
-    displayName: "Parent Reviewer",
-    role: "parent",
-  },
-  teacher: {
-    id: "mock-teacher-1",
-    email: "teacher@example.test",
-    displayName: "Teacher Coach",
-    role: "teacher",
-  },
-} as const;
-
-function createMockSession(role: MockSessionRole, onboardingComplete: boolean): AuthSession {
+function createDemoSession(profile: DemoUserProfile): AuthSession {
   return {
     source: "mock",
-    token: `mock-${role}-token`,
-    user: mockUsers[role],
-    onboardingComplete,
-    subscriptionStatus: "free",
+    token: `mock-${profile.id}-token`,
+    user: {
+      id: profile.authUserId,
+      email: profile.email,
+      displayName: profile.displayName,
+      role: profile.role,
+      gradeLevel: profile.gradeLevel,
+    },
+    onboardingComplete: profile.onboardingComplete,
+    subscriptionStatus: profile.subscriptionStatus,
   };
+}
+
+function createMockSession(role: MockSessionRole, onboardingComplete: boolean): AuthSession {
+  return createDemoSession(getDefaultDemoUserForRole(role, onboardingComplete));
 }
 
 function readDefaultScenario(): MockSessionScenario {
@@ -160,6 +151,16 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       set({ errorCode: "sign_up_failed", operationStatus: "idle", status: "ready" });
       return { errorCode: "sign_up_failed", session: null };
     }
+  },
+  signInWithDemoUser: async (demoUserId) => {
+    const session = createDemoSession(getDemoUserById(demoUserId));
+    set({
+      errorCode: null,
+      operationStatus: "idle",
+      status: "ready",
+      session,
+    });
+    return { session };
   },
   signInWithMockRole: async (role, options) => {
     const session = createMockSession(role, options?.onboardingComplete ?? true);

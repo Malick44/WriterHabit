@@ -7,6 +7,7 @@ import {
   type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
+  type TextStyle,
 } from "react-native";
 
 import { colors, layout, radius, spacing, typography, type GradeBand } from "@/design/tokens";
@@ -39,6 +40,7 @@ export interface ButtonProps {
   leftAccessory?: ReactNode;
   rightAccessory?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   testID?: string;
 }
 
@@ -95,6 +97,7 @@ export function Button({
   leftAccessory,
   rightAccessory,
   style,
+  textStyle,
   testID,
 }: ButtonProps) {
   const { settings } = useAccessibilityContext();
@@ -159,6 +162,7 @@ export function Button({
             flexShrink: 1,
             textAlign: "center",
           },
+          textStyle,
         ]}
       >
         {label}

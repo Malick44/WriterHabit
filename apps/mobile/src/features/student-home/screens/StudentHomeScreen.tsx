@@ -1,11 +1,14 @@
 import { useCallback } from "react";
+import { Image, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors, type GradeBand } from "@/design/tokens";
+import { colors, spacing, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState } from "@/shared/components/feedback";
 import { PageSection, Screen } from "@/shared/components/layout";
+import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 
 import {
   CoachEntryCard,
@@ -34,6 +37,7 @@ export function StudentHomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const state = useStudentHomeData();
+  const { primaryColor, fontSizeScale } = useGlacierThemeStore();
 
   const navigateToTarget = useCallback(
     (target: StudentHomeNavigationTarget) => {
@@ -70,10 +74,68 @@ export function StudentHomeScreen() {
     [router],
   );
 
-  const title =
-    state.status === "success" || state.status === "empty"
-      ? t("studentHome.greeting", { name: state.viewModel.studentFirstName })
-      : t("studentHome.title");
+  const greetingHeader = (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        marginBottom: spacing.md,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        <Image
+          source={{
+            uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuCLvgSHlFfdGI9SJ_vxGFGYFH_lV7whB7sK2oL4RJ8jOiPe0XrRsh4mrC2BXQv9AtamPohOXiY0neEXNQYON9plTh8dcWvdQadi9UBTXw3VWPvfW-T3SegDG744FX_DPXao2WRBkMtSes3_kULaB8ANrNW1iJq8Az-5OFYeIpuVu2QLF3n5QBA3knJY6XgQ0eHDKCpo7Gj5IprtLuzc_X1tOuLi5x15HdUV_wQxn1HP0rJoIxXKKlJobXUl66uHpuN7gFZNk_wjGZ4",
+          }}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: "rgba(255, 255, 255, 0.15)",
+          }}
+        />
+        <View style={{ gap: spacing.xs }}>
+          <Text
+            style={{
+              color: "rgba(255, 255, 255, 0.5)",
+              fontSize: Math.round(13 * fontSizeScale),
+            }}
+          >
+            {t("studentHome.greetingPrefix")}
+          </Text>
+          <Text
+            style={{
+              color: primaryColor,
+              fontSize: Math.round(20 * fontSizeScale),
+              fontWeight: "700",
+            }}
+          >
+            {state.status === "success" || state.status === "empty"
+              ? `${state.viewModel.studentFirstName}! ☀️`
+              : `${t("studentHome.defaultStudent")}! ☀️`}
+          </Text>
+        </View>
+      </View>
+      <Pressable
+        accessibilityLabel={t("studentHome.notifications.accessibility")}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Ionicons name="notifications-outline" size={20} color={primaryColor} />
+      </Pressable>
+    </View>
+  );
 
   return (
     <Screen
@@ -81,8 +143,9 @@ export function StudentHomeScreen() {
       gradeBand={state.gradeBand}
       subtitle={t(getSubtitleKey(state.gradeBand))}
       testID="student-home-screen"
-      title={title}
+      title=""
     >
+      {greetingHeader}
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("studentHome.loading.accessibility")}

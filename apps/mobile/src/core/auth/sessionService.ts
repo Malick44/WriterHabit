@@ -112,18 +112,29 @@ export const sessionService = {
   },
 
   async completeOnboarding(input?: AuthOnboardingCompletionInput): Promise<AuthSession | null> {
-    const metadata = {
+    const metadata: Record<string, unknown> = {
       onboarding_complete: true,
-      ...(input
-        ? {
-            confidence_level: input.confidenceLevel,
-            daily_practice_minutes: input.dailyPracticeMinutes,
-            grade_level: input.gradeLevel,
-            role: input.role,
-            writing_goals: input.writingGoals,
-          }
-        : null),
     };
+
+    if (input?.confidenceLevel) {
+      metadata.confidence_level = input.confidenceLevel;
+    }
+
+    if (input?.dailyPracticeMinutes) {
+      metadata.daily_practice_minutes = input.dailyPracticeMinutes;
+    }
+
+    if (input?.gradeLevel) {
+      metadata.grade_level = input.gradeLevel;
+    }
+
+    if (input?.role) {
+      metadata.role = input.role;
+    }
+
+    if (input?.writingGoals) {
+      metadata.writing_goals = input.writingGoals;
+    }
 
     const { error } = await supabase.auth.updateUser({
       data: metadata,

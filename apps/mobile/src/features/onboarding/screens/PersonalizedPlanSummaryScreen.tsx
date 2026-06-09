@@ -1,20 +1,13 @@
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type TextStyle } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import type { WritingGoal } from "@writewise/shared";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
-import { Card } from "@/shared/components/cards";
-import { ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
-import { Stack } from "@/shared/components/layout/Stack";
-import {
-  getAccessibleColors,
-  getAccessibleTextStyle,
-  useAccessibilityContext,
-} from "@/shared/utils/accessibility";
+import { useI18n, type TranslationKey } from "@/i18n";
+import { ErrorState, LoadingState } from "@/shared/components/feedback";
 
-import { assignmentFocusCopyKeys, confidenceCopyKeys, writingGoalCopyKeys } from "../constants";
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
 import {
@@ -23,18 +16,31 @@ import {
   onboardingStepRoutes,
 } from "../types";
 
+const NAVY = "#083E8E";
+const SCREEN_BACKGROUND = "#FFFFFF";
+
+const goalSummaryCopyKeys: Partial<Record<WritingGoal, TranslationKey>> = {
+  creative_writing: "onboarding.planSummary.goalNames.creativeWriting",
+  improve_grammar: "onboarding.planSummary.goalNames.grammar",
+  improve_handwriting: "onboarding.planSummary.goalNames.handwriting",
+  improve_spelling: "onboarding.planSummary.goalNames.spelling",
+  school_assignments: "onboarding.planSummary.goalNames.schoolAssignments",
+  test_prep: "onboarding.planSummary.goalNames.testPrep",
+  write_better_sentences: "onboarding.planSummary.goalNames.sentences",
+  write_essays: "onboarding.planSummary.goalNames.essays",
+  write_paragraphs: "onboarding.planSummary.goalNames.paragraphs",
+};
+
 export function PersonalizedPlanSummaryScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { settings } = useAccessibilityContext();
   const onboarding = useOnboarding();
   const [isCompleting, setIsCompleting] = useState(false);
+
   const profile = getCompletedOnboardingProfile(onboarding.progress);
   const gradeBand = onboarding.progress.gradeLevel
-    ? typography.getGradeBandForGrade(onboarding.progress.gradeLevel)
+    ? "middle"
     : "middle";
-  const type = typography.gradeBands[gradeBand];
-  const accessibleColors = getAccessibleColors(settings);
 
   useEffect(() => {
     if (!onboarding.hydrated || onboarding.plan || onboarding.status !== "idle" || !profile.success) {
@@ -59,6 +65,7 @@ export function PersonalizedPlanSummaryScreen() {
     return (
       <OnboardingStepFrame
         gradeBand={gradeBand}
+        backgroundColor={SCREEN_BACKGROUND}
         step="planSummary"
         subtitle={t("onboarding.planSummary.description")}
         title={t("onboarding.planSummary.title")}
@@ -80,6 +87,7 @@ export function PersonalizedPlanSummaryScreen() {
     return (
       <OnboardingStepFrame
         gradeBand={gradeBand}
+        backgroundColor={SCREEN_BACKGROUND}
         step="planSummary"
         subtitle={t("onboarding.planSummary.loadingDescription")}
         title={t("onboarding.planSummary.loadingTitle")}
@@ -94,6 +102,9 @@ export function PersonalizedPlanSummaryScreen() {
   }
 
   const errorMessage = onboarding.errorCode ? t(onboardingErrorMessageKeys[onboarding.errorCode]) : null;
+  const goalSummary = onboarding.plan.firstWeekGoals
+    .map((goal) => t(goalSummaryCopyKeys[goal] ?? "onboarding.planSummary.goalNames.general"))
+    .join(", ");
 
   return (
     <OnboardingStepFrame
@@ -123,78 +134,193 @@ export function PersonalizedPlanSummaryScreen() {
       step="planSummary"
       subtitle={t("onboarding.planSummary.description")}
       title={t("onboarding.planSummary.title")}
+      backgroundColor={SCREEN_BACKGROUND}
+      headerAlign="left"
+      primaryButtonStyle={styles.primaryButton}
+      titleStyle={styles.title}
     >
-      <Stack gap="lg">
-        <StatusState
-          description={t("onboarding.planSummary.readyDescription")}
-          gradeBand={gradeBand}
-          title={t("onboarding.planSummary.readyTitle")}
-          tone="success"
+      <View style={styles.summaryStack}>
+        <SummaryCard
+          iconName="school-outline"
+          label={t("onboarding.planSummary.gradeLabel")}
+          value={t("onboarding.gradeSelection.gradeLabel", { grade: onboarding.plan.gradeLevel })}
         />
-        <Card
-          gradeBand={gradeBand}
-          title={t("onboarding.planSummary.planCardTitle")}
-          subtitle={t("onboarding.planSummary.planCardSubtitle")}
-        >
-          <Stack gap="md">
-            <SummaryRow
-              label={t("onboarding.planSummary.gradeLabel")}
-              value={t("onboarding.gradeSelection.gradeLabel", { grade: onboarding.plan.gradeLevel })}
-            />
-            <SummaryRow
-              label={t("onboarding.planSummary.practiceLabel")}
-              value={t("onboarding.planSummary.practiceValue", {
-                daily: onboarding.plan.dailyPracticeMinutes,
-                weekly: onboarding.plan.weeklyPracticeMinutes,
-              })}
-            />
-            <SummaryRow
-              label={t("onboarding.planSummary.assignmentLabel")}
-              value={t(assignmentFocusCopyKeys[onboarding.plan.assignmentFocus])}
-            />
-            <SummaryRow
-              label={t("onboarding.planSummary.confidenceLabel")}
-              value={t(confidenceCopyKeys[onboarding.plan.confidenceLevel].label)}
-            />
-          </Stack>
-        </Card>
-        <Card
-          gradeBand={gradeBand}
-          title={t("onboarding.planSummary.firstWeekTitle")}
-          subtitle={t("onboarding.planSummary.firstWeekSubtitle")}
-        >
-          <Stack gap="sm">
-            {onboarding.plan.firstWeekGoals.map((goal) => (
-              <Text
-                key={goal}
-                selectable
-                style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
-              >
-                {t(writingGoalCopyKeys[goal].label)}
+
+        <SummaryCard
+          iconName="checkmark-circle-outline"
+          label={t("onboarding.planSummary.goalsLabel")}
+          value={goalSummary}
+          valueStyle={styles.goalsValue}
+        />
+
+        <SummaryCard
+          iconName="time-outline"
+          label={t("onboarding.planSummary.practiceLabel")}
+          subvalue={t("onboarding.planSummary.practiceSubvalue")}
+          value={t("onboarding.planSummary.practiceValue", {
+            daily: onboarding.plan.dailyPracticeMinutes,
+          })}
+        />
+
+        <View style={styles.previewCard}>
+          <View style={styles.previewIcon}>
+            <Ionicons name="document-text-outline" size={34} color={NAVY} />
+          </View>
+          <View style={styles.previewCopy}>
+            <Text selectable style={styles.previewLabel}>
+              {t("onboarding.planSummary.assignmentPreviewTitle")}
+            </Text>
+            <View style={styles.quoteBox}>
+              <Text selectable style={styles.quoteText}>
+                {t("onboarding.planSummary.assignmentPreviewQuote")}
               </Text>
-            ))}
-          </Stack>
-        </Card>
-        <Text
-          selectable
-          style={[getAccessibleTextStyle(type.bodySmall, settings), { color: colors.text.secondary }]}
-        >
-          {t("onboarding.planSummary.safetyNote")}
-        </Text>
-      </Stack>
+            </View>
+          </View>
+        </View>
+      </View>
     </OnboardingStepFrame>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryCard({
+  iconName,
+  label,
+  value,
+  subvalue,
+  valueStyle,
+}: {
+  iconName: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  subvalue?: string;
+  valueStyle?: StyleProp<TextStyle>;
+}) {
   return (
-    <Stack gap="xs">
-      <Text selectable style={{ color: colors.text.secondary }}>
-        {label}
-      </Text>
-      <Text selectable style={{ color: colors.text.primary, fontWeight: "700" }}>
-        {value}
-      </Text>
-    </Stack>
+    <View style={styles.summaryCard}>
+      <View style={styles.summaryIcon}>
+        <Ionicons name={iconName} size={34} color={NAVY} />
+      </View>
+      <View style={styles.summaryCopy}>
+        <Text selectable style={styles.summaryLabel}>
+          {label}
+        </Text>
+        <Text selectable style={[styles.summaryValue, valueStyle]}>
+          {value}
+        </Text>
+        {subvalue ? (
+          <Text selectable style={styles.summarySubvalue}>
+            {subvalue}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  goalsValue: {
+    fontSize: 25,
+    lineHeight: 34,
+  },
+  previewCard: {
+    backgroundColor: "#D7E4FF",
+    borderColor: "#AFC8FF",
+    borderRadius: 18,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    gap: 28,
+    minHeight: 196,
+    overflow: "hidden",
+    padding: 30,
+  },
+  previewCopy: {
+    flex: 1,
+    gap: 18,
+  },
+  previewIcon: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 44,
+    height: 88,
+    justifyContent: "center",
+    width: 88,
+  },
+  previewLabel: {
+    color: NAVY,
+    fontSize: 21,
+    fontWeight: "800",
+    letterSpacing: 2,
+    lineHeight: 28,
+  },
+  primaryButton: {
+    borderRadius: 999,
+  },
+  quoteBox: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E0E5EF",
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 22,
+    paddingVertical: 24,
+  },
+  quoteText: {
+    color: "#071426",
+    fontSize: 26,
+    fontStyle: "italic",
+    lineHeight: 40,
+  },
+  summaryCard: {
+    alignItems: "center",
+    backgroundColor: "#F8FAFF",
+    borderColor: "#C5CBD8",
+    borderRadius: 18,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    gap: 30,
+    minHeight: 142,
+    paddingHorizontal: 30,
+    paddingVertical: 24,
+    shadowColor: "#111827",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+  },
+  summaryCopy: {
+    flex: 1,
+    gap: 8,
+  },
+  summaryIcon: {
+    alignItems: "center",
+    backgroundColor: "#E8F1FF",
+    borderRadius: 44,
+    height: 88,
+    justifyContent: "center",
+    width: 88,
+  },
+  summaryLabel: {
+    color: "#3A3F4D",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 2.5,
+    lineHeight: 25,
+  },
+  summaryStack: {
+    gap: 28,
+  },
+  summarySubvalue: {
+    color: "#343949",
+    fontSize: 23,
+    lineHeight: 30,
+  },
+  summaryValue: {
+    color: "#071426",
+    fontSize: 27,
+    fontWeight: "500",
+    lineHeight: 35,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "500",
+    lineHeight: 40,
+  },
+});

@@ -6,14 +6,14 @@ import { Button } from "@/shared/components/buttons";
 import { Screen } from "@/shared/components/layout/Screen";
 import { Stack } from "@/shared/components/layout/Stack";
 
-import { AuthForm } from "../components";
+import { AuthForm, DemoUserPanel } from "../components";
 import { useAuth } from "../hooks/useAuth";
 import type { SignInFormValues } from "../types";
 
 export function SignInScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { clearError, errorCode, isBusy, signInWithEmail } = useAuth();
+  const { clearError, errorCode, isBusy, signInWithDemoUser, signInWithEmail } = useAuth();
 
   return (
     <Screen
@@ -36,6 +36,12 @@ export function SignInScreen() {
             router.push(routes.authSignUp);
           }}
           variant="ghost"
+        />
+        <DemoUserPanel
+          disabled={isBusy}
+          onSelectDemoUser={async (demoUserId) => {
+            await signInWithDemoUser(demoUserId);
+          }}
         />
       </Stack>
     </Screen>

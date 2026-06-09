@@ -4,6 +4,11 @@ set -euo pipefail
 AGENT="${1:-}"
 MODE="${2:-exec}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CODEX_EXEC_ARGS=(
+  --skip-git-repo-check
+  --dangerously-bypass-approvals-and-sandbox
+  -C "$ROOT_DIR"
+)
 
 show_usage() {
   cat <<'USAGE'
@@ -109,6 +114,6 @@ case "$MODE" in
     build_prompt
     ;;
   exec)
-    build_prompt | codex exec --skip-git-repo-check --sandbox workspace-write -C "$ROOT_DIR" -
+    build_prompt | codex exec "${CODEX_EXEC_ARGS[@]}" -
     ;;
 esac

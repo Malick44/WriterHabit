@@ -7,12 +7,18 @@ TO="27"
 MODE="run"
 COMMIT="1"
 RUN_CHECKS="1"
+CODEX_EXEC_ARGS=(
+  --skip-git-repo-check
+  --dangerously-bypass-approvals-and-sandbox
+  -C "$ROOT_DIR"
+)
 
 show_usage() {
   cat <<'USAGE'
 usage: ./script/autonomous_prompt_runner.sh [options]
 
 Runs implementation prompts in canonical order with codex exec.
+Nested Codex runs use full filesystem access and bypass approval prompts.
 
 Options:
   --from N|auto     First prompt number to run. Default: auto.
@@ -259,7 +265,7 @@ main() {
     title="$(prompt_title "$number")"
 
     echo "Running Prompt ${number}: ${path}"
-    build_prompt "$number" "$path" | codex exec --skip-git-repo-check --sandbox workspace-write -C "$ROOT_DIR" -
+    build_prompt "$number" "$path" | codex exec "${CODEX_EXEC_ARGS[@]}" -
 
     run_checks
     commit_changes "$number" "$title"

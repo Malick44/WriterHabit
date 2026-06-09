@@ -202,6 +202,8 @@ script/autonomous_prompt_runner.sh
 
 Use `.codex/EXECUTION_STATE.md` as the handoff/memory file. It should remain concise and non-secret.
 
+Autonomous and specialist review scripts run nested `codex exec` with full local filesystem access and approval prompts disabled for this trusted development workspace. Do not use those scripts on untrusted repositories, and keep secrets out of staged files and logs.
+
 Codex actions currently include:
 
 - `Run`

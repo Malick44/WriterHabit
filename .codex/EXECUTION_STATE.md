@@ -15,6 +15,18 @@ Last updated: 2026-06-09
 - Prompt 11 typed writing workspace is complete.
 - Prompt 12 canvas feature is complete.
 - Prompt 13 AI coach feature is complete.
+- Prompt 14 AI review, feedback, and revision is complete.
+- Prompt 15 progress tracking and badges is complete.
+- Prompt 16 notifications and daily assignment logic is complete.
+- Prompt 17 parent experience is complete.
+- Prompt 18 teacher experience is complete.
+- Prompt 19 subscription and paywall flow is complete.
+- Prompt 20 backend API contract is complete.
+- Prompt 21 database schema and migrations is complete.
+- Prompt 22 AI backend services is complete.
+- Prompt 23 canvas storage and sync is complete.
+- Prompt 24 testing strategy implementation is complete.
+- Next recommended prompt: `prompts/25_security_privacy_academic_integrity.md`.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.

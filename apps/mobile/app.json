@@ -1,4 +1,5 @@
 {
+  "scheme": "writewise",
   "plugins": [
     "expo-font",
     "expo-sqlite"

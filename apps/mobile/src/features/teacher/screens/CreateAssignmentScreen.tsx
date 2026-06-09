@@ -40,14 +40,14 @@ function getDefaultDueDate(): string {
   return dueDate.toISOString().slice(0, 10);
 }
 
-function getInitialFormValues(classId = "", gradeLevel = "7"): CreateTeacherAssignmentFormValues {
+function getInitialFormValues(defaultRubricText: string, classId = "", gradeLevel = "7"): CreateTeacherAssignmentFormValues {
   return {
     allowCanvas: true,
     classId,
     dueDate: getDefaultDueDate(),
     gradeLevel,
     prompt: "",
-    rubricText: "Clear response\nUses the skill focus\nRevises one part after feedback",
+    rubricText: defaultRubricText,
     skillFocus: [],
     title: "",
   };
@@ -58,7 +58,8 @@ export function CreateAssignmentScreen() {
   const { t } = useI18n();
   const assignmentsState = useTeacherAssignmentsData();
   const createAssignment = useCreateTeacherAssignment();
-  const initialForm = useMemo(() => getInitialFormValues(), []);
+  const defaultRubricText = t("teacher.create.defaultRubricText");
+  const initialForm = useMemo(() => getInitialFormValues(defaultRubricText), [defaultRubricText]);
   const [formValues, setFormValues] = useState<CreateTeacherAssignmentFormValues>(initialForm);
   const [fieldErrors, setFieldErrors] = useState<TeacherAssignmentFieldErrors>({});
 
@@ -102,7 +103,7 @@ export function CreateAssignmentScreen() {
   };
 
   const resetForm = () => {
-    setFormValues(getInitialFormValues());
+    setFormValues(getInitialFormValues(defaultRubricText));
     setFieldErrors({});
     createAssignment.reset();
   };

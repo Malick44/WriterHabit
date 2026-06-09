@@ -3,6 +3,7 @@ import type { GradeLevel } from "@writewise/shared";
 import { z } from "zod";
 
 import { supabase } from "@/core/supabase/supabaseClient";
+import { translate } from "@/i18n";
 
 import type {
   AuthActionResult,
@@ -26,7 +27,7 @@ const userMetadataSchema = z.object({
 });
 
 function getDisplayName(user: SupabaseUser, metadata: z.infer<typeof userMetadataSchema>): string {
-  return metadata.display_name ?? metadata.full_name ?? user.email ?? "WriteWise user";
+  return metadata.display_name ?? metadata.full_name ?? user.email ?? translate("en", "common.fallbackUserName");
 }
 
 export function mapSupabaseSession(session: SupabaseSession | null): AuthSession | null {

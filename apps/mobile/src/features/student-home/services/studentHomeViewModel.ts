@@ -1,4 +1,5 @@
 import { typography, type GradeBand } from "@/design/tokens";
+import { translate } from "@/i18n";
 
 import type {
   StudentHomeApiResponse,
@@ -17,10 +18,10 @@ function getFirstName(displayName: string): string {
   const trimmed = displayName.trim();
 
   if (!trimmed) {
-    return "Writer";
+    return translate("en", "common.fallbackDisplayName");
   }
 
-  return trimmed.split(/\s+/)[0] ?? "Writer";
+  return trimmed.split(/\s+/)[0] ?? translate("en", "common.fallbackDisplayName");
 }
 
 export function getStudentHomeGradeAdaptation(gradeBand: GradeBand): StudentHomeGradeAdaptation {

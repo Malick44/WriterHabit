@@ -19,6 +19,8 @@ interface StrokeCanvasAdapterProps {
 }
 
 function TemplateGuides({ template }: { template: CanvasTemplate }) {
+  const { t } = useI18n();
+
   switch (template) {
     case "lined_paper":
     case "handwriting_practice":
@@ -74,7 +76,12 @@ function TemplateGuides({ template }: { template: CanvasTemplate }) {
     case "essay_plan":
       return (
         <View style={{ gap: spacing.md }}>
-          {["Claim", "Evidence", "Explain", "Revise"].map((label) => (
+          {[
+            t("canvas.templates.essayPlanGuides.claim"),
+            t("canvas.templates.essayPlanGuides.evidence"),
+            t("canvas.templates.essayPlanGuides.explain"),
+            t("canvas.templates.essayPlanGuides.revise"),
+          ].map((label) => (
             <View
               key={label}
               style={{

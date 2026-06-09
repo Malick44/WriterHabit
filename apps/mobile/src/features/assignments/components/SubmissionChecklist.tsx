@@ -96,7 +96,9 @@ export function SubmissionChecklist({
                     { color: viewModel.canSubmit ? colors.text.success : colors.text.muted },
                   ]}
                 >
-                  {viewModel.canSubmit ? "OK" : "?"}
+                  {viewModel.canSubmit
+                    ? t("assignments.submit.checklistComplete")
+                    : t("assignments.submit.checklistPending")}
                 </Text>
               </View>
               <Stack gap="xs" style={{ flex: 1 }}>

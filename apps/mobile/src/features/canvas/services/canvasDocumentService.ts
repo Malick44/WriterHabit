@@ -1,4 +1,5 @@
 import { typography } from "@/design/tokens";
+import { translate, type TranslationKey } from "@/i18n";
 
 import {
   INITIAL_CANVAS_CLIENT_VERSION,
@@ -58,6 +59,17 @@ export const canvasTemplateDefinitions: CanvasTemplateDefinition[] = [
     template: "annotate_passage",
   },
 ];
+
+const canvasDefaultTitleKeys: Record<CanvasTemplate, TranslationKey> = {
+  annotate_passage: "canvas.document.defaultTitles.annotatePassage",
+  blank_page: "canvas.document.defaultTitles.blankPage",
+  essay_plan: "canvas.document.defaultTitles.essayPlan",
+  handwriting_practice: "canvas.document.defaultTitles.handwritingPractice",
+  lined_paper: "canvas.document.defaultTitles.linedPaper",
+  mind_map: "canvas.document.defaultTitles.mindMap",
+  storyboard: "canvas.document.defaultTitles.storyboard",
+  vocabulary_web: "canvas.document.defaultTitles.vocabularyWeb",
+};
 
 function createCanvasId() {
   return `canvas-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -255,48 +267,31 @@ export function getCanvasDocumentSummary(document: CanvasDocument): CanvasDocume
 }
 
 export function getDefaultCanvasTitle(template: CanvasTemplate): string {
-  switch (template) {
-    case "blank_page":
-      return "Blank page";
-    case "lined_paper":
-      return "Lined paper";
-    case "storyboard":
-      return "Storyboard";
-    case "mind_map":
-      return "Mind map";
-    case "essay_plan":
-      return "Essay plan";
-    case "vocabulary_web":
-      return "Vocabulary web";
-    case "handwriting_practice":
-      return "Handwriting practice";
-    case "annotate_passage":
-      return "Annotate passage";
-  }
+  return translate("en", canvasDefaultTitleKeys[template]);
 }
 
 export function getUpdatedLabel(updatedAt: string): string {
   const timestamp = Date.parse(updatedAt);
 
   if (Number.isNaN(timestamp)) {
-    return "Saved recently";
+    return translate("en", "canvas.document.savedRecently");
   }
 
   const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60_000));
 
   if (diffMinutes < 1) {
-    return "Saved just now";
+    return translate("en", "canvas.document.savedJustNow");
   }
 
   if (diffMinutes === 1) {
-    return "Saved 1 minute ago";
+    return translate("en", "canvas.document.savedOneMinuteAgo");
   }
 
   if (diffMinutes < 60) {
-    return `Saved ${diffMinutes} minutes ago`;
+    return translate("en", "canvas.document.savedMinutesAgo", { count: diffMinutes });
   }
 
-  return "Saved earlier";
+  return translate("en", "canvas.document.savedEarlier");
 }
 
 export function pushUndoSnapshot(history: CanvasStroke[][], strokes: CanvasStroke[]): CanvasStroke[][] {

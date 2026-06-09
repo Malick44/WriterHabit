@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { typography, type GradeBand } from "@/design/tokens";
+import { translate } from "@/i18n";
 
 import { progressApi } from "../api/progressApi";
 import { buildProgressDashboardViewModel } from "../services/progressViewModel";
@@ -92,7 +93,7 @@ function getFallbackGradeBand(gradeLevel?: number): GradeBand {
 function useProgressDashboardQuery() {
   const { session } = useAuthSession();
   const studentId = session?.user.id ?? "local-student";
-  const displayName = session?.user.displayName ?? "Writer";
+  const displayName = session?.user.displayName ?? translate("en", "common.fallbackDisplayName");
   const gradeLevel = session?.user.gradeLevel;
   const fallbackGradeBand = getFallbackGradeBand(gradeLevel);
   const query = useQuery({

@@ -364,6 +364,14 @@ Every user-facing screen must be:
 - safe for K-12 use
 - clear about recovery paths for errors/offline/sync failures
 
+Localization rule:
+
+- Do not hardcode user-facing copy in React Native JSX, including `<Text>Hard coded text</Text>`, `Screen title="Hard coded text"`, button labels, placeholders, helper text, empty/error/success copy, or accessibility labels/hints.
+- Add or reuse keys in `apps/mobile/src/shared/i18n/en.ts`, then render copy with `useI18n()`, `useT()`, or typed translation keys passed through feature view models.
+- Service-generated user-facing labels, fallback display names, seeded form text, and mock content that appears on screen should also resolve through translation keys instead of inline English literals.
+- Non-user-facing strings such as route names, test IDs, enum values, storage keys, API paths, CSS/font constants, and developer-only error names do not need translation keys.
+- Run the localized JSX guard with the normal test suite after UI copy changes.
+
 Grade bands:
 
 - Grades 1-5: larger controls, simple wording, fewer visible metrics, friendly cues, handwriting/read-aloud support.

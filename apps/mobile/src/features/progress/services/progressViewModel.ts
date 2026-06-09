@@ -1,7 +1,7 @@
 import type { WritingSkill } from "@writewise/shared";
 
 import { typography } from "@/design/tokens";
-import type { TranslationKey } from "@/i18n";
+import { translate, type TranslationKey } from "@/i18n";
 
 import {
   type ProgressApiResponse,
@@ -122,10 +122,10 @@ function getFirstName(displayName: string): string {
   const trimmed = displayName.trim();
 
   if (!trimmed) {
-    return "Writer";
+    return translate("en", "common.fallbackDisplayName");
   }
 
-  return trimmed.split(/\s+/)[0] ?? "Writer";
+  return trimmed.split(/\s+/)[0] ?? translate("en", "common.fallbackDisplayName");
 }
 
 export function getProgressGradeAdaptation(gradeLevel: number): ProgressGradeAdaptation {

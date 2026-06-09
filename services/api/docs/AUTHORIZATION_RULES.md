@@ -1,7 +1,9 @@
 # WriteWise API Authorization Rules
 
 Status: planned backend authorization model. Database RLS and migration details
-belong in Prompt 21; this document defines service-level rules for API handlers.
+now live in `services/api/docs/DATABASE_SCHEMA.md`,
+`services/api/docs/DATA_RELATIONSHIPS.md`, and `services/api/migrations/`; this
+document defines service-level rules for API handlers.
 
 ## Principals
 

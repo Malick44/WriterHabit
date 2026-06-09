@@ -1,5 +1,11 @@
 # 04 — Data Model
 
+The planned backend database schema and relationship map now live in
+`services/api/docs/DATABASE_SCHEMA.md` and
+`services/api/docs/DATA_RELATIONSHIPS.md`, with draft Supabase/Postgres
+migrations in `services/api/migrations/`. This document continues to describe
+the product and mobile/API-facing TypeScript models.
+
 ## Core Entities
 
 ### User

@@ -11,7 +11,11 @@ README.md
 services/api/README.md
 services/api/docs/API_CONTRACT.md
 services/api/docs/AUTHORIZATION_RULES.md
+services/api/docs/DATABASE_SCHEMA.md
+services/api/docs/DATA_RELATIONSHIPS.md
 services/api/docs/ERROR_CODES.md
+services/api/migrations/202606090001_initial_writewise_schema.sql
+services/api/migrations/202606090002_privacy_rls_policies.sql
 services/api/src/features/README.md
 prompts/01_master_agent_rules.md
 prompts/02_repo_audit_and_implementation_plan.md

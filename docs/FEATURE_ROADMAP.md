@@ -297,4 +297,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/21_database_schema_and_migrations.md` next. The backend API contract and framework-neutral feature boundary scaffold now exist; the next gap is PostgreSQL schema, relationships, migration drafts, indexes, and privacy-aware access patterns.
+Use `prompts/22_ai_backend_services.md` next. The backend API contract, framework-neutral feature boundary scaffold, PostgreSQL schema docs, relationship docs, migration drafts, indexes, and privacy-aware RLS patterns now exist; the next gap is backend AI service behavior.

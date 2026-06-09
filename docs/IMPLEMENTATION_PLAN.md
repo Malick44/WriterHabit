@@ -101,7 +101,7 @@ Do not edit these areas unless the task explicitly requires it:
 ## Risk Areas
 
 1. Testing is early. Jest is configured and smoke tests exist, but most feature workflows do not have tests yet.
-2. Backend runtime remains undefined. `services/api/docs/` now defines the planned API shape, errors, and authorization rules, but no framework, database migration strategy, or running API server has been selected.
+2. Backend runtime remains undefined. `services/api/docs/` now defines the planned API shape, errors, authorization rules, database schema, and data relationships, and `services/api/migrations/` contains draft Supabase/Postgres migrations. No framework, production migration runner, or running API server has been selected.
 3. Data validation is not enforced yet. Zod is installed but should be applied at API, local storage, and AI service boundaries.
 4. Accessibility and localization foundations exist, but placeholder feature screens still need screen-specific labels, roles, and i18n keys as they are implemented.
 5. Token architecture is established at `apps/mobile/src/design/tokens/`; future screens still need to migrate away from ad hoc local styles as they are implemented.
@@ -264,4 +264,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/21_database_schema_and_migrations.md`.
+Proceed to `prompts/22_ai_backend_services.md`.

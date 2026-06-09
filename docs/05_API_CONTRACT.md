@@ -6,6 +6,8 @@ Use those files for endpoint shapes, error codes, and authorization rules:
 - `services/api/docs/API_CONTRACT.md`
 - `services/api/docs/ERROR_CODES.md`
 - `services/api/docs/AUTHORIZATION_RULES.md`
+- `services/api/docs/DATABASE_SCHEMA.md`
+- `services/api/docs/DATA_RELATIONSHIPS.md`
 
 Base path:
 
@@ -36,8 +38,8 @@ local device persistence:
 | Subscriptions | `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` |
 
 The backend scaffold is framework-neutral and lives in
-`services/api/src/features/`. It currently contains endpoint boundary stubs only;
-Prompt 21 is responsible for database schema and migration drafts.
+`services/api/src/features/`. It currently contains endpoint boundary stubs only.
+Draft Supabase/Postgres migrations now live in `services/api/migrations/`.
 
 ## Planned Endpoint Groups
 

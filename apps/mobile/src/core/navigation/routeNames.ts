@@ -17,6 +17,8 @@ export const routes = {
   studentCanvasHome: "/(student)/canvas" as Href,
   studentCanvasTemplates: "/(student)/canvas/templates" as Href,
   studentProgress: "/(student)/progress" as Href,
+  studentProgressBadges: "/(student)/progress/badges" as Href,
+  studentProgressWeeklyReview: "/(student)/progress/weekly-review" as Href,
   studentProfile: "/(student)/profile" as Href,
   parentHome: "/(parent)/home" as Href,
   parentReports: "/(parent)/reports" as Href,

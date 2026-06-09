@@ -37,7 +37,10 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Rubric score | `apps/mobile/app/(student)/review/[submissionId]/rubric.tsx` | feedback-review |
 | Revision task | `apps/mobile/app/(student)/review/[submissionId]/revision.tsx` | feedback-review |
 | Completion celebration | `apps/mobile/app/(student)/review/[submissionId]/complete.tsx` | feedback-review |
-| Student progress dashboard | `apps/mobile/app/(student)/progress.tsx` | progress |
+| Student progress dashboard | `apps/mobile/app/(student)/progress/index.tsx` | progress |
+| Progress skill detail | `apps/mobile/app/(student)/progress/skills/[skillId].tsx` | progress |
+| Progress badges | `apps/mobile/app/(student)/progress/badges.tsx` | progress |
+| Weekly progress review | `apps/mobile/app/(student)/progress/weekly-review.tsx` | progress |
 | Student profile | `apps/mobile/app/(student)/profile.tsx` | profile-settings |
 
 ## Canvas

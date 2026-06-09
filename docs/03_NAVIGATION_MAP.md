@@ -51,7 +51,10 @@ apps/mobile/app/
     canvas/index.tsx
     canvas/templates.tsx
     canvas/[canvasId].tsx
-    progress.tsx
+    progress/index.tsx
+    progress/badges.tsx
+    progress/skills/[skillId].tsx
+    progress/weekly-review.tsx
     profile.tsx
     review/[submissionId]/index.tsx
     review/[submissionId]/summary.tsx
@@ -155,6 +158,9 @@ Student detail routes are hidden from the tab bar:
 /(student)/assignments/submit
 /(student)/canvas/templates
 /(student)/canvas/[canvasId]
+/(student)/progress/badges
+/(student)/progress/skills/[skillId]
+/(student)/progress/weekly-review
 /(student)/review/[submissionId]
 /(student)/review/[submissionId]/summary
 /(student)/review/[submissionId]/rubric

@@ -121,7 +121,7 @@ Definition of done:
 - Coach actions provide hints, questions, explanations, word-choice coaching, and revision guidance without replacing student thinking
 - Submitted writing receives structured AI feedback
 - Student receives one clear revision task
-- Student sees placeholder progress after completion; persisted progress updates remain Phase 7 work
+- Student can open local progress after completion; persisted progress sync remains backend work
 
 ## Phase 7 — Progress Tracking
 
@@ -132,11 +132,12 @@ Deliverables:
 - Badges
 - Weekly review
 - Streak logic
+- Badge unlock logic
 
 Definition of done:
 
-- Completed assignments update skill progress
-- Student can view growth over time
+- Student can view local growth over time
+- Streak and badge logic have focused unit tests
 
 ## Phase 8 — Parent Experience
 

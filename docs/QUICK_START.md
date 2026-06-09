@@ -41,7 +41,7 @@ Follow prompts/13_ai_coach_feature.md.
 Follow prompts/14_ai_review_feedback_revision.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/15_progress_tracking_and_badges.md.
+Next unfinished MVP prompt: prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 
 ## 6. Production Readiness

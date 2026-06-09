@@ -35,7 +35,7 @@ export default function StudentLayout() {
           }}
         />
         <Tabs.Screen
-          name="progress"
+          name="progress/index"
           options={{
             title: t("navigation.tabs.student.progress"),
             tabBarAccessibilityLabel: t("navigation.tabs.student.progressAccessibility"),
@@ -52,6 +52,9 @@ export default function StudentLayout() {
         <Tabs.Screen name="assignments/submit" options={{ href: null }} />
         <Tabs.Screen name="canvas/[canvasId]" options={{ href: null }} />
         <Tabs.Screen name="canvas/templates" options={{ href: null }} />
+        <Tabs.Screen name="progress/badges" options={{ href: null }} />
+        <Tabs.Screen name="progress/skills/[skillId]" options={{ href: null }} />
+        <Tabs.Screen name="progress/weekly-review" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/complete" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/index" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/revision" options={{ href: null }} />

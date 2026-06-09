@@ -369,8 +369,39 @@ passage and returns a local completion payload. In-progress revision text is
 stored locally through
 `apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
 and removed after successful revision submission. Progress earned is a
-placeholder shown in the completion screen until the Prompt 15 progress feature
-and backend progress APIs exist.
+local completion payload that can be viewed in the Prompt 15 progress dashboard;
+backend progress persistence and sync remain future API work.
+
+### ProgressDashboard
+
+The current mobile progress feature lives in `apps/mobile/src/features/progress/`.
+It uses a deterministic local mock API in
+`apps/mobile/src/features/progress/api/progressApi.ts`, validates response data
+with Zod in `apps/mobile/src/features/progress/types.ts`, and builds
+grade-adapted dashboard view models in
+`apps/mobile/src/features/progress/services/progressViewModel.ts`.
+
+Tracked progress fields include:
+
+```ts
+interface ProgressTotals {
+  assignmentsCompleted: number;
+  minutesThisWeek: number;
+  weeklyMinutesGoal: number;
+  wordsWritten: number;
+  revisionsCompleted: number;
+  rubricImprovement: number;
+  aiFeedbackApplied: number;
+  handwritingMinutes: number;
+}
+```
+
+Daily activity entries also track date, practiced skills, assignments,
+minutes, words, revisions, feedback applied, handwriting minutes, and rubric
+improvement. Streaks are computed by
+`apps/mobile/src/features/progress/services/streakService.ts`; badge unlocks
+are computed by
+`apps/mobile/src/features/progress/services/badgeUnlockService.ts`.
 
 ### RevisionTask
 

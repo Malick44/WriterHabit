@@ -453,8 +453,31 @@ Consequences:
 - Feedback is framed as one strength, one improvement, one revision task, rubric coaching, and grammar suggestions.
 - Revision asks the student to write one focused revised passage; it does not auto-apply or generate a polished final draft.
 - In-progress revision text is locally autosaved and restored, then cleared after successful submission.
-- Progress earned is currently a placeholder shown after completion. Persisted progress, badges, and backend progress sync remain Prompt 15 and backend work.
+- Progress earned now links into the local progress dashboard. Persisted progress aggregation and backend progress sync remain future backend work.
 - Backend AI review jobs, feedback persistence, audit-safe metadata logging, and usage limits remain future work.
+
+## ADR-021: Progress Tracking Uses Local Analytics Contracts Until Backend Exists
+
+Status: accepted
+
+Student progress lives in `apps/mobile/src/features/progress/`. The current implementation uses deterministic local mock data validated with Zod, then derives dashboard, skill detail, badge, and weekly review view models on device.
+
+Current evidence:
+
+- Dashboard API facade: `apps/mobile/src/features/progress/api/progressApi.ts`
+- Query hooks: `apps/mobile/src/features/progress/hooks/useProgress.ts`
+- Screens: `apps/mobile/src/features/progress/screens/`
+- Streak service: `apps/mobile/src/features/progress/services/streakService.ts`
+- Badge unlock service: `apps/mobile/src/features/progress/services/badgeUnlockService.ts`
+- View-model service: `apps/mobile/src/features/progress/services/progressViewModel.ts`
+- Tests: `apps/mobile/src/features/progress/services/streakService.test.ts` and `apps/mobile/src/features/progress/services/badgeUnlockService.test.ts`
+
+Consequences:
+
+- Progress routes under `apps/mobile/app/(student)/progress/` remain thin feature exports.
+- The dashboard tracks assignments, streaks, weekly minutes, words, revisions, rubric improvement, AI feedback applied, handwriting time, skills, badges, and weekly review.
+- Grade-band adaptation controls metric density and rubric detail for elementary, middle, and high school students.
+- Backend progress persistence, cross-device sync, parent reports, and teacher analytics remain future work.
 
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 

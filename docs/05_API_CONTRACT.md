@@ -124,6 +124,20 @@ GET /students/:studentId/badges
 GET /students/:studentId/weekly-review
 ```
 
+Current mobile implementation:
+
+- Local facade: `apps/mobile/src/features/progress/api/progressApi.ts`
+- Zod contracts: `apps/mobile/src/features/progress/types.ts`
+- View model: `apps/mobile/src/features/progress/services/progressViewModel.ts`
+- Streak logic: `apps/mobile/src/features/progress/services/streakService.ts`
+- Badge unlock logic: `apps/mobile/src/features/progress/services/badgeUnlockService.ts`
+
+The local facade returns deterministic mock progress data for assignments
+completed, streak inputs, weekly minutes, words written, revisions, rubric
+improvement, AI feedback applied, handwriting time, skill progress, badges, and
+weekly review. Backend persistence and authorization for these endpoints remain
+future work.
+
 ## Parent
 
 ```txt

@@ -198,7 +198,7 @@ Work:
 Risks:
 
 - AI coach currently uses deterministic local mock responses; backend AI service calls, usage limits, and audit-safe metadata logging remain future work.
-- AI feedback review currently uses deterministic local mock responses and placeholder progress; backend AI review jobs, feedback persistence, and progress sync remain future work.
+- AI feedback review currently uses deterministic local mock responses and local progress earned payloads; backend AI review jobs, feedback persistence, and progress sync remain future work.
 - AI feedback must not rewrite student assignments.
 
 ## Phase 7: Progress
@@ -209,16 +209,14 @@ Primary feature:
 
 Work:
 
-- Implement progress dashboard.
-- Implement skill detail.
-- Implement badges.
-- Implement streak and growth calculations.
-- Add unit tests for progress calculations and badge unlock logic.
+- Maintain the implemented progress dashboard, skill detail, badges, weekly review, streak service, and badge unlock service.
+- Maintain Zod validation for progress dashboard payloads.
+- Keep focused tests for progress scoring, streak logic, and badge unlock logic.
 
 Risks:
 
-- Existing progress calculator has no tests.
-- Progress inputs must be stable shared contracts.
+- Progress currently uses deterministic local mock data; backend progress persistence, aggregation, and sync remain future work.
+- Progress inputs must remain stable shared contracts for parent, teacher, and backend reporting work.
 
 ## Phase 8: Parent Experience
 
@@ -277,4 +275,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/15_progress_tracking_and_badges.md` next. Structured feedback review, revision tasks, and completion placeholders now exist; the next gap is real progress tracking and badges.
+Use `prompts/16_notifications_and_daily_assignment_logic.md` next. Progress tracking and badges now exist locally; the next gap is daily assignment scheduling and notification logic.

@@ -14,6 +14,9 @@ export const deepLinkRoutes = {
   studentReviewRevision: "/(student)/review/[submissionId]/revision",
   studentReviewRubric: "/(student)/review/[submissionId]/rubric",
   studentReviewSummary: "/(student)/review/[submissionId]/summary",
+  studentProgressBadges: "/(student)/progress/badges",
+  studentProgressSkill: "/(student)/progress/skills/[skillId]",
+  studentProgressWeeklyReview: "/(student)/progress/weekly-review",
   writingWorkspace: "/(student)/write/[assignmentId]",
   parentStudentReport: "/(parent)/students/[studentId]/report",
   teacherSubmissionReview: "/(teacher)/submissions/[submissionId]",
@@ -93,6 +96,13 @@ export function getStudentReviewCompletionRoute(submissionId: string): Href {
   return {
     pathname: "/(student)/review/[submissionId]/complete",
     params: { submissionId },
+  };
+}
+
+export function getStudentProgressSkillRoute(skillId: string): Href {
+  return {
+    pathname: "/(student)/progress/skills/[skillId]",
+    params: { skillId },
   };
 }
 

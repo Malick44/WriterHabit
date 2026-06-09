@@ -932,12 +932,92 @@ export const en = {
   },
   aiCoach: {
     drawerTitle: "AI coach",
+    drawerAccessibility: "AI writing coach drawer",
+    descriptionElementary: "Pick one small kind of help. The coach asks questions and gives hints so the writing stays yours.",
+    descriptionMiddle: "Choose a coaching move for planning, sentence checks, questions, or revision decisions.",
+    descriptionHigh: "Use coaching to test reasoning, improve structure, or choose a focused revision move.",
     hintCta: "Give me a hint",
     brainstormCta: "Help me brainstorm",
     sentenceCheckCta: "Check my sentence",
     explainMistakeCta: "Explain this mistake",
+    revisionHelpCta: "Help me revise",
     strongerWordCta: "Suggest a stronger word",
+    askQuestionCta: "Ask me a question",
+    closeAccessibility: "Close AI coach drawer",
+    closeCta: "Close coach",
     safetyReminder: "The coach helps you think and revise; it does not write the assignment for you.",
+    actions: {
+      askQuestion: {
+        description: "Ask one guiding question that helps you decide the next writing move.",
+      },
+      brainstorm: {
+        description: "Get planning choices while keeping the final writing in your own words.",
+      },
+      explainMistake: {
+        description: "Understand one mistake pattern so you can fix it yourself.",
+      },
+      hint: {
+        description: "Get a small hint that points you back to the prompt.",
+      },
+      revisionHelp: {
+        description: "Choose one focused revision task for your current draft.",
+      },
+      sentenceCheck: {
+        description: "Check one sentence-level issue without replacing your draft.",
+      },
+      strongerWord: {
+        description: "Get help choosing a more precise word that still sounds like you.",
+      },
+    },
+    empty: {
+      title: "Choose a coaching move",
+      description: "Start with a hint, a brainstorm, a question, or a sentence check when you have text.",
+      accessibility: "AI coach is waiting for a coaching action",
+    },
+    emptyResult: {
+      title: "Add your own text first",
+      description: "This coaching move needs a sentence or draft excerpt to review. Try a hint or brainstorm before drafting.",
+      action: "Choose another move",
+      accessibility: "AI coach needs student writing before this action",
+    },
+    error: {
+      title: "Coach did not respond",
+      description: "Your draft is unchanged. Try again, or keep writing and return to coaching later.",
+      accessibility: "AI coach request error",
+    },
+    loading: {
+      title: "Preparing coaching",
+      description: "Checking the prompt, your draft excerpt, and the safety rules.",
+      accessibility: "AI coach is preparing a response",
+    },
+    missing: {
+      title: "Assignment context missing",
+      description: "Open a current assignment before asking for coaching.",
+      accessibility: "AI coach missing assignment context",
+    },
+    offline: {
+      title: "Coach is offline",
+      description: "Keep drafting and saving on this device. New coaching can start after the connection returns.",
+      action: "Back to choices",
+      accessibility: "AI coach is unavailable offline",
+    },
+    response: {
+      strength: "Strength",
+      improvement: "Improvement",
+      nextStep: "Next step",
+      question: "Question",
+    },
+    safetyBlocked: {
+      title: "Use coaching help",
+      description: "WriteWise can give hints, questions, explanations, and revision tasks, but it cannot replace your thinking.",
+      action: "Choose a safe move",
+      accessibility: "AI coach safety policy blocked this request",
+    },
+    success: {
+      title: "Coaching ready",
+      description: "Use the next step yourself, then revise the draft in your own words.",
+      accessibility: "AI coach response ready",
+    },
   },
   feedbackReview: {
     coachingAccessibility: "Feedback review coaching safety note",

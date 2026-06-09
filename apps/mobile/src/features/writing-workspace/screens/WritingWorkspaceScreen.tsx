@@ -169,9 +169,15 @@ export function WritingWorkspaceScreen() {
           >
             {activePanel === "coach" ? (
               <CoachEntryPanel
+                assignment={state.viewModel.assignment}
+                canvasAttachment={state.viewModel.draft?.canvasAttachment ?? null}
+                draftText={state.viewModel.text}
                 gradeAdaptation={state.viewModel.gradeAdaptation}
-                gradeBand={state.gradeBand}
+                gradeLevel={state.gradeLevel}
+                isOffline={state.viewModel.isOffline}
+                metrics={state.viewModel.metrics}
                 onClose={closePanel}
+                studentId={state.studentId}
                 visible
               />
             ) : (

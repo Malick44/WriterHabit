@@ -52,7 +52,7 @@ export function CoachEntryCard({ actions, gradeBand, onActionPress }: CoachEntry
               onPress={() => onActionPress(action)}
               size={gradeBand === "elementary" ? "lg" : "md"}
               style={{ flexGrow: 1 }}
-              variant={action.id === "revise" ? "secondary" : "primary"}
+              variant={action.id === "revision_help" ? "secondary" : "primary"}
             />
           ))}
         </Inline>

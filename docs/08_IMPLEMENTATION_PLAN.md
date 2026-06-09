@@ -101,10 +101,14 @@ Definition of done:
 - Student can continue writing after attachment
 - Backend file export/sync remains future work
 
-## Phase 6 — AI Feedback
+## Phase 6 — AI Coach and Feedback
 
 Deliverables:
 
+- AI coach drawer implemented
+- AI coach safety guardrails implemented
+- AI coach context and prompt builders implemented
+- Deterministic AI coach mock API implemented
 - AI review loading screen
 - Feedback summary
 - Rubric score
@@ -114,6 +118,7 @@ Deliverables:
 
 Definition of done:
 
+- Coach actions provide hints, questions, explanations, word-choice coaching, and revision guidance without replacing student thinking
 - Submitted writing receives structured AI feedback
 - Student receives one clear revision task
 - Student progress updates after completion

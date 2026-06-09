@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { GradeLevel } from "@writewise/shared";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { typography, type GradeBand } from "@/design/tokens";
@@ -26,6 +27,7 @@ export type WritingWorkspaceDataState =
   | { status: "missing"; gradeBand: GradeBand; refetch: () => void; viewModel: WritingWorkspaceViewModel }
   | {
       status: "success";
+      gradeLevel: GradeLevel;
       gradeBand: GradeBand;
       isRefreshing: boolean;
       refetch: () => void;
@@ -33,6 +35,7 @@ export type WritingWorkspaceDataState =
       setText: (text: string) => void;
       submitDraft: () => Promise<WritingSubmissionResponse | null>;
       submitStatus: "idle" | "loading" | "error" | "success";
+      studentId: string;
       viewModel: WritingWorkspaceViewModel;
     };
 
@@ -277,7 +280,9 @@ export function useWritingWorkspace(assignmentId?: string): WritingWorkspaceData
     };
   }
 
-  if (query.isError || !viewModel) {
+  const response = query.data;
+
+  if (query.isError || !viewModel || !response) {
     return {
       gradeBand: fallbackGradeBand,
       refetch,
@@ -295,12 +300,14 @@ export function useWritingWorkspace(assignmentId?: string): WritingWorkspaceData
   }
 
   return {
+    gradeLevel: response.gradeLevel,
     gradeBand: viewModel.gradeAdaptation.band,
     isRefreshing: query.isFetching,
     refetch,
     saveNow: () => saveDraft(),
     setText,
     status: "success",
+    studentId,
     submitDraft,
     submitStatus,
     viewModel,

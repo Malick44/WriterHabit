@@ -74,10 +74,10 @@ Each audited route file imports and exports a feature screen, which aligns with 
 
 The app is scaffolded but not feature-complete:
 
-- Many screens are placeholders with copy such as `implementation goes here`.
+- Parent, teacher, subscription, progress, and feedback-summary screens still include placeholder or partial surfaces.
 - Feature APIs and hooks are mostly stubs.
 - `apps/mobile/src/features/progress/services/progressCalculator.ts` contains logic that should receive unit tests before progress work expands.
-- `apps/mobile/src/features/ai-coach/prompts/reviewPrompt.ts` includes safety rules against completing assignments, which matches the product safety rule.
+- `apps/mobile/src/features/ai-coach/` now includes a policy-safe drawer, bounded context builder, grade-aware prompt builder, deterministic mock API, and safety tests.
 - Shared UI primitives exist under `apps/mobile/src/shared/components/` for layout, buttons, cards, forms, feedback states, and progress.
 - Design tokens live in the canonical token path `apps/mobile/src/design/tokens/`. Legacy shared theme files in `apps/mobile/src/shared/theme/` re-export those tokens for compatibility.
 
@@ -182,7 +182,7 @@ Deliverables:
 - Local draft autosave, recovery, and validation.
 - Outline builder.
 - Rubric checklist.
-- AI coach drawer entry points using approved coaching CTAs only.
+- AI coach drawer using approved coaching CTAs only.
 - Attached canvas preview.
 - Submit route into AI review loading.
 
@@ -212,7 +212,7 @@ Definition of done:
 
 Deliverables:
 
-- AI coach safety guardrails.
+- Maintain implemented AI coach safety guardrails, context builder, prompt builder, mock API, and drawer.
 - Review loading state.
 - Structured feedback summary.
 - One revision task per review cycle.
@@ -257,4 +257,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/13_ai_coach_feature.md`.
+Proceed to `prompts/14_ai_review_feedback_revision.md`.

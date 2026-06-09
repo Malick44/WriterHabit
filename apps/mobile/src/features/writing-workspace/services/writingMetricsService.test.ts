@@ -31,12 +31,12 @@ describe("writingMetricsService", () => {
     expect(getWritingWorkspaceGradeAdaptation(3)).toMatchObject({
       band: "elementary",
       showDetailedRubric: false,
-      visibleCoachActionCount: 2,
+      visibleCoachActionCount: 3,
     });
     expect(getWritingWorkspaceGradeAdaptation(10)).toMatchObject({
       band: "high",
       showDetailedRubric: true,
-      visibleCoachActionCount: 4,
+      visibleCoachActionCount: 7,
     });
   });
 });

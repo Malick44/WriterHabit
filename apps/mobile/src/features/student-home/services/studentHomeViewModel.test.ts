@@ -83,7 +83,7 @@ describe("studentHomeViewModel", () => {
       "aiCoach.hintCta",
       "aiCoach.brainstormCta",
       "aiCoach.sentenceCheckCta",
-      "writingWorkspace.revise",
+      "aiCoach.revisionHelpCta",
     ]);
     expect(viewModel.coachActions.every((action) => action.target.kind === "write")).toBe(true);
   });

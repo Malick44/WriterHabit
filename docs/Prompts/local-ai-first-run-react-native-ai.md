@@ -8,7 +8,7 @@ Repository context:
 - For memory-sensitive work, use the mobile memory guard guidance at skills/mobile-memory-guard/SKILL.md.
 - For deployment classification, use skills/expo-ota-vs-rebuild/SKILL.md. This feature is native-build work, not OTA-only.
 - Follow the feature-based architecture in docs/01_FEATURE_BASED_ARCHITECTURE.md and the module template in docs/11_FEATURE_MODULE_TEMPLATE.md: route files stay thin and re-export feature screens; screens consume hooks only; native/provider logic stays in services.
-- The AI coach already lives at apps/mobile/src/features/ai-coach/ (api/aicoachApi.ts, hooks/useAiCoach.ts, prompts/, types.ts). Local AI must plug into the existing coach contracts (AiCoachContext / AiCoachResponse), not bypass them.
+- The AI coach already lives at apps/mobile/src/features/ai-coach/ (api/aiCoachApi.ts, hooks/useAiCoach.ts, services/, prompts/, types.ts). Local AI must plug into the existing coach contracts (AiCoachContext / AiCoachResponse), not bypass them.
 
 NON-NEGOTIABLE child-safety guardrails (read first):
 - Server-side moderation and academic-integrity checks are mandatory for every coaching response shown to a student (docs/06, docs/10). On-device generation must NOT be used to skip input/output moderation.

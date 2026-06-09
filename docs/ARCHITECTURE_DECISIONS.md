@@ -125,7 +125,7 @@ Current evidence:
 
 - `apps/mobile/package.json` includes `jest-expo`, `@types/jest`, and `react-test-renderer`.
 - `apps/mobile/jest.config.js` runs `apps/mobile/src/**/*.test.ts` and `apps/mobile/src/**/*.test.tsx`.
-- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, and accessibility settings helpers.
+- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home view-model decisions, assignment status transitions, writing draft persistence, writing metrics, canvas persistence/stroke behavior, and AI coach policy/context/prompt/mock API behavior.
 
 Recommended first tests:
 
@@ -349,8 +349,8 @@ Consequences:
 - Route file `apps/mobile/app/(student)/write/[assignmentId].tsx` remains a thin feature export.
 - Draft state is explicit: restoring, unsaved, saving, saved, failed, empty, offline cached, and submitted-for-review paths are visible in the feature UI.
 - Drafts are device-local until backend draft contracts are implemented. They are validated with Zod and capped before persistence.
-- AI coach entry points are limited to hint, brainstorming, sentence check, and revision help; the workspace does not offer assignment-completion CTAs.
-- Full AI coach drawer behavior, canvas editing, backend submission, and feedback summary remain separate feature prompts.
+- AI coach entry points are limited to approved learning actions: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
+- Backend submission and feedback summary remain separate feature prompts.
 
 ## ADR-018: Canvas Uses a Local Stroke Adapter Until a Drawing Engine Is Chosen
 
@@ -393,6 +393,35 @@ Consequences:
 - Current sync states are local/device states. Backend sync, preview image generation, file export, object storage, and handwriting recognition remain future work.
 - The typed writing workspace reads attached canvas summaries through the canvas feature API, so an attached page can appear without importing canvas screen internals.
 
+## ADR-019: AI Coach Uses a Local Policy-Safe Service Boundary
+
+Status: accepted
+
+The AI coach feature is owned by `apps/mobile/src/features/ai-coach/`. The
+current implementation uses a deterministic local mock API instead of a backend
+AI call. It validates AI context and responses with Zod, keeps request context
+bounded, blocks assignment-completion intent through a feature-owned policy
+service, and renders the coach drawer from the typed writing workspace.
+
+Current evidence:
+
+- Drawer: `apps/mobile/src/features/ai-coach/components/AiCoachDrawer.tsx`
+- Hook: `apps/mobile/src/features/ai-coach/hooks/useAiCoach.ts`
+- API facade: `apps/mobile/src/features/ai-coach/api/aiCoachApi.ts`
+- Bounded context builder: `apps/mobile/src/features/ai-coach/services/aiCoachContextService.ts`
+- Policy guard: `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts`
+- Grade-aware prompt builder: `apps/mobile/src/features/ai-coach/prompts/coachPrompt.ts`
+- Tests: `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.test.ts`
+- Workspace bridge: `apps/mobile/src/features/writing-workspace/components/CoachEntryPanel.tsx`
+
+Consequences:
+
+- The coach supports idle, loading, empty, error, offline, safety-blocked, and success states without route-file logic.
+- Visible actions remain approved learning actions only: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
+- Coach requests carry assignment metadata, grade level, skill focus, rubric criteria, writing metrics, optional canvas summary, and a bounded draft excerpt rather than the full draft.
+- TanStack Query mutation state uses a short garbage-collection window for coach responses; full drafts and canvas documents remain owned by their source features.
+- Backend AI calls, usage limits, audit-safe metadata logging, and feedback review generation remain future work.
+
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 
 Status: proposed
@@ -425,7 +454,9 @@ WriteWise AI is a learning app. AI features must help students think, plan, revi
 
 Current evidence:
 
-- `apps/mobile/src/features/ai-coach/prompts/reviewPrompt.ts` instructs the model not to rewrite the full assignment or provide a final polished answer.
+- `apps/mobile/src/features/ai-coach/prompts/coachPrompt.ts` and `apps/mobile/src/features/ai-coach/prompts/reviewPrompt.ts` instruct the model boundary to coach instead of producing a finished response.
+- `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts` blocks assignment-completion intent before response generation and validates output before display.
+- `apps/mobile/src/features/ai-coach/components/AiCoachDrawer.tsx` renders only approved coaching actions.
 
 Consequences:
 

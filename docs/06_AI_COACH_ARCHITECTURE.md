@@ -34,18 +34,26 @@ It should help students think, plan, revise, and improve. It should not complete
 
 ```txt
 features/ai-coach/
+  api/
+    aiCoachApi.ts
+  components/
+    AiCoachDrawer.tsx
+  hooks/
+    useAiCoach.ts
   services/
-    aiCoachService.ts
-    aiSafetyService.ts
-    gradeLevelAdapter.ts
-    academicIntegrityService.ts
+    aiCoachContextService.ts
+    aiCoachPolicyService.ts
   prompts/
-    hintPrompt.ts
-    brainstormPrompt.ts
-    grammarPrompt.ts
+    coachPrompt.ts
     reviewPrompt.ts
-    revisionPrompt.ts
+  types.ts
 ```
+
+Current implementation is a deterministic local mock boundary. It does not call a
+backend AI service or include model credentials. The mock facade is intentionally
+shaped like the future service boundary: build bounded context, validate policy,
+build a grade-aware prompt, validate output, and return a structured coaching
+packet.
 
 ## Grade-Level Tone
 
@@ -88,25 +96,53 @@ Every AI request must include:
 interface AiCoachContext {
   studentId: string;
   gradeLevel: number;
-  writingLevel: string;
+  writingLevel: "early_elementary" | "upper_elementary" | "middle" | "high";
+  assignmentId: string;
+  assignmentTitle: string;
   assignmentType: string;
   skillFocus: string[];
   assignmentPrompt: string;
-  studentText?: string;
-  canvasText?: string;
-  rubric?: unknown;
+  draftExcerpt: string;
+  canvasContext?: {
+    canvasId: string;
+    pageCount: number;
+    recognizedTextExcerpt?: string;
+    title: string;
+    updatedLabel?: string;
+  } | null;
+  rubric: Array<{
+    description: string;
+    id: string;
+    label: string;
+  }>;
+  metrics: {
+    paragraphCount: number;
+    sentenceCount: number;
+    wordCount: number;
+  };
   requestedAction: AiCoachAction;
+  studentRequest?: string;
+  connectionStatus: "online" | "offline_cached";
 }
 ```
+
+`draftExcerpt`, `canvasContext.recognizedTextExcerpt`, and `studentRequest` are
+bounded before validation so the coach does not retain full drafts, full canvas
+documents, or large freeform payloads.
 
 ## Response Contract
 
 ```ts
 interface AiCoachResponse {
-  message: string;
-  suggestedNextAction?: string;
+  action: AiCoachAction;
+  state: "success" | "empty" | "safety_blocked";
+  strength?: string;
+  improvement?: string;
+  nextStep?: string;
+  guidingQuestion?: string;
   safetyFlags: string[];
   learningMode: true;
+  generatedAt: string;
 }
 ```
 
@@ -137,12 +173,30 @@ AI request flow:
 User action
   -> Build AI context
   -> Validate academic-integrity policy
-  -> Moderate input
-  -> Run grade-level prompt
-  -> Moderate output
+  -> Build grade-level prompt
+  -> Run deterministic mock response or future backend AI call
+  -> Validate output policy
   -> Return coach response
-  -> Log safe metadata only
 ```
+
+Current explicit UI states:
+
+- idle/empty choice state
+- loading
+- empty result when a draft-dependent action has no student text
+- error with retry
+- offline with recovery to choices
+- safety-blocked with recovery to approved actions
+- success with one strength, one improvement, one next step, and one question
+
+Current mock scenarios can be selected with
+`EXPO_PUBLIC_WRITEWISE_AI_COACH_SCENARIO`:
+
+- `success`
+- `empty`
+- `error`
+- `offline`
+- `safety_blocked`
 
 ## AI Usage Cost Controls
 

@@ -88,8 +88,8 @@ function buildCoachActions(dashboard: StudentHomeApiResponse): StudentHomeCoachA
     },
     {
       accessibilityLabelKey: "studentHome.coach.reviseAccessibility",
-      id: "revise",
-      labelKey: "writingWorkspace.revise",
+      id: "revision_help",
+      labelKey: "aiCoach.revisionHelpCta",
       target,
     },
   ];

@@ -75,4 +75,4 @@ This file maps current mobile route files to their owning feature modules. It sh
 
 | Screen | Route | Feature |
 |---|---|---|
-| AI coach drawer | embedded in future writing screens | ai-coach |
+| AI coach drawer | embedded in `apps/mobile/src/features/writing-workspace/components/CoachEntryPanel.tsx` | ai-coach |

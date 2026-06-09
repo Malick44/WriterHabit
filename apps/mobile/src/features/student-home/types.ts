@@ -142,7 +142,7 @@ export type StudentHomeNavigationTarget =
   | { kind: "review"; submissionId: string }
   | { kind: "write"; assignmentId: string };
 
-export type StudentHomeCoachActionId = "hint" | "brainstorm" | "sentence_check" | "revise";
+export type StudentHomeCoachActionId = "hint" | "brainstorm" | "sentence_check" | "revision_help";
 
 export interface StudentHomeCoachAction {
   id: StudentHomeCoachActionId;

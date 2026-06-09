@@ -78,6 +78,15 @@ POST   /canvas-documents/:canvasDocumentId/recognize-text
 
 ## AI Coach
 
+These are planned backend API contracts. The current mobile AI coach feature
+uses a deterministic local mock facade in
+`apps/mobile/src/features/ai-coach/api/aiCoachApi.ts`. Requests are built by
+`apps/mobile/src/features/ai-coach/services/aiCoachContextService.ts`, validated
+with Zod, guarded by
+`apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts`, and
+rendered through the workspace coach drawer. No model keys, service-role keys,
+or backend AI calls are present in the mobile app.
+
 ```txt
 POST /ai/coach/hint
 POST /ai/coach/brainstorm

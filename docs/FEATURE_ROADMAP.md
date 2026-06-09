@@ -121,7 +121,7 @@ Work:
 - Maintain the implemented student dashboard in `apps/mobile/src/features/student-home/`.
 - Keep dashboard data in a feature-owned, Zod-validated mock API until backend contracts exist.
 - Preserve dashboard loading, empty, error, offline cached, and success states.
-- Keep dashboard AI coach entry points limited to hints, brainstorming, sentence checks, and revision help.
+- Keep dashboard AI coach entry points limited to approved learning-oriented actions.
 - Maintain assignment history, detail, and submission confirmation screens in `apps/mobile/src/features/assignments/`.
 - Maintain feature-owned assignment status contracts and status transition tests.
 - Keep assignment loading, empty, error, offline cached, and success states explicit.
@@ -149,13 +149,13 @@ Work:
 - Maintain feature-owned local draft autosave and recovery states.
 - Add outline builder.
 - Maintain rubric checklist and attached canvas preview panels.
-- Maintain approved AI coach entry points only.
+- Maintain the embedded policy-safe AI coach drawer with approved actions only.
 - Validate draft persistence data with Zod and focused tests.
 
 Risks:
 
 - Drafts are currently local-device only; backend draft persistence contracts are not implemented.
-- AI coach UI must continue to avoid forbidden CTAs.
+- AI coach UI and mock responses must continue to avoid assignment-completion CTAs or outputs.
 - Submit currently routes to review loading; full feedback generation remains future work.
 
 ## Phase 5: Canvas
@@ -190,17 +190,17 @@ Primary features:
 
 Work:
 
-- Implement AI coach drawer.
+- Maintain the implemented AI coach drawer, bounded context builder, policy service, grade-aware prompt builder, and deterministic mock API.
 - Implement review loading.
 - Implement feedback summary.
 - Implement revision task.
 - Implement completion celebration.
 - Add Zod validation for AI review results.
-- Add safety tests for prompt and action guardrails.
+- Keep safety tests for prompt and action guardrails.
 
 Risks:
 
-- Prompt builder exists, but full service boundary and safety validation do not.
+- AI coach currently uses deterministic local mock responses; backend AI service calls, usage limits, and audit-safe metadata logging remain future work.
 - AI feedback must not rewrite student assignments.
 
 ## Phase 7: Progress
@@ -279,4 +279,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/13_ai_coach_feature.md` next. Canvas and typed writing now provide student-owned work surfaces; the next gap is the safe AI coach drawer/service boundary.
+Use `prompts/14_ai_review_feedback_revision.md` next. The safe AI coach drawer/service boundary now exists; the next gap is structured feedback review, revision tasks, and completion after submission.

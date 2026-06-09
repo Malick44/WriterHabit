@@ -51,7 +51,7 @@ export function getWritingWorkspaceGradeAdaptation(gradeLevel: number): WritingW
         editorMinHeight: 220,
         showDetailedRubric: false,
         showOutlineSupport: false,
-        visibleCoachActionCount: 2,
+        visibleCoachActionCount: 3,
       };
     case "high":
       return {
@@ -59,7 +59,7 @@ export function getWritingWorkspaceGradeAdaptation(gradeLevel: number): WritingW
         editorMinHeight: 360,
         showDetailedRubric: true,
         showOutlineSupport: true,
-        visibleCoachActionCount: 4,
+        visibleCoachActionCount: 7,
       };
     case "middle":
       return {
@@ -67,7 +67,7 @@ export function getWritingWorkspaceGradeAdaptation(gradeLevel: number): WritingW
         editorMinHeight: 300,
         showDetailedRubric: true,
         showOutlineSupport: true,
-        visibleCoachActionCount: 3,
+        visibleCoachActionCount: 5,
       };
   }
 }

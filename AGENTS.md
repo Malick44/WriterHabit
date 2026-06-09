@@ -18,7 +18,7 @@ After that, read the task-specific implementation prompt, screen prompt, project
 ## Current Status
 
 - Primary app: `apps/mobile/` (Expo SDK 56, React Native, Expo Router, TypeScript strict).
-- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, and canvas feature exist; full AI coach, full feedback review, progress, parent, and teacher screens are still placeholders or partial scaffolds.
+- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, and policy-safe AI coach feature exist; full feedback review, progress, parent, and teacher screens are still placeholders or partial scaffolds.
 - Prompt 02 audit/planning is complete.
 - Prompt 04 design system/shared UI is complete.
 - Prompt 05 navigation/role routing is complete.
@@ -29,8 +29,9 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 10 assignment feature is complete.
 - Prompt 11 typed writing workspace is complete.
 - Prompt 12 canvas feature is complete.
-- Next recommended prompt: `prompts/13_ai_coach_feature.md`.
-- Git is initialized on branch `main`; no initial commit has been created yet.
+- Prompt 13 AI coach feature is complete.
+- Next recommended prompt: `prompts/14_ai_review_feedback_revision.md`.
+- Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
 - Supabase is connected for local development:
@@ -227,7 +228,7 @@ Prompt order is maintained in:
 Current next prompt:
 
 ```txt
-prompts/13_ai_coach_feature.md
+prompts/14_ai_review_feedback_revision.md
 ```
 
 Screen design prompt workflow:

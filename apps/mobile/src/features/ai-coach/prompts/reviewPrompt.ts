@@ -1,28 +1,47 @@
+import { buildAiCoachPrompt } from "./coachPrompt";
+import {
+  MAX_AI_COACH_DRAFT_EXCERPT_LENGTH,
+  aiCoachContextSchema,
+  type AiCoachContext,
+} from "../types";
+
 interface BuildReviewPromptParams {
-  gradeLevel: number;
   assignmentPrompt: string;
+  gradeLevel: number;
+  skillFocus: AiCoachContext["skillFocus"];
   studentText: string;
-  skillFocus: string[];
 }
 
 export function buildReviewPrompt(params: BuildReviewPromptParams) {
-  return `
-You are a writing coach for a Grade ${params.gradeLevel} student.
+  const skillFocus: AiCoachContext["skillFocus"] = params.skillFocus.length > 0 ? params.skillFocus : ["clarity"];
+  const context = aiCoachContextSchema.parse({
+    assignmentId: "review-context",
+    assignmentPrompt: params.assignmentPrompt,
+    assignmentTitle: "Writing review",
+    assignmentType: params.gradeLevel <= 5 ? "sentence_practice" : params.gradeLevel <= 8 ? "paragraph_writing" : "essay_writing",
+    canvasContext: null,
+    connectionStatus: "online",
+    draftExcerpt: params.studentText.slice(0, MAX_AI_COACH_DRAFT_EXCERPT_LENGTH),
+    gradeLevel: params.gradeLevel,
+    metrics: {
+      paragraphCount: params.studentText.trim() ? params.studentText.trim().split(/\n{2,}/).length : 0,
+      sentenceCount: params.studentText.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.length ?? 0,
+      wordCount: params.studentText.match(/[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*/g)?.length ?? 0,
+    },
+    requestedAction: "revision_help",
+    rubric: [],
+    skillFocus,
+    studentId: "review-student",
+    writingLevel:
+      params.gradeLevel <= 2
+        ? "early_elementary"
+        : params.gradeLevel <= 5
+          ? "upper_elementary"
+          : params.gradeLevel <= 8
+            ? "middle"
+            : "high",
+  });
+  const prompt = buildAiCoachPrompt(context);
 
-Assignment prompt:
-${params.assignmentPrompt}
-
-Skill focus:
-${params.skillFocus.join(", ")}
-
-Student writing:
-${params.studentText}
-
-Rules:
-- Do not rewrite the full assignment.
-- Do not provide a final polished answer.
-- Give supportive, age-appropriate feedback.
-- Give one strength, one improvement, and one revision task.
-- Keep feedback focused and actionable.
-`;
+  return [prompt.system, prompt.user].join("\n\n");
 }

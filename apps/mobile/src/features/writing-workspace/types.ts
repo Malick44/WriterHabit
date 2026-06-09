@@ -1,7 +1,12 @@
 import { z } from "zod";
+import type { GradeLevel } from "@writewise/shared";
 
 import type { GradeBand } from "@/design/tokens";
 import { assignmentRecordSchema, type AssignmentRecord } from "@/features/assignments/types";
+
+const gradeLevelSchema = z.custom<GradeLevel>(
+  (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 12,
+);
 
 export const MAX_DRAFT_TEXT_LENGTH = 20_000;
 
@@ -33,7 +38,7 @@ export const writingWorkspaceResponseSchema = z.object({
   connectionStatus: z.enum(["online", "offline_cached"]),
   draft: writingDraftSchema.nullable(),
   generatedAt: z.string().datetime(),
-  gradeLevel: z.number().int().min(1).max(12),
+  gradeLevel: gradeLevelSchema,
   studentId: z.string().min(1),
 });
 
@@ -48,6 +53,7 @@ export type WritingDraft = z.infer<typeof writingDraftSchema>;
 export type WritingWorkspaceResponse = z.infer<typeof writingWorkspaceResponseSchema> & {
   assignment: AssignmentRecord | null;
   draft: WritingDraft | null;
+  gradeLevel: GradeLevel;
 };
 export type WritingSubmissionResponse = z.infer<typeof writingSubmissionResponseSchema>;
 

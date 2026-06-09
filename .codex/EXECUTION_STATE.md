@@ -14,9 +14,10 @@ Last updated: 2026-06-09
 - Prompt 10 assignment feature is complete.
 - Prompt 11 typed writing workspace is complete.
 - Prompt 12 canvas feature is complete.
+- Prompt 13 AI coach feature is complete.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
-- Git is initialized on branch `main`; no initial commit has been created yet.
+- Git is initialized on branch `main`; implementation commits exist.
 - Expo mobile app lives at `apps/mobile/`.
 - Supabase mobile client is configured with public Expo env variables.
 - Supabase local admin CLI is configured for development-only use.
@@ -241,17 +242,44 @@ Last updated: 2026-06-09
   - `docs/FEATURE_ROADMAP.md`
   - `docs/IMPLEMENTATION_PLAN.md`
   - `docs/08_IMPLEMENTATION_PLAN.md`
+- Added policy-safe AI coach feature:
+  - `apps/mobile/src/features/ai-coach/components/AiCoachDrawer.tsx`
+  - `apps/mobile/src/features/ai-coach/hooks/useAiCoach.ts`
+  - `apps/mobile/src/features/ai-coach/api/aiCoachApi.ts`
+  - `apps/mobile/src/features/ai-coach/services/aiCoachContextService.ts`
+  - `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts`
+  - `apps/mobile/src/features/ai-coach/prompts/coachPrompt.ts`
+  - `apps/mobile/src/features/ai-coach/prompts/reviewPrompt.ts`
+  - `apps/mobile/src/features/ai-coach/types.ts`
+- Connected typed writing workspace coach panel to the AI coach drawer:
+  - `apps/mobile/src/features/writing-workspace/components/CoachEntryPanel.tsx`
+  - `apps/mobile/src/features/writing-workspace/screens/WritingWorkspaceScreen.tsx`
+  - `apps/mobile/src/features/writing-workspace/hooks/useWritingWorkspace.ts`
+  - `apps/mobile/src/features/writing-workspace/services/writingMetricsService.ts`
+- Added AI coach safety tests:
+  - `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.test.ts`
+- Updated AI coach localization:
+  - `apps/mobile/src/shared/i18n/en.ts`
+- Updated AI coach documentation and handoff notes:
+  - `AGENTS.md`
+  - `docs/02_SCREEN_TO_FEATURE_MAP.md`
+  - `docs/05_API_CONTRACT.md`
+  - `docs/06_AI_COACH_ARCHITECTURE.md`
+  - `docs/ARCHITECTURE_DECISIONS.md`
+  - `docs/FEATURE_ROADMAP.md`
+  - `docs/IMPLEMENTATION_PLAN.md`
+  - `docs/08_IMPLEMENTATION_PLAN.md`
 
 ## Next Recommended Prompt
 
 Use:
 
-`prompts/13_ai_coach_feature.md`
+`prompts/14_ai_review_feedback_revision.md`
 
 Reason:
 
-- Typed writing and canvas now provide local student-owned work surfaces.
-- The next major product gap is the safe AI coach drawer/service boundary for hints, brainstorming, sentence checks, and revision help.
+- The safe AI coach drawer/service boundary now supports hints, brainstorming, questions, sentence checks, explanations, revision help, and word-choice coaching.
+- The next major product gap is structured AI review feedback, revision tasks, and completion celebration after writing submission.
 
 ## Validation Status
 
@@ -354,7 +382,17 @@ Prompt 12 validation:
 
 Result: all passed on 2026-06-09. The first doctor attempt failed in the sandbox because npm registry DNS was blocked; rerunning with approved network access passed 21/21 Expo Doctor checks.
 
-Test status: Jest is configured with the Expo preset and has smoke coverage for progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home dashboard view-model decisions, assignment status transitions/history filters, writing draft persistence, writing metrics/grade adaptation, canvas stroke document behavior, and canvas local persistence.
+Prompt 13 validation:
+
+```bash
+./script/build_and_run.sh --typecheck
+./script/build_and_run.sh --test
+./script/build_and_run.sh --doctor
+```
+
+Result: all passed on 2026-06-09. The first doctor attempt failed in the sandbox because npm registry DNS was blocked; rerunning with approved network access passed 21/21 Expo Doctor checks.
+
+Test status: Jest is configured with the Expo preset and has smoke coverage for progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home dashboard view-model decisions, assignment status transitions/history filters, writing draft persistence, writing metrics/grade adaptation, canvas stroke document behavior, canvas local persistence, and AI coach policy/context/prompt/mock API behavior.
 
 ## Architecture Notes
 
@@ -377,6 +415,8 @@ Test status: Jest is configured with the Expo preset and has smoke coverage for 
 - Student writing submission currently validates non-empty student text and routes to AI review loading. Full AI review and feedback summary remain future work.
 - Canvas home, template picker, handwriting/drawing adapter, toolbar, local autosave, attachment, bounded undo/redo, and canvas persistence live in `apps/mobile/src/features/canvas/`.
 - Current canvas documents are device-local, non-secret stroke documents persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and bounded to 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots. Backend canvas sync, preview image export, object storage, and handwriting recognition remain future work.
+- AI coach drawer, action state, bounded context builder, grade-aware prompt builder, policy service, deterministic mock API, and safety tests live in `apps/mobile/src/features/ai-coach/`.
+- Current AI coach responses are local deterministic mock coaching packets validated with Zod. They support explicit idle, loading, empty, error, offline, safety-blocked, and success states. Backend AI calls, usage limits, and metadata logging remain future work.
 - Current onboarding completion writes public Supabase auth metadata keys only; dedicated student profile tables/API persistence are future backend work.
 - Canonical localization lives in `apps/mobile/src/shared/i18n/`.
 - Accessibility helpers live in `apps/mobile/src/shared/utils/accessibility.ts`.

@@ -47,7 +47,7 @@ Follow prompts/15_progress_tracking_and_badges.md.
 Follow prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/20_backend_api_contract.md.
+Next unfinished MVP prompt: prompts/21_database_schema_and_migrations.md.
 ```
 
 ## 6. Production Readiness

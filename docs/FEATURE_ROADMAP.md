@@ -297,4 +297,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/20_backend_api_contract.md` next. The mobile subscription flow now uses deterministic local entitlement mocks; the next gap is defining backend API contracts for durable persistence, authorization, and future store entitlement sync.
+Use `prompts/21_database_schema_and_migrations.md` next. The backend API contract and framework-neutral feature boundary scaffold now exist; the next gap is PostgreSQL schema, relationships, migration drafts, indexes, and privacy-aware access patterns.

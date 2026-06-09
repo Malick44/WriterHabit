@@ -564,13 +564,17 @@ Consequences:
 
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 
-Status: proposed
+Status: accepted
 
-`services/api/README.md` lists backend responsibilities but does not choose NestJS, Spring Boot, or another framework.
+`services/api/docs/` now defines the planned backend API contract, error
+catalog, and authorization rules. `services/api/src/features/` contains
+framework-neutral feature boundary stubs. The backend still does not choose
+NestJS, Spring Boot, or another runtime framework.
 
-Decision needed:
+Decision needed before implementation:
 
-- Choose backend framework and database migration tooling before implementing API contracts.
+- Choose backend framework and database migration tooling before implementing
+  runtime handlers, persistence, and deployment.
 
 Backend responsibilities currently documented:
 
@@ -585,6 +589,12 @@ Backend responsibilities currently documented:
 - Parent and teacher reporting.
 - Subscription entitlement sync. The mobile app currently uses local deterministic subscription mocks in `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts`.
 - Notifications and weekly reports.
+
+Canonical planned backend docs:
+
+- `services/api/docs/API_CONTRACT.md`
+- `services/api/docs/ERROR_CODES.md`
+- `services/api/docs/AUTHORIZATION_RULES.md`
 
 ## ADR-009: AI Coach Must Teach, Not Complete Assignments
 

@@ -18,7 +18,7 @@ After that, read the task-specific implementation prompt, screen prompt, project
 ## Current Status
 
 - Primary app: `apps/mobile/` (Expo SDK 56, React Native, Expo Router, TypeScript strict).
-- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, teacher experience, and local subscription/paywall entitlement flow exist.
+- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, teacher experience, local subscription/paywall entitlement flow, and backend API contract/service-boundary scaffold exist.
 - Prompt 02 audit/planning is complete.
 - Prompt 04 design system/shared UI is complete.
 - Prompt 05 navigation/role routing is complete.
@@ -36,7 +36,8 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 17 parent experience is complete.
 - Prompt 18 teacher experience is complete.
 - Prompt 19 subscription and paywall flow is complete.
-- Next recommended prompt: `prompts/20_backend_api_contract.md`.
+- Prompt 20 backend API contract is complete.
+- Next recommended prompt: `prompts/21_database_schema_and_migrations.md`.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -55,7 +56,7 @@ writewise/
   packages/
     shared/                         Shared TypeScript contracts
   services/
-    api/                            Backend notes; framework not selected yet
+    api/                            Backend API contract docs and framework-neutral feature stubs
   docs/                             Architecture, roadmap, API, AI, canvas, security docs
   prompts/                          Implementation prompts and specialist prompts
   prompts/writewise_screen_design_prompts/
@@ -69,7 +70,7 @@ writewise/
 
 Important current facts:
 
-- `services/api/` currently only has `README.md`; do not document backend source folders as existing until they exist.
+- `services/api/` now has framework-neutral contract docs in `services/api/docs/` and feature boundary stubs in `services/api/src/features/`; no backend runtime framework, package manifest, migrations, or running API server exists yet.
 - `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@writewise/shared`.
 - No native `apps/mobile/ios/` or `apps/mobile/android/` folders should be kept unless the workflow intentionally changes from Expo CNG/prebuild.
 
@@ -246,7 +247,7 @@ Prompt order is maintained in:
 Current next prompt:
 
 ```txt
-prompts/20_backend_api_contract.md
+prompts/21_database_schema_and_migrations.md
 ```
 
 Screen design prompt workflow:

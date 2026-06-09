@@ -8,6 +8,11 @@ LOCALIZATION_ACCESSIBILITY.md
 PROMPT_INDEX.json
 QUICK_START.md
 README.md
+services/api/README.md
+services/api/docs/API_CONTRACT.md
+services/api/docs/AUTHORIZATION_RULES.md
+services/api/docs/ERROR_CODES.md
+services/api/src/features/README.md
 prompts/01_master_agent_rules.md
 prompts/02_repo_audit_and_implementation_plan.md
 prompts/03_project_scaffold_expo_router.md

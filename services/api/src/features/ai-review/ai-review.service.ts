@@ -1,10 +1,11 @@
-// Backend placeholder.
-// Responsibilities:
-// - Validate academic integrity policy
-// - Moderate student input
-// - Build grade-level AI prompt
-// - Queue or execute AI review
-// - Store structured feedback
-// - Update student progress after review completion
+export const aiReviewEndpoints = [
+  "POST /api/v1/ai/review/submissions/:submissionId",
+  "GET /api/v1/ai/review/submissions/:submissionId/status",
+  "GET /api/v1/submissions/:submissionId/feedback",
+  "POST /api/v1/submissions/:submissionId/revisions",
+] as const;
 
+export type AiReviewEndpoint = (typeof aiReviewEndpoints)[number];
+
+// Framework-neutral placeholder for review jobs, feedback, and progress updates.
 export class AiReviewService {}

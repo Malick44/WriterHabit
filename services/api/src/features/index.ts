@@ -1,0 +1,12 @@
+export { aiCoachEndpoints, allowedAiCoachActions } from "./ai-coach/ai-coach.service";
+export { aiReviewEndpoints } from "./ai-review/ai-review.service";
+export { assignmentEndpoints } from "./assignments/assignments.controller";
+export { authEndpoints } from "./auth/auth.controller";
+export { canvasEndpoints } from "./canvas/canvas.service";
+export { onboardingEndpoints } from "./onboarding/onboarding.controller";
+export { parentEndpoints } from "./parents/parents.controller";
+export { progressEndpoints } from "./progress/progress.controller";
+export { studentEndpoints } from "./students/students.controller";
+export { submissionEndpoints } from "./submissions/submissions.controller";
+export { subscriptionEndpoints } from "./subscriptions/subscriptions.controller";
+export { teacherEndpoints } from "./teachers/teachers.controller";

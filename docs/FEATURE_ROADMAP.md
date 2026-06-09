@@ -218,7 +218,29 @@ Risks:
 - Progress currently uses deterministic local mock data; backend progress persistence, aggregation, and sync remain future work.
 - Progress inputs must remain stable shared contracts for parent, teacher, and backend reporting work.
 
-## Phase 8: Parent Experience
+## Phase 8: Notifications and Daily Assignments
+
+Primary areas:
+
+- `apps/mobile/src/features/assignments/`
+- `apps/mobile/src/features/progress/`
+- `apps/mobile/src/features/profile-settings/`
+- `apps/mobile/src/core/notifications/`
+
+Work:
+
+- Maintain the implemented daily assignment selector, catalog, and mock assignment API wiring.
+- Maintain notification preference parsing and local persistence.
+- Maintain provider-free notification payload preparation for daily assignment, streak, incomplete assignment, and weekly report reminders.
+- Keep focused tests for daily assignment selection, streak continuation, notification preferences, and prepared notification payloads.
+
+Risks:
+
+- Notification preparation currently does not schedule real local notifications or push notifications.
+- Adding `expo-notifications`, permission prompts, APNs/FCM, or provider delivery will require native build and store review planning.
+- Backend persistence is still needed for cross-device preferences, device tokens, scheduling, and parent/teacher report delivery.
+
+## Phase 9: Parent Experience
 
 Primary feature:
 
@@ -233,9 +255,9 @@ Work:
 
 Risks:
 
-- Parent reporting depends on assignment and progress contracts that are not yet implemented.
+- Parent reporting depends on assignment, progress, notification, and weekly report contracts that are still local/mobile-only or backend-planned.
 
-## Phase 9: Teacher Experience
+## Phase 10: Teacher Experience
 
 Primary feature:
 
@@ -252,7 +274,7 @@ Risks:
 
 - Backend contracts and authorization model are not selected yet.
 
-## Phase 10: Subscriptions and Release Readiness
+## Phase 11: Subscriptions and Release Readiness
 
 Primary features:
 
@@ -275,4 +297,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/16_notifications_and_daily_assignment_logic.md` next. Progress tracking and badges now exist locally; the next gap is daily assignment scheduling and notification logic.
+Use `prompts/17_parent_experience.md` next. Daily assignment selection and provider-free notification preparation now exist locally; the next gap is parent reporting and visibility.

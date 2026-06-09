@@ -75,8 +75,10 @@ Each audited route file imports and exports a feature screen, which aligns with 
 The app is scaffolded but not feature-complete:
 
 - Parent, teacher, and subscription screens still include placeholder or partial surfaces.
-- Remaining placeholder APIs and hooks are concentrated in parent, teacher, subscription, notification, and backend-dependent work.
+- Remaining placeholder APIs and hooks are concentrated in parent, teacher, subscription, and backend-dependent work.
 - `apps/mobile/src/features/progress/` now includes a local progress dashboard, skill detail, badges, weekly review, streak service, badge unlock service, and focused progress tests.
+- `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts` now selects daily assignments from grade, goals, history, weak skills, daily minutes, repeat avoidance, inactivity, and gradual difficulty adjustment.
+- `apps/mobile/src/core/notifications/notificationService.ts` and `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts` now provide provider-free notification preparation and local notification preferences.
 - `apps/mobile/src/features/ai-coach/` now includes a policy-safe drawer, bounded context builder, grade-aware prompt builder, deterministic mock API, and safety tests.
 - `apps/mobile/src/features/feedback-review/` now includes a deterministic local mock review API, feedback summary, rubric score, grammar suggestion cards, one focused revision task, and completion celebration.
 - Shared UI primitives exist under `apps/mobile/src/shared/components/` for layout, buttons, cards, forms, feedback states, and progress.
@@ -260,4 +262,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/16_notifications_and_daily_assignment_logic.md`.
+Proceed to `prompts/17_parent_experience.md`.

@@ -12,6 +12,8 @@ Use for:
 - AI safety policy helpers
 - Canvas serialization
 - Date/streak logic
+- Daily assignment selection
+- Notification preference parsing and provider-free payload preparation
 
 ### Component Tests
 

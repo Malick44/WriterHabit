@@ -29,7 +29,11 @@ POST /students/:studentId/personalized-plan
 
 These are planned backend API contracts. The current mobile assignment feature
 uses deterministic mock data in
-`apps/mobile/src/features/assignments/api/assignmentsApi.ts`.
+`apps/mobile/src/features/assignments/api/assignmentsApi.ts`. The current daily
+assignment is selected through
+`apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`, which
+uses grade, goals, weak skills, history, daily minutes, repeat avoidance,
+inactivity, and gradual difficulty adjustment.
 
 ```txt
 GET  /students/:studentId/daily-assignment
@@ -137,6 +141,34 @@ completed, streak inputs, weekly minutes, words written, revisions, rubric
 improvement, AI feedback applied, handwriting time, skill progress, badges, and
 weekly review. Backend persistence and authorization for these endpoints remain
 future work.
+
+## Notifications
+
+These are planned backend/provider contracts. The current mobile implementation
+does not add `expo-notifications`, does not request notification permissions,
+does not register APNs/FCM tokens, and does not call a push provider.
+
+```txt
+GET  /students/:studentId/notification-preferences
+PUT  /students/:studentId/notification-preferences
+POST /students/:studentId/notifications/register-device
+POST /students/:studentId/notifications/unregister-device
+GET  /students/:studentId/notifications/prepared
+POST /notifications/weekly-reports
+```
+
+Current mobile implementation:
+
+- Notification preparation: `apps/mobile/src/core/notifications/notificationService.ts`
+- Local preferences: `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`
+- Daily assignment selector: `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`
+- Streak continuation inputs: `apps/mobile/src/features/progress/services/streakService.ts`
+
+Prepared notification types are `daily_assignment`, `streak`,
+`incomplete_assignment`, and `weekly_report`. Payloads contain localization keys,
+params, a local wall-clock schedule string, and route target metadata only.
+Backend scheduling, device registration, provider delivery, token storage, and
+parent/teacher weekly report generation remain future work.
 
 ## Parent
 

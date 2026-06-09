@@ -65,6 +65,12 @@ Parents should be able to:
 - Manage notifications
 - Request data deletion
 
+Current mobile notification work is provider-free. `apps/mobile/src/core/notifications/notificationService.ts`
+prepares local payload metadata only, and
+`apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`
+stores local preferences only. No device push tokens, APNs/FCM credentials, or
+push-provider identifiers exist in the mobile app.
+
 ## Data Retention
 
 Recommended:

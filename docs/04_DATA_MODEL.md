@@ -40,6 +40,26 @@ interface StudentProfile {
 
 Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion currently writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `role`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`. Dedicated student profile tables and API persistence are still future backend work.
 
+Notification preferences are currently local, validated settings owned by
+`apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`.
+They are persisted through the existing `preferencesStorage` facade and do not
+store push tokens.
+
+```ts
+interface NotificationPreferences {
+  enabled: boolean;
+  timezone: string;
+  dailyAssignment: { enabled: boolean; timeOfDay: string };
+  streak: { enabled: boolean; timeOfDay: string };
+  incompleteAssignment: { enabled: boolean; timeOfDay: string };
+  weeklyReport: {
+    enabled: boolean;
+    timeOfDay: string;
+    weekday: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+  };
+}
+```
+
 ### WritingGoal
 
 ```ts
@@ -155,6 +175,26 @@ The assignment feature currently supports history tabs, assignment detail,
 start-writing/start-canvas routes, and guarded submission confirmation. Data is
 deterministic mock data; real assignment persistence and submission APIs remain
 future backend work.
+
+Daily assignment selection now lives in
+`apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`. The
+selector chooses from a deterministic daily assignment catalog using grade,
+writing goals, weak skills, recent history, daily minutes, repeat avoidance,
+inactivity, and gradual difficulty adjustment. The mock assignment API uses this
+service for its current daily assignment.
+
+```ts
+interface DailyAssignmentSelectionResult {
+  assignment: DailyAssignmentTemplate;
+  inactivityDays: number | null;
+  matchedGoals: WritingGoal[];
+  matchedWeakSkills: WritingSkill[];
+  recentTypeCount: number;
+  reasonCodes: DailyAssignmentReasonCode[];
+  score: number;
+  targetDifficulty: "easy" | "moderate" | "challenging";
+}
+```
 
 ### StudentHomeDashboard Read Model
 
@@ -402,6 +442,42 @@ improvement. Streaks are computed by
 `apps/mobile/src/features/progress/services/streakService.ts`; badge unlocks
 are computed by
 `apps/mobile/src/features/progress/services/badgeUnlockService.ts`.
+
+Streak continuation status is also derived in
+`apps/mobile/src/features/progress/services/streakService.ts` so reminder logic
+can distinguish continued, at-risk, missed, and not-started streak states.
+
+### PreparedNotification
+
+MVP notification preparation lives in
+`apps/mobile/src/core/notifications/notificationService.ts`. It builds local,
+localization-keyed notification payloads and route targets for daily assignment,
+streak, incomplete assignment, and weekly report notifications. It does not
+request permissions, register push tokens, or call a push provider.
+
+```ts
+type NotificationType =
+  | "daily_assignment"
+  | "streak"
+  | "incomplete_assignment"
+  | "weekly_report";
+
+interface PreparedNotification {
+  id: string;
+  type: NotificationType;
+  studentId: string;
+  titleKey: TranslationKey;
+  bodyKey: TranslationKey;
+  accessibilityLabelKey: TranslationKey;
+  params: TranslationParams;
+  scheduledForLocal: string;
+  data: {
+    notificationType: NotificationType;
+    targetRoute: string;
+    targetParams: Record<string, string>;
+  };
+}
+```
 
 ### RevisionTask
 

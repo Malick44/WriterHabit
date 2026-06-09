@@ -1,4 +1,4 @@
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel, WritingGoal, WritingSkill } from "@writewise/shared";
 
 import {
   assignmentDetailResponseSchema,
@@ -12,6 +12,11 @@ import {
   type AssignmentSubmissionResponse,
 } from "../types";
 import { canSubmitAssignment, getNextStatusOnStart } from "../services/assignmentStatusService";
+import {
+  selectDailyAssignment,
+  type DailyAssignmentHistoryItem,
+  type DailyAssignmentTemplate,
+} from "../services/dailyAssignmentService";
 
 interface AssignmentRequestInput {
   gradeLevel?: GradeLevel;
@@ -32,161 +37,178 @@ function getGradeLevel(input: AssignmentRequestInput): GradeLevel {
   return input.gradeLevel ?? 7;
 }
 
-function createCurrentAssignment(gradeLevel: GradeLevel, scenario: AssignmentScenario): AssignmentRecord {
-  const status = scenario === "submitted" ? "submitted" : "in_progress";
+function getDailyAssignmentGoals(gradeLevel: GradeLevel): WritingGoal[] {
+  if (gradeLevel <= 5) {
+    return ["write_better_sentences", "creative_writing", "improve_handwriting"];
+  }
+
+  if (gradeLevel <= 8) {
+    return ["write_paragraphs", "school_assignments", "improve_grammar"];
+  }
+
+  return ["write_essays", "school_assignments", "test_prep"];
+}
+
+function getDailyAssignmentWeakSkills(gradeLevel: GradeLevel): WritingSkill[] {
+  if (gradeLevel <= 5) {
+    return ["sentence_structure", "vocabulary"];
+  }
+
+  if (gradeLevel <= 8) {
+    return ["organization", "clarity", "revision_quality"];
+  }
+
+  return ["argument_strength", "evidence_usage", "organization"];
+}
+
+function getDailyPracticeMinutes(gradeLevel: GradeLevel): number {
+  if (gradeLevel <= 5) {
+    return 10;
+  }
+
+  if (gradeLevel <= 8) {
+    return 15;
+  }
+
+  return 25;
+}
+
+function createDailyAssignmentHistory(gradeLevel: GradeLevel): DailyAssignmentHistoryItem[] {
+  if (gradeLevel <= 5) {
+    return [
+      {
+        assignmentId: "reviewed-story-detail",
+        assignmentType: "creative_writing",
+        completedAt: "2026-06-08",
+        difficulty: "easy",
+        skillFocus: ["creativity", "vocabulary"],
+      },
+      {
+        assignmentId: "submitted-handwriting-practice",
+        assignmentType: "handwriting_practice",
+        completedAt: "2026-06-07",
+        difficulty: "easy",
+        skillFocus: ["handwriting"],
+      },
+    ];
+  }
+
+  if (gradeLevel <= 8) {
+    return [
+      {
+        assignmentId: "reviewed-reading-response",
+        assignmentType: "reading_response",
+        completedAt: "2026-06-08",
+        difficulty: "moderate",
+        skillFocus: ["clarity", "organization"],
+      },
+      {
+        assignmentId: "grammar-combine-sentences",
+        assignmentType: "grammar_practice",
+        completedAt: "2026-06-07",
+        difficulty: "easy",
+        skillFocus: ["grammar", "sentence_structure"],
+      },
+    ];
+  }
+
+  return [
+    {
+      assignmentId: "reviewed-argument-response",
+      assignmentType: "reading_response",
+      completedAt: "2026-06-08",
+      difficulty: "moderate",
+      skillFocus: ["argument_strength", "evidence_usage"],
+    },
+    {
+      assignmentId: "evidence-analysis-practice",
+      assignmentType: "paragraph_writing",
+      completedAt: "2026-06-07",
+      difficulty: "moderate",
+      skillFocus: ["evidence_usage", "clarity"],
+    },
+  ];
+}
+
+function createCurrentDraft(
+  assignment: DailyAssignmentTemplate,
+  gradeLevel: GradeLevel,
+): AssignmentRecord["draft"] {
+  if (assignment.assignmentType === "handwriting_practice") {
+    return {
+      canvasPageCount: 1,
+      lastEditedLabel: "Saved 10 minutes ago",
+      preview: "Handwriting practice page saved locally.",
+      revisionNumber: 0,
+      wordCount: 5,
+    };
+  }
 
   if (gradeLevel <= 5) {
     return {
-      assignedLabel: "Today",
-      assignmentType: "sentence_practice",
-      currentSubmissionId: scenario === "submitted" ? "submission-sentence-details" : undefined,
-      difficulty: "easy",
-      draft: {
-        canvasPageCount: 0,
-        lastEditedLabel: "Saved 12 minutes ago",
-        preview: "The park is bright. I see a tall slide...",
-        revisionNumber: 0,
-        wordCount: 22,
-      },
-      dueLabel: "Today",
-      estimatedMinutes: 10,
-      gradeLevelMax: 5,
-      gradeLevelMin: 1,
-      id: "daily-sentence-details",
-      instructions: [
-        "Write your own three sentences.",
-        "Add one describing word to each sentence.",
-        "Reread your favorite sentence before you submit.",
-      ],
-      prompt: "Write three sentences about a place you know. Add one describing word to each sentence.",
-      rubric: [
-        {
-          description: "Each sentence shares a complete idea.",
-          id: "clear-sentence",
-          label: "Clear sentence",
-        },
-        {
-          description: "At least one sentence includes a describing word.",
-          id: "describing-word",
-          label: "Describing word",
-        },
-        {
-          description: "Sentences start with capital letters and end with punctuation.",
-          id: "sentence-care",
-          label: "Sentence care",
-        },
-      ],
-      rubricId: "rubric-sentence-details",
-      skillFocus: ["sentence_structure", "vocabulary"],
-      status,
-      submittedLabel: scenario === "submitted" ? "Submitted today" : undefined,
-      teacherNote: "Use your own memory of the place. A hint can help you choose details.",
-      title: "Add details to sentences",
+      canvasPageCount: 0,
+      lastEditedLabel: "Saved 12 minutes ago",
+      preview: "The park is bright. I see a tall slide...",
+      revisionNumber: 0,
+      wordCount: 22,
     };
   }
 
   if (gradeLevel <= 8) {
     return {
-      assignedLabel: "Today",
-      assignmentType: "paragraph_writing",
-      currentSubmissionId: scenario === "submitted" ? "submission-paragraph-evidence" : undefined,
-      difficulty: "moderate",
-      draft: {
-        canvasPageCount: 0,
-        lastEditedLabel: "Saved 18 minutes ago",
-        preview: "Practice matters more because people can improve with feedback...",
-        revisionNumber: 1,
-        wordCount: 96,
-      },
-      dueLabel: "Today",
-      estimatedMinutes: 15,
-      gradeLevelMax: 8,
-      gradeLevelMin: 6,
-      id: "daily-paragraph-evidence",
-      instructions: [
-        "Write your own topic sentence.",
-        "Add two details that support your reason.",
-        "Revise one sentence so the reason is clearer.",
-      ],
-      prompt: "Write a paragraph explaining whether practice or talent matters more when learning a skill.",
-      rubric: [
-        {
-          description: "The first sentence states a focused opinion.",
-          id: "topic-sentence",
-          label: "Topic sentence",
-        },
-        {
-          description: "Details explain why the opinion makes sense.",
-          id: "supporting-detail",
-          label: "Supporting detail",
-        },
-        {
-          description: "One sentence is revised for clarity before submission.",
-          id: "revision-quality",
-          label: "Revision quality",
-        },
-      ],
-      rubricId: "rubric-paragraph-evidence",
-      skillFocus: ["organization", "clarity", "revision_quality"],
-      status,
-      submittedLabel: scenario === "submitted" ? "Submitted today" : undefined,
-      teacherNote: "A coach hint can ask a question, but the paragraph should stay in your words.",
-      title: "Support a paragraph idea",
+      canvasPageCount: 0,
+      lastEditedLabel: "Saved 18 minutes ago",
+      preview: "Practice matters more because people can improve with feedback...",
+      revisionNumber: 1,
+      wordCount: 96,
     };
   }
 
   return {
+    canvasPageCount: 0,
+    lastEditedLabel: "Saved 25 minutes ago",
+    preview: "Technology affects learning most when it gives students faster feedback...",
+    revisionNumber: 2,
+    wordCount: 184,
+  };
+}
+
+function getCurrentSubmissionId(assignmentId: string): string {
+  return `submission-${assignmentId.replace(/^daily-/, "")}`;
+}
+
+function createCurrentAssignment(gradeLevel: GradeLevel, scenario: AssignmentScenario): AssignmentRecord {
+  const status = scenario === "submitted" ? "submitted" : "in_progress";
+  const selection = selectDailyAssignment({
+    dailyMinutes: getDailyPracticeMinutes(gradeLevel),
+    goals: getDailyAssignmentGoals(gradeLevel),
+    gradeLevel,
+    history: createDailyAssignmentHistory(gradeLevel),
+    referenceDate: "2026-06-09",
+    weakSkills: getDailyAssignmentWeakSkills(gradeLevel),
+  });
+  const assignment = selection.assignment;
+
+  return {
     assignedLabel: "Today",
-    assignmentType: "essay_writing",
-    currentSubmissionId: scenario === "submitted" ? "submission-essay-thesis-evidence" : undefined,
-    difficulty: "challenging",
-    draft: {
-      canvasPageCount: 0,
-      lastEditedLabel: "Saved 25 minutes ago",
-      preview: "Technology affects learning most when it gives students faster feedback...",
-      revisionNumber: 2,
-      wordCount: 184,
-    },
+    assignmentType: assignment.assignmentType,
+    currentSubmissionId: scenario === "submitted" ? getCurrentSubmissionId(assignment.id) : undefined,
+    difficulty: assignment.difficulty,
+    draft: createCurrentDraft(assignment, gradeLevel),
     dueLabel: "Today",
-    estimatedMinutes: 25,
-    gradeLevelMax: 12,
-    gradeLevelMin: 9,
-    id: "daily-essay-thesis-evidence",
-    instructions: [
-      "Draft a thesis in your own words.",
-      "Write one body paragraph with evidence.",
-      "Add analysis after the evidence.",
-      "Check the rubric before submitting.",
-    ],
-    prompt: "Draft a thesis and one evidence-based body paragraph about how technology affects learning.",
-    rubric: [
-      {
-        description: "The thesis makes a specific, arguable claim.",
-        id: "thesis",
-        label: "Thesis",
-      },
-      {
-        description: "The paragraph uses relevant evidence.",
-        id: "evidence",
-        label: "Evidence usage",
-      },
-      {
-        description: "Analysis explains why the evidence supports the claim.",
-        id: "analysis",
-        label: "Analysis",
-      },
-      {
-        description: "Revision improves clarity or reasoning before submission.",
-        id: "revision-quality",
-        label: "Revision quality",
-      },
-    ],
-    rubricId: "rubric-essay-thesis-evidence",
-    skillFocus: ["argument_strength", "evidence_usage", "organization", "revision_quality"],
+    estimatedMinutes: assignment.estimatedMinutes,
+    gradeLevelMax: assignment.gradeLevelMax,
+    gradeLevelMin: assignment.gradeLevelMin,
+    id: assignment.id,
+    instructions: assignment.instructions,
+    prompt: assignment.prompt,
+    rubric: assignment.rubric,
+    rubricId: assignment.rubricId,
+    skillFocus: assignment.skillFocus,
     status,
     submittedLabel: scenario === "submitted" ? "Submitted today" : undefined,
-    teacherNote: "Use coach questions for planning and revision choices, not a finished response.",
-    title: "Strengthen a thesis and evidence",
+    teacherNote: assignment.teacherNote,
+    title: assignment.title,
   };
 }
 

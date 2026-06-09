@@ -2,6 +2,18 @@ import type { ProgressDailyActivity, ProgressStreakSummary } from "../types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STREAK_MILESTONES = [3, 5, 7, 14, 30, 60, 100] as const;
+const DEFAULT_STREAK_REMINDER_HOUR = 17;
+
+export type StreakContinuationStatus = "at_risk" | "continued" | "missed" | "not_started";
+
+export interface StreakContinuationSummary {
+  canContinueToday: boolean;
+  currentDays: number;
+  lastPracticeDate: string | null;
+  nextMilestoneDays: number;
+  shouldSendReminder: boolean;
+  status: StreakContinuationStatus;
+}
 
 function parseDate(value: string): Date {
   const [year, month, day] = value.split("-").map(Number);
@@ -86,5 +98,61 @@ export function calculateWritingStreak(input: {
     progressValue: nextMilestoneDays > 0 ? Math.min(1, currentDays / nextMilestoneDays) : 0,
     referenceDate: input.referenceDate,
     requiresPracticeToday: !practicedToday && currentDays > 0,
+  };
+}
+
+export function getStreakContinuationSummary(input: {
+  activity: ProgressDailyActivity[];
+  currentHour?: number;
+  referenceDate: string;
+  reminderHour?: number;
+}): StreakContinuationSummary {
+  const streak = calculateWritingStreak({
+    activity: input.activity,
+    referenceDate: input.referenceDate,
+  });
+  const currentHour = input.currentHour ?? 12;
+  const reminderHour = input.reminderHour ?? DEFAULT_STREAK_REMINDER_HOUR;
+
+  if (streak.practicedToday) {
+    return {
+      canContinueToday: false,
+      currentDays: streak.currentDays,
+      lastPracticeDate: streak.lastPracticeDate,
+      nextMilestoneDays: streak.nextMilestoneDays,
+      shouldSendReminder: false,
+      status: "continued",
+    };
+  }
+
+  if (streak.requiresPracticeToday) {
+    return {
+      canContinueToday: true,
+      currentDays: streak.currentDays,
+      lastPracticeDate: streak.lastPracticeDate,
+      nextMilestoneDays: streak.nextMilestoneDays,
+      shouldSendReminder: currentHour >= reminderHour,
+      status: "at_risk",
+    };
+  }
+
+  if (streak.lastPracticeDate) {
+    return {
+      canContinueToday: false,
+      currentDays: 0,
+      lastPracticeDate: streak.lastPracticeDate,
+      nextMilestoneDays: streak.nextMilestoneDays,
+      shouldSendReminder: false,
+      status: "missed",
+    };
+  }
+
+  return {
+    canContinueToday: false,
+    currentDays: 0,
+    lastPracticeDate: null,
+    nextMilestoneDays: streak.nextMilestoneDays,
+    shouldSendReminder: false,
+    status: "not_started",
   };
 }

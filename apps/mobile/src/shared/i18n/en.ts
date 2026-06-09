@@ -34,6 +34,28 @@ export const en = {
       description: "Your changes are ready.",
     },
   },
+  notifications: {
+    dailyAssignment: {
+      accessibility: "Daily writing reminder for {{title}}.",
+      body: "{{title}} is ready for a {{minutes}} minute practice block.",
+      title: "Today's writing practice is ready",
+    },
+    incompleteAssignment: {
+      accessibility: "Incomplete writing reminder for {{title}}.",
+      body: "You can keep working on {{title}} in about {{minutes}} minutes.",
+      title: "Your draft is still open",
+    },
+    streak: {
+      accessibility: "Writing streak reminder for {{count}} days.",
+      body: "Practice today to keep your {{count}} day streak moving toward {{milestone}} days.",
+      title: "Keep your writing streak",
+    },
+    weeklyReport: {
+      accessibility: "Weekly writing report for {{weekLabel}}.",
+      body: "{{weekLabel}}: {{assignments}} assignments, {{minutes}} minutes, next focus {{focusSkill}}.",
+      title: "Weekly writing report",
+    },
+  },
   navigation: {
     loading: {
       title: "Checking your session",

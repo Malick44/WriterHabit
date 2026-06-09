@@ -479,6 +479,32 @@ Consequences:
 - Grade-band adaptation controls metric density and rubric detail for elementary, middle, and high school students.
 - Backend progress persistence, cross-device sync, parent reports, and teacher analytics remain future work.
 
+## ADR-022: Notification Preparation Is Provider-Free Until Native Push Setup
+
+Status: accepted
+
+Prompt 16 adds daily assignment selection and notification preparation without
+introducing a native push provider. This keeps the current implementation
+OTA-safe and avoids adding notification permissions before product, privacy, and
+store-submission details are finalized.
+
+Current evidence:
+
+- Daily assignment selector: `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`
+- Mock assignment API usage: `apps/mobile/src/features/assignments/api/assignmentsApi.ts`
+- Streak continuation state: `apps/mobile/src/features/progress/services/streakService.ts`
+- Notification preferences: `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`
+- Prepared notification payloads: `apps/mobile/src/core/notifications/notificationService.ts`
+- Notification localization keys: `apps/mobile/src/shared/i18n/en.ts`
+- Tests: `apps/mobile/src/features/assignments/services/dailyAssignmentService.test.ts`, `apps/mobile/src/features/progress/services/streakService.test.ts`, `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.test.ts`, and `apps/mobile/src/core/notifications/notificationService.test.ts`
+
+Consequences:
+
+- Prepared notification types are daily assignment, streak, incomplete assignment, and weekly report.
+- Payloads use localization keys and route target metadata instead of raw provider-specific messages.
+- No `expo-notifications` dependency, native permission prompt, push token registration, APNs/FCM configuration, or backend provider call exists yet.
+- Adding real local or remote push delivery later will require a new native build and likely store resubmission.
+
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 
 Status: proposed

@@ -288,6 +288,7 @@ Primary features:
 Work:
 
 - Paywall, upgrade prompt, entitlement hook/service, entitlement gate, restore placeholder, and localized trust copy are implemented locally in `apps/mobile/src/features/subscriptions/`.
+- Performance/offline polish is implemented with shared offline and retry components, skeleton loading states, bounded query cache defaults, stronger local draft/canvas recovery, retryable AI review and canvas sync states, and pagination placeholders for history-style lists.
 - Extend accessibility settings as feature screens add read-aloud and dictation affordances.
 - Complete empty, loading, error, and success states across major flows.
 - Run release QA.
@@ -299,7 +300,6 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/26_performance_offline_and_error_states.md` next. Security,
-privacy, academic-integrity, child-safety, data-retention, and audit scaffolding
-now exist; the next gap is performance, offline behavior, and cross-feature
-error-state polish.
+Use `prompts/27_final_qa_release_checklist.md` next. Performance, offline
+behavior, retry, autosave reliability, and cross-feature error-state polish now
+exist; the next gap is final QA and release-readiness verification.

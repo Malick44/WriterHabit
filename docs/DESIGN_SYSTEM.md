@@ -69,7 +69,7 @@ Current primitives include:
 - Buttons: `Button`, `PrimaryButton`
 - Cards: `Card`, `InfoCard`
 - Forms: `FormField`, `TextField`, `ChoiceCard`, `CheckboxRow`
-- Feedback: `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`, `StatusState`, `ProgressBar`
+- Feedback: `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`, `StatusState`, `OfflineBanner`, `RetryButton`, `ProgressBar`
 
 Shared components accept user-facing labels and messages as props so feature screens can source copy from `apps/mobile/src/shared/i18n/`.
 

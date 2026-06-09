@@ -79,7 +79,7 @@ export interface CanvasSyncSaveResult {
 }
 
 export interface CanvasAutosaveScheduler {
-  cancel: () => void;
+  cancel: () => CanvasDocument | null;
   flush: () => Promise<boolean>;
   schedule: (document: CanvasDocument) => void;
 }
@@ -266,7 +266,10 @@ export function createCanvasAutosaveScheduler(input: {
       timeout = null;
     }
 
+    const pendingDocument = latestDocument;
     latestDocument = null;
+
+    return pendingDocument;
   };
 
   const flush = async () => {

@@ -12,6 +12,7 @@ export interface LoadingStateProps {
   description?: string;
   accessibilityLabel?: string;
   gradeBand?: GradeBand;
+  skeletonRowCount?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
@@ -21,12 +22,15 @@ export function LoadingState({
   description,
   accessibilityLabel,
   gradeBand = "middle",
+  skeletonRowCount = 3,
   style,
   testID,
 }: LoadingStateProps) {
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
+  const skeletonWidths: Array<ViewStyle["width"]> =
+    gradeBand === "elementary" ? ["92%", "78%", "66%"] : ["88%", "72%", "56%"];
 
   return (
     <View
@@ -63,6 +67,32 @@ export function LoadingState({
           </Text>
         ) : null}
       </View>
+      {skeletonRowCount > 0 ? (
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            alignSelf: "stretch",
+            gap: spacing.sm,
+            maxWidth: 420,
+            width: "100%",
+          }}
+        >
+          {Array.from({ length: skeletonRowCount }, (_, index) => (
+            <View
+              key={`loading-skeleton-${index}`}
+              style={{
+                alignSelf: "center",
+                backgroundColor: settings.highContrast ? accessibleColors.border : colors.border.default,
+                borderRadius: 999,
+                height: gradeBand === "elementary" ? 16 : 12,
+                opacity: settings.highContrast ? 1 : 0.72,
+                width: skeletonWidths[index % skeletonWidths.length],
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }

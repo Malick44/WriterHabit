@@ -2,6 +2,7 @@ import { localJsonStorage } from "@/services/storage/localJsonStorage";
 
 import {
   MAX_DRAFT_TEXT_LENGTH,
+  writingCanvasAttachmentSchema,
   writingDraftSchema,
   type WritingCanvasAttachment,
   type WritingDraft,
@@ -11,8 +12,41 @@ function getDraftKey(studentId: string, assignmentId: string): string {
   return `writing-draft.${studentId}.${assignmentId}`;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isIsoTimestamp(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}
+
 export function normalizeDraftText(text: string): string {
   return text.length > MAX_DRAFT_TEXT_LENGTH ? text.slice(0, MAX_DRAFT_TEXT_LENGTH) : text;
+}
+
+function recoverStoredDraft(storedDraft: unknown, fallbackDraft: WritingDraft): WritingDraft | null {
+  if (!isRecord(storedDraft)) {
+    return null;
+  }
+
+  if (storedDraft.assignmentId !== fallbackDraft.assignmentId || storedDraft.studentId !== fallbackDraft.studentId) {
+    return null;
+  }
+
+  const parsedAttachment = writingCanvasAttachmentSchema.nullable().safeParse(storedDraft.canvasAttachment);
+  const recovered = writingDraftSchema.safeParse({
+    ...fallbackDraft,
+    canvasAttachment: parsedAttachment.success ? parsedAttachment.data : fallbackDraft.canvasAttachment,
+    createdAt: isIsoTimestamp(storedDraft.createdAt) ? storedDraft.createdAt : fallbackDraft.createdAt,
+    revisionNumber:
+      typeof storedDraft.revisionNumber === "number" && Number.isInteger(storedDraft.revisionNumber)
+        ? Math.max(0, storedDraft.revisionNumber)
+        : fallbackDraft.revisionNumber,
+    text: normalizeDraftText(typeof storedDraft.text === "string" ? storedDraft.text : fallbackDraft.text),
+    updatedAt: isIsoTimestamp(storedDraft.updatedAt) ? storedDraft.updatedAt : fallbackDraft.updatedAt,
+  });
+
+  return recovered.success ? recovered.data : null;
 }
 
 export function createWritingDraft(input: {
@@ -45,7 +79,7 @@ export const draftPersistenceService = {
     const parsed = writingDraftSchema.safeParse(storedDraft);
 
     if (!parsed.success) {
-      return fallbackDraft;
+      return recoverStoredDraft(storedDraft, fallbackDraft) ?? fallbackDraft;
     }
 
     return parsed.data;

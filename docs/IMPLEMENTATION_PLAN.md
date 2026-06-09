@@ -184,7 +184,7 @@ Definition of done:
 Deliverables:
 
 - Typed editor implemented in `apps/mobile/src/features/writing-workspace/`.
-- Local draft autosave, recovery, and validation.
+- Local draft autosave, recovery, validation, and same-student/same-assignment oversized text recovery.
 - Outline builder.
 - Rubric checklist.
 - AI coach drawer using approved coaching CTAs only.
@@ -207,6 +207,7 @@ Deliverables:
 - Handwriting canvas.
 - Local artifact persistence through `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`.
 - Local-first sync orchestration through `apps/mobile/src/features/canvas/services/canvasSyncService.ts`.
+- Same-student canvas reload recovery for oversized stroke documents and per-summary index filtering for malformed local index entries.
 - Backend metadata, signed upload, attach, and export placeholders under `services/api/src/features/canvas/`.
 - Assignment attachment flow.
 
@@ -232,6 +233,7 @@ Definition of done:
 - AI feedback helps students revise their own writing.
 - The service boundary validates input/output with Zod.
 - Current progress earned links to the local progress dashboard; backend progress sync remains future work.
+- AI review retry is user-visible through the loading/error screen while keeping automatic query retries disabled for review generation.
 
 ### Phase 7: Progress, Parent, Teacher, and Subscriptions
 
@@ -241,6 +243,7 @@ Deliverables:
 - Parent reports.
 - Maintain the implemented teacher dashboard, assignment creation, class progress, and submission review workflows.
 - Subscription entitlement checks and paywall.
+- Shared offline banner, retry button, skeleton loading affordances, bounded query cache defaults, and pagination placeholders for assignment/canvas/teacher history-style lists.
 
 Definition of done:
 
@@ -267,4 +270,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/26_performance_offline_and_error_states.md`.
+Proceed to `prompts/27_final_qa_release_checklist.md`.

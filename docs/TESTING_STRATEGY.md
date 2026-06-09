@@ -18,8 +18,8 @@ Feature-owned unit tests cover the main logic-heavy modules:
 
 - onboarding validation and personalized plan creation in `apps/mobile/src/features/onboarding/`
 - assignment status transitions and daily assignment selection in `apps/mobile/src/features/assignments/`
-- typed writing metrics and draft persistence in `apps/mobile/src/features/writing-workspace/`
-- canvas document normalization, persistence, and sync scaffolding in `apps/mobile/src/features/canvas/`
+- typed writing metrics, draft persistence, and draft reload recovery in `apps/mobile/src/features/writing-workspace/`
+- canvas document normalization, persistence recovery, and sync scaffolding in `apps/mobile/src/features/canvas/`
 - AI coach policy checks, context, prompts, and deterministic mock API behavior in `apps/mobile/src/features/ai-coach/`
 - feedback review, rubric progress, revision validation, and revision draft persistence in `apps/mobile/src/features/feedback-review/`
 - progress calculations, streaks, and badge unlocks in `apps/mobile/src/features/progress/`
@@ -34,6 +34,7 @@ Root integration tests in `tests/integration/` currently scaffold provider-free 
 - assignment history/detail readiness to submission
 - canvas creation, stroke persistence, and attachment
 - feedback review creation and focused revision validation
+- oversized local draft/canvas recovery through feature-owned persistence tests
 
 No test calls a real AI provider, payment provider, Supabase service-role path, or production backend.
 

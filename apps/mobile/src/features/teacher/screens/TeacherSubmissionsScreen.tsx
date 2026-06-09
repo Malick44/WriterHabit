@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { getTeacherSubmissionReviewRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { TeacherSubmissionCard } from "../components";
@@ -56,14 +56,14 @@ export function TeacherSubmissionsScreen() {
       {state.status === "success" ? (
         <Stack gap="lg">
           {state.viewModel.isOffline ? (
-            <StatusState
+            <OfflineBanner
               actionLabel={t("common.retry")}
               accessibilityLabel={t("teacher.offline.accessibility")}
               description={t("teacher.offline.description")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
               title={t("teacher.offline.title")}
-              tone="warning"
             />
           ) : null}
 
@@ -100,14 +100,31 @@ export function TeacherSubmissionsScreen() {
             title={t("teacher.submissions.reviewedTitle")}
           >
             <Stack gap="md">
-              {state.viewModel.reviewed.map((submission) => (
-                <TeacherSubmissionCard
+              {state.viewModel.reviewed.length > 0 ? (
+                state.viewModel.reviewed.map((submission) => (
+                  <TeacherSubmissionCard
+                    gradeBand={state.gradeBand}
+                    key={submission.id}
+                    onPress={() => router.push(getTeacherSubmissionReviewRoute(submission.id))}
+                    submission={submission}
+                  />
+                ))
+              ) : (
+                <StatusState
+                  accessibilityLabel={t("teacher.submissions.emptyReviewedAccessibility")}
+                  description={t("teacher.submissions.emptyReviewedDescription")}
                   gradeBand={state.gradeBand}
-                  key={submission.id}
-                  onPress={() => router.push(getTeacherSubmissionReviewRoute(submission.id))}
-                  submission={submission}
+                  title={t("teacher.submissions.emptyReviewedTitle")}
+                  tone="neutral"
                 />
-              ))}
+              )}
+              <StatusState
+                accessibilityLabel={t("teacher.submissions.paginationAccessibility")}
+                description={t("teacher.submissions.paginationDescription")}
+                gradeBand={state.gradeBand}
+                title={t("teacher.submissions.paginationTitle")}
+                tone="neutral"
+              />
             </Stack>
           </PageSection>
         </Stack>

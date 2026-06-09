@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getCanvasTemplatePickerRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState, SuccessState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { CanvasToolbar, StrokeCanvasAdapter } from "../components";
@@ -99,20 +99,21 @@ export function HandwritingCanvasScreen() {
       {state.status === "success" && state.viewModel.document ? (
         <Stack gap="lg">
           {state.viewModel.isOffline ? (
-            <StatusState
+            <OfflineBanner
               actionLabel={t("canvas.workspace.offlineAction")}
               accessibilityLabel={t("canvas.workspace.offlineAccessibility")}
               description={t("canvas.workspace.offlineDescription")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
               title={t("canvas.workspace.offlineTitle")}
-              tone="warning"
             />
           ) : null}
 
           {state.viewModel.syncStatus === "sync_failed" || saveStatus === "error" || attachStatus === "error" ? (
             <StatusState
               actionLabel={t("canvas.workspace.recoveryAction")}
+              actionLoading={saveStatus === "saving" || attachStatus === "loading"}
               accessibilityLabel={t("canvas.workspace.recoveryAccessibility")}
               description={t("canvas.workspace.recoveryDescription")}
               gradeBand={state.gradeBand}

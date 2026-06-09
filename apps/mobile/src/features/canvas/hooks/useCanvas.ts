@@ -29,7 +29,7 @@ import { useCanvasToolStore } from "../stores/canvasToolStore";
 export type CanvasHomeDataState =
   | { gradeBand: GradeBand; refetch: () => void; status: "loading" }
   | { gradeBand: GradeBand; refetch: () => void; status: "error" }
-  | { gradeBand: GradeBand; refetch: () => void; status: "empty"; viewModel: CanvasHomeViewModel }
+  | { gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void; status: "empty"; viewModel: CanvasHomeViewModel }
   | { gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void; status: "success"; viewModel: CanvasHomeViewModel };
 
 export type CanvasWorkspaceDataState =
@@ -127,7 +127,13 @@ export function useCanvasHomeData(): CanvasHomeDataState {
   }
 
   if (viewModel.isEmpty) {
-    return { gradeBand: viewModel.gradeAdaptation.band, refetch, status: "empty", viewModel };
+    return {
+      gradeBand: viewModel.gradeAdaptation.band,
+      isRefreshing: query.isFetching,
+      refetch,
+      status: "empty",
+      viewModel,
+    };
   }
 
   return {
@@ -326,11 +332,11 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
 
   useEffect(() => {
     return () => {
-      autosaveSchedulerRef.current?.cancel();
+      const pendingDocument = autosaveSchedulerRef.current?.cancel() ?? null;
 
-      const documentToSave = latestDocumentRef.current;
+      const documentToSave = pendingDocument ?? latestDocumentRef.current;
 
-      if (documentToSave && documentToSave.syncStatus === "local_only") {
+      if (documentToSave && documentToSave.syncStatus !== "saved") {
         void canvasApi.saveCanvas({ document: documentToSave, gradeLevel, studentId });
       }
     };

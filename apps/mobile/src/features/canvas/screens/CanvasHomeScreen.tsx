@@ -4,7 +4,7 @@ import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/nav
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { CanvasDocumentCard } from "../components";
@@ -46,28 +46,42 @@ export function CanvasHomeScreen() {
       ) : null}
 
       {state.status === "empty" ? (
-        <EmptyState
-          actionLabel={t("canvas.home.createCta")}
-          accessibilityLabel={t("canvas.home.emptyAccessibility")}
-          description={t("canvas.emptyDescription")}
-          gradeBand={state.gradeBand}
-          onActionPress={() => router.push(getCanvasTemplatePickerRoute())}
-          testID="canvas-home-empty"
-          title={t("canvas.emptyTitle")}
-        />
+        <Stack gap="lg">
+          {state.viewModel.isOffline ? (
+            <OfflineBanner
+              actionLabel={t("canvas.home.offlineAction")}
+              accessibilityLabel={t("canvas.home.offlineAccessibility")}
+              description={t("canvas.home.offlineDescription")}
+              gradeBand={state.gradeBand}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
+              title={t("canvas.home.offlineTitle")}
+            />
+          ) : null}
+
+          <EmptyState
+            actionLabel={t("canvas.home.createCta")}
+            accessibilityLabel={t("canvas.home.emptyAccessibility")}
+            description={t("canvas.emptyDescription")}
+            gradeBand={state.gradeBand}
+            onActionPress={() => router.push(getCanvasTemplatePickerRoute())}
+            testID="canvas-home-empty"
+            title={t("canvas.emptyTitle")}
+          />
+        </Stack>
       ) : null}
 
       {state.status === "success" ? (
         <Stack gap="lg">
           {state.viewModel.isOffline ? (
-            <StatusState
+            <OfflineBanner
               actionLabel={t("canvas.home.offlineAction")}
               accessibilityLabel={t("canvas.home.offlineAccessibility")}
               description={t("canvas.home.offlineDescription")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
               title={t("canvas.home.offlineTitle")}
-              tone="warning"
             />
           ) : null}
 
@@ -93,6 +107,13 @@ export function CanvasHomeScreen() {
                   onOpen={() => router.push(getCanvasDocumentRoute(document.id, document.assignmentId))}
                 />
               ))}
+              <StatusState
+                accessibilityLabel={t("canvas.home.paginationAccessibility")}
+                description={t("canvas.home.paginationDescription")}
+                gradeBand={state.gradeBand}
+                title={t("canvas.home.paginationTitle")}
+                tone="neutral"
+              />
             </Stack>
           </PageSection>
         </Stack>

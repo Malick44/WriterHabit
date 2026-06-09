@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getStudentReviewSummaryRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
 
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
@@ -44,6 +44,7 @@ export function AiReviewLoadingScreen() {
         {state.status === "processing" ? (
           <StatusState
             actionLabel={t("feedbackReview.loadingRetryCta")}
+            actionLoading={state.isRefreshing}
             accessibilityLabel={t("feedbackReview.processingAccessibility")}
             description={t("feedbackReview.processingDescription")}
             gradeBand={state.gradeBand}
@@ -56,6 +57,7 @@ export function AiReviewLoadingScreen() {
         {state.status === "error" ? (
           <ErrorState
             actionLabel={t("common.retry")}
+            actionLoading={state.isRefreshing}
             accessibilityLabel={t("feedbackReview.error.accessibility")}
             description={t("feedbackReview.error.description")}
             gradeBand={state.gradeBand}
@@ -92,14 +94,14 @@ export function AiReviewLoadingScreen() {
         ) : null}
 
         {state.status === "success" && state.viewModel.isOffline ? (
-          <StatusState
+          <OfflineBanner
             actionLabel={t("feedbackReview.offline.action")}
             accessibilityLabel={t("feedbackReview.offline.accessibility")}
             description={t("feedbackReview.offline.description")}
             gradeBand={state.gradeBand}
-            onActionPress={state.refetch}
+            isRetrying={state.isRefreshing}
+            onRetry={state.refetch}
             title={t("feedbackReview.offline.title")}
-            tone="warning"
           />
         ) : null}
 

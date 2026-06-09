@@ -1,13 +1,25 @@
+import { z } from "zod";
+
 import { localJsonStorage } from "@/services/storage/localJsonStorage";
 
 import {
   MAX_CANVAS_DOCUMENTS,
   canvasDocumentSchema,
   canvasDocumentSummarySchema,
+  canvasPointSchema,
+  canvasStrokeSchema,
   type CanvasDocument,
   type CanvasDocumentSummary,
 } from "../types";
 import { getCanvasDocumentSummary, normalizeCanvasDocument } from "./canvasDocumentService";
+
+const recoverableCanvasStrokeSchema = canvasStrokeSchema.extend({
+  points: z.array(canvasPointSchema),
+});
+
+const recoverableCanvasDocumentSchema = canvasDocumentSchema.extend({
+  strokes: z.array(recoverableCanvasStrokeSchema),
+});
 
 function getCanvasIndexKey(studentId: string) {
   return `canvas-index.${studentId}`;
@@ -18,14 +30,17 @@ function getCanvasDocumentKey(studentId: string, canvasId: string) {
 }
 
 async function readIndex(studentId: string): Promise<CanvasDocumentSummary[]> {
-  const storedIndex = await localJsonStorage.getItem<unknown[]>(getCanvasIndexKey(studentId), []);
-  const parsed = canvasDocumentSummarySchema.array().safeParse(storedIndex);
+  const storedIndex = await localJsonStorage.getItem<unknown>(getCanvasIndexKey(studentId), []);
 
-  if (!parsed.success) {
+  if (!Array.isArray(storedIndex)) {
     return [];
   }
 
-  return parsed.data;
+  return storedIndex.flatMap((summary) => {
+    const parsedSummary = canvasDocumentSummarySchema.safeParse(summary);
+
+    return parsedSummary.success ? [parsedSummary.data] : [];
+  });
 }
 
 async function writeIndex(studentId: string, summaries: CanvasDocumentSummary[]) {
@@ -43,7 +58,17 @@ export const canvasPersistenceService = {
     const storedDocument = await localJsonStorage.getItem<unknown>(getCanvasDocumentKey(studentId, canvasId), null);
     const parsed = canvasDocumentSchema.safeParse(storedDocument);
 
-    return parsed.success ? parsed.data : null;
+    if (parsed.success) {
+      return parsed.data;
+    }
+
+    const recoverable = recoverableCanvasDocumentSchema.safeParse(storedDocument);
+
+    if (!recoverable.success || recoverable.data.studentId !== studentId || recoverable.data.id !== canvasId) {
+      return null;
+    }
+
+    return normalizeCanvasDocument(recoverable.data);
   },
 
   async getDocuments(studentId: string): Promise<CanvasDocumentSummary[]> {

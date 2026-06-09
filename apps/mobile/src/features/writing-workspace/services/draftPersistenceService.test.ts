@@ -69,4 +69,24 @@ describe("draftPersistenceService", () => {
 
     expect(saved.text).toHaveLength(MAX_DRAFT_TEXT_LENGTH);
   });
+
+  it("recovers same-assignment oversized stored text after reload", async () => {
+    const fallback = createWritingDraft({
+      assignmentId: "assignment-4",
+      canvasAttachment: null,
+      seedText: "Fallback idea",
+      studentId: "student-1",
+      timestamp: "2026-06-08T09:00:00.000Z",
+    });
+
+    mockStore.set("writing-draft.student-1.assignment-4", {
+      ...fallback,
+      text: "b".repeat(MAX_DRAFT_TEXT_LENGTH + 25),
+    });
+
+    const restored = await draftPersistenceService.getDraft(fallback);
+
+    expect(restored.text).toHaveLength(MAX_DRAFT_TEXT_LENGTH);
+    expect(restored.text).toBe("b".repeat(MAX_DRAFT_TEXT_LENGTH));
+  });
 });

@@ -1,6 +1,5 @@
 import { Text, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { Button } from "@/shared/components/buttons/Button";
 import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
   getAccessibleColors,
@@ -10,50 +9,40 @@ import {
 
 import { RetryButton } from "./RetryButton";
 
-export type StatusTone = "neutral" | "info" | "success" | "warning" | "error";
-
-export interface StatusStateProps {
+export interface OfflineBannerProps {
   title: string;
-  description?: string;
-  tone?: StatusTone;
+  description: string;
   actionLabel?: string;
-  actionLoading?: boolean;
-  onActionPress?: () => void;
   accessibilityLabel?: string;
   gradeBand?: GradeBand;
+  isRetrying?: boolean;
+  onRetry?: () => void;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-const toneMap = {
-  neutral: colors.feedback.neutral,
-  info: colors.feedback.info,
-  success: colors.feedback.success,
-  warning: colors.feedback.warning,
-  error: colors.feedback.error,
-} as const;
-
-export function StatusState({
+export function OfflineBanner({
   title,
   description,
-  tone = "neutral",
   actionLabel,
-  actionLoading = false,
-  onActionPress,
   accessibilityLabel,
   gradeBand = "middle",
+  isRetrying = false,
+  onRetry,
   style,
   testID,
-}: StatusStateProps) {
+}: OfflineBannerProps) {
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const toneTokens = toneMap[tone];
+  const toneTokens = colors.feedback.warning;
+  const hasAction = Boolean(actionLabel && onRetry);
 
   return (
     <View
       accessibilityLabel={accessibilityLabel ?? title}
-      accessibilityRole={tone === "error" ? "alert" : "summary"}
+      accessibilityRole="summary"
+      accessibilityState={{ busy: isRetrying }}
       testID={testID}
       style={[
         {
@@ -78,35 +67,24 @@ export function StatusState({
         >
           {title}
         </Text>
-        {description ? (
-          <Text
-            selectable
-            style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.mutedText }]}
-          >
-            {description}
-          </Text>
-        ) : null}
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.body, settings),
+            { color: accessibleColors.mutedText },
+          ]}
+        >
+          {description}
+        </Text>
       </View>
-      {actionLabel && onActionPress ? (
-        tone === "error" || tone === "warning" ? (
-          <RetryButton
-            accessibilityLabel={actionLabel}
-            gradeBand={gradeBand}
-            label={actionLabel}
-            onRetry={onActionPress}
-            retrying={actionLoading}
-          />
-        ) : (
-          <Button
-            accessibilityLabel={actionLabel}
-            gradeBand={gradeBand}
-            label={actionLabel}
-            loading={actionLoading}
-            onPress={onActionPress}
-            size="sm"
-            variant="secondary"
-          />
-        )
+      {hasAction ? (
+        <RetryButton
+          accessibilityLabel={actionLabel}
+          gradeBand={gradeBand}
+          label={actionLabel ?? ""}
+          onRetry={onRetry}
+          retrying={isRetrying}
+        />
       ) : null}
     </View>
   );

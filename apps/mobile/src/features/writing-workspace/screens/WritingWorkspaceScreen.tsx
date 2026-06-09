@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { CanvasAttachmentPreview } from "../components/CanvasAttachmentPreview";
@@ -103,20 +103,21 @@ export function WritingWorkspaceScreen() {
       {state.status === "success" && state.viewModel.assignment ? (
         <Stack gap="lg">
           {state.viewModel.isOffline ? (
-            <StatusState
+            <OfflineBanner
               actionLabel={t("writingWorkspace.offline.action")}
               accessibilityLabel={t("writingWorkspace.offline.accessibility")}
               description={t("writingWorkspace.offline.description")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
               title={t("writingWorkspace.offline.title")}
-              tone="warning"
             />
           ) : null}
 
           {state.viewModel.autosaveStatus === "failed" ? (
             <StatusState
               actionLabel={t("writingWorkspace.recovery.action")}
+              actionLoading={isSavingNow}
               accessibilityLabel={t("writingWorkspace.recovery.accessibility")}
               description={t("writingWorkspace.recovery.description")}
               gradeBand={state.gradeBand}

@@ -27,7 +27,8 @@ Last updated: 2026-06-09
 - Prompt 23 canvas storage and sync is complete.
 - Prompt 24 testing strategy implementation is complete.
 - Prompt 25 security, privacy, and academic integrity is complete.
-- Next recommended prompt: `prompts/26_performance_offline_and_error_states.md`.
+- Prompt 26 performance, offline support, autosave reliability, retry, and error-state polish is complete.
+- Next recommended prompt: `prompts/27_final_qa_release_checklist.md`.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -312,17 +313,33 @@ Last updated: 2026-06-09
   - `docs/QUICK_START.md`
   - `tests/unit/auditService.test.ts`
   - `tests/unit/criticalLogic.test.ts`
+- Added Prompt 26 performance, offline, retry, and error-state polish:
+  - `apps/mobile/src/shared/components/feedback/OfflineBanner.tsx`
+  - `apps/mobile/src/shared/components/feedback/RetryButton.tsx`
+  - `apps/mobile/src/shared/components/feedback/LoadingState.tsx`
+  - `apps/mobile/src/shared/components/feedback/StatusState.tsx`
+  - `apps/mobile/src/shared/query/queryClient.ts`
+  - `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.ts`
+  - `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`
+  - `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
+  - `apps/mobile/src/features/canvas/hooks/useCanvas.ts`
+  - `apps/mobile/src/features/feedback-review/hooks/useFeedbackReview.ts`
+  - assignment, canvas, writing, feedback review, and teacher submission screens using localized offline banners, retry busy states, skeleton loading, and history pagination placeholders
+- Added Prompt 26 focused tests:
+  - `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.test.ts`
+  - `apps/mobile/src/features/canvas/services/canvasPersistenceService.test.ts`
+  - `apps/mobile/src/features/canvas/services/canvasSyncService.test.ts`
 
 ## Next Recommended Prompt
 
 Use:
 
-`prompts/26_performance_offline_and_error_states.md`
+`prompts/27_final_qa_release_checklist.md`
 
 Reason:
 
-- Security, privacy, academic-integrity, child-safety, data-retention, and audit scaffolding now exists.
-- The next major product gap is performance, offline behavior, and cross-feature error-state polish.
+- Performance, offline behavior, autosave reliability, retry, and cross-feature error-state polish now exist.
+- The next major product gap is final QA, release readiness, and checklist verification.
 
 ## Validation Status
 
@@ -435,7 +452,17 @@ Prompt 13 validation:
 
 Result: all passed on 2026-06-09. The first doctor attempt failed in the sandbox because npm registry DNS was blocked; rerunning with approved network access passed 21/21 Expo Doctor checks.
 
-Test status: Jest is configured with the Expo preset and has smoke coverage for progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home dashboard view-model decisions, assignment status transitions/history filters, writing draft persistence, writing metrics/grade adaptation, canvas stroke document behavior, canvas local persistence, and AI coach policy/context/prompt/mock API behavior.
+Prompt 26 validation:
+
+```bash
+./script/build_and_run.sh --typecheck
+./script/build_and_run.sh --test
+./script/build_and_run.sh --doctor
+```
+
+Result: all passed on 2026-06-09. Jest passed 31/31 suites and 114/114 tests; Expo Doctor passed 21/21 checks.
+
+Test status: Jest is configured with the Expo preset and has smoke coverage for progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home dashboard view-model decisions, assignment status transitions/history filters, writing draft persistence and reload recovery, writing metrics/grade adaptation, canvas stroke document behavior, canvas local persistence and reload recovery, canvas autosave scheduler behavior, and AI coach policy/context/prompt/mock API behavior.
 
 ## Architecture Notes
 
@@ -458,6 +485,7 @@ Test status: Jest is configured with the Expo preset and has smoke coverage for 
 - Student writing submission currently validates non-empty student text and routes to AI review loading. Full AI review and feedback summary remain future work.
 - Canvas home, template picker, handwriting/drawing adapter, toolbar, local autosave, attachment, bounded undo/redo, and canvas persistence live in `apps/mobile/src/features/canvas/`.
 - Current canvas documents are device-local, non-secret stroke documents persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and bounded to 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots. Backend canvas sync, preview image export, object storage, and handwriting recognition remain future work.
+- Prompt 26 adds same-student/same-assignment recovery for oversized local drafts, same-student canvas recovery for oversized stored stroke documents, per-summary canvas index filtering, shared offline/retry UI primitives, loading skeletons, bounded TanStack Query cache defaults, and history pagination placeholders. The mobile app still does not include a real network status listener dependency.
 - AI coach drawer, action state, bounded context builder, grade-aware prompt builder, policy service, deterministic mock API, and safety tests live in `apps/mobile/src/features/ai-coach/`.
 - Current AI coach responses are local deterministic mock coaching packets validated with Zod. They support explicit idle, loading, empty, error, offline, safety-blocked, and success states. Backend AI calls, usage limits, and metadata logging remain future work.
 - Current onboarding completion writes public Supabase auth metadata keys only; dedicated student profile tables/API persistence are future backend work.

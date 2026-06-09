@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { AssignmentHistoryTabs, AssignmentListCard } from "../components";
@@ -50,14 +50,14 @@ export function AssignmentHistoryScreen() {
       {state.status === "empty" || state.status === "success" ? (
         <Stack gap="lg">
           {state.viewModel.isOffline ? (
-            <StatusState
+            <OfflineBanner
               actionLabel={t("assignments.history.offlineAction")}
               accessibilityLabel={t("assignments.history.offlineAccessibility")}
               description={t("assignments.history.offlineDescription")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
+              isRetrying={state.isRefreshing}
+              onRetry={state.refetch}
               title={t("assignments.history.offlineTitle")}
-              tone="warning"
             />
           ) : null}
 
@@ -104,6 +104,13 @@ export function AssignmentHistoryScreen() {
                     onPress={() => router.push(getAssignmentDetailRoute(assignment.id))}
                   />
                 ))}
+                <StatusState
+                  accessibilityLabel={t("assignments.history.paginationAccessibility")}
+                  description={t("assignments.history.paginationDescription")}
+                  gradeBand={state.gradeBand}
+                  title={t("assignments.history.paginationTitle")}
+                  tone="neutral"
+                />
               </Stack>
             )}
           </PageSection>

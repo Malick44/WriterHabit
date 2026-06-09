@@ -99,6 +99,10 @@ apps/mobile/src/shared/components/forms/
 apps/mobile/src/shared/components/feedback/
 ```
 
+`OfflineBanner` and `RetryButton` are shared feedback primitives. Feature screens
+must still pass localized titles, descriptions, action labels, and
+accessibility labels from `apps/mobile/src/shared/i18n/en.ts`.
+
 Future shared controls should:
 
 - Set practical React Native accessibility roles.

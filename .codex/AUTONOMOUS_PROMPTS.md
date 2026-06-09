@@ -41,4 +41,4 @@ Run a smaller batch:
 
 ## Current Project Default
 
-`.codex/EXECUTION_STATE.md` currently marks Prompt 25 complete, so `--from auto` starts at Prompt 26.
+`.codex/EXECUTION_STATE.md` currently marks Prompt 26 complete, so `--from auto` starts at Prompt 27.

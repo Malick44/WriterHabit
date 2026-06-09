@@ -14,6 +14,7 @@ jest.mock("@/services/storage/localJsonStorage", () => ({
 
 import { attachCanvasToAssignment, createCanvasDocument } from "./canvasDocumentService";
 import { canvasPersistenceService } from "./canvasPersistenceService";
+import { MAX_CANVAS_POINTS_PER_STROKE, MAX_CANVAS_STROKES, type CanvasStroke } from "../types";
 
 describe("canvasPersistenceService", () => {
   beforeEach(() => {
@@ -62,5 +63,64 @@ describe("canvasPersistenceService", () => {
     mockStore.set("canvas-doc.student-1.bad-doc", { id: "bad-doc" });
 
     await expect(canvasPersistenceService.getDocument("student-1", "bad-doc")).resolves.toBeNull();
+  });
+
+  it("recovers oversized same-student stroke documents after reload", async () => {
+    const document = createCanvasDocument({
+      studentId: "student-1",
+      template: "mind_map",
+      timestamp: "2026-06-09T09:00:00.000Z",
+    });
+    const oversizedStroke: CanvasStroke = {
+      color: "#0F172A",
+      createdAt: "2026-06-09T09:00:00.000Z",
+      id: "stroke-many-points",
+      points: Array.from({ length: MAX_CANVAS_POINTS_PER_STROKE + 8 }, (_, index) => ({
+        x: index / 10,
+        y: index / 10,
+      })),
+      tool: "pen",
+      width: 4,
+    };
+
+    mockStore.set("canvas-doc.student-1.canvas-recovery", {
+      ...document,
+      id: "canvas-recovery",
+      strokes: Array.from({ length: MAX_CANVAS_STROKES + 6 }, (_, index) => ({
+        ...oversizedStroke,
+        id: `stroke-${index}`,
+      })),
+    });
+
+    const restored = await canvasPersistenceService.getDocument("student-1", "canvas-recovery");
+
+    expect(restored?.strokes).toHaveLength(MAX_CANVAS_STROKES);
+    expect(restored?.strokes[0]?.points).toHaveLength(MAX_CANVAS_POINTS_PER_STROKE);
+  });
+
+  it("keeps valid index summaries when one stored summary is malformed", async () => {
+    const document = createCanvasDocument({
+      studentId: "student-1",
+      template: "blank_page",
+      timestamp: "2026-06-09T09:00:00.000Z",
+    });
+    const saved = await canvasPersistenceService.saveDocument(document);
+
+    mockStore.set("canvas-index.student-1", [
+      { id: "bad-summary" },
+      {
+        assignmentId: saved.assignmentId,
+        id: saved.id,
+        isAttached: false,
+        strokeCount: 0,
+        syncStatus: saved.syncStatus,
+        template: saved.template,
+        title: saved.title,
+        updatedAt: saved.updatedAt,
+        updatedLabel: "Saved just now",
+      },
+    ]);
+
+    await expect(canvasPersistenceService.getDocuments("student-1")).resolves.toHaveLength(1);
   });
 });

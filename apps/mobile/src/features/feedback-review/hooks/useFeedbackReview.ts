@@ -14,9 +14,9 @@ import type {
 
 export type FeedbackReviewDataState =
   | { status: "loading"; gradeBand: GradeBand; refetch: () => void }
-  | { status: "error"; gradeBand: GradeBand; refetch: () => void }
+  | { status: "error"; gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void }
   | { status: "missing"; gradeBand: GradeBand; refetch: () => void }
-  | { status: "processing"; gradeBand: GradeBand; refetch: () => void }
+  | { status: "processing"; gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void }
   | {
       status: "success";
       completion: FeedbackRevisionCompletion | null;
@@ -104,6 +104,7 @@ export function useFeedbackReview(submissionId?: string): FeedbackReviewDataStat
   if (!submissionId || query.isError) {
     return {
       gradeBand: fallbackGradeBand,
+      isRefreshing: query.isFetching,
       refetch,
       status: "error",
     };
@@ -120,6 +121,7 @@ export function useFeedbackReview(submissionId?: string): FeedbackReviewDataStat
   if (query.data.status === "processing") {
     return {
       gradeBand: getFallbackGradeBand(query.data.gradeLevel),
+      isRefreshing: query.isFetching,
       refetch,
       status: "processing",
     };

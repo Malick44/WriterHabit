@@ -134,4 +134,27 @@ describe("canvasSyncService", () => {
     scheduler.cancel();
     jest.useRealTimers();
   });
+
+  it("returns the latest pending autosave document when cancelled", () => {
+    jest.useFakeTimers();
+    const firstDocument = createCanvasDocument({
+      studentId: "student-1",
+      template: "blank_page",
+      timestamp: "2026-06-09T09:00:00.000Z",
+    });
+    const secondDocument = {
+      ...firstDocument,
+      title: "Cancel keeps this page",
+    };
+    const save = jest.fn(async () => true);
+    const scheduler = createCanvasAutosaveScheduler({ save });
+
+    scheduler.schedule(firstDocument);
+    scheduler.schedule(secondDocument);
+
+    expect(scheduler.cancel()).toBe(secondDocument);
+    jest.advanceTimersByTime(CANVAS_AUTOSAVE_DEBOUNCE_MS);
+    expect(save).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
 });

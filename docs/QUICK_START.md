@@ -47,7 +47,7 @@ Follow prompts/15_progress_tracking_and_badges.md.
 Follow prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/26_performance_offline_and_error_states.md.
+Next unfinished MVP prompt: prompts/27_final_qa_release_checklist.md.
 ```
 
 ## 6. Production Readiness

@@ -679,3 +679,41 @@ Consequences:
   payloads, tokens, service-role values, and secrets.
 - Signed URL and rate-limit enforcement remain future backend runtime work, but
   their requirements are now documented before implementation.
+
+## ADR-027: Offline And Retry UI Is Feature-State Driven Until Network Status Is Added
+
+Status: accepted
+
+Prompt 26 improves performance, local reload safety, retry affordances, and
+offline/error states without adding a native network-status dependency.
+
+Current evidence:
+
+- Shared offline and retry primitives:
+  `apps/mobile/src/shared/components/feedback/OfflineBanner.tsx` and
+  `apps/mobile/src/shared/components/feedback/RetryButton.tsx`
+- Skeleton loading affordances:
+  `apps/mobile/src/shared/components/feedback/LoadingState.tsx`
+- Bounded TanStack Query cache defaults:
+  `apps/mobile/src/shared/query/queryClient.ts`
+- Draft reload recovery:
+  `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.ts`
+- Canvas reload recovery and malformed-index filtering:
+  `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`
+- Canvas autosave cancellation returns the latest pending local document:
+  `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
+- Offline banners and retry busy states are wired through feature screens rather
+  than route files.
+
+Consequences:
+
+- Offline visibility is driven by existing feature response states such as
+  `connectionStatus: "offline_cached"` and canvas `syncStatus`, not by a global
+  NetInfo listener.
+- Drafts and canvas documents remain device-local, non-secret data persisted
+  through `apps/mobile/src/services/storage/localJsonStorage.ts`.
+- Canvas stroke documents remain bounded to 24 documents per student, 240
+  strokes per document, 16 points per stroke, and 12 undo snapshots.
+- Assignment, canvas, and teacher submission history surfaces now expose
+  localized pagination placeholders, but real paged backend APIs remain future
+  work.

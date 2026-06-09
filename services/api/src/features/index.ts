@@ -1,4 +1,5 @@
 export * from "./ai";
+export * from "./audit";
 export { assignmentEndpoints } from "./assignments/assignments.controller";
 export { authEndpoints } from "./auth/auth.controller";
 export * from "./canvas/canvas.contracts";

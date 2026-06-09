@@ -5,37 +5,21 @@ import {
   type AiCoachResponse,
   type AiCoachSafetyFlag,
 } from "../types";
+import {
+  createAllowedAcademicIntegrityDecision,
+  evaluateAcademicIntegrityText,
+  mergeAcademicIntegrityDecisions,
+  type AcademicIntegrityRedirect,
+} from "./academicIntegrityService";
 
 export interface AiCoachPolicyResult {
   allowed: boolean;
   flags: AiCoachSafetyFlag[];
+  policyCodes: string[];
+  redirects: AcademicIntegrityRedirect[];
 }
 
 const actionNeedsStudentText = new Set(["sentence_check", "explain_mistake", "revision_help", "stronger_word"]);
-
-const blockedTermSets = [
-  ["write", "essay"],
-  ["finish"],
-  ["give", "answer"],
-  ["generate", "final", "draft"],
-  ["do", "homework"],
-  ["complete", "assignment"],
-  ["full", "rewrite"],
-];
-
-function normalize(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function containsAllTerms(value: string, terms: string[]): boolean {
-  return terms.every((term) => value.includes(term));
-}
-
-function containsCompletionIntent(value: string): boolean {
-  const normalized = normalize(value);
-
-  return blockedTermSets.some((terms) => containsAllTerms(normalized, terms));
-}
 
 function addFlag(flags: AiCoachSafetyFlag[], flag: AiCoachSafetyFlag) {
   if (!flags.includes(flag)) {
@@ -46,22 +30,41 @@ function addFlag(flags: AiCoachSafetyFlag[], flag: AiCoachSafetyFlag) {
 export function evaluateAiCoachRequest(context: AiCoachContext): AiCoachPolicyResult {
   const flags: AiCoachSafetyFlag[] = [];
   const action = aiCoachActionSchema.safeParse(context.requestedAction);
+  const integrityDecision = context.studentRequest
+    ? evaluateAcademicIntegrityText({
+        source: "student_request",
+        text: context.studentRequest,
+      })
+    : createAllowedAcademicIntegrityDecision();
 
   if (!action.success) {
     addFlag(flags, "unsupported_action");
-  }
-
-  if (context.studentRequest && containsCompletionIntent(context.studentRequest)) {
-    addFlag(flags, "assignment_completion_request");
   }
 
   if (actionNeedsStudentText.has(context.requestedAction) && context.metrics.wordCount === 0) {
     addFlag(flags, "empty_context");
   }
 
+  const merged = mergeAcademicIntegrityDecisions([
+    integrityDecision,
+    {
+      allowed: !flags.includes("unsupported_action"),
+      flags,
+      messageKey: null,
+      policyCodes: flags.includes("unsupported_action") ? ["validation.unsupported_ai_action"] : [],
+      redirects: [],
+    },
+  ]);
+
   return {
-    allowed: !flags.includes("assignment_completion_request") && !flags.includes("unsupported_action"),
-    flags,
+    allowed:
+      !merged.flags.includes("assignment_completion_request") &&
+      !merged.flags.includes("full_rewrite_request") &&
+      !merged.flags.includes("answer_request") &&
+      !merged.flags.includes("unsupported_action"),
+    flags: merged.flags,
+    policyCodes: merged.policyCodes,
+    redirects: merged.redirects,
   };
 }
 
@@ -76,13 +79,34 @@ export function evaluateAiCoachOutput(response: AiCoachResponse): AiCoachPolicyR
   ]
     .filter(Boolean)
     .join(" ");
+  const integrityDecision = evaluateAcademicIntegrityText({
+    source: "model_output",
+    text: outputText,
+  });
 
-  if (containsCompletionIntent(outputText)) {
+  if (!integrityDecision.allowed) {
     addFlag(flags, "unsafe_output");
   }
 
+  const merged = mergeAcademicIntegrityDecisions([
+    integrityDecision,
+    {
+      allowed: !flags.includes("unsafe_output"),
+      flags,
+      messageKey: null,
+      policyCodes: flags.includes("unsafe_output") ? ["ai_safety.unsafe_output"] : [],
+      redirects: integrityDecision.redirects,
+    },
+  ]);
+
   return {
-    allowed: !flags.includes("unsafe_output"),
-    flags,
+    allowed:
+      !merged.flags.includes("assignment_completion_request") &&
+      !merged.flags.includes("full_rewrite_request") &&
+      !merged.flags.includes("answer_request") &&
+      !merged.flags.includes("unsafe_output"),
+    flags: merged.flags,
+    policyCodes: merged.policyCodes,
+    redirects: merged.redirects,
   };
 }

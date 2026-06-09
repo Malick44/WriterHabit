@@ -267,4 +267,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/24_testing_strategy_implementation.md`.
+Proceed to `prompts/26_performance_offline_and_error_states.md`.

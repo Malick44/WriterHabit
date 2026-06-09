@@ -43,6 +43,7 @@ features/ai-coach/
   hooks/
     useAiCoach.ts
   services/
+    academicIntegrityService.ts
     aiCoachContextService.ts
     aiCoachPolicyService.ts
   prompts/
@@ -71,6 +72,10 @@ backend AI service or include model credentials. The mock facade is intentionall
 shaped like the future service boundary: build bounded context, validate policy,
 build a grade-aware prompt, validate output, and return a structured coaching
 packet.
+
+The mobile academic-integrity service redirects blocked completion, full-rewrite,
+and answer-seeking requests toward approved coaching actions such as hints,
+brainstorming, questions, sentence checks, and revision help.
 
 The current feedback review implementation is also a deterministic local mock
 boundary. It reads assignment mock data plus the locally saved typed draft,

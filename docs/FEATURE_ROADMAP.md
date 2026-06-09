@@ -299,4 +299,7 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/24_testing_strategy_implementation.md` next. Canvas storage and sync scaffolding now exists; the next gap is broadening the automated test strategy across implemented features.
+Use `prompts/26_performance_offline_and_error_states.md` next. Security,
+privacy, academic-integrity, child-safety, data-retention, and audit scaffolding
+now exist; the next gap is performance, offline behavior, and cross-feature
+error-state polish.

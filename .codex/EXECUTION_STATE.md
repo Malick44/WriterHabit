@@ -26,7 +26,8 @@ Last updated: 2026-06-09
 - Prompt 22 AI backend services is complete.
 - Prompt 23 canvas storage and sync is complete.
 - Prompt 24 testing strategy implementation is complete.
-- Next recommended prompt: `prompts/25_security_privacy_academic_integrity.md`.
+- Prompt 25 security, privacy, and academic integrity is complete.
+- Next recommended prompt: `prompts/26_performance_offline_and_error_states.md`.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -285,17 +286,43 @@ Last updated: 2026-06-09
   - `docs/FEATURE_ROADMAP.md`
   - `docs/IMPLEMENTATION_PLAN.md`
   - `docs/08_IMPLEMENTATION_PLAN.md`
+- Added Prompt 25 security, privacy, academic-integrity, child-safety, data-retention, and audit scaffolding:
+  - `docs/SECURITY_PRIVACY.md`
+  - `docs/ACADEMIC_INTEGRITY_POLICY.md`
+  - `docs/CHILD_SAFETY_REQUIREMENTS.md`
+  - `docs/DATA_RETENTION_POLICY.md`
+  - `apps/mobile/src/features/ai-coach/services/academicIntegrityService.ts`
+  - `services/api/src/features/audit/audit.contracts.ts`
+  - `services/api/src/features/audit/audit.service.ts`
+  - `services/api/src/features/audit/index.ts`
+- Updated Prompt 25 supporting docs and tests:
+  - `docs/10_SECURITY_PRIVACY.md`
+  - `docs/06_AI_COACH_ARCHITECTURE.md`
+  - `docs/ARCHITECTURE_DECISIONS.md`
+  - `docs/FEATURE_ROADMAP.md`
+  - `docs/FILE_INDEX.md`
+  - `services/api/docs/AUTHORIZATION_RULES.md`
+  - `services/api/src/features/README.md`
+  - `services/api/src/features/index.ts`
+  - `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts`
+  - `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.test.ts`
+  - `apps/mobile/src/features/ai-coach/types.ts`
+  - `.codex/AUTONOMOUS_PROMPTS.md`
+  - `docs/IMPLEMENTATION_PLAN.md`
+  - `docs/QUICK_START.md`
+  - `tests/unit/auditService.test.ts`
+  - `tests/unit/criticalLogic.test.ts`
 
 ## Next Recommended Prompt
 
 Use:
 
-`prompts/14_ai_review_feedback_revision.md`
+`prompts/26_performance_offline_and_error_states.md`
 
 Reason:
 
-- The safe AI coach drawer/service boundary now supports hints, brainstorming, questions, sentence checks, explanations, revision help, and word-choice coaching.
-- The next major product gap is structured AI review feedback, revision tasks, and completion celebration after writing submission.
+- Security, privacy, academic-integrity, child-safety, data-retention, and audit scaffolding now exists.
+- The next major product gap is performance, offline behavior, and cross-feature error-state polish.
 
 ## Validation Status
 

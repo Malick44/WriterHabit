@@ -70,8 +70,10 @@ export const aiCoachRequestStatusSchema = z.enum([
 export type AiCoachRequestStatus = z.infer<typeof aiCoachRequestStatusSchema>;
 
 export const aiCoachSafetyFlagSchema = z.enum([
+  "answer_request",
   "assignment_completion_request",
   "empty_context",
+  "full_rewrite_request",
   "unsafe_output",
   "unsupported_action",
 ]);

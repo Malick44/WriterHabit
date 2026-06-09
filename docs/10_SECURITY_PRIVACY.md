@@ -1,5 +1,12 @@
 # 10 — Security, Privacy, and Compliance
 
+Prompt 25 expands this summary into canonical policy documents:
+
+- `docs/SECURITY_PRIVACY.md`
+- `docs/ACADEMIC_INTEGRITY_POLICY.md`
+- `docs/CHILD_SAFETY_REQUIREMENTS.md`
+- `docs/DATA_RETENTION_POLICY.md`
+
 ## Product Risk
 
 This app serves children and students. Privacy and safety must be treated as core product requirements.

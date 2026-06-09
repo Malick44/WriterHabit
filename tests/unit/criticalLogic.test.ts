@@ -322,19 +322,59 @@ describe("critical product logic", () => {
 
     expect(blockedRequest).toEqual({
       allowed: false,
-      flags: ["assignment_completion_request"],
+      flags: ["assignment_completion_request", "answer_request"],
+      policyCodes: ["ai_safety.assignment_completion_request", "ai_safety.answer_request"],
+      redirects: [
+        {
+          action: "hint",
+          labelKey: "aiCoach.hintCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+        {
+          action: "brainstorm",
+          labelKey: "aiCoach.brainstormCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+        {
+          action: "ask_question",
+          labelKey: "aiCoach.askQuestionCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+      ],
     });
     expect(unsupportedRequest).toEqual({
       allowed: false,
       flags: ["unsupported_action"],
+      policyCodes: ["validation.unsupported_ai_action"],
+      redirects: [],
     });
     expect(safeRequest).toEqual({
       allowed: true,
       flags: [],
+      policyCodes: [],
+      redirects: [],
     });
     expect(evaluateAiCoachOutput(unsafeOutput)).toEqual({
       allowed: false,
-      flags: ["unsafe_output"],
+      flags: ["full_rewrite_request", "unsafe_output"],
+      policyCodes: ["ai_safety.full_rewrite_request", "ai_safety.unsafe_output"],
+      redirects: [
+        {
+          action: "revision_help",
+          labelKey: "aiCoach.revisionHelpCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+        {
+          action: "sentence_check",
+          labelKey: "aiCoach.sentenceCheckCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+        {
+          action: "stronger_word",
+          labelKey: "aiCoach.strongerWordCta",
+          reasonKey: "aiCoach.safetyBlocked.description",
+        },
+      ],
     });
   });
 

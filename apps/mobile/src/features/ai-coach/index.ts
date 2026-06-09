@@ -3,6 +3,7 @@ export * from "./components/AiCoachDrawer";
 export * from "./hooks/useAiCoach";
 export * from "./prompts/coachPrompt";
 export * from "./prompts/reviewPrompt";
+export * from "./services/academicIntegrityService";
 export * from "./services/aiCoachContextService";
 export * from "./services/aiCoachPolicyService";
 export * from "./types";

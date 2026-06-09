@@ -29,6 +29,10 @@ document defines service-level rules for API handlers.
 - Student writing and canvas contents are educational records. Return bounded
   excerpts to parent and teacher dashboards unless the detailed endpoint is
   explicitly authorized.
+- Signed URL endpoints must authorize the caller before creating the URL, derive
+  object paths server-side, and audit URL creation without logging the URL.
+- Rate limits must apply to AI, auth abuse thresholds, signed URL creation,
+  provider webhooks, notification device registration, and admin access.
 
 ## Resource Access Matrix
 
@@ -143,6 +147,10 @@ document defines service-level rules for API handlers.
   looking up the internal user or family entitlement record.
 
 ## Audit Events
+
+Framework-neutral audit event contracts and metadata sanitization live in
+`services/api/src/features/audit/`. The draft database row shape is
+`public.audit_logs` in `services/api/migrations/202606090001_initial_writewise_schema.sql`.
 
 Audit the following backend actions:
 

@@ -3,6 +3,7 @@ import type { GradeLevel, WritingSkill } from "@writewise/shared";
 import { aiCoachApi } from "../api/aiCoachApi";
 import { buildAiCoachPrompt } from "../prompts/coachPrompt";
 import { buildAiCoachContext } from "./aiCoachContextService";
+import { evaluateAcademicIntegrityText } from "./academicIntegrityService";
 import { evaluateAiCoachRequest } from "./aiCoachPolicyService";
 import {
   MAX_AI_COACH_DRAFT_EXCERPT_LENGTH,
@@ -69,7 +70,29 @@ describe("aiCoachPolicyService", () => {
     expect(evaluateAiCoachRequest(context)).toMatchObject({
       allowed: false,
       flags: ["assignment_completion_request"],
+      policyCodes: ["ai_safety.assignment_completion_request"],
     });
+  });
+
+  it("redirects cheating-oriented requests to approved coaching actions", () => {
+    const decision = evaluateAcademicIntegrityText({
+      source: "student_request",
+      text: "Give me the answer and make a final draft.",
+    });
+
+    expect(decision).toMatchObject({
+      allowed: false,
+      flags: ["full_rewrite_request", "answer_request"],
+      policyCodes: ["ai_safety.full_rewrite_request", "ai_safety.answer_request"],
+    });
+    expect(decision.redirects.map((redirect) => redirect.action)).toEqual([
+      "revision_help",
+      "sentence_check",
+      "stronger_word",
+      "hint",
+      "ask_question",
+      "brainstorm",
+    ]);
   });
 
   it("returns empty context for draft-dependent actions without student text", async () => {

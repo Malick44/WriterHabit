@@ -9,6 +9,7 @@ framework is selected:
 | Feature | Boundary |
 | --- | --- |
 | `auth` | Auth provider integration and session hydration. |
+| `audit` | Metadata-only security and operational audit event contracts, sanitization, and future persistence adapter boundary. |
 | `students` | Student profiles and student home read model. |
 | `onboarding` | Onboarding progress, completion, and personalized plans. |
 | `assignments` | Daily assignment, assignment listing, detail, start, submit entry points. |

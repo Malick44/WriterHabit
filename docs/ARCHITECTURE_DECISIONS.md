@@ -644,6 +644,7 @@ WriteWise AI is a learning app. AI features must help students think, plan, revi
 Current evidence:
 
 - `apps/mobile/src/features/ai-coach/prompts/coachPrompt.ts` and `apps/mobile/src/features/ai-coach/prompts/reviewPrompt.ts` instruct the model boundary to coach instead of producing a finished response.
+- `apps/mobile/src/features/ai-coach/services/academicIntegrityService.ts` detects completion, full-rewrite, and answer-seeking requests and redirects students to approved coaching actions.
 - `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts` blocks assignment-completion intent before response generation and validates output before display.
 - `apps/mobile/src/features/ai-coach/components/AiCoachDrawer.tsx` renders only approved coaching actions.
 
@@ -652,3 +653,29 @@ Consequences:
 - AI prompts and UI actions must avoid assignment-completion language.
 - AI review output should provide coaching, feedback, and revision tasks.
 - AI service input/output should be validated with Zod before display or persistence.
+
+## ADR-026: Security, Privacy, And Audit Policies Are Metadata-First
+
+Status: accepted
+
+Prompt 25 documents security, privacy, academic-integrity, child-safety, and
+data-retention requirements without claiming a production backend exists.
+
+Current evidence:
+
+- Security and privacy policy: `docs/SECURITY_PRIVACY.md`
+- Academic integrity policy: `docs/ACADEMIC_INTEGRITY_POLICY.md`
+- Child safety requirements: `docs/CHILD_SAFETY_REQUIREMENTS.md`
+- Data retention policy: `docs/DATA_RETENTION_POLICY.md`
+- Audit scaffold: `services/api/src/features/audit/`
+- Planned audit table: `public.audit_logs` in `services/api/migrations/202606090001_initial_writewise_schema.sql`
+
+Consequences:
+
+- Parent, teacher, admin, provider, and system access must be authorized and
+  audited according to `services/api/docs/AUTHORIZATION_RULES.md`.
+- Audit metadata stores opaque IDs, request IDs, hashes, status values, and
+  safety flags; it redacts or omits student writing, full prompts, raw provider
+  payloads, tokens, service-role values, and secrets.
+- Signed URL and rate-limit enforcement remain future backend runtime work, but
+  their requirements are now documented before implementation.

@@ -350,7 +350,7 @@ Consequences:
 - Draft state is explicit: restoring, unsaved, saving, saved, failed, empty, offline cached, and submitted-for-review paths are visible in the feature UI.
 - Drafts are device-local until backend draft contracts are implemented. They are validated with Zod and capped before persistence.
 - AI coach entry points are limited to approved learning actions: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
-- Backend submission and feedback summary remain separate feature prompts.
+- Backend submission persistence remains future work. The current feedback-review feature can render local mock review results after submission.
 
 ## ADR-018: Canvas Uses a Local Stroke Adapter Until a Drawing Engine Is Chosen
 
@@ -421,6 +421,40 @@ Consequences:
 - Coach requests carry assignment metadata, grade level, skill focus, rubric criteria, writing metrics, optional canvas summary, and a bounded draft excerpt rather than the full draft.
 - TanStack Query mutation state uses a short garbage-collection window for coach responses; full drafts and canvas documents remain owned by their source features.
 - Backend AI calls, usage limits, audit-safe metadata logging, and feedback review generation remain future work.
+
+## ADR-020: Feedback Review Uses Bounded Local Review Results
+
+Status: accepted
+
+The feedback-review feature is owned by
+`apps/mobile/src/features/feedback-review/`. The current implementation uses a
+deterministic local mock API instead of a backend AI review job. It reads
+assignment mock data and the locally saved typed draft, validates review payloads
+with Zod, and returns bounded excerpts for feedback and revision screens rather
+than retaining the full draft in review state.
+
+Current evidence:
+
+- Loading screen: `apps/mobile/src/features/feedback-review/screens/AiReviewLoadingScreen.tsx`
+- Summary screen: `apps/mobile/src/features/feedback-review/screens/FeedbackSummaryScreen.tsx`
+- Rubric screen: `apps/mobile/src/features/feedback-review/screens/RubricScoreScreen.tsx`
+- Revision screen: `apps/mobile/src/features/feedback-review/screens/RevisionScreen.tsx`
+- Completion screen: `apps/mobile/src/features/feedback-review/screens/CompletionCelebrationScreen.tsx`
+- API facade: `apps/mobile/src/features/feedback-review/api/feedbackreviewApi.ts`
+- Hook: `apps/mobile/src/features/feedback-review/hooks/useFeedbackReview.ts`
+- View-model and validation service: `apps/mobile/src/features/feedback-review/services/feedbackReviewService.ts`
+- Focused revision local persistence: `apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
+- Tests: `apps/mobile/src/features/feedback-review/services/feedbackReviewService.test.ts`
+
+Consequences:
+
+- Route files under `apps/mobile/app/(student)/review/[submissionId]/` remain thin feature exports.
+- The review flow supports loading, processing, empty/missing, error, offline cached, success, revision submission, and completion states.
+- Feedback is framed as one strength, one improvement, one revision task, rubric coaching, and grammar suggestions.
+- Revision asks the student to write one focused revised passage; it does not auto-apply or generate a polished final draft.
+- In-progress revision text is locally autosaved and restored, then cleared after successful submission.
+- Progress earned is currently a placeholder shown after completion. Persisted progress, badges, and backend progress sync remain Prompt 15 and backend work.
+- Backend AI review jobs, feedback persistence, audit-safe metadata logging, and usage limits remain future work.
 
 ## ADR-008: Backend API Remains Framework-Neutral for Now
 

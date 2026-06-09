@@ -53,7 +53,11 @@ apps/mobile/app/
     canvas/[canvasId].tsx
     progress.tsx
     profile.tsx
-    review/[submissionId].tsx
+    review/[submissionId]/index.tsx
+    review/[submissionId]/summary.tsx
+    review/[submissionId]/rubric.tsx
+    review/[submissionId]/revision.tsx
+    review/[submissionId]/complete.tsx
     write/[assignmentId].tsx
   (parent)/
     _layout.tsx                     Parent bottom tabs
@@ -152,6 +156,10 @@ Student detail routes are hidden from the tab bar:
 /(student)/canvas/templates
 /(student)/canvas/[canvasId]
 /(student)/review/[submissionId]
+/(student)/review/[submissionId]/summary
+/(student)/review/[submissionId]/rubric
+/(student)/review/[submissionId]/revision
+/(student)/review/[submissionId]/complete
 /(student)/write/[assignmentId]
 ```
 
@@ -198,6 +206,10 @@ writewise://student/canvas/canvas_123
 writewise://student/canvas/templates
 writewise://student/write/assignment_123
 writewise://student/review/submission_123
+writewise://student/review/submission_123/summary
+writewise://student/review/submission_123/rubric
+writewise://student/review/submission_123/revision
+writewise://student/review/submission_123/complete
 writewise://parent/students/student_123/report
 writewise://teacher/submissions/submission_123
 ```
@@ -209,6 +221,10 @@ These helpers return Expo Router `Href` objects for:
 - Canvas template picker
 - Canvas document
 - Student AI review loading
+- Student feedback summary
+- Student rubric score
+- Student revision task
+- Student completion celebration
 - Writing workspace
 - Parent student report
 - Teacher submission review

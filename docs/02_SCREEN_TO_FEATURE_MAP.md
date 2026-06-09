@@ -32,7 +32,11 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Daily assignment detail | `apps/mobile/app/(student)/assignments/[assignmentId].tsx` | assignments |
 | Assignment submission confirmation | `apps/mobile/app/(student)/assignments/submit.tsx` | assignments |
 | Typed writing workspace | `apps/mobile/app/(student)/write/[assignmentId].tsx` | writing-workspace |
-| AI review loading | `apps/mobile/app/(student)/review/[submissionId].tsx` | feedback-review |
+| AI review loading | `apps/mobile/app/(student)/review/[submissionId]/index.tsx` | feedback-review |
+| Feedback summary | `apps/mobile/app/(student)/review/[submissionId]/summary.tsx` | feedback-review |
+| Rubric score | `apps/mobile/app/(student)/review/[submissionId]/rubric.tsx` | feedback-review |
+| Revision task | `apps/mobile/app/(student)/review/[submissionId]/revision.tsx` | feedback-review |
+| Completion celebration | `apps/mobile/app/(student)/review/[submissionId]/complete.tsx` | feedback-review |
 | Student progress dashboard | `apps/mobile/app/(student)/progress.tsx` | progress |
 | Student profile | `apps/mobile/app/(student)/profile.tsx` | profile-settings |
 

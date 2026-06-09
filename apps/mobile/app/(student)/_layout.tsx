@@ -52,7 +52,11 @@ export default function StudentLayout() {
         <Tabs.Screen name="assignments/submit" options={{ href: null }} />
         <Tabs.Screen name="canvas/[canvasId]" options={{ href: null }} />
         <Tabs.Screen name="canvas/templates" options={{ href: null }} />
-        <Tabs.Screen name="review/[submissionId]" options={{ href: null }} />
+        <Tabs.Screen name="review/[submissionId]/complete" options={{ href: null }} />
+        <Tabs.Screen name="review/[submissionId]/index" options={{ href: null }} />
+        <Tabs.Screen name="review/[submissionId]/revision" options={{ href: null }} />
+        <Tabs.Screen name="review/[submissionId]/rubric" options={{ href: null }} />
+        <Tabs.Screen name="review/[submissionId]/summary" options={{ href: null }} />
         <Tabs.Screen name="write/[assignmentId]" options={{ href: null }} />
       </Tabs>
     </RouteGate>

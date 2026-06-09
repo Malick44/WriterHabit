@@ -306,6 +306,72 @@ interface Feedback {
 }
 ```
 
+Current mobile feedback review screens use a feature-owned mock read model in
+`apps/mobile/src/features/feedback-review/types.ts`, validated in
+`apps/mobile/src/features/feedback-review/api/feedbackreviewApi.ts`. The current
+review facade derives deterministic feedback from assignment mock data and the
+locally saved typed draft, but it returns bounded excerpts rather than retaining
+full student drafts in review state.
+
+```ts
+interface FeedbackReview {
+  id: string;
+  submissionId: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  assignmentPrompt: string;
+  assignmentType: AssignmentType;
+  studentId: string;
+  gradeLevel: GradeLevel;
+  status: "completed";
+  connectionStatus: "online" | "offline_cached";
+  submittedTextExcerpt: string;
+  summary: {
+    strength: string;
+    improvement: string;
+    nextRevisionTask: string;
+  };
+  revisionTask: {
+    id: string;
+    instruction: string;
+    targetSkill: WritingSkill;
+    focusLabel: string;
+    guidingQuestion: string;
+    originalExcerpt: string;
+  };
+  rubricScores: {
+    criterionId: string;
+    label: string;
+    description: string;
+    score: 1 | 2 | 3 | 4;
+    maxScore: 4;
+    level: "starting" | "building" | "meeting" | "strong";
+    coachingNote: string;
+  }[];
+  grammarSuggestions: {
+    id: string;
+    title: string;
+    explanation: string;
+    originalExcerpt: string;
+    studentAction: string;
+  }[];
+  progressEarned: {
+    minutes: number;
+    points: number;
+    skill: WritingSkill;
+  };
+  createdAt: string;
+}
+```
+
+Revision submission currently validates one focused student-written revised
+passage and returns a local completion payload. In-progress revision text is
+stored locally through
+`apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
+and removed after successful revision submission. Progress earned is a
+placeholder shown in the completion screen until the Prompt 15 progress feature
+and backend progress APIs exist.
+
 ### RevisionTask
 
 ```ts

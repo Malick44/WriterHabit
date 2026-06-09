@@ -1,23 +1,20 @@
 import { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import {
-  getStudentReviewRevisionRoute,
-  getStudentReviewRubricRoute,
-} from "@/core/navigation/deepLinks";
+import { getStudentReviewRevisionRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
-import { FeedbackSummaryCard, GrammarSuggestionCard } from "../components";
+import { RubricScoreCard } from "../components";
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export function FeedbackSummaryScreen() {
+export function RubricScoreScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ submissionId?: string | string[] }>();
@@ -28,16 +25,16 @@ export function FeedbackSummaryScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("feedbackReview.summary.subtitle")}
-      testID="feedback-summary-screen"
-      title={t("feedbackReview.summaryTitle")}
+      subtitle={t("feedbackReview.rubric.subtitle")}
+      testID="feedback-rubric-screen"
+      title={t("feedbackReview.rubric.title")}
     >
       {state.status === "loading" ? (
         <LoadingState
-          accessibilityLabel={t("feedbackReview.summary.loadingAccessibility")}
-          description={t("feedbackReview.summary.loadingDescription")}
+          accessibilityLabel={t("feedbackReview.rubric.loadingAccessibility")}
+          description={t("feedbackReview.rubric.loadingDescription")}
           gradeBand={state.gradeBand}
-          label={t("feedbackReview.summary.loadingTitle")}
+          label={t("feedbackReview.rubric.loadingTitle")}
         />
       ) : null}
 
@@ -77,61 +74,39 @@ export function FeedbackSummaryScreen() {
 
       {state.status === "success" ? (
         <Stack gap="lg">
-          {state.viewModel.isOffline ? (
+          <PageSection
+            gradeBand={state.gradeBand}
+            subtitle={t("feedbackReview.rubric.sectionSubtitle")}
+            title={t("feedbackReview.rubric.sectionTitle")}
+          >
+            <Stack gap="md">
+              {state.viewModel.visibleRubricScores.map((score) => (
+                <RubricScoreCard gradeBand={state.gradeBand} key={score.criterionId} score={score} />
+              ))}
+            </Stack>
+          </PageSection>
+
+          {!state.viewModel.gradeAdaptation.showDetailedRubric ? (
             <StatusState
-              actionLabel={t("feedbackReview.offline.action")}
-              accessibilityLabel={t("feedbackReview.offline.accessibility")}
-              description={t("feedbackReview.offline.description")}
+              accessibilityLabel={t("feedbackReview.rubric.simpleAccessibility")}
+              description={t("feedbackReview.rubric.simpleDescription")}
               gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
-              title={t("feedbackReview.offline.title")}
-              tone="warning"
+              title={t("feedbackReview.rubric.simpleTitle")}
+              tone="info"
             />
           ) : null}
 
-          <PageSection
+          <StatusState
+            actionLabel={t("feedbackReview.rubric.revisionCta")}
+            accessibilityLabel={t("feedbackReview.rubric.revisionAccessibility")}
+            description={t("feedbackReview.rubric.revisionDescription")}
             gradeBand={state.gradeBand}
-            subtitle={t("feedbackReview.summary.feedbackSubtitle")}
-            title={t("feedbackReview.summary.feedbackTitle")}
-          >
-            <FeedbackSummaryCard
-              gradeBand={state.gradeBand}
-              onRevisionPress={() => {
-                router.push(getStudentReviewRevisionRoute(state.viewModel.review.submissionId));
-              }}
-              onRubricPress={() => {
-                router.push(getStudentReviewRubricRoute(state.viewModel.review.submissionId));
-              }}
-              progressValue={state.viewModel.progressValue}
-              review={state.viewModel.review}
-            />
-          </PageSection>
-
-          <PageSection
-            gradeBand={state.gradeBand}
-            subtitle={t("feedbackReview.grammar.subtitle")}
-            title={t("feedbackReview.grammar.title")}
-          >
-            <Stack gap="md">
-              {state.viewModel.visibleGrammarSuggestions.length > 0 ? (
-                state.viewModel.visibleGrammarSuggestions.map((suggestion) => (
-                  <GrammarSuggestionCard
-                    gradeBand={state.gradeBand}
-                    key={suggestion.id}
-                    suggestion={suggestion}
-                  />
-                ))
-              ) : (
-                <StatusState
-                  accessibilityLabel={t("feedbackReview.grammar.emptyAccessibility")}
-                  description={t("feedbackReview.grammar.emptyDescription")}
-                  gradeBand={state.gradeBand}
-                  title={t("feedbackReview.grammar.emptyTitle")}
-                  tone="success"
-                />
-              )}
-            </Stack>
-          </PageSection>
+            onActionPress={() => {
+              router.push(getStudentReviewRevisionRoute(state.viewModel.review.submissionId));
+            }}
+            title={t("feedbackReview.nextStepLabel")}
+            tone="success"
+          />
         </Stack>
       ) : null}
     </Screen>

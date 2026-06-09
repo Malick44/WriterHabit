@@ -47,6 +47,21 @@ features/ai-coach/
     coachPrompt.ts
     reviewPrompt.ts
   types.ts
+features/feedback-review/
+  api/
+    feedbackreviewApi.ts
+  components/
+  hooks/
+    useFeedbackReview.ts
+  screens/
+    AiReviewLoadingScreen.tsx
+    FeedbackSummaryScreen.tsx
+    RubricScoreScreen.tsx
+    RevisionScreen.tsx
+    CompletionCelebrationScreen.tsx
+  services/
+    feedbackReviewService.ts
+  types.ts
 ```
 
 Current implementation is a deterministic local mock boundary. It does not call a
@@ -54,6 +69,13 @@ backend AI service or include model credentials. The mock facade is intentionall
 shaped like the future service boundary: build bounded context, validate policy,
 build a grade-aware prompt, validate output, and return a structured coaching
 packet.
+
+The current feedback review implementation is also a deterministic local mock
+boundary. It reads assignment mock data plus the locally saved typed draft,
+returns bounded excerpts, and renders structured feedback with one strength, one
+improvement, one revision task, rubric scores, grammar suggestion cards, and a
+completion celebration. It does not rewrite the student's assignment or persist
+progress to a backend yet.
 
 ## Grade-Level Tone
 
@@ -188,6 +210,17 @@ Current explicit UI states:
 - offline with recovery to choices
 - safety-blocked with recovery to approved actions
 - success with one strength, one improvement, one next step, and one question
+
+The feedback review flow additionally handles:
+
+- AI review loading at `/(student)/review/[submissionId]`
+- processing with retry
+- missing/empty feedback with recovery to assignments
+- offline cached feedback with retry
+- feedback summary at `/(student)/review/[submissionId]/summary`
+- rubric score at `/(student)/review/[submissionId]/rubric`
+- one focused revision task at `/(student)/review/[submissionId]/revision`
+- completion celebration at `/(student)/review/[submissionId]/complete`
 
 Current mock scenarios can be selected with
 `EXPO_PUBLIC_WRITEWISE_AI_COACH_SCENARIO`:

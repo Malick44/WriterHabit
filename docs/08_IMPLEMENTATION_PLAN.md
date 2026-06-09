@@ -109,19 +109,19 @@ Deliverables:
 - AI coach safety guardrails implemented
 - AI coach context and prompt builders implemented
 - Deterministic AI coach mock API implemented
-- AI review loading screen
-- Feedback summary
-- Rubric score
-- Revision task
-- Grammar suggestions
-- Completion celebration
+- AI review loading screen implemented
+- Feedback summary implemented
+- Rubric score implemented
+- Revision task implemented
+- Grammar suggestions implemented
+- Completion celebration implemented
 
 Definition of done:
 
 - Coach actions provide hints, questions, explanations, word-choice coaching, and revision guidance without replacing student thinking
 - Submitted writing receives structured AI feedback
 - Student receives one clear revision task
-- Student progress updates after completion
+- Student sees placeholder progress after completion; persisted progress updates remain Phase 7 work
 
 ## Phase 7 — Progress Tracking
 

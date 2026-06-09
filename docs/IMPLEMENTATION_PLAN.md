@@ -74,10 +74,11 @@ Each audited route file imports and exports a feature screen, which aligns with 
 
 The app is scaffolded but not feature-complete:
 
-- Parent, teacher, subscription, progress, and feedback-summary screens still include placeholder or partial surfaces.
+- Parent, teacher, subscription, and progress screens still include placeholder or partial surfaces.
 - Feature APIs and hooks are mostly stubs.
 - `apps/mobile/src/features/progress/services/progressCalculator.ts` contains logic that should receive unit tests before progress work expands.
 - `apps/mobile/src/features/ai-coach/` now includes a policy-safe drawer, bounded context builder, grade-aware prompt builder, deterministic mock API, and safety tests.
+- `apps/mobile/src/features/feedback-review/` now includes a deterministic local mock review API, feedback summary, rubric score, grammar suggestion cards, one focused revision task, and completion celebration.
 - Shared UI primitives exist under `apps/mobile/src/shared/components/` for layout, buttons, cards, forms, feedback states, and progress.
 - Design tokens live in the canonical token path `apps/mobile/src/design/tokens/`. Legacy shared theme files in `apps/mobile/src/shared/theme/` re-export those tokens for compatibility.
 
@@ -217,11 +218,13 @@ Deliverables:
 - Structured feedback summary.
 - One revision task per review cycle.
 - Rubric scoring display.
+- Grammar suggestion cards and completion celebration.
 
 Definition of done:
 
 - AI feedback helps students revise their own writing.
 - The service boundary validates input/output with Zod.
+- Current progress earned remains a placeholder until progress tracking is implemented.
 
 ### Phase 7: Progress, Parent, Teacher, and Subscriptions
 
@@ -257,4 +260,4 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/14_ai_review_feedback_revision.md`.
+Proceed to `prompts/15_progress_tracking_and_badges.md`.

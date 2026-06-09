@@ -191,16 +191,14 @@ Primary features:
 Work:
 
 - Maintain the implemented AI coach drawer, bounded context builder, policy service, grade-aware prompt builder, and deterministic mock API.
-- Implement review loading.
-- Implement feedback summary.
-- Implement revision task.
-- Implement completion celebration.
-- Add Zod validation for AI review results.
+- Maintain the implemented review loading, feedback summary, rubric score, grammar suggestions, revision task, and completion celebration screens.
+- Maintain Zod validation for AI review results and revision completion payloads.
 - Keep safety tests for prompt and action guardrails.
 
 Risks:
 
 - AI coach currently uses deterministic local mock responses; backend AI service calls, usage limits, and audit-safe metadata logging remain future work.
+- AI feedback review currently uses deterministic local mock responses and placeholder progress; backend AI review jobs, feedback persistence, and progress sync remain future work.
 - AI feedback must not rewrite student assignments.
 
 ## Phase 7: Progress
@@ -279,4 +277,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/14_ai_review_feedback_revision.md` next. The safe AI coach drawer/service boundary now exists; the next gap is structured feedback review, revision tasks, and completion after submission.
+Use `prompts/15_progress_tracking_and_badges.md` next. Structured feedback review, revision tasks, and completion placeholders now exist; the next gap is real progress tracking and badges.

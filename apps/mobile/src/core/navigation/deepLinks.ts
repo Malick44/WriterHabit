@@ -10,6 +10,10 @@ export const deepLinkRoutes = {
   canvasDocument: "/(student)/canvas/[canvasId]",
   canvasTemplates: "/(student)/canvas/templates",
   studentReview: "/(student)/review/[submissionId]",
+  studentReviewCompletion: "/(student)/review/[submissionId]/complete",
+  studentReviewRevision: "/(student)/review/[submissionId]/revision",
+  studentReviewRubric: "/(student)/review/[submissionId]/rubric",
+  studentReviewSummary: "/(student)/review/[submissionId]/summary",
   writingWorkspace: "/(student)/write/[assignmentId]",
   parentStudentReport: "/(parent)/students/[studentId]/report",
   teacherSubmissionReview: "/(teacher)/submissions/[submissionId]",
@@ -60,6 +64,34 @@ export function getCanvasTemplatePickerRoute(assignmentId?: string): Href {
 export function getStudentReviewRoute(submissionId: string): Href {
   return {
     pathname: "/(student)/review/[submissionId]",
+    params: { submissionId },
+  };
+}
+
+export function getStudentReviewSummaryRoute(submissionId: string): Href {
+  return {
+    pathname: "/(student)/review/[submissionId]/summary",
+    params: { submissionId },
+  };
+}
+
+export function getStudentReviewRubricRoute(submissionId: string): Href {
+  return {
+    pathname: "/(student)/review/[submissionId]/rubric",
+    params: { submissionId },
+  };
+}
+
+export function getStudentReviewRevisionRoute(submissionId: string): Href {
+  return {
+    pathname: "/(student)/review/[submissionId]/revision",
+    params: { submissionId },
+  };
+}
+
+export function getStudentReviewCompletionRoute(submissionId: string): Href {
+  return {
+    pathname: "/(student)/review/[submissionId]/complete",
     params: { submissionId },
   };
 }

@@ -46,9 +46,9 @@ workspace uses local device persistence in
 `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.ts`
 through `apps/mobile/src/services/storage/localJsonStorage.ts`. Local drafts are
 Zod-validated, autosaved, restored per student and assignment, and capped before
-storage. The current submit path validates non-empty student writing and routes
-to `/(student)/review/[submissionId]`; it does not call a backend submission API
-yet.
+storage. The current submit path validates non-empty student writing, saves the
+draft locally, and routes to `/(student)/review/[submissionId]`; feedback review
+then uses a deterministic local mock facade rather than a backend submission API.
 
 ```txt
 GET    /student-assignments/:studentAssignmentId/draft
@@ -98,10 +98,21 @@ POST /ai/coach/revision-question
 
 ## AI Review
 
+These are planned backend API contracts. The current mobile feedback review
+feature uses a deterministic local mock facade in
+`apps/mobile/src/features/feedback-review/api/feedbackreviewApi.ts`. It reads
+assignment mock data and locally saved draft text, returns bounded excerpts,
+validates responses with Zod from
+`apps/mobile/src/features/feedback-review/types.ts`, and renders loading,
+processing, empty, error, offline, success, revision, and completion states. No
+model credentials, service-role keys, or backend AI calls are present in the
+mobile app.
+
 ```txt
 POST /ai/review/submissions/:submissionId
 GET  /ai/review/submissions/:submissionId/status
 GET  /submissions/:submissionId/feedback
+POST /submissions/:submissionId/revisions
 ```
 
 ## Progress
@@ -188,3 +199,62 @@ interface ReviewSubmissionResponse {
   status: "queued" | "processing" | "completed" | "failed";
 }
 ```
+
+## Current Mobile AI Review Mock Response
+
+```ts
+interface FeedbackReviewResponse {
+  studentId: string;
+  gradeLevel: number;
+  generatedAt: string;
+  connectionStatus: "online" | "offline_cached";
+  status: "processing" | "completed" | "missing";
+  review: FeedbackReview | null;
+}
+
+interface FeedbackReview {
+  id: string;
+  submissionId: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  submittedTextExcerpt: string;
+  summary: {
+    strength: string;
+    improvement: string;
+    nextRevisionTask: string;
+  };
+  revisionTask: {
+    instruction: string;
+    originalExcerpt: string;
+    targetSkill: string;
+    guidingQuestion: string;
+  };
+  rubricScores: Array<{
+    criterionId: string;
+    score: number;
+    maxScore: 4;
+    level: "starting" | "building" | "meeting" | "strong";
+    coachingNote: string;
+  }>;
+  grammarSuggestions: Array<{
+    title: string;
+    explanation: string;
+    studentAction: string;
+    originalExcerpt: string;
+  }>;
+  progressEarned: {
+    minutes: number;
+    points: number;
+    skill: string;
+  };
+}
+```
+
+Current mock scenarios can be selected with
+`EXPO_PUBLIC_WRITEWISE_FEEDBACK_REVIEW_SCENARIO`:
+
+- `success`
+- `processing`
+- `empty`
+- `error`
+- `offline`

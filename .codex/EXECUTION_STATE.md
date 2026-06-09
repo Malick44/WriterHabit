@@ -28,7 +28,8 @@ Last updated: 2026-06-09
 - Prompt 24 testing strategy implementation is complete.
 - Prompt 25 security, privacy, and academic integrity is complete.
 - Prompt 26 performance, offline support, autosave reliability, retry, and error-state polish is complete.
-- Next recommended prompt: `prompts/27_final_qa_release_checklist.md`.
+- Prompt 27 final QA and release checklist is complete.
+- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with production backend/runtime, authorization, payment entitlement sync, mobile E2E automation, and lint tooling.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -329,28 +330,52 @@ Last updated: 2026-06-09
   - `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.test.ts`
   - `apps/mobile/src/features/canvas/services/canvasPersistenceService.test.ts`
   - `apps/mobile/src/features/canvas/services/canvasSyncService.test.ts`
+- Added Prompt 27 final QA and release readiness docs:
+  - `docs/FINAL_QA_REPORT.md`
+  - `docs/RELEASE_CHECKLIST.md`
+  - `docs/KNOWN_ISSUES.md`
+- Updated release handoff/index docs:
+  - `AGENTS.md`
+  - `.codex/EXECUTION_STATE.md`
+  - `.codex/AUTONOMOUS_PROMPTS.md`
+  - `docs/FILE_INDEX.md`
+  - `docs/QUICK_START.md`
+  - `docs/IMPLEMENTATION_PLAN.md`
+  - `docs/FEATURE_ROADMAP.md`
 
 ## Next Recommended Prompt
 
-Use:
+The canonical implementation prompt sequence through
+`prompts/27_final_qa_release_checklist.md` is complete.
 
-`prompts/27_final_qa_release_checklist.md`
+Next recommended engineering step:
 
-Reason:
-
-- Performance, offline behavior, autosave reliability, retry, and cross-feature error-state polish now exist.
-- The next major product gap is final QA, release readiness, and checklist verification.
+- Close the P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with
+  production backend/runtime, authorization, payment entitlement sync, mobile E2E
+  automation, and lint tooling.
 
 ## Validation Status
 
-Current passing checks:
+Current Prompt 27 passing checks:
 
 ```bash
 ./script/build_and_run.sh --doctor
 ./script/build_and_run.sh --typecheck
 ./script/build_and_run.sh --test
-node scripts/supabase-admin.mjs health
+npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
+npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
 ```
+
+Current Prompt 27 release-check gaps:
+
+```bash
+cd apps/mobile && npm run lint
+./script/build_and_run.sh --export-web
+```
+
+`npm run lint` fails because `eslint` is not installed/configured.
+`--export-web` fails because `react-native-web` is not installed; the primary
+release surface remains mobile.
 
 Prompt 04 validation:
 
@@ -461,6 +486,23 @@ Prompt 26 validation:
 ```
 
 Result: all passed on 2026-06-09. Jest passed 31/31 suites and 114/114 tests; Expo Doctor passed 21/21 checks.
+
+Prompt 27 validation:
+
+```bash
+./script/build_and_run.sh --typecheck
+./script/build_and_run.sh --test
+./script/build_and_run.sh --doctor
+npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
+npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
+cd apps/mobile && npm run lint
+./script/build_and_run.sh --export-web
+```
+
+Result: typecheck passed, Jest passed 31/31 suites and 114/114 tests, Expo
+Doctor passed 21/21 checks, and iOS/Android production bundle exports passed to
+temporary output directories. Lint failed with `eslint: command not found`. Web
+export failed because `react-native-web` is not installed.
 
 Test status: Jest is configured with the Expo preset and has smoke coverage for progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home dashboard view-model decisions, assignment status transitions/history filters, writing draft persistence and reload recovery, writing metrics/grade adaptation, canvas stroke document behavior, canvas local persistence and reload recovery, canvas autosave scheduler behavior, and AI coach policy/context/prompt/mock API behavior.
 

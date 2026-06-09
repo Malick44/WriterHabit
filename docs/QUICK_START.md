@@ -47,7 +47,7 @@ Follow prompts/15_progress_tracking_and_badges.md.
 Follow prompts/16_notifications_and_daily_assignment_logic.md.
 ```
 ```txt
-Next unfinished MVP prompt: prompts/27_final_qa_release_checklist.md.
+All MVP implementation prompts through prompts/27_final_qa_release_checklist.md are complete.
 ```
 
 ## 6. Production Readiness
@@ -63,3 +63,6 @@ Follow prompts/26_performance_offline_and_error_states.md.
 ```txt
 Follow prompts/27_final_qa_release_checklist.md.
 ```
+
+Use `docs/FINAL_QA_REPORT.md`, `docs/RELEASE_CHECKLIST.md`, and
+`docs/KNOWN_ISSUES.md` for the next release-hardening pass.

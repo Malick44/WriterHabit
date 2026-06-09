@@ -19,7 +19,7 @@ Preview the next sequence:
 ./script/autonomous_prompt_runner.sh --dry-run
 ```
 
-Run from the next incomplete prompt through the final QA prompt:
+Run from a selected prompt through the final QA prompt:
 
 ```bash
 ./script/autonomous_prompt_runner.sh --from auto --to 27
@@ -41,4 +41,5 @@ Run a smaller batch:
 
 ## Current Project Default
 
-`.codex/EXECUTION_STATE.md` currently marks Prompt 26 complete, so `--from auto` starts at Prompt 27.
+`.codex/EXECUTION_STATE.md` currently marks Prompt 27 complete, so the canonical
+implementation prompt sequence has no remaining prompt after `--from auto`.

@@ -300,6 +300,7 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/27_final_qa_release_checklist.md` next. Performance, offline
-behavior, retry, autosave reliability, and cross-feature error-state polish now
-exist; the next gap is final QA and release-readiness verification.
+The canonical prompt sequence through `prompts/27_final_qa_release_checklist.md`
+is complete. Release-hardening work should now follow `docs/FINAL_QA_REPORT.md`,
+`docs/RELEASE_CHECKLIST.md`, and `docs/KNOWN_ISSUES.md`, with P0 backend,
+authorization, payment, and production data-safety gaps first.

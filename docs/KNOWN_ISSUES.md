@@ -1,0 +1,24 @@
+# Known Issues
+
+Status: Release-readiness issue list from Prompt 27 final QA on 2026-06-09.
+
+| ID | Severity | Area | Issue | Impact | Recommended Fix |
+| --- | --- | --- | --- | --- | --- |
+| WW-REL-001 | P0 | Backend | No production backend runtime exists. `services/api/` contains docs, migrations, and framework-neutral stubs only. | Real users cannot safely persist, sync, or authorize student, parent, teacher, assignment, feedback, canvas, progress, or audit data. | Choose and implement the API runtime, wire feature endpoints, enforce authorization before data load, and add integration tests. |
+| WW-REL-002 | P0 | Database and RLS | Database schema and RLS policies are draft migrations, not a verified production migration path. | Child/student data cannot be considered production-safe. | Add a migration runner, seed/test fixtures, and role-based RLS tests for student, parent, teacher, admin, and service boundaries. |
+| WW-REL-003 | P0 | Subscriptions | Subscription entitlement and paywall flows are local deterministic scaffolds. No StoreKit, Play Billing, receipt validation, webhook, or server entitlement sync exists. | Paid plans, restore purchases, renewal state, refunds, and family access cannot be trusted in production. | Integrate a store/payment provider and backend entitlement service before enabling paid plans. |
+| WW-REL-004 | P1 | QA Automation | Flow 1 and Flow 2 are documented and covered by provider-free unit/integration scaffolds, but no mobile E2E runner is configured. | Route transitions, device UI behavior, keyboard behavior, canvas gestures, and offline recovery are not automatically validated on installed builds. | Add Maestro or Detox and automate Flow 1, Flow 2, parent report review, teacher assignment creation, and paywall gates. |
+| WW-REL-005 | P1 | Tooling | `npm run lint` fails with `eslint: command not found`. | Release gates cannot enforce linting and static code-quality checks. | Install/configure an Expo-compatible ESLint setup or remove lint from required gates until configured. |
+| WW-REL-006 | P1 | Build Surface | `./script/build_and_run.sh --export-web` fails because `react-native-web` is not installed. | Web export is currently not a valid release check. | Decide whether web is supported. Install web dependencies and test web export, or remove the web export command from release expectations. |
+| WW-REL-007 | P1 | AI Runtime | Mobile AI coach and feedback review use deterministic local mocks; backend AI service scaffolds are not connected to a production provider. | Real AI responses, moderation, rate limits, usage limits, and audit persistence are not operational. | Wire AI requests through the backend safety policy, moderation, usage limit, audit, and provider adapters. |
+| WW-REL-008 | P1 | Canvas Storage | Canvas is local-first with sync scaffolding; real file export, object upload, signed URLs, and storage authorization are not implemented. | Canvas work cannot sync reliably across devices or support production attachment/export workflows. | Implement signed upload/download endpoints, object path derivation, local file export, retry, and audit logging. |
+| WW-REL-009 | P1 | Notifications | Notification work prepares provider-free payload metadata only. No scheduling, device-token registration, APNs/FCM, or report delivery exists. | Daily reminders, streak nudges, and weekly parent/teacher notifications are not deliverable in production. | Decide notification provider/scope, add permission UX, schedule or push delivery, backend device metadata, and tests. |
+| WW-REL-010 | P1 | Auth Profiles | Supabase auth exists, but dedicated role profiles and onboarding records are not fully persisted through production APIs. | Cross-device role, grade, onboarding, parent link, and teacher class state will be incomplete. | Implement profile tables/endpoints and migrate local/demo metadata to server-backed records. |
+| WW-REL-011 | P2 | Accessibility QA | Automated labels and localization guards pass, but VoiceOver, TalkBack, large text, high contrast, reduced motion, and keyboard/switch workflows have not been manually verified. | Students with accessibility needs may hit untested navigation or control issues. | Run manual accessibility QA across grade bands and fix screen-level issues. |
+| WW-REL-012 | P2 | Release Operations | EAS build profiles, store metadata, screenshots, privacy labels, crash reporting, release rollback, and support workflows are not complete. | The app cannot move through a controlled public release process. | Add release operations docs, EAS config, store-prep assets, observability, and incident/support procedures. |
+
+## Current Non-Blockers
+
+- TypeScript, Jest, Expo Doctor, iOS export, and Android export passed in this QA pass.
+- Generated native/build output folders were removed from the working tree after local checks.
+- No Supabase admin credential values were added to app code or docs.

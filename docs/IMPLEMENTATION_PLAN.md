@@ -270,4 +270,7 @@ npm test
 
 ## Next Recommended Prompt
 
-Proceed to `prompts/27_final_qa_release_checklist.md`.
+The canonical prompt sequence through `prompts/27_final_qa_release_checklist.md`
+is complete. Next engineering work should close the P0/P1 release blockers in
+`docs/KNOWN_ISSUES.md`, starting with the production backend/runtime,
+authorization, payment entitlement sync, E2E runner, and lint tooling.

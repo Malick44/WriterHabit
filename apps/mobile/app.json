@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    "expo-font",
+    "expo-sqlite"
+  ],
+  "ios": {
+    "bundleIdentifier": "com.writewise"
+  }
+}

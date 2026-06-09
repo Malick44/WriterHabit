@@ -1,0 +1,87 @@
+import { useRouter } from "expo-router";
+
+import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
+import { colors } from "@/design/tokens";
+import { useI18n } from "@/i18n";
+import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { PageSection, Screen, Stack } from "@/shared/components/layout";
+
+import { CanvasDocumentCard } from "../components";
+import { useCanvasHomeData } from "../hooks/useCanvas";
+
+export function CanvasAttachmentScreen() {
+  const router = useRouter();
+  const { t } = useI18n();
+  const state = useCanvasHomeData();
+
+  return (
+    <Screen
+      backgroundColor={colors.gradeBand[state.gradeBand].background}
+      gradeBand={state.gradeBand}
+      subtitle={t("canvas.attachment.subtitle")}
+      testID="canvas-attachment-screen"
+      title={t("canvas.attachment.title")}
+    >
+      {state.status === "loading" ? (
+        <LoadingState
+          accessibilityLabel={t("canvas.attachment.loadingAccessibility")}
+          description={t("canvas.home.loadingDescription")}
+          gradeBand={state.gradeBand}
+          label={t("canvas.home.loadingTitle")}
+        />
+      ) : null}
+
+      {state.status === "error" ? (
+        <ErrorState
+          actionLabel={t("common.retry")}
+          accessibilityLabel={t("canvas.attachment.errorAccessibility")}
+          description={t("canvas.home.errorDescription")}
+          gradeBand={state.gradeBand}
+          onActionPress={state.refetch}
+          title={t("canvas.home.errorTitle")}
+        />
+      ) : null}
+
+      {state.status === "empty" ? (
+        <EmptyState
+          actionLabel={t("canvas.home.createCta")}
+          accessibilityLabel={t("canvas.attachment.emptyAccessibility")}
+          description={t("canvas.attachment.emptyDescription")}
+          gradeBand={state.gradeBand}
+          onActionPress={() => router.push(getCanvasTemplatePickerRoute())}
+          title={t("canvas.emptyTitle")}
+        />
+      ) : null}
+
+      {state.status === "success" ? (
+        <Stack gap="lg">
+          {state.viewModel.isOffline ? (
+            <StatusState
+              accessibilityLabel={t("canvas.home.offlineAccessibility")}
+              description={t("canvas.home.offlineDescription")}
+              gradeBand={state.gradeBand}
+              title={t("canvas.home.offlineTitle")}
+              tone="warning"
+            />
+          ) : null}
+          <PageSection
+            gradeBand={state.gradeBand}
+            subtitle={t("canvas.attachment.sectionSubtitle")}
+            title={t("canvas.attachment.sectionTitle")}
+          >
+            <Stack gap="md">
+              {state.viewModel.documents.map((document) => (
+                <CanvasDocumentCard
+                  document={document}
+                  gradeBand={state.gradeBand}
+                  key={document.id}
+                  onOpen={() => router.push(getCanvasDocumentRoute(document.id, document.assignmentId))}
+                />
+              ))}
+            </Stack>
+          </PageSection>
+        </Stack>
+      ) : null}
+    </Screen>
+  );
+}

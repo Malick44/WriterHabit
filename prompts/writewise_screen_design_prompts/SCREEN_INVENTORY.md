@@ -1,0 +1,50 @@
+# Screen Inventory
+
+- **Splash Screen** — 01_public_entry/01_splash_screen.md
+- **Welcome Screen** — 01_public_entry/02_welcome_screen.md
+- **Role Selection Screen** — 01_public_entry/03_role_selection_screen.md
+- **Grade Selection Screen** — 02_student_onboarding/04_grade_selection_screen.md
+- **Writing Goals Screen** — 02_student_onboarding/05_writing_goals_screen.md
+- **Writing Confidence Screen** — 02_student_onboarding/06_writing_confidence_screen.md
+- **Daily Practice Goal Screen** — 02_student_onboarding/07_daily_practice_goal_screen.md
+- **Personalized Plan Loading Screen** — 02_student_onboarding/08_personalized_plan_loading_screen.md
+- **Personalized Plan Summary Screen** — 02_student_onboarding/09_personalized_plan_summary_screen.md
+- **Student Home Dashboard** — 03_student_home_assignments/10_student_home_dashboard.md
+- **Daily Assignment Detail Screen** — 03_student_home_assignments/11_daily_assignment_detail_screen.md
+- **Assignment History Screen** — 03_student_home_assignments/12_assignment_history_screen.md
+- **Typed Writing Workspace** — 04_writing_workspace/13_typed_writing_workspace.md
+- **Split View Writing + AI Coach** — 04_writing_workspace/14_split_view_ai_coach_screen.md
+- **Outline Builder Screen** — 04_writing_workspace/15_outline_builder_screen.md
+- **Revision Screen** — 04_writing_workspace/16_revision_screen.md
+- **Final Submission Screen** — 04_writing_workspace/17_final_submission_screen.md
+- **Canvas Home Screen** — 05_canvas/18_canvas_home_screen.md
+- **Handwriting Canvas Screen** — 05_canvas/19_handwriting_canvas_screen.md
+- **Drawing / Brainstorm Canvas Screen** — 05_canvas/20_brainstorm_canvas_screen.md
+- **Canvas Attached to Assignment Screen** — 05_canvas/21_canvas_attached_to_assignment_screen.md
+- **AI Review Loading Screen** — 06_feedback_review/22_ai_review_loading_screen.md
+- **Feedback Summary Screen** — 06_feedback_review/23_feedback_summary_screen.md
+- **Rubric Score Screen** — 06_feedback_review/24_rubric_score_screen.md
+- **Grammar Suggestions Screen** — 06_feedback_review/25_grammar_suggestions_screen.md
+- **Progress Celebration Screen** — 06_feedback_review/26_progress_celebration_screen.md
+- **Student Progress Dashboard** — 07_progress/27_student_progress_dashboard.md
+- **Skill Detail Screen** — 07_progress/28_skill_detail_screen.md
+- **Badges / Achievements Screen** — 07_progress/29_badges_achievements_screen.md
+- **Weekly Review Screen** — 07_progress/30_weekly_review_screen.md
+- **Parent Home Dashboard** — 08_parent/31_parent_home_dashboard.md
+- **Parent Student Report Screen** — 08_parent/32_parent_student_report_screen.md
+- **Parent Assignment Review Screen** — 08_parent/33_parent_assignment_review_screen.md
+- **Parent Settings Screen** — 08_parent/34_parent_settings_screen.md
+- **Teacher Dashboard** — 09_teacher/35_teacher_dashboard_screen.md
+- **Class Progress Screen** — 09_teacher/36_class_progress_screen.md
+- **Create Assignment Screen** — 09_teacher/37_create_assignment_screen.md
+- **Teacher Submission Review Screen** — 09_teacher/38_teacher_submission_review_screen.md
+- **Student Profile Screen** — 10_profile_settings/39_student_profile_screen.md
+- **App Settings Screen** — 10_profile_settings/40_app_settings_screen.md
+- **Accessibility Settings Screen** — 10_profile_settings/41_accessibility_settings_screen.md
+- **Free Trial / Paywall Screen** — 11_subscription/42_free_trial_paywall_screen.md
+- **Upgrade Prompt Screen** — 11_subscription/43_upgrade_prompt_screen.md
+- **No Assignments Yet** — 12_edge_states/44_no_assignments_yet_screen.md
+- **Offline Draft Mode** — 12_edge_states/45_offline_draft_mode_screen.md
+- **AI Review Failed** — 12_edge_states/46_ai_review_failed_screen.md
+- **Canvas Save Error** — 12_edge_states/47_canvas_save_error_screen.md
+- **Assignment Submitted** — 12_edge_states/48_assignment_submitted_screen.md

@@ -1,0 +1,122 @@
+{
+  "project": "WriteWise AI",
+  "description": "Ordered implementation prompts for AI coding agents",
+  "order": [
+    {
+      "file": "prompts/01_master_agent_rules.md",
+      "title": "Master agent rules"
+    },
+    {
+      "file": "prompts/02_repo_audit_and_implementation_plan.md",
+      "title": "Repo audit and implementation plan"
+    },
+    {
+      "file": "prompts/03_project_scaffold_expo_router.md",
+      "title": "Project scaffold with Expo Router"
+    },
+    {
+      "file": "prompts/04_design_system_and_shared_ui.md",
+      "title": "Design system and shared UI"
+    },
+    {
+      "file": "prompts/05_navigation_and_role_routing.md",
+      "title": "Navigation and role routing"
+    },
+    {
+      "file": "prompts/06_localization_accessibility_foundation.md",
+      "title": "Localization and accessibility foundation"
+    },
+    {
+      "file": "prompts/07_auth_and_session_flow.md",
+      "title": "Auth and session flow"
+    },
+    {
+      "file": "prompts/08_student_onboarding_flow.md",
+      "title": "Student onboarding flow"
+    },
+    {
+      "file": "prompts/09_student_home_dashboard.md",
+      "title": "Student home dashboard"
+    },
+    {
+      "file": "prompts/10_assignment_feature.md",
+      "title": "Assignment feature"
+    },
+    {
+      "file": "prompts/11_typed_writing_workspace.md",
+      "title": "Typed writing workspace"
+    },
+    {
+      "file": "prompts/12_canvas_feature.md",
+      "title": "Canvas feature"
+    },
+    {
+      "file": "prompts/13_ai_coach_feature.md",
+      "title": "AI coach feature"
+    },
+    {
+      "file": "prompts/14_ai_review_feedback_revision.md",
+      "title": "AI review, feedback, and revision"
+    },
+    {
+      "file": "prompts/15_progress_tracking_and_badges.md",
+      "title": "Progress tracking and badges"
+    },
+    {
+      "file": "prompts/16_notifications_and_daily_assignment_logic.md",
+      "title": "Notifications and daily assignment logic"
+    },
+    {
+      "file": "prompts/17_parent_experience.md",
+      "title": "Parent experience"
+    },
+    {
+      "file": "prompts/18_teacher_experience.md",
+      "title": "Teacher experience"
+    },
+    {
+      "file": "prompts/19_subscription_and_paywall.md",
+      "title": "Subscription and paywall"
+    },
+    {
+      "file": "prompts/20_backend_api_contract.md",
+      "title": "Backend API contract"
+    },
+    {
+      "file": "prompts/21_database_schema_and_migrations.md",
+      "title": "Database schema and migrations"
+    },
+    {
+      "file": "prompts/22_ai_backend_services.md",
+      "title": "AI backend services"
+    },
+    {
+      "file": "prompts/23_canvas_storage_and_sync.md",
+      "title": "Canvas storage and sync"
+    },
+    {
+      "file": "prompts/24_testing_strategy_implementation.md",
+      "title": "Testing strategy implementation"
+    },
+    {
+      "file": "prompts/25_security_privacy_academic_integrity.md",
+      "title": "Security, privacy, academic integrity"
+    },
+    {
+      "file": "prompts/26_performance_offline_and_error_states.md",
+      "title": "Performance, offline, and error states"
+    },
+    {
+      "file": "prompts/27_final_qa_release_checklist.md",
+      "title": "Final QA and release checklist"
+    }
+  ],
+  "specialists": [
+    "prompts/specialists/design_review_agent.md",
+    "prompts/specialists/frontend_polish_agent.md",
+    "prompts/specialists/backend_review_agent.md",
+    "prompts/specialists/ai_safety_review_agent.md",
+    "prompts/specialists/testing_agent.md",
+    "prompts/specialists/product_manager_review_agent.md"
+  ]
+}

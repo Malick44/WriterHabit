@@ -1,0 +1,111 @@
+# Localization And Accessibility
+
+This document records the current localization and accessibility foundation for `apps/mobile/`.
+
+## Canonical Localization Path
+
+Use the shared i18n module for new app copy:
+
+```txt
+apps/mobile/src/shared/i18n/en.ts
+apps/mobile/src/shared/i18n/types.ts
+apps/mobile/src/shared/i18n/index.ts
+apps/mobile/src/shared/i18n/useT.ts
+```
+
+Compatibility exports remain in:
+
+```txt
+apps/mobile/src/i18n/index.tsx
+apps/mobile/src/i18n/locales/en.ts
+```
+
+New feature code should prefer:
+
+```ts
+import { useT } from "@/shared/i18n/useT";
+```
+
+Existing route layouts may still import `useI18n` from `@/i18n`; that path re-exports the shared provider.
+
+## Copy Rules
+
+- Do not hardcode new user-facing strings in JSX.
+- Add keys to `apps/mobile/src/shared/i18n/en.ts`.
+- Keep keys grouped by feature area, such as `assignments`, `writingWorkspace`, `canvas`, `aiCoach`, `parent`, `teacher`, and `accessibility`.
+- Keep AI coaching copy learning-oriented. Do not add CTAs such as "Write my essay", "Finish for me", "Give me the answer", "Generate final draft", or "Do my homework".
+- Prefer screen-owned copy keys over shared component-owned copy. Shared components should receive labels and messages as props.
+
+## Accessibility Settings
+
+Accessibility preferences are owned by profile settings:
+
+```txt
+apps/mobile/src/features/profile-settings/accessibility/accessibilitySettingsStore.ts
+apps/mobile/src/features/profile-settings/accessibility/AccessibilitySettingsProvider.tsx
+```
+
+The store persists locally through:
+
+```txt
+apps/mobile/src/services/storage/preferencesStorage.ts
+```
+
+Supported settings:
+
+- `textSize`: `default`, `large`, or `extraLarge`
+- `dyslexiaFriendlyFont`
+- `highContrast`
+- `reducedMotion`
+- `textToSpeech`
+- `speechToText`
+- `simplifiedUi`
+
+The provider is installed in:
+
+```txt
+apps/mobile/src/core/providers/AppProviders.tsx
+```
+
+## Shared Accessibility Utilities
+
+Reusable helpers live in:
+
+```txt
+apps/mobile/src/shared/utils/accessibility.ts
+```
+
+Use these helpers for shared UI and future feature screens:
+
+- `useAccessibilityContext`
+- `getAccessibleTextStyle`
+- `getAccessibleColors`
+- `getMinimumTouchTarget`
+- `getAccessibleHitSlop`
+- `getMotionDuration`
+- `buildAccessibilityLabel`
+- `mergeAccessibilityState`
+
+## Shared UI Behavior
+
+Current shared components consume accessibility settings for text scale, touch target sizing, hit slop, high contrast, and readable text style:
+
+```txt
+apps/mobile/src/shared/components/layout/Screen.tsx
+apps/mobile/src/shared/components/buttons/Button.tsx
+apps/mobile/src/shared/components/forms/
+apps/mobile/src/shared/components/feedback/
+```
+
+Future shared controls should:
+
+- Set practical React Native accessibility roles.
+- Set labels on interactive controls.
+- Set `accessibilityState` for disabled, selected, checked, busy, and expanded states.
+- Keep touch targets at least 44px and use larger targets when accessibility settings request them.
+- Use `getMotionDuration` for nonessential motion.
+- Source visible copy from i18n keys supplied by feature screens.
+
+## Known Constraint
+
+`dyslexiaFriendlyFont` currently applies a simpler system-font style with roomier spacing. A dedicated bundled dyslexia-friendly font asset has not been added yet.

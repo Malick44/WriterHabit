@@ -84,3 +84,4 @@ This file maps current mobile route files to their owning feature modules. It sh
 | Screen | Route | Feature |
 |---|---|---|
 | AI coach drawer | embedded in `apps/mobile/src/features/writing-workspace/components/CoachEntryPanel.tsx` | ai-coach |
+| Entitlement gate and inline upgrade prompt | reusable from `apps/mobile/src/features/subscriptions/components/EntitlementGate.tsx` | subscriptions |

@@ -285,9 +285,7 @@ Primary features:
 
 Work:
 
-- Implement paywall.
-- Implement upgrade prompts.
-- Implement entitlement gates.
+- Paywall, upgrade prompt, entitlement hook/service, entitlement gate, restore placeholder, and localized trust copy are implemented locally in `apps/mobile/src/features/subscriptions/`.
 - Extend accessibility settings as feature screens add read-aloud and dictation affordances.
 - Complete empty, loading, error, and success states across major flows.
 - Run release QA.
@@ -299,4 +297,4 @@ Risks:
 
 ## Next Recommended Prompt
 
-Use `prompts/19_subscription_and_paywall.md` next. Teacher dashboard, assignment creation, class progress, and submission review now exist locally; the next gap is subscription entitlement and paywall behavior.
+Use `prompts/20_backend_api_contract.md` next. The mobile subscription flow now uses deterministic local entitlement mocks; the next gap is defining backend API contracts for durable persistence, authorization, and future store entitlement sync.

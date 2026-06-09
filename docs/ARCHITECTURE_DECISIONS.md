@@ -13,6 +13,7 @@ Current evidence:
 - `apps/mobile/package.json` sets `"main": "expo-router/entry"`.
 - `apps/mobile/app/index.tsx` exports `LaunchScreen`.
 - Student, parent, teacher, onboarding, canvas, review, and paywall routes export feature screens.
+- `apps/mobile/app/paywall.tsx` stays thin and exports `PaywallRouteScreen`.
 
 Consequences:
 
@@ -65,6 +66,7 @@ Current evidence:
 - `apps/mobile/src/shared/query/queryClient.ts` owns the shared TanStack Query client defaults.
 - Zustand is used in `apps/mobile/src/shared/state/session.ts`, `apps/mobile/src/shared/state/preferences.tsx`, and canvas tool state.
 - Secure storage facade exists in `apps/mobile/src/services/storage/secureStorage.ts`.
+- Subscription entitlement state and checkout/restore placeholders use TanStack Query in `apps/mobile/src/features/subscriptions/hooks/useSubscriptions.ts`.
 
 ## ADR-004: Localization Is Required for User-Facing Copy
 
@@ -107,7 +109,7 @@ Current evidence:
 
 - `apps/mobile/tsconfig.json` sets `"strict": true`.
 - `zod` is installed in `apps/mobile/package.json`.
-- API and local storage validation is not broadly implemented yet.
+- API, local storage, subscription entitlement, and AI service boundaries increasingly use Zod validation, but backend contracts still need schema coverage as they are implemented.
 
 Consequences:
 
@@ -125,7 +127,7 @@ Current evidence:
 
 - `apps/mobile/package.json` includes `jest-expo`, `@types/jest`, and `react-test-renderer`.
 - `apps/mobile/jest.config.js` runs `apps/mobile/src/**/*.test.ts` and `apps/mobile/src/**/*.test.tsx`.
-- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home view-model decisions, assignment status transitions, writing draft persistence, writing metrics, canvas persistence/stroke behavior, AI coach policy/context/prompt/mock API behavior, and parent view-model adaptation/rubric totals.
+- Current tests cover progress scoring, grade-band typography token mapping, role routing decisions, i18n interpolation, accessibility settings helpers, onboarding validation/plan logic, auth validation, student home view-model decisions, assignment status transitions, writing draft persistence, writing metrics, canvas persistence/stroke behavior, AI coach policy/context/prompt/mock API behavior, parent view-model adaptation/rubric totals, teacher view-model behavior, and subscription entitlement gate decisions.
 
 Recommended first tests:
 
@@ -134,7 +136,7 @@ Recommended first tests:
 - AI safety guards and prompt builders under `apps/mobile/src/features/ai-coach/`
 - Onboarding validation schemas when added
 - Assignment status transitions when added
-- Subscription entitlement gates when added
+- Subscription entitlement gate screen/component rendering
 
 ## ADR-007: Design Tokens Use the Canonical Mobile Design Path
 
@@ -581,7 +583,7 @@ Backend responsibilities currently documented:
 - AI review queue.
 - Progress calculation.
 - Parent and teacher reporting.
-- Subscription entitlement sync.
+- Subscription entitlement sync. The mobile app currently uses local deterministic subscription mocks in `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts`.
 - Notifications and weekly reports.
 
 ## ADR-009: AI Coach Must Teach, Not Complete Assignments

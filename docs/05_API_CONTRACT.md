@@ -240,6 +240,52 @@ POST /webhooks/revenuecat
 POST /webhooks/stripe
 ```
 
+Current mobile subscription mock behavior lives in `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` and is validated by `apps/mobile/src/features/subscriptions/types.ts`.
+Local scenarios can be exercised with `EXPO_PUBLIC_WRITEWISE_SUBSCRIPTION_SCENARIO=success|premium|trial|past_due|empty|error|offline`.
+
+```ts
+interface SubscriptionApiResponse {
+  userId: string;
+  role: "student" | "parent" | "teacher" | "admin";
+  status: "free" | "trial" | "active" | "past_due";
+  canAccessPremium: boolean;
+  currentPlanId: "writewise_plus_monthly" | "writewise_plus_yearly" | null;
+  renewalLabel: string | null;
+  connectionStatus: "online" | "offline_cached";
+  generatedAt: string;
+  managementUrl: string | null;
+  trustLinks: {
+    termsUrl: string;
+    privacyUrl: string;
+  };
+  plans: SubscriptionPlan[];
+  features: SubscriptionFeature[];
+}
+
+interface SubscriptionPlan {
+  id: "writewise_plus_monthly" | "writewise_plus_yearly";
+  billingPeriod: "month" | "year";
+  priceLabel: string;
+  trialDays: number;
+  isRecommended: boolean;
+}
+
+interface SubscriptionFeature {
+  id:
+    | "safe_ai_coach"
+    | "daily_practice"
+    | "extended_progress_history"
+    | "family_progress_reports"
+    | "teacher_class_insights"
+    | "rubric_detail"
+    | "canvas_archive";
+  includedIn: "free" | "plus";
+  supportedRoles: Array<"student" | "parent" | "teacher" | "admin">;
+}
+```
+
+The local checkout action activates a mock trial entitlement in memory; it does not charge an account. The local restore action returns `restored` only when the mock scenario or current session already has `trial` or `active` status; otherwise it returns `not_found`.
+
 ## Error Response Shape
 
 ```ts

@@ -18,7 +18,7 @@ After that, read the task-specific implementation prompt, screen prompt, project
 ## Current Status
 
 - Primary app: `apps/mobile/` (Expo SDK 56, React Native, Expo Router, TypeScript strict).
-- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, and teacher experience exist; subscription screens are still placeholders or partial scaffolds.
+- Current implementation stage: feature scaffold, shared design-system foundation, role-based navigation foundation, localization/accessibility foundation, auth/session foundation, student onboarding flow, student home dashboard, assignment feature, typed writing workspace, canvas feature, policy-safe AI coach feature, feedback review/revision flow, local progress tracking/badges flow, daily assignment selection logic, notification-preparation services, parent experience, teacher experience, and local subscription/paywall entitlement flow exist.
 - Prompt 02 audit/planning is complete.
 - Prompt 04 design system/shared UI is complete.
 - Prompt 05 navigation/role routing is complete.
@@ -35,7 +35,8 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 16 notifications and daily assignment logic is complete.
 - Prompt 17 parent experience is complete.
 - Prompt 18 teacher experience is complete.
-- Next recommended prompt: `prompts/19_subscription_and_paywall.md`.
+- Prompt 19 subscription and paywall flow is complete.
+- Next recommended prompt: `prompts/20_backend_api_contract.md`.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -245,7 +246,7 @@ Prompt order is maintained in:
 Current next prompt:
 
 ```txt
-prompts/18_teacher_experience.md
+prompts/20_backend_api_contract.md
 ```
 
 Screen design prompt workflow:

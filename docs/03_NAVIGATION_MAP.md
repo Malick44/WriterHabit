@@ -269,6 +269,8 @@ Auth routes currently include:
 
 `/(auth)/welcome` offers Supabase sign-in/sign-up entry points and local demo role shortcuts. `/(auth)/sign-in` and `/(auth)/sign-up` submit through `apps/mobile/src/core/auth/authStore.ts`, which delegates real email/password operations to `apps/mobile/src/core/auth/sessionService.ts`.
 
+`/paywall` exports `PaywallRouteScreen` from `apps/mobile/src/features/subscriptions/screens/PaywallRouteScreen.tsx`. The screen renders loading, empty, error, free, past-due, and active Plus states from the local subscription entitlement hook. Inline premium gates can send users to this route without blocking free writing flows.
+
 Student onboarding routes currently include:
 
 ```txt

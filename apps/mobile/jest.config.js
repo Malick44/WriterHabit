@@ -1,7 +1,16 @@
 module.exports = {
   preset: 'jest-expo',
+  roots: ['<rootDir>/src', '<rootDir>/../../tests'],
+  moduleDirectories: ['node_modules', '<rootDir>/node_modules'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
+  testMatch: [
+    '<rootDir>/src/**/*.test.ts',
+    '<rootDir>/src/**/*.test.tsx',
+    '<rootDir>/../../tests/unit/**/*.test.ts',
+    '<rootDir>/../../tests/unit/**/*.test.tsx',
+    '<rootDir>/../../tests/integration/**/*.test.ts',
+    '<rootDir>/../../tests/integration/**/*.test.tsx',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/core/(.*)$': '<rootDir>/src/core/$1',

@@ -33,7 +33,7 @@ The mobile app is the only package with a package manager lockfile. It uses npm,
 | React Hook Form | Installed; no audited screen usage found yet |
 | Zod | Installed; no audited API/local-storage validation boundary usage found yet |
 | Localization | Present: canonical shared i18n in `apps/mobile/src/shared/i18n/` with compatibility exports in `apps/mobile/src/i18n/` |
-| Testing | Present: `jest-expo`, `@types/jest`, and `react-test-renderer` are dev dependencies; `apps/mobile/jest.config.js` runs `apps/mobile/src/**/*.test.ts` and `apps/mobile/src/**/*.test.tsx` |
+| Testing | Present: `jest-expo`, `@types/jest`, `@testing-library/react-native`, and `react-test-renderer` are dev dependencies; `apps/mobile/jest.config.js` runs feature-owned tests under `apps/mobile/src/`, root unit tests under `tests/unit/`, and root integration tests under `tests/integration/` |
 | Native projects | No `apps/mobile/ios/` or `apps/mobile/android/` folder is present; the app is currently CNG/prebuild style |
 
 ## Existing Mobile Structure
@@ -100,7 +100,7 @@ Do not edit these areas unless the task explicitly requires it:
 
 ## Risk Areas
 
-1. Testing is early. Jest is configured and smoke tests exist, but most feature workflows do not have tests yet.
+1. Testing now has a documented strategy, feature-owned service tests, root unit acceptance tests, root integration scaffolds, and documented E2E scenarios. A mobile E2E runner has not been selected yet.
 2. Backend runtime remains undefined. `services/api/docs/` now defines the planned API shape, errors, authorization rules, database schema, and data relationships, and `services/api/migrations/` contains draft Supabase/Postgres migrations. No framework, production migration runner, or running API server has been selected.
 3. Data validation is not enforced yet. Zod is installed but should be applied at API, local storage, and AI service boundaries.
 4. Accessibility and localization foundations exist, but placeholder feature screens still need screen-specific labels, roles, and i18n keys as they are implemented.

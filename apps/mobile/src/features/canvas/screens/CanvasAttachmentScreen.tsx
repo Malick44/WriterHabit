@@ -1,22 +1,63 @@
+import { useState } from "react";
+import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
-import { colors } from "@/design/tokens";
+import { colors, shadows, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
-import { CanvasDocumentCard } from "../components";
+import { CanvasSelectableDocumentCard } from "../components";
 import { useCanvasHomeData } from "../hooks/useCanvas";
 
 export function CanvasAttachmentScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   const state = useCanvasHomeData();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const documents = state.status === "success" ? state.viewModel.documents : [];
+  const effectiveSelectedId = selectedId ?? documents[0]?.id ?? null;
+  const selectedDocument = documents.find((document) => document.id === effectiveSelectedId) ?? null;
+  const type = typography.gradeBands[state.gradeBand];
+
+  const footer =
+    state.status === "success" && selectedDocument ? (
+      <View
+        style={{
+          backgroundColor: colors.background.surface,
+          borderTopColor: colors.border.default,
+          borderTopWidth: 1,
+          gap: spacing.sm,
+          paddingBottom: Math.max(insets.bottom, spacing.lg),
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.lg,
+          ...shadows.floating,
+        }}
+      >
+        <Text selectable style={[type.caption, { color: colors.text.muted, textAlign: "center" }]}>
+          {t("canvas.attachment.selectedCount", { count: 1 })}
+        </Text>
+        <Button
+          accessibilityLabel={t("canvas.attachment.openSelectedCta")}
+          fullWidth
+          gradeBand={state.gradeBand}
+          label={t("canvas.attachment.openSelectedCta")}
+          onPress={() => router.push(getCanvasDocumentRoute(selectedDocument.id, selectedDocument.assignmentId))}
+          size={state.gradeBand === "elementary" ? "lg" : "md"}
+          testID="canvas-attachment-confirm"
+        />
+      </View>
+    ) : undefined;
 
   return (
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
+      footer={footer}
       gradeBand={state.gradeBand}
       subtitle={t("canvas.attachment.subtitle")}
       testID="canvas-attachment-screen"
@@ -64,18 +105,28 @@ export function CanvasAttachmentScreen() {
               tone="warning"
             />
           ) : null}
+
+          <StatusState
+            accessibilityLabel={t("canvas.attachment.infoTitle")}
+            description={t("canvas.attachment.infoDescription")}
+            gradeBand={state.gradeBand}
+            title={t("canvas.attachment.infoTitle")}
+            tone="info"
+          />
+
           <PageSection
             gradeBand={state.gradeBand}
             subtitle={t("canvas.attachment.sectionSubtitle")}
             title={t("canvas.attachment.sectionTitle")}
           >
             <Stack gap="md">
-              {state.viewModel.documents.map((document) => (
-                <CanvasDocumentCard
+              {documents.map((document) => (
+                <CanvasSelectableDocumentCard
                   document={document}
                   gradeBand={state.gradeBand}
                   key={document.id}
-                  onOpen={() => router.push(getCanvasDocumentRoute(document.id, document.assignmentId))}
+                  onSelect={() => setSelectedId(document.id)}
+                  selected={document.id === effectiveSelectedId}
                 />
               ))}
             </Stack>

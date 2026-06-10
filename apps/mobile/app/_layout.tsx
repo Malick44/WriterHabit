@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { AppProviders } from "@/core/providers/AppProviders";
+import { ThemeTuningPanel } from "@/shared/components/layout";
 
 export default function RootLayout() {
   return (
@@ -13,6 +14,7 @@ export default function RootLayout() {
         <Stack.Screen name="(teacher)" />
         <Stack.Screen name="paywall" />
       </Stack>
+      {__DEV__ && <ThemeTuningPanel />}
     </AppProviders>
   );
 }

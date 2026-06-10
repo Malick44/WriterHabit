@@ -1,6 +1,6 @@
 import { createMockSession } from "@/core/auth/authStore";
 
-import { getLaunchRoute, getRouteAccessDecision } from "./roleRouter";
+import { getLaunchRoute, getPostLoginRoute, getRouteAccessDecision } from "./roleRouter";
 import { routes } from "./routeNames";
 
 describe("roleRouter", () => {
@@ -18,6 +18,12 @@ describe("roleRouter", () => {
     expect(getLaunchRoute(createMockSession("teacher", true))).toBe(routes.teacherDashboard);
   });
 
+  it("routes dev post-login sessions to onboarding", () => {
+    expect(getPostLoginRoute(createMockSession("student", true))).toBe(
+      __DEV__ ? routes.onboardingRoleSelection : routes.studentHome,
+    );
+  });
+
   it("blocks role mismatches and returns the role home redirect", () => {
     expect(getRouteAccessDecision(createMockSession("parent", true), "student")).toEqual({
       allowed: false,
@@ -30,9 +36,21 @@ describe("roleRouter", () => {
     expect(getRouteAccessDecision(null, "auth")).toEqual({ allowed: true });
     expect(getRouteAccessDecision(createMockSession("student", true), "auth")).toEqual({
       allowed: false,
-      redirectTo: routes.studentHome,
+      redirectTo: __DEV__ ? routes.onboardingRoleSelection : routes.studentHome,
       reason: "already_authenticated",
     });
+  });
+
+  it("allows completed users to revisit onboarding in dev mode", () => {
+    expect(getRouteAccessDecision(createMockSession("student", true), "onboarding")).toEqual(
+      __DEV__
+        ? { allowed: true }
+        : {
+            allowed: false,
+            redirectTo: routes.studentHome,
+            reason: "already_authenticated",
+          },
+    );
   });
 
   it("requires onboarding before role-specific and paywall routes", () => {

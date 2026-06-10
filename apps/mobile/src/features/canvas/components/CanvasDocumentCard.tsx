@@ -1,9 +1,7 @@
-import { Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 
-import { Button } from "@/shared/components/buttons";
-import { Card } from "@/shared/components/cards";
-import { Inline, Stack } from "@/shared/components/layout";
-import { colors, typography, type GradeBand } from "@/design/tokens";
+import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   buildAccessibilityLabel,
@@ -14,6 +12,8 @@ import {
 
 import type { CanvasDocumentSummary } from "../types";
 import { CanvasSyncStatusBadge } from "./CanvasSyncStatusBadge";
+import { CanvasTemplatePill } from "./CanvasTemplatePill";
+import { CanvasTemplatePreview } from "./CanvasTemplatePreview";
 
 interface CanvasDocumentCardProps {
   document: CanvasDocumentSummary;
@@ -26,42 +26,73 @@ export function CanvasDocumentCard({ document, gradeBand, onOpen }: CanvasDocume
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
+  const accent = colors.gradeBand[gradeBand].accent;
 
   return (
-    <Card
+    <Pressable
       accessibilityHint={t("canvas.home.cardHint")}
-      accessibilityLabel={buildAccessibilityLabel([t("canvas.home.cardAccessibility"), document.title])}
-      gradeBand={gradeBand}
+      accessibilityLabel={buildAccessibilityLabel([
+        t("canvas.home.cardAccessibility"),
+        document.title,
+        t(`canvas.sync.${document.syncStatus}`),
+      ])}
+      accessibilityRole="button"
+      hitSlop={layout.hitSlop}
       onPress={onOpen}
       testID={`canvas-document-${document.id}`}
-      title={document.title}
+      style={({ pressed }) => [
+        {
+          alignItems: "center",
+          backgroundColor: pressed ? colors.background.subtle : colors.background.surface,
+          borderColor: colors.border.default,
+          borderCurve: "continuous",
+          borderRadius: radius.xl,
+          borderWidth: 1,
+          flexDirection: "row",
+          gap: spacing.md,
+          padding: spacing.md,
+          ...shadows.card,
+        },
+      ]}
     >
-      <Stack gap="md">
-        <Inline gap="sm">
-          <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
-            {t("canvas.home.strokeCount", { count: document.strokeCount })}
+      <CanvasTemplatePreview accent={accent} template={document.template} />
+
+      <View style={{ flex: 1, gap: spacing.xs }}>
+        <View style={{ alignItems: "center", flexDirection: "row", gap: spacing.sm }}>
+          <Text
+            numberOfLines={1}
+            selectable
+            style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text, flexShrink: 1 }]}
+          >
+            {document.title}
           </Text>
+          {document.isAttached ? (
+            <View
+              style={{
+                backgroundColor: colors.feedback.info.background,
+                borderRadius: radius.full,
+                paddingHorizontal: spacing.sm,
+                paddingVertical: spacing.xxs,
+              }}
+            >
+              <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.feedback.info.text }]}>
+                {t("canvas.home.attachedLabel")}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={{ alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <CanvasTemplatePill gradeBand={gradeBand} template={document.template} />
           <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
             {document.updatedLabel}
           </Text>
-        </Inline>
-        <Inline align="center" gap="sm" justify="space-between">
-          <CanvasSyncStatusBadge gradeBand={gradeBand} status={document.syncStatus} />
-          {document.isAttached ? (
-            <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.text }]}>
-              {t("canvas.home.attachedLabel")}
-            </Text>
-          ) : null}
-        </Inline>
-        <Button
-          accessibilityLabel={t("canvas.home.openAccessibility")}
-          gradeBand={gradeBand}
-          label={t("canvas.home.openCta")}
-          onPress={onOpen}
-          size={gradeBand === "elementary" ? "lg" : "md"}
-          variant="secondary"
-        />
-      </Stack>
-    </Card>
+        </View>
+
+        <CanvasSyncStatusBadge gradeBand={gradeBand} status={document.syncStatus} />
+      </View>
+
+      <Ionicons color={colors.text.muted} name="chevron-forward" size={20} />
+    </Pressable>
   );
 }

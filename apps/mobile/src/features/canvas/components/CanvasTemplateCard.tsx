@@ -1,16 +1,16 @@
-import { Text } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
-import { Card } from "@/shared/components/cards";
-import { Stack } from "@/shared/components/layout";
-import { colors, typography, type GradeBand } from "@/design/tokens";
+import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   buildAccessibilityLabel,
+  getAccessibleColors,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
 import type { CanvasTemplateDefinition } from "../types";
+import { CanvasTemplatePreview } from "./CanvasTemplatePreview";
 
 interface CanvasTemplateCardProps {
   definition: CanvasTemplateDefinition;
@@ -29,28 +29,43 @@ export function CanvasTemplateCard({
 }: CanvasTemplateCardProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
+  const accent = colors.gradeBand[gradeBand].accent;
 
   return (
-    <Card
+    <Pressable
       accessibilityHint={t("canvas.templates.cardHint")}
       accessibilityLabel={buildAccessibilityLabel([t("canvas.templates.cardAccessibility"), t(definition.labelKey)])}
-      gradeBand={gradeBand}
-      onPress={disabled ? undefined : onSelect}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={layout.hitSlop}
+      onPress={onSelect}
       testID={`canvas-template-${definition.template}`}
-      title={t(definition.labelKey)}
-      variant="accent"
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? colors.background.subtle : colors.background.surface,
+          borderColor: colors.border.default,
+          borderCurve: "continuous",
+          borderRadius: radius.xl,
+          borderWidth: 1,
+          gap: spacing.sm,
+          opacity: disabled ? 0.6 : 1,
+          padding: spacing.md,
+          ...shadows.card,
+        },
+      ]}
     >
-      <Stack gap="sm">
-        {showDescription ? (
-          <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: colors.text.secondary }]}>
-            {t(definition.descriptionKey)}
-          </Text>
-        ) : null}
-        <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
-          {t("canvas.templates.selectCta")}
+      <CanvasTemplatePreview accent={accent} template={definition.template} variant="tile" />
+      <Text selectable style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
+        {t(definition.labelKey)}
+      </Text>
+      {showDescription ? (
+        <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: colors.text.secondary }]}>
+          {t(definition.descriptionKey)}
         </Text>
-      </Stack>
-    </Card>
+      ) : null}
+    </Pressable>
   );
 }

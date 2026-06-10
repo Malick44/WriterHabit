@@ -74,11 +74,11 @@ export const useOnboardingStore = create<OnboardingStore>()((set, get) => ({
   hydrateProgress: async (userId, options) => {
     const state = get();
 
-    if (state.hydrated && state.userId === userId) {
+    if ((state.hydrated || state.status === "loading") && state.userId === userId) {
       return;
     }
 
-    set({ errorCode: null, status: "loading" });
+    set({ errorCode: null, status: "loading", userId });
 
     try {
       const storedProgress = await onboardingApi.loadProgress(userId);

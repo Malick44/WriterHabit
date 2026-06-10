@@ -4,16 +4,24 @@ import {
   StyleSheet,
   Text,
   View,
+  type DimensionValue,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
+import { getGradeBandForGrade, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
+import {
+  type ThemeTuningColorPreset,
+  type ThemeTuningScreenConfig,
+  useScreenThemeValues,
+  useThemeTuningScreen,
+} from "@/shared/theme";
 
-import { dailyPracticeCopyKeys } from "../constants";
 import { OnboardingStepFrame } from "../components";
+import { dailyPracticeCopyKeys } from "../constants";
 import { useOnboarding } from "../hooks/useOnboarding";
 import {
   type DailyPracticeMinutes,
@@ -21,26 +29,274 @@ import {
   onboardingValidationMessageKeys,
 } from "../types";
 
-const NAVY = "#083E8E";
-const SCREEN_BACKGROUND = "#F8FAFF";
+type DailyPracticeThemeValues = {
+  accentColor: string;
+  bodyScale: number;
+  iconColor: string;
+  iconScale: number;
+  iconSurfaceColor: string;
+  mutedTextColor: string;
+  optionCardRadius: number;
+  optionGap: number;
+  optionSurfaceColor: string;
+  progressTrackColor: string;
+  screenBackgroundColor: string;
+  selectedOptionColor: string;
+  summarySurfaceColor: string;
+  textColor: string;
+  titleScale: number;
+};
+
+const DAILY_PRACTICE_SCREEN_ID = "onboarding.dailyPracticeGoal";
+
+const DAILY_PRACTICE_THEME_DEFAULTS: DailyPracticeThemeValues = {
+  accentColor: "#1D4ED8",
+  bodyScale: 1,
+  iconColor: "#1D4ED8",
+  iconScale: 1,
+  iconSurfaceColor: "#DBEAFE",
+  mutedTextColor: "#475569",
+  optionCardRadius: 18,
+  optionGap: 12,
+  optionSurfaceColor: "#FFFFFF",
+  progressTrackColor: "#D7E3F8",
+  screenBackgroundColor: "#F4F8FF",
+  selectedOptionColor: "#EAF2FF",
+  summarySurfaceColor: "#FFFFFF",
+  textColor: "#0F172A",
+  titleScale: 1,
+};
+
+const DAILY_PRACTICE_SCREEN_PRESETS = [
+  { labelKey: "themeTuner.presets.dailyPractice.paper", value: "#F4F8FF" },
+  { labelKey: "themeTuner.presets.dailyPractice.sky", value: "#EAF4FF" },
+  { labelKey: "themeTuner.presets.dailyPractice.mint", value: "#ECFDF5" },
+  { labelKey: "themeTuner.presets.dailyPractice.night", value: "#101827" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_ACCENT_PRESETS = [
+  { labelKey: "themeTuner.presets.primary.iceBlue", value: "#0EA5E9" },
+  { labelKey: "themeTuner.presets.primary.emerald", value: "#0F766E" },
+  { labelKey: "themeTuner.presets.primary.cyberPurple", value: "#7C3AED" },
+  { labelKey: "themeTuner.presets.primary.ruby", value: "#BE123C" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_SURFACE_PRESETS = [
+  { labelKey: "themeTuner.presets.dailyPractice.white", value: "#FFFFFF" },
+  { labelKey: "themeTuner.presets.dailyPractice.softBlue", value: "#EAF2FF" },
+  { labelKey: "themeTuner.presets.dailyPractice.warm", value: "#FFF7ED" },
+  { labelKey: "themeTuner.presets.dailyPractice.slate", value: "#1E293B" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_TEXT_PRESETS = [
+  { labelKey: "themeTuner.presets.dailyPractice.ink", value: "#0F172A" },
+  { labelKey: "themeTuner.presets.dailyPractice.slateText", value: "#334155" },
+  { labelKey: "themeTuner.presets.dailyPractice.whiteText", value: "#F8FAFC" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_MUTED_TEXT_PRESETS = [
+  { labelKey: "themeTuner.presets.dailyPractice.slateText", value: "#475569" },
+  { labelKey: "themeTuner.presets.dailyPractice.blueText", value: "#3B5B8F" },
+  { labelKey: "themeTuner.presets.dailyPractice.softWhiteText", value: "#CBD5E1" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_ICON_SURFACE_PRESETS = [
+  { labelKey: "themeTuner.presets.dailyPractice.softBlue", value: "#DBEAFE" },
+  { labelKey: "themeTuner.presets.dailyPractice.mint", value: "#CCFBF1" },
+  { labelKey: "themeTuner.presets.dailyPractice.warm", value: "#FED7AA" },
+  { labelKey: "themeTuner.presets.dailyPractice.slate", value: "#334155" },
+] satisfies readonly ThemeTuningColorPreset[];
+
+const DAILY_PRACTICE_TUNING_CONFIG = {
+  controls: [
+    {
+      id: "daily-screen-background",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.screenBackground",
+      param: "screenBackgroundColor",
+      presets: DAILY_PRACTICE_SCREEN_PRESETS,
+      scope: "screen",
+    },
+    {
+      id: "daily-accent",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.accent",
+      param: "accentColor",
+      presets: DAILY_PRACTICE_ACCENT_PRESETS,
+      scope: "screen",
+    },
+    {
+      id: "daily-summary-surface",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.summarySurface",
+      param: "summarySurfaceColor",
+      presets: DAILY_PRACTICE_SURFACE_PRESETS,
+      scope: "component",
+    },
+    {
+      id: "daily-option-surface",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.optionSurface",
+      param: "optionSurfaceColor",
+      presets: DAILY_PRACTICE_SURFACE_PRESETS,
+      scope: "component",
+    },
+    {
+      id: "daily-selected-option",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.selectedOption",
+      param: "selectedOptionColor",
+      presets: DAILY_PRACTICE_SURFACE_PRESETS,
+      scope: "component",
+    },
+    {
+      id: "daily-progress-track",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.progressTrack",
+      param: "progressTrackColor",
+      presets: DAILY_PRACTICE_SCREEN_PRESETS,
+      scope: "component",
+    },
+    {
+      id: "daily-option-radius",
+      kind: "range",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.optionRadius",
+      max: 30,
+      min: 8,
+      param: "optionCardRadius",
+      scope: "component",
+      step: 2,
+      valueFormat: "number",
+    },
+    {
+      id: "daily-option-gap",
+      kind: "range",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.optionGap",
+      max: 24,
+      min: 6,
+      param: "optionGap",
+      scope: "component",
+      step: 2,
+      valueFormat: "number",
+    },
+    {
+      id: "daily-text-color",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.textColor",
+      param: "textColor",
+      presets: DAILY_PRACTICE_TEXT_PRESETS,
+      scope: "text",
+    },
+    {
+      id: "daily-muted-text-color",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.mutedTextColor",
+      param: "mutedTextColor",
+      presets: DAILY_PRACTICE_MUTED_TEXT_PRESETS,
+      scope: "text",
+    },
+    {
+      id: "daily-title-scale",
+      kind: "range",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.titleScale",
+      max: 1.35,
+      min: 0.8,
+      param: "titleScale",
+      scope: "text",
+      step: 0.05,
+      valueFormat: "scale",
+    },
+    {
+      id: "daily-body-scale",
+      kind: "range",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.bodyScale",
+      max: 1.35,
+      min: 0.8,
+      param: "bodyScale",
+      scope: "text",
+      step: 0.05,
+      valueFormat: "scale",
+    },
+    {
+      id: "daily-icon-color",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.iconColor",
+      param: "iconColor",
+      presets: DAILY_PRACTICE_ACCENT_PRESETS,
+      scope: "icon",
+    },
+    {
+      id: "daily-icon-surface",
+      kind: "color",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.iconSurface",
+      param: "iconSurfaceColor",
+      presets: DAILY_PRACTICE_ICON_SURFACE_PRESETS,
+      scope: "icon",
+    },
+    {
+      id: "daily-icon-scale",
+      kind: "range",
+      labelKey: "themeTuner.controls.dailyPracticeGoal.iconScale",
+      max: 1.45,
+      min: 0.75,
+      param: "iconScale",
+      scope: "icon",
+      step: 0.05,
+      valueFormat: "scale",
+    },
+  ],
+  defaultValues: { ...DAILY_PRACTICE_THEME_DEFAULTS },
+  descriptionKey: "themeTuner.screens.dailyPracticeGoal.description",
+  id: DAILY_PRACTICE_SCREEN_ID,
+  routePattern: "/(onboarding)/daily-practice-goal",
+  titleKey: "themeTuner.screens.dailyPracticeGoal.title",
+} satisfies ThemeTuningScreenConfig;
+
 const visibleDailyPracticeOptions = [5, 10, 15, 20] as const satisfies readonly DailyPracticeMinutes[];
 
 const iconByMinutes: Record<DailyPracticeMinutes, keyof typeof Ionicons.glyphMap> = {
-  5: "stopwatch-outline",
-  10: "alarm-outline",
-  15: "checkmark-circle-outline",
-  20: "ribbon-outline",
+  5: "flash-outline",
+  10: "leaf-outline",
+  15: "trail-sign-outline",
+  20: "trophy-outline",
   30: "time-outline",
 };
 
+function getReadableControlColor(hexColor: string) {
+  const normalized = hexColor.replace("#", "");
+
+  if (normalized.length !== 6) {
+    return "#0F172A";
+  }
+
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+  return luminance > 0.56 ? "#0F172A" : "#FFFFFF";
+}
+
 export function DailyPracticeGoalScreen() {
+  useThemeTuningScreen(DAILY_PRACTICE_TUNING_CONFIG);
+
   const router = useRouter();
   const { t } = useI18n();
   const onboarding = useOnboarding();
+  const theme = useScreenThemeValues<DailyPracticeThemeValues>(
+    DAILY_PRACTICE_SCREEN_ID,
+    DAILY_PRACTICE_THEME_DEFAULTS,
+  );
   const [showValidationError, setShowValidationError] = useState(false);
 
-  const gradeBand = "middle";
+  const gradeBand = getGradeBandForGrade(onboarding.progress.gradeLevel ?? 7);
+  const type = typography.gradeBands[gradeBand];
   const selectedMinutes = onboarding.progress.dailyPracticeMinutes ?? 10;
+  const selectedOption = dailyPracticeCopyKeys[selectedMinutes];
+  const visibleSelectedOptionIndex = visibleDailyPracticeOptions.findIndex((minutes) => minutes === selectedMinutes);
+  const selectedOptionIndex = Math.max(visibleSelectedOptionIndex, 0);
+  const selectedProgressWidth = `${((selectedOptionIndex + 1) / visibleDailyPracticeOptions.length) * 100}%` as DimensionValue;
+  const readableAccentTextColor = getReadableControlColor(theme.accentColor);
 
   if (!onboarding.hydrated) {
     return (
@@ -62,7 +318,11 @@ export function DailyPracticeGoalScreen() {
 
   return (
     <OnboardingStepFrame
+      backIconColor={theme.textColor}
+      backgroundColor={theme.screenBackgroundColor}
+      contentStyle={styles.frameContent}
       errorMessage={errorMessage}
+      footerStyle={{ backgroundColor: theme.screenBackgroundColor }}
       gradeBand={gradeBand}
       onPrimaryPress={() => {
         void (async () => {
@@ -76,151 +336,369 @@ export function DailyPracticeGoalScreen() {
         })();
       }}
       onSecondaryPress={() => router.back()}
-      backgroundColor={SCREEN_BACKGROUND}
-      footerStyle={{ backgroundColor: SCREEN_BACKGROUND }}
-      primaryLabel={t("common.continue")}
-      secondaryLabel={t("common.back")}
-      step="dailyPractice"
-      subtitle={t("onboarding.dailyPracticeGoal.description")}
-      title={t("onboarding.dailyPracticeGoal.title")}
-      contentStyle={styles.frameContent}
       primaryButtonStyle={{
-        backgroundColor: NAVY,
-        borderColor: NAVY,
-        borderRadius: 999,
+        backgroundColor: theme.accentColor,
+        borderColor: theme.accentColor,
+        borderRadius: radius.full,
         minHeight: 62,
       }}
-      titleStyle={styles.title}
-      subtitleStyle={styles.subtitle}
+      primaryLabel={t("common.continue")}
+      progressActiveColor={theme.accentColor}
+      progressInactiveColor={theme.progressTrackColor}
+      secondaryLabel={t("common.back")}
+      showProgressDots
+      step="dailyPractice"
+      subtitle={t("onboarding.dailyPracticeGoal.description")}
+      subtitleStyle={[
+        styles.subtitle,
+        {
+          color: theme.mutedTextColor,
+          fontSize: type.body.fontSize * theme.bodyScale,
+          lineHeight: type.body.lineHeight * theme.bodyScale,
+        },
+      ]}
+      title={t("onboarding.dailyPracticeGoal.title")}
+      titleStyle={[
+        styles.title,
+        {
+          color: theme.textColor,
+          fontSize: type.heading.fontSize * theme.titleScale,
+          lineHeight: type.heading.lineHeight * theme.titleScale,
+        },
+      ]}
     >
-      <View style={styles.options}>
-        {visibleDailyPracticeOptions.map((minutes) => {
-          const isSelected = selectedMinutes === minutes;
-          const iconName = iconByMinutes[minutes] ?? "time-outline";
-
-          return (
-            <Pressable
-              key={minutes}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected }}
-              accessibilityHint={t("onboarding.dailyPracticeGoal.dailyGoalAccessibilityHint")}
-              onPress={() => {
-                setShowValidationError(false);
-                void onboarding.setDailyPracticeMinutes(minutes);
-              }}
+      <View style={styles.contentStack}>
+        <View
+          accessibilityLabel={t("onboarding.dailyPracticeGoal.selectedSummaryAccessibility", {
+            minutes: selectedMinutes,
+          })}
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: theme.summarySurfaceColor,
+              borderColor: `${theme.accentColor}2E`,
+              borderRadius: theme.optionCardRadius + 6,
+            },
+          ]}
+        >
+          <View style={styles.summaryHeader}>
+            <View
               style={[
-                styles.card,
+                styles.summaryIcon,
                 {
-                  borderColor: isSelected ? NAVY : "#C5CBD8",
-                  backgroundColor: isSelected ? "#F8FBFF" : "#FFFFFF",
-                  shadowOpacity: isSelected ? 0.14 : 0.05,
+                  backgroundColor: theme.iconSurfaceColor,
                 },
               ]}
             >
-              <View
+              <Ionicons
+                color={theme.iconColor}
+                name={iconByMinutes[selectedMinutes]}
+                size={34 * theme.iconScale}
+              />
+            </View>
+
+            <View style={styles.summaryCopy}>
+              <Text
                 style={[
-                  styles.iconWrap,
+                  styles.eyebrow,
                   {
-                    backgroundColor: "#E0ECFF",
+                    color: theme.accentColor,
+                    fontSize: type.caption.fontSize * theme.bodyScale,
+                    lineHeight: type.caption.lineHeight * theme.bodyScale,
                   },
                 ]}
               >
-                <Ionicons
-                  name={iconName}
-                  size={34}
-                  color={NAVY}
-                />
-              </View>
-
-              <View style={styles.copy}>
-                <Text style={styles.cardTitle}>
-                  {t(dailyPracticeCopyKeys[minutes].label)}
-                </Text>
-                <Text style={styles.cardDescription}>
-                  {t(dailyPracticeCopyKeys[minutes].description)}
-                </Text>
-              </View>
-
-              <View
+                {t("onboarding.dailyPracticeGoal.summaryEyebrow")}
+              </Text>
+              <Text
+                accessibilityRole="header"
                 style={[
-                  styles.radioOuter,
+                  styles.summaryTitle,
                   {
-                    backgroundColor: isSelected ? NAVY : "#FFFFFF",
-                    borderColor: isSelected ? NAVY : "#C7CBD7",
+                    color: theme.textColor,
+                    fontSize: type.title.fontSize * theme.titleScale,
+                    lineHeight: type.title.lineHeight * theme.titleScale,
                   },
                 ]}
               >
-                {isSelected ? null : null}
-              </View>
-            </Pressable>
-          );
-        })}
+                {t("onboarding.dailyPracticeGoal.summaryTitle", { minutes: selectedMinutes })}
+              </Text>
+            </View>
+          </View>
+
+          <Text
+            style={[
+              styles.summaryDescription,
+              {
+                color: theme.mutedTextColor,
+                fontSize: type.bodySmall.fontSize * theme.bodyScale,
+                lineHeight: type.bodySmall.lineHeight * theme.bodyScale,
+              },
+            ]}
+          >
+            {t(selectedOption.description)}
+          </Text>
+
+          <View
+            accessibilityLabel={t("onboarding.dailyPracticeGoal.progressLabel")}
+            style={[styles.progressTrack, { backgroundColor: theme.progressTrackColor }]}
+          >
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: theme.accentColor,
+                  width: selectedProgressWidth,
+                },
+              ]}
+            />
+          </View>
+        </View>
+
+        <View style={styles.optionsHeader}>
+          <Text
+            style={[
+              styles.optionsTitle,
+              {
+                color: theme.textColor,
+                fontSize: type.label.fontSize * theme.bodyScale,
+                lineHeight: type.label.lineHeight * theme.bodyScale,
+              },
+            ]}
+          >
+            {t("onboarding.dailyPracticeGoal.choosePaceTitle")}
+          </Text>
+          <Text
+            style={[
+              styles.flexibilityNote,
+              {
+                color: theme.mutedTextColor,
+                fontSize: type.caption.fontSize * theme.bodyScale,
+                lineHeight: type.caption.lineHeight * theme.bodyScale,
+              },
+            ]}
+          >
+            {t("onboarding.dailyPracticeGoal.flexibilityNote")}
+          </Text>
+        </View>
+
+        <View style={[styles.options, { gap: theme.optionGap }]}>
+          {visibleDailyPracticeOptions.map((minutes) => {
+            const isSelected = selectedMinutes === minutes;
+            const iconName = iconByMinutes[minutes];
+
+            return (
+              <Pressable
+                accessibilityHint={t("onboarding.dailyPracticeGoal.dailyGoalAccessibilityHint")}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+                key={minutes}
+                onPress={() => {
+                  setShowValidationError(false);
+                  void onboarding.setDailyPracticeMinutes(minutes);
+                }}
+                style={({ pressed }) => [
+                  styles.optionCard,
+                  {
+                    backgroundColor: isSelected ? theme.selectedOptionColor : theme.optionSurfaceColor,
+                    borderColor: isSelected ? theme.accentColor : `${theme.accentColor}24`,
+                    borderRadius: theme.optionCardRadius,
+                    opacity: pressed ? 0.78 : 1,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.optionIcon,
+                    {
+                      backgroundColor: theme.iconSurfaceColor,
+                    },
+                  ]}
+                >
+                  <Ionicons color={theme.iconColor} name={iconName} size={24 * theme.iconScale} />
+                </View>
+
+                <View style={styles.optionCopy}>
+                  <View style={styles.optionTitleRow}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        {
+                          color: theme.textColor,
+                          fontSize: type.bodyStrong.fontSize * theme.bodyScale,
+                          lineHeight: type.bodyStrong.lineHeight * theme.bodyScale,
+                        },
+                      ]}
+                    >
+                      {t(dailyPracticeCopyKeys[minutes].label)}
+                    </Text>
+                    {minutes === 10 ? (
+                      <View style={[styles.badge, { backgroundColor: theme.accentColor }]}>
+                        <Text style={[styles.badgeText, { color: readableAccentTextColor }]}>
+                          {t("onboarding.dailyPracticeGoal.recommendedBadge")}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.optionDescription,
+                      {
+                        color: theme.mutedTextColor,
+                        fontSize: type.bodySmall.fontSize * theme.bodyScale,
+                        lineHeight: type.bodySmall.lineHeight * theme.bodyScale,
+                      },
+                    ]}
+                  >
+                    {t(dailyPracticeCopyKeys[minutes].description)}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.radioOuter,
+                    {
+                      backgroundColor: isSelected ? theme.accentColor : "transparent",
+                      borderColor: isSelected ? theme.accentColor : `${theme.accentColor}66`,
+                    },
+                  ]}
+                >
+                  {isSelected ? (
+                    <Ionicons name="checkmark" size={16} color={readableAccentTextColor} />
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </OnboardingStepFrame>
   );
 }
 
 const styles = StyleSheet.create({
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    lineHeight: 14,
+  },
+  contentStack: {
+    gap: spacing.xl,
+  },
+  eyebrow: {
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  flexibilityNote: {
+    flexShrink: 1,
+  },
   frameContent: {
     gap: 0,
   },
-  title: {
-    color: NAVY,
-    fontSize: 34,
-    lineHeight: 42,
+  optionCard: {
+    alignItems: "center",
+    borderWidth: 1,
+    flexDirection: "row",
+    minHeight: 88,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+  },
+  optionCopy: {
+    flex: 1,
+    gap: 2,
+    marginLeft: spacing.md,
+  },
+  optionDescription: {
+    fontWeight: "500",
+  },
+  optionIcon: {
+    alignItems: "center",
+    borderRadius: 24,
+    height: 48,
+    justifyContent: "center",
+    width: 48,
+  },
+  optionTitle: {
+    flexShrink: 1,
     fontWeight: "800",
   },
-  subtitle: {
-    color: "#333949",
-    fontSize: 21,
-    lineHeight: 30,
+  optionTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
   },
   options: {
-    gap: 32,
-    marginTop: 8,
+    gap: spacing.md,
   },
-  card: {
-    minHeight: 126,
-    borderWidth: 1.5,
-    borderRadius: 18,
-    paddingHorizontal: 30,
-    paddingVertical: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#111827",
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 24,
-    elevation: 2,
+  optionsHeader: {
+    gap: spacing.xs,
   },
-  iconWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
+  optionsTitle: {
+    fontWeight: "800",
   },
-  copy: {
-    flex: 1,
-    marginLeft: 30,
+  progressFill: {
+    borderRadius: radius.full,
+    height: "100%",
   },
-  cardTitle: {
-    color: "#071426",
-    fontSize: 25,
-    lineHeight: 31,
-    fontWeight: "700",
-  },
-  cardDescription: {
-    color: "#343949",
-    fontSize: 24,
-    lineHeight: 31,
-    marginTop: 3,
+  progressTrack: {
+    borderRadius: radius.full,
+    height: 8,
+    overflow: "hidden",
   },
   radioOuter: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    borderWidth: 3,
     alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 2,
+    height: 32,
     justifyContent: "center",
+    marginLeft: spacing.sm,
+    width: 32,
+  },
+  subtitle: {
+    fontWeight: "500",
+  },
+  summaryCard: {
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+  },
+  summaryCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  summaryDescription: {
+    fontWeight: "500",
+  },
+  summaryHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  summaryIcon: {
+    alignItems: "center",
+    borderRadius: 34,
+    height: 68,
+    justifyContent: "center",
+    width: 68,
+  },
+  summaryTitle: {
+    fontWeight: "800",
+  },
+  title: {
+    fontWeight: "800",
   },
 });

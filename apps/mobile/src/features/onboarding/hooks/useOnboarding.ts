@@ -19,14 +19,14 @@ export function useOnboarding() {
   const userId = session?.user.id;
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !session) {
       return;
     }
 
     void onboarding.hydrateProgress(userId, {
       defaultRole: session.user.role === "admin" ? undefined : session.user.role,
     });
-  }, [onboarding, session?.user.role, userId]);
+  }, [onboarding.hydrateProgress, session?.user.role, userId]);
 
   const validationError = getOnboardingValidationError(onboarding.progress);
   const firstIncompleteStep = getFirstIncompleteOnboardingStep(onboarding.progress);

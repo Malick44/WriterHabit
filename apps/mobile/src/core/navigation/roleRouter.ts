@@ -41,6 +41,18 @@ export function getLaunchRoute(session: AuthSession | null): AppRoute {
   return getHomeRouteForRole(session.user.role);
 }
 
+function shouldForceOnboardingAfterDevLogin(session: AuthSession | null): session is AuthSession {
+  return Boolean(__DEV__ && isAuthenticatedSession(session));
+}
+
+export function getPostLoginRoute(session: AuthSession | null): AppRoute {
+  if (shouldForceOnboardingAfterDevLogin(session)) {
+    return routes.onboardingRoleSelection;
+  }
+
+  return getLaunchRoute(session);
+}
+
 export function getLaunchRouteFromSnapshot(snapshot: AuthSessionSnapshot): AppRoute | null {
   if (snapshot.status === "hydrating") {
     return null;
@@ -57,7 +69,7 @@ export function getRouteAccessDecision(session: AuthSession | null, area: RouteA
 
     return {
       allowed: false,
-      redirectTo: getLaunchRoute(session),
+      redirectTo: getPostLoginRoute(session),
       reason: "already_authenticated",
     };
   }
@@ -71,7 +83,7 @@ export function getRouteAccessDecision(session: AuthSession | null, area: RouteA
   }
 
   if (area === "onboarding") {
-    if (!session.onboardingComplete) {
+    if (__DEV__ || !session.onboardingComplete) {
       return { allowed: true };
     }
 

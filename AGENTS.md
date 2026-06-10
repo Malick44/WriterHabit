@@ -125,6 +125,15 @@ Feature rule:
 - Avoid giant global `screens/`, `components/`, `hooks/`, or `services` folders.
 - Avoid direct imports of another feature's implementation details. Promote shared contracts to `apps/mobile/src/shared/` or `packages/shared/`.
 
+Reusable UI rule:
+
+- Before creating feature-local UI, always check the shared component layer in `apps/mobile/src/shared/components/` and reuse existing primitives when they fit.
+- Use shared reusable systems for cross-screen patterns instead of duplicating UI logic in feature screens. Current examples include `Modal`, `BottomSheetModal`, `ModalProvider`, `useModal`, `TopAlertBanner`, `TopAlertProvider`, `useTopAlert`, `showTopAlert`, and `hideTopAlert`.
+- If a new UI pattern is likely to appear in more than one feature or screen, build it as a typed shared component or shared provider system under `apps/mobile/src/shared/components/` first, then consume it from features.
+- Feature-owned components should compose shared primitives and keep only feature-specific layout, state, and copy wiring locally.
+- Shared UI components must stay localization-ready, accessibility-aware, theme-token based, and covered by focused tests when they include behavior.
+- Do not introduce direct React Native `Modal`, ad hoc top banners/toasts, hardcoded alert UI, custom button variants, duplicate cards, or screen-local feedback patterns unless the shared component layer is insufficient. If it is insufficient, extend the shared component rather than forking the pattern.
+
 ## Stack And State
 
 Mobile stack:

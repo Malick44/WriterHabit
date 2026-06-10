@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View, type GestureResponderEvent } from "react-native";
 
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -162,12 +162,14 @@ export function StrokeCanvasAdapter({
       accessibilityLabel={t("canvas.surface.accessibility")}
       testID="canvas-surface"
       style={{
-        backgroundColor: colors.background.canvas,
+        backgroundColor: colors.background.surface,
         borderColor: accessibleColors.border,
-        borderRadius: radius.md,
+        borderCurve: "continuous",
+        borderRadius: radius.xl,
         borderWidth: 1,
         minHeight: gradeAdaptation.surfaceMinHeight,
         overflow: "hidden",
+        ...shadows.card,
       }}
     >
       <Pressable
@@ -192,10 +194,12 @@ export function StrokeCanvasAdapter({
             pointerEvents="none"
             style={{
               alignItems: "center",
-              bottom: spacing.xl,
+              bottom: spacing.huge,
+              justifyContent: "center",
               left: spacing.lg,
               position: "absolute",
               right: spacing.lg,
+              top: spacing.lg,
             }}
           >
             <Text
@@ -225,6 +229,24 @@ export function StrokeCanvasAdapter({
             />
           )),
         )}
+
+        <View
+          pointerEvents="none"
+          style={{ alignItems: "center", bottom: spacing.md, left: spacing.lg, position: "absolute", right: spacing.lg }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.background.subtle,
+              borderRadius: radius.full,
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.xs,
+            }}
+          >
+            <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
+              {t("canvas.surface.drawPrompt")}
+            </Text>
+          </View>
+        </View>
       </Pressable>
     </View>
   );

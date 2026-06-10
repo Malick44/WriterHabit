@@ -71,9 +71,123 @@ Current primitives include:
 - Cards: `Card`, `InfoCard`
 - Forms: `FormField`, `TextField`, `ChoiceCard`, `CheckboxRow`
 - Feedback: `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`, `StatusState`, `OfflineBanner`, `RetryButton`, `ProgressBar`
+- Top alerts: `TopAlertBanner`, `TopAlertProvider`, `useTopAlert`, `showTopAlert`, `hideTopAlert`
 - Modals: `Modal`, `BottomSheetModal`, `ModalProvider`, `useModal`, `modalManager`
 
 Shared components accept user-facing labels and messages as props so feature screens can source copy from `apps/mobile/src/shared/i18n/`.
+
+## Development Theme Tuning
+
+The development-only theme tuner is mounted from `apps/mobile/app/_layout.tsx`
+through `ThemeTuningPanel`.
+
+The base Glacier theme store lives in:
+
+```txt
+apps/mobile/src/shared/theme/glacierThemeStore.ts
+apps/mobile/src/shared/theme/themeTuningHooks.ts
+```
+
+The store keeps global fallback values for older screens and a screen-aware
+registry for screens that opt into dynamic tuning. A screen registers a
+`ThemeTuningScreenConfig` with `useThemeTuningScreen(config)` and reads merged
+defaults plus overrides with `useScreenThemeValues(screenId, defaults)`.
+
+`ThemeTuningPanel` renders the active screen's registered controls grouped by
+screen, components, text, and icons. If the active screen has not registered a
+config, the panel falls back to global Glacier controls.
+
+`DailyPracticeGoalScreen` currently registers controls for:
+
+- screen background and accent color
+- summary and option card surfaces
+- option spacing and corner radius
+- primary and muted text colors
+- title and body scale
+- icon color, icon surface, and icon scale
+
+All tuner labels, screen names, control names, and preset names use translation
+keys in `apps/mobile/src/shared/i18n/en.ts`.
+
+## Top Alert Banner System
+
+The reusable top-of-screen alert system lives in:
+
+```txt
+apps/mobile/src/shared/components/feedback/top-alert/
+  TopAlertBanner.tsx
+  TopAlertProvider.tsx
+  TopAlertContext.tsx
+  topAlert.constants.ts
+  topAlert.styles.ts
+  topAlert.types.ts
+  topAlertManager.ts
+  topAlertQueue.ts
+  useTopAlert.ts
+  index.ts
+```
+
+`TopAlertProvider` is installed in `apps/mobile/src/core/providers/AppProviders.tsx`, inside `GestureHandlerRootView`, `I18nProvider`, and `AccessibilitySettingsProvider`. It renders a single mounted banner only while an alert is active, then advances queued alerts.
+
+Public API:
+
+```ts
+import { showTopAlert, useTopAlert } from "@/shared/components/feedback/top-alert";
+
+showTopAlert({
+  type: "success",
+  titleKey: "alerts.examples.profileSaved.title",
+  descriptionKey: "alerts.examples.profileSaved.description",
+  actionLabelKey: "alerts.examples.profileSaved.action",
+});
+
+const topAlert = useTopAlert();
+topAlert.show({
+  type: "warning",
+  titleKey: "alerts.examples.unsavedChanges.title",
+  descriptionKey: "alerts.examples.unsavedChanges.description",
+  actionLabelKey: "alerts.examples.unsavedChanges.action",
+  autoDismissMs: 5000,
+});
+```
+
+Supported variants:
+
+- `success`
+- `error`
+- `warning`
+- `info`
+- `neutral`
+- `offline`
+- `loading`
+
+Design and theme behavior:
+
+- Alert colors resolve through `apps/mobile/src/design/tokens/colors.ts`, including feedback and palette tokens.
+- `compact` and `expanded` variants share the same shell but vary vertical density and description visibility.
+- Banners respect safe-area top insets and render as a floating rounded card.
+- `colorScheme="dark"` switches the token mapping to dark surfaces while keeping high-contrast support through accessibility settings.
+
+Performance behavior:
+
+- Only the active alert is mounted.
+- Alerts are queued with `TopAlertQueue`; identical alerts are deduplicated within a short window.
+- Auto-dismiss timers are cleared on pause, dismissal, and unmount.
+- Reanimated shared values drive slide, fade, scale, and swipe-up dismissal.
+- Gesture callbacks pause auto-dismiss while the banner is pressed or dragged.
+
+Accessibility behavior:
+
+- Alert copy, action labels, close labels, and hints are `TranslationKey` values.
+- Banners use `accessibilityRole="alert"` and announce the resolved title/description when shown.
+- Close and action controls use localized accessibility labels and at least the shared minimum touch target.
+- RTL layout is mirrored with `I18nManager.isRTL`; long translated title/description/action text can wrap without breaking the shell.
+
+Testing strategy:
+
+- `topAlertQueue.test.ts` covers activation, queue advancement, deduplication, and queue size limits.
+- `TopAlertProvider.test.tsx` covers rendering each alert type, auto-dismiss, manual dismissal, action press, accessibility labels, and timer cleanup.
+- `noHardcodedJsxText.test.ts` continues to guard visible copy and accessibility props.
 
 ## Modal System
 

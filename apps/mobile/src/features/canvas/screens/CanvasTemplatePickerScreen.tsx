@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
+import { View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { getCanvasDocumentRoute } from "@/core/navigation/deepLinks";
-import { colors, typography } from "@/design/tokens";
+import { colors, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
-import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { PageSection, Screen } from "@/shared/components/layout";
 
 import { canvasApi } from "../api/canvasApi";
 import { CanvasTemplateCard } from "../components";
@@ -94,20 +95,21 @@ export function CanvasTemplatePickerScreen() {
         subtitle={t("canvas.templates.sectionSubtitle")}
         title={t("canvas.templates.sectionTitle")}
       >
-        <Stack gap="md">
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
           {canvasTemplateDefinitions.slice(0, gradeAdaptation.visibleTemplateCount).map((definition) => (
-            <CanvasTemplateCard
-              definition={definition}
-              disabled={Boolean(creatingTemplate)}
-              gradeBand={gradeBand}
-              key={definition.template}
-              onSelect={() => {
-                void createFromTemplate(definition.template);
-              }}
-              showDescription={gradeAdaptation.showDetailedTemplates}
-            />
+            <View key={definition.template} style={{ flexBasis: "47%", flexGrow: 1, minWidth: 150 }}>
+              <CanvasTemplateCard
+                definition={definition}
+                disabled={Boolean(creatingTemplate)}
+                gradeBand={gradeBand}
+                onSelect={() => {
+                  void createFromTemplate(definition.template);
+                }}
+                showDescription={gradeAdaptation.showDetailedTemplates}
+              />
+            </View>
           ))}
-        </Stack>
+        </View>
       </PageSection>
     </Screen>
   );

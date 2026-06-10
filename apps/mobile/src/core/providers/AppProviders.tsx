@@ -6,6 +6,7 @@ import { DevPanelFloatingLauncher } from "@/features/auth/components";
 import { AccessibilitySettingsProvider } from "@/features/profile-settings/accessibility";
 import { I18nProvider } from "@/i18n";
 import { ModalProvider } from "@/shared/components/modals";
+import { TopAlertProvider } from "@/shared/components/feedback/top-alert";
 import { QueryProvider } from "@/shared/query/QueryProvider";
 
 export function AppProviders({ children }: PropsWithChildren) {
@@ -14,12 +15,14 @@ export function AppProviders({ children }: PropsWithChildren) {
       <I18nProvider>
         <AccessibilitySettingsProvider>
           <ModalProvider>
-            <AuthSessionProvider>
-              <QueryProvider>
-                {children}
-                <DevPanelFloatingLauncher />
-              </QueryProvider>
-            </AuthSessionProvider>
+            <TopAlertProvider>
+              <AuthSessionProvider>
+                <QueryProvider>
+                  {children}
+                  <DevPanelFloatingLauncher />
+                </QueryProvider>
+              </AuthSessionProvider>
+            </TopAlertProvider>
           </ModalProvider>
         </AccessibilitySettingsProvider>
       </I18nProvider>

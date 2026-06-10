@@ -1,13 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getCanvasTemplatePickerRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState, SuccessState } from "@/shared/components/feedback";
-import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
 
-import { CanvasToolbar, StrokeCanvasAdapter } from "../components";
+import { CanvasSyncStatusBadge, CanvasToolbar, StrokeCanvasAdapter } from "../components";
 import { useCanvasWorkspace } from "../hooks/useCanvas";
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
@@ -98,6 +100,10 @@ export function HandwritingCanvasScreen() {
 
       {state.status === "success" && state.viewModel.document ? (
         <Stack gap="lg">
+          <Inline align="center" gap="sm" justify="flex-end">
+            <CanvasSyncStatusBadge gradeBand={state.gradeBand} status={state.viewModel.syncStatus} />
+          </Inline>
+
           {state.viewModel.isOffline ? (
             <OfflineBanner
               actionLabel={t("canvas.workspace.offlineAction")}
@@ -145,16 +151,6 @@ export function HandwritingCanvasScreen() {
             />
           ) : null}
 
-          {state.viewModel.isEmpty ? (
-            <StatusState
-              accessibilityLabel={t("canvas.workspace.emptyAccessibility")}
-              description={t("canvas.workspace.emptyDescription")}
-              gradeBand={state.gradeBand}
-              title={t("canvas.workspace.emptyTitle")}
-              tone="info"
-            />
-          ) : null}
-
           <PageSection
             gradeBand={state.gradeBand}
             subtitle={t("canvas.workspace.surfaceSubtitle")}
@@ -168,28 +164,41 @@ export function HandwritingCanvasScreen() {
             />
           </PageSection>
 
+          <Stack gap="sm">
+            <Button
+              accessibilityHint={state.viewModel.canAttach ? t("canvas.toolbar.attachHint") : t("canvas.toolbar.attachDisabledHint")}
+              accessibilityLabel={t("canvas.attachToAssignment")}
+              disabled={!state.viewModel.canAttach}
+              fullWidth
+              gradeBand={state.gradeBand}
+              label={t("canvas.attachToAssignment")}
+              leftAccessory={<Ionicons color={colors.action.primary.foreground} name="attach" size={18} />}
+              loading={attachStatus === "loading"}
+              onPress={() => {
+                void attachNow();
+              }}
+              testID="canvas-workspace-attach"
+            />
+            <Button
+              accessibilityLabel={t("canvas.toolbar.save")}
+              fullWidth
+              gradeBand={state.gradeBand}
+              label={t("canvas.toolbar.save")}
+              loading={saveStatus === "saving" || state.viewModel.syncStatus === "saving"}
+              onPress={() => {
+                void saveNow();
+              }}
+              testID="canvas-workspace-save"
+              variant="secondary"
+            />
+          </Stack>
+
           <CanvasToolbar
-            canAttach={state.viewModel.canAttach}
             canRedo={state.viewModel.canRedo}
             canUndo={state.viewModel.canUndo}
             gradeBand={state.gradeBand}
-            onAttach={() => {
-              void attachNow();
-            }}
             onRedo={state.redo}
-            onSave={() => {
-              void saveNow();
-            }}
             onUndo={state.undo}
-            syncStatus={state.viewModel.syncStatus}
-          />
-
-          <StatusState
-            accessibilityLabel={t("canvas.workspace.memoryAccessibility")}
-            description={t("canvas.workspace.memoryDescription", { count: state.viewModel.strokeCount })}
-            gradeBand={state.gradeBand}
-            title={t("canvas.workspace.memoryTitle")}
-            tone="neutral"
           />
         </Stack>
       ) : null}

@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors, spacing, type GradeBand } from "@/design/tokens";
+import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState } from "@/shared/components/feedback";
 import { PageSection, Screen } from "@/shared/components/layout";
@@ -21,17 +21,6 @@ import {
 } from "../components";
 import { useStudentHomeData } from "../hooks/useStudentHomeData";
 import type { StudentHomeNavigationTarget } from "../types";
-
-function getSubtitleKey(gradeBand: GradeBand) {
-  switch (gradeBand) {
-    case "elementary":
-      return "studentHome.subtitle.elementary";
-    case "high":
-      return "studentHome.subtitle.high";
-    case "middle":
-      return "studentHome.subtitle.middle";
-  }
-}
 
 export function StudentHomeScreen() {
   const router = useRouter();
@@ -141,7 +130,7 @@ export function StudentHomeScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t(getSubtitleKey(state.gradeBand))}
+      subtitle={t("studentHome.subtitle")}
       testID="student-home-screen"
       title=""
     >

@@ -67,7 +67,9 @@ jest.mock('react-native-gesture-handler', () => {
       activeOffsetY: () => gesture,
       enabled: () => gesture,
       failOffsetX: () => gesture,
+      onBegin: () => gesture,
       onEnd: () => gesture,
+      onFinalize: () => gesture,
       onUpdate: () => gesture,
     };
 
@@ -81,6 +83,23 @@ jest.mock('react-native-gesture-handler', () => {
     GestureDetector: ({ children }: { children: unknown }) => children,
     GestureHandlerRootView: ({ children, ...props }: { children?: unknown }) =>
       React.createElement(View, props, children),
+  };
+});
+
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const insets = { bottom: 0, left: 0, right: 0, top: 0 };
+  const frame = { height: 844, width: 390, x: 0, y: 0 };
+
+  return {
+    SafeAreaProvider: ({ children, ...props }: { children?: unknown }) =>
+      React.createElement(View, props, children),
+    SafeAreaView: ({ children, ...props }: { children?: unknown }) =>
+      React.createElement(View, props, children),
+    initialWindowMetrics: { frame, insets },
+    useSafeAreaFrame: () => frame,
+    useSafeAreaInsets: () => insets,
   };
 });
 

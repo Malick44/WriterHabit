@@ -44,6 +44,9 @@ type OnboardingStepFrameProps = {
   primaryButtonStyle?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
+  backIconColor?: string;
+  progressActiveColor?: string;
+  progressInactiveColor?: string;
 };
 
 const NAVY = "#083E8E";
@@ -75,6 +78,9 @@ export function OnboardingStepFrame({
   primaryButtonStyle,
   titleStyle,
   subtitleStyle,
+  backIconColor = "#071426",
+  progressActiveColor = NAVY,
+  progressInactiveColor = "#D9E4FF",
 }: OnboardingStepFrameProps) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -127,7 +133,7 @@ export function OnboardingStepFrame({
               onPress={onSecondaryPress}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={32} color="#071426" />
+              <Ionicons name="arrow-back" size={32} color={backIconColor} />
             </Pressable>
           ) : null}
 
@@ -139,7 +145,11 @@ export function OnboardingStepFrame({
                 return (
                   <View
                     key={`${step}-progress-${index}`}
-                    style={[styles.progressDot, isActive ? styles.progressDotActive : null]}
+                    style={[
+                      styles.progressDot,
+                      { backgroundColor: progressInactiveColor },
+                      isActive ? [styles.progressDotActive, { backgroundColor: progressActiveColor }] : null,
+                    ]}
                   />
                 );
               })}

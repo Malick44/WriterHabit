@@ -33,6 +33,7 @@ Existing route layouts may still import `useI18n` from `@/i18n`; that path re-ex
 - Do not hardcode new user-facing strings in JSX.
 - Add keys to `apps/mobile/src/shared/i18n/en.ts`.
 - Shared modals require at least `modal.close`, `modal.confirm`, and `modal.cancel`; close hints and example keys are also grouped under `modal`.
+- Shared top alerts use the `alerts` namespace for dismiss labels and example alert copy. Alert options accept `TranslationKey` fields such as `titleKey`, `descriptionKey`, `actionLabelKey`, `accessibilityLabelKey`, `closeAccessibilityLabelKey`, and `closeAccessibilityHintKey`.
 - Keep keys grouped by feature area, such as `assignments`, `writingWorkspace`, `canvas`, `aiCoach`, `parent`, `teacher`, and `accessibility`.
 - Keep AI coaching copy learning-oriented. Do not add CTAs such as "Write my essay", "Finish for me", "Give me the answer", "Generate final draft", or "Do my homework".
 - Prefer screen-owned copy keys over shared component-owned copy. Shared components should receive labels and messages as props.
@@ -53,6 +54,28 @@ modal: {
 ```
 
 Modal props accept `TranslationKey` values, so invalid modal copy keys fail TypeScript compilation.
+
+Top alert options also accept `TranslationKey` values. Example:
+
+```ts
+showTopAlert({
+  type: "success",
+  titleKey: "alerts.examples.profileSaved.title",
+  descriptionKey: "alerts.examples.profileSaved.description",
+  actionLabelKey: "alerts.examples.profileSaved.action",
+});
+```
+
+## Theme Tuner Copy
+
+The development theme tuner uses typed translation keys for all visible panel
+copy. Screen-specific configs should declare `titleKey`, `descriptionKey`,
+control `labelKey` values, and preset `labelKey` values from
+`apps/mobile/src/shared/i18n/en.ts`.
+
+When a screen registers with `useThemeTuningScreen(config)`, the tuner only
+shows controls for that active screen. Unregistered screens continue to show the
+global fallback controls.
 
 ## Accessibility Settings
 

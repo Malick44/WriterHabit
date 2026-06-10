@@ -1,10 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
-import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 
 import { CanvasDocumentCard } from "../components";
@@ -14,6 +15,19 @@ export function CanvasHomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const state = useCanvasHomeData();
+
+  const createButton = (
+    <Button
+      accessibilityLabel={t("canvas.home.createAccessibility")}
+      fullWidth
+      gradeBand={state.gradeBand}
+      label={t("canvas.home.createCta")}
+      leftAccessory={<Ionicons color={colors.action.primary.foreground} name="add" size={20} />}
+      onPress={() => router.push(getCanvasTemplatePickerRoute())}
+      size={state.gradeBand === "elementary" ? "lg" : "md"}
+      testID="canvas-home-create"
+    />
+  );
 
   return (
     <Screen
@@ -85,13 +99,7 @@ export function CanvasHomeScreen() {
             />
           ) : null}
 
-          <Button
-            accessibilityLabel={t("canvas.home.createAccessibility")}
-            gradeBand={state.gradeBand}
-            label={t("canvas.home.createCta")}
-            onPress={() => router.push(getCanvasTemplatePickerRoute())}
-            size={state.gradeBand === "elementary" ? "lg" : "md"}
-          />
+          {createButton}
 
           <PageSection
             gradeBand={state.gradeBand}
@@ -107,13 +115,6 @@ export function CanvasHomeScreen() {
                   onOpen={() => router.push(getCanvasDocumentRoute(document.id, document.assignmentId))}
                 />
               ))}
-              <StatusState
-                accessibilityLabel={t("canvas.home.paginationAccessibility")}
-                description={t("canvas.home.paginationDescription")}
-                gradeBand={state.gradeBand}
-                title={t("canvas.home.paginationTitle")}
-                tone="neutral"
-              />
             </Stack>
           </PageSection>
         </Stack>

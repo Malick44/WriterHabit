@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
 import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
@@ -9,13 +10,7 @@ import {
 } from "@/shared/utils/accessibility";
 
 import type { CanvasSyncStatus } from "../types";
-
-const statusTone: Record<CanvasSyncStatus, keyof typeof colors.feedback> = {
-  local_only: "warning",
-  saved: "success",
-  saving: "info",
-  sync_failed: "error",
-};
+import { syncStatusIcon, syncStatusTone } from "./canvasVisuals";
 
 interface CanvasSyncStatusBadgeProps {
   gradeBand: GradeBand;
@@ -27,28 +22,29 @@ export function CanvasSyncStatusBadge({ gradeBand, status }: CanvasSyncStatusBad
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
-  const toneTokens = colors.feedback[statusTone[status]];
+  const toneTokens = colors.feedback[syncStatusTone[status]];
+  const useAccessibleSurface = settings.highContrast;
+  const textColor = useAccessibleSurface ? accessibleColors.text : toneTokens.text;
+  const iconColor = useAccessibleSurface ? accessibleColors.text : toneTokens.icon;
 
   return (
     <View
       accessibilityLabel={t("canvas.sync.accessibility", { status: t(`canvas.sync.${status}`) })}
       style={{
+        alignItems: "center",
         alignSelf: "flex-start",
-        backgroundColor: settings.highContrast ? accessibleColors.surface : toneTokens.background,
-        borderColor: settings.highContrast ? accessibleColors.border : toneTokens.border,
+        backgroundColor: useAccessibleSurface ? accessibleColors.surface : toneTokens.background,
+        borderColor: useAccessibleSurface ? accessibleColors.border : toneTokens.border,
         borderRadius: radius.full,
         borderWidth: 1,
-        paddingHorizontal: spacing.md,
+        flexDirection: "row",
+        gap: spacing.xs,
+        paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
       }}
     >
-      <Text
-        selectable
-        style={[
-          getAccessibleTextStyle(type.caption, settings),
-          { color: settings.highContrast ? accessibleColors.text : toneTokens.text },
-        ]}
-      >
+      <Ionicons color={iconColor} name={syncStatusIcon[status]} size={14} />
+      <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: textColor }]}>
         {t(`canvas.sync.${status}`)}
       </Text>
     </View>

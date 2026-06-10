@@ -6,3 +6,4 @@ export * from "./ProgressBar";
 export * from "./RetryButton";
 export * from "./StatusState";
 export * from "./SuccessState";
+export * from "./top-alert";

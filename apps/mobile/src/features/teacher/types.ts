@@ -363,6 +363,7 @@ export interface TeacherGradeAdaptation {
 }
 
 export interface TeacherDashboardViewModel {
+  activities: TeacherDashboardActivityItem[];
   assignments: TeacherAssignmentSummary[];
   classes: TeacherClassSummary[];
   gradeAdaptation: TeacherGradeAdaptation;
@@ -370,12 +371,50 @@ export interface TeacherDashboardViewModel {
   isOffline: boolean;
   metrics: {
     activeAssignments: number;
+    activeStudentsToday: number;
+    activeStudentsTodayPercent: number;
+    activeStudentsTodayTotal: number;
     averageCompletionPercent: number;
+    classAverageGrade: string;
+    classAverageScore: number;
+    pendingReviewTotal: number;
     reviewQueue: number;
+    weeklyGrowthPercent: number;
     totalStudents: number;
   };
   safetyNote: string;
   submissions: TeacherSubmissionSummary[];
+  topTrendLabel: string;
+  watchlist: TeacherDashboardWatchlistItem[];
+}
+
+export type TeacherDashboardWatchlistReason =
+  | "high_priority_review"
+  | "low_completion"
+  | "revision_follow_up";
+
+export interface TeacherDashboardWatchlistItem {
+  action: "remind" | "review";
+  classId: string;
+  id: string;
+  initials: string;
+  percent: number | null;
+  reason: TeacherDashboardWatchlistReason;
+  studentName: string;
+  submissionId: string | null;
+}
+
+export type TeacherDashboardActivityKind = "reviewed" | "revision_requested" | "submitted";
+
+export interface TeacherDashboardActivityItem {
+  assignmentTitle: string;
+  className: string;
+  id: string;
+  kind: TeacherDashboardActivityKind;
+  scorePercent: number | null;
+  studentName: string;
+  submissionId: string;
+  submittedLabel: string;
 }
 
 export interface TeacherAssignmentsViewModel {

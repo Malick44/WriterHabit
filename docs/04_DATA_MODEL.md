@@ -44,12 +44,15 @@ interface StudentProfile {
 }
 ```
 
-Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion currently writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `role`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`. Dedicated student profile tables and API persistence are still future backend work.
+Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `role`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`. Student edit, goals, and language settings now sync through Supabase RPCs in `services/api/migrations/202606100001_profile_settings_notification_sync.sql`; broader onboarding records and production API hydration remain future backend work.
 
-Notification preferences are currently local, validated settings owned by
+Notification preferences are validated settings owned by
 `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`.
-They are persisted through the existing `preferencesStorage` facade and do not
-store push tokens.
+They are persisted through the existing `preferencesStorage` facade, synced
+through Supabase RPCs when a session exists, and scheduled locally through
+`apps/mobile/src/core/notifications/notificationDeliveryService.ts` when device
+permissions allow. Expo push tokens are registered only through the backend API
+boundary and are not stored in mobile local preferences.
 
 ```ts
 interface NotificationPreferences {
@@ -470,8 +473,14 @@ can distinguish continued, at-risk, missed, and not-started streak states.
 MVP notification preparation lives in
 `apps/mobile/src/core/notifications/notificationService.ts`. It builds local,
 localization-keyed notification payloads and route targets for daily assignment,
-streak, incomplete assignment, and weekly report notifications. It does not
-request permissions, register push tokens, or call a push provider.
+streak, incomplete assignment, and weekly report notifications.
+`apps/mobile/src/core/notifications/notificationDeliveryService.ts` schedules
+enabled reminders locally with `expo-notifications` and registers an Expo push
+token through `apps/mobile/src/features/profile-settings/api/profilesettingsApi.ts`
+when a native build and permission state allow. Backend push delivery logic lives
+in `services/api/src/features/notifications/`; a deployed API runtime, scheduler,
+and push credentials are still required before remote push delivery is
+production-ready.
 
 ```ts
 type NotificationType =

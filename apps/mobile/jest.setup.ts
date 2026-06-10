@@ -115,6 +115,28 @@ jest.mock('expo-sqlite', () => ({
 
 jest.mock('expo-sqlite/localStorage/install', () => ({}));
 
+jest.mock('expo-notifications', () => ({
+  AndroidImportance: {
+    DEFAULT: 'default',
+  },
+  SchedulableTriggerInputTypes: {
+    DAILY: 'daily',
+    WEEKLY: 'weekly',
+  },
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
+  clearLastNotificationResponse: jest.fn(),
+  getExpoPushTokenAsync: jest.fn(() => Promise.resolve({ data: 'ExpoPushToken[test]', type: 'expo' })),
+  getLastNotificationResponse: jest.fn(() => null),
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ canAskAgain: false, granted: false })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ canAskAgain: false, granted: false })),
+  scheduleNotificationAsync: jest.fn(() => Promise.resolve('scheduled-notification')),
+  setNotificationChannelAsync: jest.fn(() => Promise.resolve()),
+  setNotificationHandler: jest.fn(),
+}));
+
 // Provide a mock global localStorage for Supabase client persistence in Jest tests
 const store: Record<string, string> = {};
 global.localStorage = {

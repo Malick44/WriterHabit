@@ -6,8 +6,11 @@ import type {
   TeacherClassProgressApiResponse,
   TeacherClassProgressViewModel,
   TeacherDashboardApiResponse,
+  TeacherDashboardActivityItem,
   TeacherDashboardViewModel,
+  TeacherDashboardWatchlistItem,
   TeacherGradeAdaptation,
+  TeacherSubmissionSummary,
   TeacherSubmissionReviewApiResponse,
   TeacherSubmissionReviewViewModel,
   TeacherSubmissionsApiResponse,
@@ -80,25 +83,167 @@ function getAverageCompletion(classes: TeacherDashboardApiResponse["classes"]): 
   return Math.round(total / classes.length);
 }
 
+function getAverageSkillScore(classes: TeacherDashboardApiResponse["classes"]): number {
+  if (classes.length === 0) {
+    return 0;
+  }
+
+  const total = classes.reduce((sum, item) => sum + item.averageSkillScore, 0);
+
+  return Math.round(total / classes.length);
+}
+
+function getClassAverageGrade(score: number): string {
+  if (score >= 90) {
+    return "A-";
+  }
+
+  if (score >= 80) {
+    return "B";
+  }
+
+  if (score >= 70) {
+    return "B-";
+  }
+
+  if (score >= 60) {
+    return "C";
+  }
+
+  return "D";
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function getActiveStudentsSummary(classes: TeacherDashboardApiResponse["classes"]) {
+  const totalStudents = classes.reduce((sum, item) => sum + item.studentCount, 0);
+  const totalCompletion = classes.reduce(
+    (sum, item) => sum + item.studentCount * (item.averageCompletionPercent / 100),
+    0,
+  );
+  const activeStudentsToday = Math.round(totalCompletion);
+  const activeStudentsTodayPercent =
+    totalStudents > 0 ? Math.round((activeStudentsToday / totalStudents) * 100) : 0;
+
+  return {
+    activeStudentsToday,
+    activeStudentsTodayPercent,
+    activeStudentsTodayTotal: totalStudents,
+  };
+}
+
+function getPendingReviewTotal(
+  classes: TeacherDashboardApiResponse["classes"],
+  submissions: TeacherSubmissionSummary[],
+): number {
+  const classQueue = classes.reduce((sum, item) => sum + item.submissionsNeedingReview, 0);
+
+  if (classQueue > 0) {
+    return classQueue;
+  }
+
+  return submissions.filter((submission) => submission.status === "awaiting_review").length;
+}
+
+function buildDashboardWatchlist(
+  submissions: TeacherSubmissionSummary[],
+  classes: TeacherDashboardApiResponse["classes"],
+): TeacherDashboardWatchlistItem[] {
+  const submissionWatchlist = submissions
+    .filter((submission) => submission.priority === "high" || submission.status === "revision_requested")
+    .map<TeacherDashboardWatchlistItem>((submission) => ({
+      action: submission.status === "awaiting_review" ? "review" : "remind",
+      classId: submission.classId,
+      id: submission.id,
+      initials: getInitials(submission.studentName),
+      percent: submission.scorePercent,
+      reason:
+        submission.status === "revision_requested"
+          ? "revision_follow_up"
+          : "high_priority_review",
+      studentName: submission.studentName,
+      submissionId: submission.id,
+    }));
+
+  const lowCompletionClass = classes
+    .filter((classSummary) => classSummary.averageCompletionPercent < 70)
+    .sort((first, second) => first.averageCompletionPercent - second.averageCompletionPercent)
+    .map<TeacherDashboardWatchlistItem>((classSummary) => ({
+      action: "remind",
+      classId: classSummary.id,
+      id: `${classSummary.id}-low-completion`,
+      initials: getInitials(classSummary.name),
+      percent: classSummary.averageCompletionPercent,
+      reason: "low_completion",
+      studentName: classSummary.name,
+      submissionId: null,
+    }));
+
+  return [...submissionWatchlist, ...lowCompletionClass].slice(0, 3);
+}
+
+function buildDashboardActivities(
+  submissions: TeacherSubmissionSummary[],
+): TeacherDashboardActivityItem[] {
+  return submissions.slice(0, 4).map((submission) => {
+    const kind: TeacherDashboardActivityItem["kind"] =
+      submission.status === "reviewed"
+        ? "reviewed"
+        : submission.status === "revision_requested"
+          ? "revision_requested"
+          : "submitted";
+
+    return {
+      assignmentTitle: submission.assignmentTitle,
+      className: submission.className,
+      id: submission.id,
+      kind,
+      scorePercent: submission.scorePercent,
+      studentName: submission.studentName,
+      submissionId: submission.id,
+      submittedLabel: submission.submittedLabel,
+    };
+  });
+}
+
 export function buildTeacherDashboardViewModel(
   response: TeacherDashboardApiResponse,
 ): TeacherDashboardViewModel {
   const gradeAdaptation = getPrimaryAdaptation(response);
+  const activeStudentSummary = getActiveStudentsSummary(response.classes);
+  const activeAssignments = response.assignments.filter((assignment) => assignment.status === "active").length;
+  const classAverageScore = getAverageSkillScore(response.classes);
+  const reviewQueue = response.submissions.filter((submission) => submission.status === "awaiting_review").length;
 
   return {
+    activities: buildDashboardActivities(response.submissions),
     assignments: response.assignments.slice(0, gradeAdaptation.visibleAssignmentCount),
     classes: response.classes.slice(0, gradeAdaptation.visibleClassCount),
     gradeAdaptation,
     isEmpty: response.classes.length === 0,
     isOffline: response.connectionStatus === "offline_cached",
     metrics: {
-      activeAssignments: response.assignments.filter((assignment) => assignment.status === "active").length,
+      activeAssignments,
+      ...activeStudentSummary,
       averageCompletionPercent: getAverageCompletion(response.classes),
-      reviewQueue: response.submissions.filter((submission) => submission.status === "awaiting_review").length,
+      classAverageGrade: getClassAverageGrade(classAverageScore),
+      classAverageScore,
+      pendingReviewTotal: getPendingReviewTotal(response.classes, response.submissions),
+      reviewQueue,
+      weeklyGrowthPercent: Math.min(12, Math.max(1, activeAssignments + reviewQueue)),
       totalStudents: response.classes.reduce((sum, item) => sum + item.studentCount, 0),
     },
     safetyNote: response.safetyNote,
     submissions: response.submissions.slice(0, gradeAdaptation.visibleSubmissionCount),
+    topTrendLabel: response.classes[0]?.trendLabel ?? response.safetyNote,
+    watchlist: buildDashboardWatchlist(response.submissions, response.classes),
   };
 }
 

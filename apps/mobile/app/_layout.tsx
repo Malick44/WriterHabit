@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { AppProviders } from "@/core/providers/AppProviders";
-import { ThemeTuningPanel } from "@/shared/components/layout";
+import { ThemeTuningPanel } from "@/devtools/theme-tuner";
 
 export default function RootLayout() {
   return (

@@ -6,6 +6,8 @@ interface ApiRequestOptions {
   headers?: Record<string, string>;
 }
 
+type ApiRequestOptionsWithoutBody = Omit<ApiRequestOptions, "body" | "method">;
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api/v1";
 
 async function request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
@@ -26,9 +28,14 @@ async function request<T>(path: string, options: ApiRequestOptions = {}): Promis
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body }),
-  put: <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body }),
-  patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
-  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  delete: <T>(path: string, options?: ApiRequestOptionsWithoutBody) =>
+    request<T>(path, { ...options, method: "DELETE" }),
+  get: <T>(path: string, options?: ApiRequestOptionsWithoutBody) =>
+    request<T>(path, { ...options, method: "GET" }),
+  patch: <T>(path: string, body?: unknown, options?: ApiRequestOptionsWithoutBody) =>
+    request<T>(path, { ...options, method: "PATCH", body }),
+  post: <T>(path: string, body?: unknown, options?: ApiRequestOptionsWithoutBody) =>
+    request<T>(path, { ...options, method: "POST", body }),
+  put: <T>(path: string, body?: unknown, options?: ApiRequestOptionsWithoutBody) =>
+    request<T>(path, { ...options, method: "PUT", body }),
 };

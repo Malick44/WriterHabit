@@ -6,6 +6,8 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type TextStyle,
+  type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -18,11 +20,25 @@ import {
   getWritingWorkspaceRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
+import {
+  overrideStyle,
+  useRegisterTunableComponents,
+  useRegisterTunableScreen,
+} from "@/devtools/theme-tuner";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
 
 import { useStudentHomeData } from "../hooks/useStudentHomeData";
+import {
+  homeColors,
+  homeRadius,
+  homeSpacing,
+  studentHomeComponentConfigs,
+  studentHomeScreenConfig,
+  useStudentHomeTokenOverrides,
+  type StudentHomeTokenOverrides,
+} from "../themeTuning";
 import type {
   StudentHomeAssignment,
   StudentHomeDraft,
@@ -42,45 +58,6 @@ type WeeklyStat = {
   label: string;
   value: string;
 };
-
-const homeColors = {
-  background: "#f8f9ff",
-  card: "#ffffff",
-  error: "#ba1a1a",
-  errorContainer: "#ffdad6",
-  inverseText: "#ffffff",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primaryContainer: "#dae2ff",
-  secondary: "#006c49",
-  secondaryContainerSoft: "rgba(108, 248, 187, 0.3)",
-  secondaryFixedDim: "#4edea3",
-  surface: "#f8f9ff",
-  surfaceContainer: "#e5eeff",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerLow: "#eff4ff",
-  surfaceVariant: "#d3e4fe",
-  tertiaryFixedDim: "#ffb95f",
-} as const;
-
-const homeRadius = {
-  sm: 4,
-  lg: 8,
-  xl: 12,
-  full: 999,
-} as const;
-
-const homeSpacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  section: 32,
-} as const;
 
 const FEEDBACK_REWARD_POINTS = 12;
 const RING_SEGMENT_COUNT = 24;
@@ -129,6 +106,25 @@ function getAssignmentStatusLabel(t: TFunction, assignment: StudentHomeAssignmen
   return t(assignmentStatusLabelKeys[assignment.status]);
 }
 
+// Dev-only style fragments for the theme tuner. They resolve to null unless a
+// token is overridden, which never happens in production builds.
+function tunedCardStyle(tuned: StudentHomeTokenOverrides, includePadding = false): ViewStyle | null {
+  return overrideStyle<ViewStyle>({
+    backgroundColor: tuned["colors.cardBackground"],
+    borderColor: tuned["colors.cardBorder"],
+    borderRadius: tuned["radius.card"],
+    padding: includePadding ? tuned["spacing.cardPadding"] : undefined,
+  });
+}
+
+function tunedTextStyle(color?: string, fontSize?: number): TextStyle | null {
+  return overrideStyle<TextStyle>({
+    color,
+    fontSize,
+    lineHeight: fontSize === undefined ? undefined : Math.round(fontSize * 1.4),
+  });
+}
+
 export function StudentHomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -136,6 +132,13 @@ export function StudentHomeScreen() {
   const state = useStudentHomeData();
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
+
+  useRegisterTunableScreen(studentHomeScreenConfig);
+  useRegisterTunableComponents(studentHomeComponentConfigs);
+  const tuned = useStudentHomeTokenOverrides();
+  const tunedScreenBackground = overrideStyle<ViewStyle>({
+    backgroundColor: tuned["colors.screenBackground"],
+  });
 
   const navigateToTarget = useCallback(
     (target: StudentHomeNavigationTarget) => {
@@ -211,7 +214,7 @@ export function StudentHomeScreen() {
   const handleOpenNotifications = useCallback(() => {}, []);
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={["top"]} style={[styles.safeArea, tunedScreenBackground]}>
       <AppHeader
         gradeBand={state.gradeBand}
         leftAction={{ type: "none" }}
@@ -231,7 +234,7 @@ export function StudentHomeScreen() {
         ]}
         contentStyle={isTablet ? styles.appHeaderContentTablet : undefined}
         showSafeArea={false}
-        style={[styles.appHeader, isTablet ? styles.appHeaderTablet : null]}
+        style={[styles.appHeader, isTablet ? styles.appHeaderTablet : null, tunedScreenBackground]}
         variant="compact"
       />
 
@@ -241,7 +244,13 @@ export function StudentHomeScreen() {
         showsVerticalScrollIndicator={false}
         testID="student-home-screen"
       >
-        <View style={[styles.content, isTablet ? styles.contentTablet : null]}>
+        <View
+          style={[
+            styles.content,
+            isTablet ? styles.contentTablet : null,
+            overrideStyle<ViewStyle>({ gap: tuned["spacing.section"] }),
+          ]}
+        >
           {state.status === "loading" ? (
             <LoadingState
               accessibilityLabel={t("studentHome.loading.accessibility")}
@@ -369,10 +378,15 @@ function DashboardSection({
   titleKey: TranslationKey;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
 
   return (
     <View style={styles.section}>
-      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.sectionTitle}>
+      <Text
+        maxFontSizeMultiplier={1.1}
+        numberOfLines={1}
+        style={[styles.sectionTitle, tunedTextStyle(tuned["colors.textSecondary"])]}
+      >
         {t(titleKey)}
       </Text>
       {children}
@@ -390,10 +404,15 @@ function SectionHeaderWithAction({
   titleKey: TranslationKey;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
 
   return (
     <View style={styles.sectionHeaderRow}>
-      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.sectionTitle}>
+      <Text
+        maxFontSizeMultiplier={1.1}
+        numberOfLines={1}
+        style={[styles.sectionTitle, tunedTextStyle(tuned["colors.textSecondary"])]}
+      >
         {t(titleKey)}
       </Text>
       <Pressable
@@ -403,7 +422,11 @@ function SectionHeaderWithAction({
         onPress={onPress}
         style={({ pressed }) => [styles.seeAllButton, pressed ? styles.pressed : null]}
       >
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.seeAllText}>
+        <Text
+          maxFontSizeMultiplier={1.05}
+          numberOfLines={1}
+          style={[styles.seeAllText, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+        >
           {t("common.viewAll")}
         </Text>
       </Pressable>
@@ -421,6 +444,7 @@ function TodayAssignmentCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
   const primarySkill = assignment.skillFocus[0];
   const statusLabel = getAssignmentStatusLabel(t, assignment);
   const skillLabel = primarySkill ? getSkillLabel(t, primarySkill) : t("common.unavailable");
@@ -435,31 +459,55 @@ function TodayAssignmentCard({
         styles.card,
         styles.assignmentCard,
         isTablet ? styles.assignmentCardTablet : null,
+        tunedCardStyle(tuned, true),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-today-assignment"
     >
       <View style={styles.assignmentTitleRow}>
         <View style={styles.assignmentTitleCopy}>
-          <Text maxFontSizeMultiplier={1.12} numberOfLines={3} style={styles.assignmentTitle}>
+          <Text
+            maxFontSizeMultiplier={1.12}
+            numberOfLines={3}
+            style={[
+              styles.assignmentTitle,
+              tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"]),
+            ]}
+          >
             {assignment.title}
           </Text>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.assignmentSkill}>
+          <Text
+            maxFontSizeMultiplier={1.05}
+            numberOfLines={1}
+            style={[styles.assignmentSkill, tunedTextStyle(tuned["colors.textSecondary"])]}
+          >
             {skillLabel}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={homeColors.outlineVariant} />
+        <Ionicons name="chevron-forward" size={24} color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant} />
       </View>
 
       <View style={styles.assignmentMetaRow}>
         <View style={styles.inlineMeta}>
-          <Ionicons name="time-outline" size={16} color={homeColors.onSurfaceVariant} />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.metaText}>
+          <Ionicons
+            name="time-outline"
+            size={16}
+            color={tuned["colors.textSecondary"] ?? homeColors.onSurfaceVariant}
+          />
+          <Text
+            maxFontSizeMultiplier={1.05}
+            numberOfLines={1}
+            style={[styles.metaText, tunedTextStyle(tuned["colors.textSecondary"])]}
+          >
             {t("common.minutes", { count: assignment.estimatedMinutes })}
           </Text>
         </View>
         <View style={styles.inlineMeta}>
-          <Ionicons name="ellipse-outline" size={16} color={homeColors.outlineVariant} />
+          <Ionicons
+            name="ellipse-outline"
+            size={16}
+            color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant}
+          />
           <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.metaTextMuted}>
             {statusLabel}
           </Text>
@@ -477,6 +525,7 @@ function WeeklyProgressSummary({
   viewModel: StudentHomeViewModel;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
   const stats: WeeklyStat[] = [
     {
       accentColor: homeColors.error,
@@ -487,8 +536,8 @@ function WeeklyProgressSummary({
       value: t("studentHome.weeklySummary.dayCount", { count: viewModel.streak.currentDays }),
     },
     {
-      accentColor: homeColors.primary,
-      backgroundColor: homeColors.surfaceContainerHigh,
+      accentColor: tuned["colors.buttonPrimary"] ?? homeColors.primary,
+      backgroundColor: tuned["colors.accentCyan"] ?? homeColors.surfaceContainerHigh,
       icon: "timer",
       key: "time",
       label: t("studentHome.weeklySummary.timeLabel"),
@@ -506,8 +555,14 @@ function WeeklyProgressSummary({
 }
 
 function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
+  const tuned = useStudentHomeTokenOverrides();
+
   return (
-    <View accessible accessibilityLabel={`${stat.value}, ${stat.label}`} style={[styles.card, styles.statCard]}>
+    <View
+      accessible
+      accessibilityLabel={`${stat.value}, ${stat.label}`}
+      style={[styles.card, styles.statCard, tunedCardStyle(tuned, true)]}
+    >
       <View style={[styles.statIconBubble, { backgroundColor: stat.backgroundColor }]}>
         <Ionicons name={stat.icon} size={23} color={stat.accentColor} />
       </View>
@@ -517,7 +572,10 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
           maxFontSizeMultiplier={1.05}
           minimumFontScale={0.75}
           numberOfLines={1}
-          style={styles.statValue}
+          style={[
+            styles.statValue,
+            tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"]),
+          ]}
         >
           {stat.value}
         </Text>
@@ -526,7 +584,7 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
           maxFontSizeMultiplier={1.05}
           minimumFontScale={0.72}
           numberOfLines={1}
-          style={styles.statLabel}
+          style={[styles.statLabel, tunedTextStyle(tuned["colors.textSecondary"])]}
         >
           {stat.label}
         </Text>
@@ -545,6 +603,12 @@ function SkillProgressCard({
   skills: StudentHomeSkillProgress[];
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
+  const ringColors = [
+    tuned["colors.progressGreen"] ?? skillProgressColors[0],
+    tuned["colors.progressGreen"] ?? skillProgressColors[1],
+    tuned["colors.achievementGold"] ?? skillProgressColors[2],
+  ];
 
   return (
     <View style={styles.section} testID="student-home-skills">
@@ -556,12 +620,12 @@ function SkillProgressCard({
       <View
         accessible
         accessibilityLabel={t("studentHome.skills.accessibility")}
-        style={[styles.card, styles.skillsCard, isTablet ? styles.skillsCardTablet : null]}
+        style={[styles.card, styles.skillsCard, isTablet ? styles.skillsCardTablet : null, tunedCardStyle(tuned, true)]}
       >
         {skills.length > 0 ? (
           skills.map((skill, index) => (
             <SkillProgressRing
-              color={skillProgressColors[index % skillProgressColors.length]}
+              color={ringColors[index % ringColors.length]}
               key={skill.skill}
               label={getProgressSkillLabel(t, skill)}
               score={skill.currentScore}
@@ -587,6 +651,7 @@ function SkillProgressRing({
   score: number;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
   const activeSegments = Math.round((Math.min(100, Math.max(0, score)) / 100) * RING_SEGMENT_COUNT);
 
   return (
@@ -609,8 +674,17 @@ function SkillProgressRing({
             ]}
           />
         ))}
-        <View style={styles.ringCenter}>
-          <Text maxFontSizeMultiplier={1} numberOfLines={1} style={styles.ringText}>
+        <View
+          style={[
+            styles.ringCenter,
+            overrideStyle<ViewStyle>({ backgroundColor: tuned["colors.cardBackground"] }),
+          ]}
+        >
+          <Text
+            maxFontSizeMultiplier={1}
+            numberOfLines={1}
+            style={[styles.ringText, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+          >
             {t("studentHome.skills.percent", { count: score })}
           </Text>
         </View>
@@ -620,7 +694,7 @@ function SkillProgressRing({
         maxFontSizeMultiplier={1.05}
         minimumFontScale={0.72}
         numberOfLines={1}
-        style={styles.skillRingLabel}
+        style={[styles.skillRingLabel, tunedTextStyle(tuned["colors.textSecondary"])]}
       >
         {label}
       </Text>
@@ -638,6 +712,8 @@ function ContinueDraftCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
+  const primaryColor = tuned["colors.buttonPrimary"] ?? homeColors.primary;
 
   return (
     <Pressable
@@ -649,24 +725,33 @@ function ContinueDraftCard({
         styles.card,
         styles.draftCard,
         isTablet ? styles.draftCardTablet : null,
+        tunedCardStyle(tuned),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-continue-draft"
     >
-      <View style={styles.draftIcon}>
-        <Ionicons name="document-text-outline" size={24} color={homeColors.primary} />
+      <View style={[styles.draftIcon, overrideStyle<ViewStyle>({ backgroundColor: tuned["colors.accentCyan"] })]}>
+        <Ionicons name="document-text-outline" size={24} color={primaryColor} />
       </View>
       <View style={styles.draftCopy}>
-        <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.draftTitle}>
+        <Text
+          maxFontSizeMultiplier={1.1}
+          numberOfLines={1}
+          style={[styles.draftTitle, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+        >
           {draft.title}
         </Text>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.draftMeta}>
+        <Text
+          maxFontSizeMultiplier={1.05}
+          numberOfLines={1}
+          style={[styles.draftMeta, tunedTextStyle(tuned["colors.textSecondary"])]}
+        >
           {draft.lastEditedLabel}
         </Text>
       </View>
       <View style={styles.draftActions}>
-        <Ionicons name="create-outline" size={20} color={homeColors.primary} />
-        <Ionicons name="chevron-forward" size={22} color={homeColors.outlineVariant} />
+        <Ionicons name="create-outline" size={20} color={primaryColor} />
+        <Ionicons name="chevron-forward" size={22} color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant} />
       </View>
     </Pressable>
   );
@@ -703,6 +788,7 @@ function RecentFeedbackCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
   const feedbackCopy = feedback?.strength ?? t("studentHome.feedback.emptyDescription");
 
   return (
@@ -715,13 +801,21 @@ function RecentFeedbackCard({
         styles.card,
         styles.feedbackCard,
         isTablet ? styles.feedbackCardTablet : null,
+        tunedCardStyle(tuned),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-feedback"
     >
       <View style={styles.feedbackCopy}>
-        <Ionicons name="checkmark-circle" size={21} color={homeColors.secondary} />
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={2} style={styles.feedbackText}>
+        <Ionicons name="checkmark-circle" size={21} color={tuned["colors.progressGreen"] ?? homeColors.secondary} />
+        <Text
+          maxFontSizeMultiplier={1.08}
+          numberOfLines={2}
+          style={[
+            styles.feedbackText,
+            tunedTextStyle(tuned["colors.textPrimary"], tuned["typography.bodySize"]),
+          ]}
+        >
           {feedbackCopy}
         </Text>
       </View>

@@ -487,7 +487,7 @@ Consequences:
 
 ## ADR-022: Notification Preparation Is Provider-Free Until Native Push Setup
 
-Status: accepted
+Status: superseded for delivery by ADR-028
 
 Prompt 16 adds daily assignment selection and notification preparation without
 introducing a native push provider. This keeps the current implementation
@@ -508,8 +508,35 @@ Consequences:
 
 - Prepared notification types are daily assignment, streak, incomplete assignment, and weekly report.
 - Payloads use localization keys and route target metadata instead of raw provider-specific messages.
-- No `expo-notifications` dependency, native permission prompt, push token registration, APNs/FCM configuration, or backend provider call exists yet.
-- Adding real local or remote push delivery later will require a new native build and likely store resubmission.
+- The original provider-free decision is preserved as historical context.
+- Local notification scheduling and backend push service contracts are now tracked by ADR-028.
+
+## ADR-028: Profile Settings Sync And Notification Delivery Boundary
+
+Status: accepted
+
+Student edit, goals, language, and notification preferences now keep the local
+device cache but also sync to Supabase RPCs when a session exists. Local reminder
+delivery uses `expo-notifications` in the mobile app. Remote push delivery is
+implemented as a framework-neutral backend service under
+`services/api/src/features/notifications/`, but production delivery still needs a
+deployed API runtime, worker/scheduler, and APNs/FCM credentials.
+
+Current evidence:
+
+- Profile settings local and RPC sync: `apps/mobile/src/features/profile-settings/services/studentProfileSettingsPreferenceService.ts`
+- Notification preference local and RPC sync: `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`
+- Local notification scheduling and Expo token registration boundary: `apps/mobile/src/core/notifications/notificationDeliveryService.ts`
+- Notification response routing: `apps/mobile/src/core/notifications/NotificationResponseHandler.tsx`
+- Backend SQL/RPC migration: `services/api/migrations/202606100001_profile_settings_notification_sync.sql`
+- Backend push service contracts: `services/api/src/features/notifications/`
+
+Consequences:
+
+- Adding `expo-notifications` changes the native dependency graph and requires a native rebuild/resubmission for notification delivery.
+- Mobile preferences remain usable offline because local persistence is still the first write.
+- Expo push tokens cross only the backend account API boundary and should be stored encrypted with token hashes for lookup.
+- Production push delivery remains incomplete until a real API runtime mounts the notification endpoints and runs due-notification sends.
 
 ## ADR-023: Parent Experience Uses Local Reporting Contracts Until Backend Exists
 

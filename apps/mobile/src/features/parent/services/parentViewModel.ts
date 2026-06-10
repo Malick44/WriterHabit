@@ -3,11 +3,17 @@ import { typography } from "@/design/tokens";
 import type {
   ParentAssignmentReviewApiResponse,
   ParentAssignmentReviewViewModel,
+  ParentAssignmentSummary,
   ParentDashboardApiResponse,
+  ParentDashboardMilestone,
+  ParentDashboardUpcomingItem,
   ParentDashboardViewModel,
+  ParentDashboardWritingLevel,
   ParentGradeAdaptation,
+  ParentSkillProgress,
   ParentStudentReportApiResponse,
   ParentStudentReportViewModel,
+  ParentWeeklyProgress,
 } from "../types";
 
 function clampProgress(value: number): number {
@@ -74,6 +80,124 @@ function getAssignmentCompletionValue(input: {
   return clampProgress(input.completedAssignments / input.assignedAssignments);
 }
 
+function getAverageSkillScore(skillProgress: ParentSkillProgress[]): number {
+  if (skillProgress.length === 0) {
+    return 0;
+  }
+
+  return Math.round(
+    skillProgress.reduce((total, skill) => total + skill.currentScore, 0) / skillProgress.length,
+  );
+}
+
+function getWritingLevel(skillProgress: ParentSkillProgress[]): ParentDashboardWritingLevel {
+  const averageScore = getAverageSkillScore(skillProgress);
+
+  if (averageScore >= 82) {
+    return "advanced";
+  }
+
+  if (averageScore >= 64) {
+    return "intermediate";
+  }
+
+  return "developing";
+}
+
+function getRecentRankPercent(skillProgress: ParentSkillProgress[]): number {
+  const averageScore = getAverageSkillScore(skillProgress);
+
+  if (averageScore <= 0) {
+    return 0;
+  }
+
+  return Math.min(35, Math.max(5, 100 - averageScore));
+}
+
+function getTopSkill(skillProgress: ParentSkillProgress[]): ParentSkillProgress | null {
+  return [...skillProgress].sort((first, second) => second.currentScore - first.currentScore)[0] ?? null;
+}
+
+function buildDashboardMilestones(input: {
+  assignments: ParentAssignmentSummary[];
+  skillProgress: ParentSkillProgress[];
+  weeklyProgress: ParentWeeklyProgress | null;
+}): ParentDashboardMilestone[] {
+  const milestones: ParentDashboardMilestone[] = [];
+
+  if (input.weeklyProgress && input.weeklyProgress.streakDays > 0) {
+    milestones.push({
+      description: input.weeklyProgress.celebration,
+      id: "weekly-streak",
+      kind: "streak",
+      streakDays: input.weeklyProgress.streakDays,
+    });
+  }
+
+  const topSkill = getTopSkill(input.skillProgress);
+
+  if (topSkill) {
+    milestones.push({
+      description: topSkill.trendDescription,
+      id: `skill-${topSkill.skill}`,
+      kind: "skill",
+      scorePercent: topSkill.currentScore,
+      skillLabel: topSkill.label,
+    });
+  }
+
+  const strongestAssignment = [...input.assignments].sort(
+    (first, second) => second.scorePercent - first.scorePercent,
+  )[0];
+
+  if (strongestAssignment) {
+    milestones.push({
+      description: strongestAssignment.feedbackSummary,
+      id: strongestAssignment.submissionId,
+      kind: "assignment",
+      scorePercent: strongestAssignment.scorePercent,
+      title: strongestAssignment.title,
+    });
+  }
+
+  return milestones.slice(0, 3);
+}
+
+function buildUpcomingItems(assignments: ParentAssignmentSummary[]): ParentDashboardUpcomingItem[] {
+  return assignments.slice(0, 2).map((assignment) => ({
+    context: assignment.feedbackSummary,
+    id: assignment.submissionId,
+    progressPercent: assignment.scorePercent,
+    status: assignment.status,
+    submissionId: assignment.submissionId,
+    title: assignment.title,
+  }));
+}
+
+function getCoachInsight(input: {
+  selectedStudent: ParentDashboardApiResponse["students"][number] | null;
+  weeklyProgress: ParentWeeklyProgress | null;
+}): string {
+  if (!input.selectedStudent || !input.weeklyProgress) {
+    return "";
+  }
+
+  return input.weeklyProgress.areaToPracticeDescription;
+}
+
+function getEncouragementSummary(input: {
+  skillProgress: ParentSkillProgress[];
+  weeklyProgress: ParentWeeklyProgress | null;
+}): string {
+  const topSkill = getTopSkill(input.skillProgress);
+
+  if (topSkill) {
+    return topSkill.nextPractice;
+  }
+
+  return input.weeklyProgress?.celebration ?? "";
+}
+
 export function buildParentDashboardViewModel(
   dashboard: ParentDashboardApiResponse,
 ): ParentDashboardViewModel {
@@ -90,17 +214,33 @@ export function buildParentDashboardViewModel(
   const assignmentCompletionValue = dashboard.weeklyProgress
     ? getAssignmentCompletionValue(dashboard.weeklyProgress)
     : 0;
+  const visibleAssignments = dashboard.assignments.slice(0, gradeAdaptation.visibleAssignmentCount);
+  const visibleSkillProgress = dashboard.skillProgress.slice(0, gradeAdaptation.visibleSkillCount);
 
   return {
-    assignments: dashboard.assignments.slice(0, gradeAdaptation.visibleAssignmentCount),
+    assignments: visibleAssignments,
     assignmentCompletionValue,
+    coachInsight: getCoachInsight({ selectedStudent, weeklyProgress: dashboard.weeklyProgress }),
+    confidenceGrowthPercent: dashboard.weeklyProgress?.skillImprovementPercent ?? 0,
+    encouragementSummary: getEncouragementSummary({
+      skillProgress: dashboard.skillProgress,
+      weeklyProgress: dashboard.weeklyProgress,
+    }),
     gradeAdaptation,
     isEmpty: dashboard.students.length === 0 || !selectedStudent || !dashboard.weeklyProgress,
     isOffline: dashboard.connectionStatus === "offline_cached",
+    milestones: buildDashboardMilestones({
+      assignments: dashboard.assignments,
+      skillProgress: dashboard.skillProgress,
+      weeklyProgress: dashboard.weeklyProgress,
+    }),
+    recentRankPercent: getRecentRankPercent(dashboard.skillProgress),
     selectedStudent,
     settingsSummary: dashboard.settingsSummary,
-    skillProgress: dashboard.skillProgress.slice(0, gradeAdaptation.visibleSkillCount),
+    skillProgress: visibleSkillProgress,
     students: dashboard.students,
+    upcomingItems: buildUpcomingItems(visibleAssignments),
+    writingLevel: getWritingLevel(dashboard.skillProgress),
     weeklyProgress: dashboard.weeklyProgress,
     weeklyProgressValue,
   };

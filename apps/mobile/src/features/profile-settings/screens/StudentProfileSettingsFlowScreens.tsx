@@ -5,6 +5,7 @@ import type { WritingGoal } from "@writewise/shared";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
+import { notificationDeliveryService } from "@/core/notifications/notificationDeliveryService";
 import { defaultNotificationPreferences, type NotificationPreferences } from "@/core/notifications/notificationService";
 import { layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
@@ -228,7 +229,7 @@ function SettingsLoadState({
 }
 
 function useStudentProfilePreferenceState() {
-  const { session } = useAuthSession();
+  const { session, setSession } = useAuthSession();
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [preferences, setPreferences] = useState(() =>
     getDefaultStudentProfileSettingsPreferences({
@@ -282,6 +283,7 @@ function useStudentProfilePreferenceState() {
     preferences,
     retry,
     session,
+    setSession,
     setPreferences,
     studentId,
   };
@@ -311,6 +313,7 @@ export function EditProfileSettingsScreen() {
     preferences,
     retry,
     session,
+    setSession,
     setPreferences,
     studentId,
   } = useStudentProfilePreferenceState();
@@ -356,6 +359,16 @@ export function EditProfileSettingsScreen() {
       .then((nextPreferences) => {
         setPreferences(nextPreferences);
         setGradeInput(String(nextPreferences.gradeLevel));
+        if (session) {
+          setSession({
+            ...session,
+            user: {
+              ...session.user,
+              displayName: nextPreferences.displayName,
+              gradeLevel: nextPreferences.gradeLevel,
+            },
+          });
+        }
         setSaved(true);
       })
       .catch(() => {
@@ -369,6 +382,8 @@ export function EditProfileSettingsScreen() {
     gradeInput,
     preferences.displayName,
     preferences.learningFocusNote,
+    session,
+    setSession,
     setPreferences,
     studentId,
   ]);
@@ -691,6 +706,12 @@ export function NotificationSettingsScreen() {
       .updatePreferences(studentId, preferences)
       .then((nextPreferences) => {
         setPreferences(nextPreferences);
+        void notificationDeliveryService
+          .syncNotificationDelivery({
+            preferences: nextPreferences,
+            studentId,
+          })
+          .catch(() => undefined);
         setSaved(true);
       })
       .catch(() => {

@@ -1,6 +1,7 @@
 import type { GradeLevel, WritingGoal } from "@writewise/shared";
 import { z } from "zod";
 
+import { supabase } from "@/core/supabase/supabaseClient";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
 
 const STUDENT_PROFILE_SETTINGS_KEY_PREFIX = "profile-settings.student-profile";
@@ -33,6 +34,15 @@ export interface StudentProfileSettingsPreferences {
 }
 
 export type StudentProfileSettingsPreferencesPatch = Partial<StudentProfileSettingsPreferences>;
+
+const studentProfileSettingsRowSchema = z.object({
+  daily_goal_minutes: z.number(),
+  display_name: z.string(),
+  grade_level: z.number(),
+  language: z.enum(profileLanguageOptions),
+  learning_focus_note: z.string().nullable().catch(""),
+  writing_goals: z.array(z.unknown()).catch([]),
+});
 
 export function isGradeLevel(value: number): value is GradeLevel {
   return Number.isInteger(value) && value >= 1 && value <= 12;
@@ -130,6 +140,87 @@ export function mergeStudentProfileSettingsPreferences(
   );
 }
 
+function mapRemoteProfileSettings(
+  value: unknown,
+  defaults: StudentProfileSettingsPreferences,
+): StudentProfileSettingsPreferences | null {
+  const parsed = studentProfileSettingsRowSchema.safeParse(value);
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  return parseStudentProfileSettingsPreferences(
+    {
+      dailyPracticeMinutes: parsed.data.daily_goal_minutes,
+      displayName: parsed.data.display_name,
+      gradeLevel: parsed.data.grade_level,
+      language: parsed.data.language,
+      learningFocusNote: parsed.data.learning_focus_note ?? "",
+      writingGoals: parsed.data.writing_goals,
+    },
+    defaults,
+  );
+}
+
+async function getRemoteProfileSettings(
+  defaults: StudentProfileSettingsPreferences,
+): Promise<StudentProfileSettingsPreferences | null> {
+  const { data: authData } = await supabase.auth.getSession();
+
+  if (!authData.session) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .rpc("get_own_student_profile_settings")
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapRemoteProfileSettings(data, defaults);
+}
+
+async function updateRemoteProfileSettings(
+  preferences: StudentProfileSettingsPreferences,
+  defaults: StudentProfileSettingsPreferences,
+): Promise<StudentProfileSettingsPreferences | null> {
+  const { data: authData } = await supabase.auth.getSession();
+
+  if (!authData.session) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .rpc("upsert_own_student_profile_settings", {
+      p_daily_goal_minutes: preferences.dailyPracticeMinutes,
+      p_display_name: preferences.displayName,
+      p_grade_level: preferences.gradeLevel,
+      p_language: preferences.language,
+      p_learning_focus_note: preferences.learningFocusNote,
+      p_writing_goals: preferences.writingGoals,
+    })
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  await supabase.auth.updateUser({
+    data: {
+      display_name: preferences.displayName,
+      grade_level: preferences.gradeLevel,
+      language: preferences.language,
+      writing_goals: preferences.writingGoals,
+      daily_practice_minutes: preferences.dailyPracticeMinutes,
+    },
+  });
+
+  return mapRemoteProfileSettings(data, defaults);
+}
+
 export const studentProfileSettingsPreferenceService = {
   async getPreferences(
     studentId: string,
@@ -140,7 +231,15 @@ export const studentProfileSettingsPreferenceService = {
       defaults,
     );
 
-    return parseStudentProfileSettingsPreferences(storedPreferences, defaults);
+    const localPreferences = parseStudentProfileSettingsPreferences(storedPreferences, defaults);
+    const remotePreferences = await getRemoteProfileSettings(defaults);
+
+    if (remotePreferences) {
+      await preferencesStorage.setPreference(getProfileSettingsKey(studentId), remotePreferences);
+      return remotePreferences;
+    }
+
+    return localPreferences;
   },
 
   async updatePreferences(
@@ -152,6 +251,13 @@ export const studentProfileSettingsPreferenceService = {
     const nextPreferences = mergeStudentProfileSettingsPreferences(currentPreferences, patch, defaults);
 
     await preferencesStorage.setPreference(getProfileSettingsKey(studentId), nextPreferences);
+
+    const remotePreferences = await updateRemoteProfileSettings(nextPreferences, defaults);
+
+    if (remotePreferences) {
+      await preferencesStorage.setPreference(getProfileSettingsKey(studentId), remotePreferences);
+      return remotePreferences;
+    }
 
     return nextPreferences;
   },

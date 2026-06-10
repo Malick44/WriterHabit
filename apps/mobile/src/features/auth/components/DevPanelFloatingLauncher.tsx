@@ -11,9 +11,9 @@ import { colors, radius, spacing, typography } from "@/design/tokens";
 import { onboardingPreviewTargets, prepareOnboardingPreview } from "@/features/onboarding";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
+import { useThemeTunerStore } from "@/devtools/theme-tuner";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import { Modal } from "@/shared/components/modals";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { useAuth } from "../hooks/useAuth";
@@ -224,7 +224,7 @@ export function DevPanelFloatingLauncher() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
   const topAlert = useTopAlert();
-  const toggleTuningPanel = useGlacierThemeStore((state) => state.toggleTuningPanel);
+  const openThemeTunerPanel = useThemeTunerStore((state) => state.openPanel);
   const { clearError, isBusy, session, signInWithDemoUser, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -361,8 +361,8 @@ export function DevPanelFloatingLauncher() {
 
   const handleOpenThemeTuning = useCallback(() => {
     setIsOpen(false);
-    toggleTuningPanel();
-  }, [toggleTuningPanel]);
+    openThemeTunerPanel();
+  }, [openThemeTunerPanel]);
 
   const handleSignOut = useCallback(async () => {
     clearError();
@@ -481,7 +481,7 @@ export function DevPanelFloatingLauncher() {
             <Button
               accessibilityLabel={t("themeTuner.openAccessibility")}
               disabled={isBusy}
-              label={t("themeTuner.title")}
+              label={t("themeTuner.inspector.title")}
               leftAccessory={<Ionicons color={colors.text.primary} name="color-palette" size={17} />}
               onPress={handleOpenThemeTuning}
               size="sm"

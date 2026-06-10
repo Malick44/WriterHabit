@@ -91,6 +91,16 @@ describe("parentViewModel", () => {
     expect(viewModel.weeklyProgressValue).toBe(1);
     expect(viewModel.assignmentCompletionValue).toBe(1);
     expect(viewModel.gradeAdaptation.band).toBe("middle");
+    expect(viewModel.writingLevel).toBe("intermediate");
+    expect(viewModel.recentRankPercent).toBe(25);
+    expect(viewModel.milestones).toMatchObject([
+      { kind: "streak", streakDays: 4 },
+      { kind: "skill", scorePercent: 75, skillLabel: "Clarity" },
+      { kind: "assignment", scorePercent: 82, title: "Paragraph" },
+    ]);
+    expect(viewModel.upcomingItems).toMatchObject([
+      { progressPercent: 82, status: "feedback_ready", title: "Paragraph" },
+    ]);
   });
 
   it("marks dashboards without linked students as empty", () => {

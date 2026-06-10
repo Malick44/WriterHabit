@@ -32,7 +32,7 @@ selected yet.
 | Table | Purpose | Important constraints and indexes |
 | --- | --- | --- |
 | `users` | Public app profile for a Supabase auth user. | `id` references `auth.users(id)`, unique `email`, role check for `student`, `parent`, `teacher`, `admin`, `users_role_idx`. |
-| `student_profiles` | Student grade, writing level, goals, daily goal, language, accessibility settings, onboarding completion. | Unique `user_id`, grade 1-12, generated `grade_band`, goal allow-list, GIN index on `writing_goals`. |
+| `student_profiles` | Student grade, writing level, goals, daily goal, language, learning focus note, accessibility settings, onboarding completion. | Unique `user_id`, grade 1-12, daily goal in 5/10/15/20/30, generated `grade_band`, goal allow-list, language check, GIN index on `writing_goals`. |
 | `parent_profiles` | Parent display profile. | Unique `user_id`. |
 | `parent_settings` | Parent report and notification settings. | Primary key `parent_user_id`, constrained setting values. |
 | `teacher_profiles` | Teacher display profile and optional school label. | Unique `user_id`. |
@@ -120,6 +120,16 @@ and assignment completion events.
 
 Push tokens should be encrypted or otherwise protected by backend infrastructure.
 Application logs and docs should use token hashes or opaque IDs only.
+
+`services/api/migrations/202606100001_profile_settings_notification_sync.sql`
+adds RPCs for the current mobile app to sync student profile settings and
+notification preferences while the production API runtime is still being
+assembled:
+
+- `get_own_student_profile_settings`
+- `upsert_own_student_profile_settings`
+- `get_own_notification_preferences`
+- `upsert_own_notification_preferences`
 
 ## Audit Logs
 

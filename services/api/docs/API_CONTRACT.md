@@ -1,8 +1,9 @@
 # WriteWise Backend API Contract
 
 Status: planned contract for the future backend service. The current mobile app
-still uses Supabase client auth plus feature-owned deterministic mock APIs and
-local storage where noted in the repository docs.
+uses Supabase client auth, Supabase RPCs for student profile settings and
+notification preferences, plus feature-owned deterministic mock APIs and local
+storage where noted in the repository docs.
 
 Base path:
 
@@ -233,6 +234,7 @@ interface StudentProfileResponse {
   displayName: string;
   gradeLevel: GradeLevel;
   gradeBand: GradeBand;
+  learningFocusNote: string;
   writingLevel: "getting_started" | "building" | "steady" | "confident";
   writingGoals: WritingGoal[];
   dailyGoalMinutes: 5 | 10 | 15 | 20 | 30;
@@ -245,6 +247,7 @@ interface StudentProfileResponse {
 interface UpdateStudentProfileRequest {
   displayName?: string;
   gradeLevel?: GradeLevel;
+  learningFocusNote?: string;
   writingGoals?: WritingGoal[];
   dailyGoalMinutes?: 5 | 10 | 15 | 20 | 30;
   language?: string;
@@ -280,8 +283,11 @@ interface StudentHomeResponse {
 
 ## Onboarding
 
-The mobile app currently stores in-progress onboarding locally and writes public
-auth metadata on completion. Dedicated profile persistence is planned here.
+The mobile app stores in-progress onboarding locally and writes public auth
+metadata on completion. Student profile settings are synced through the
+Supabase RPCs created in
+`services/api/migrations/202606100001_profile_settings_notification_sync.sql`;
+broader onboarding records and production API hydration remain planned here.
 
 ```txt
 GET  /students/:studentId/onboarding
@@ -1091,9 +1097,13 @@ must be idempotent by provider event ID.
 
 ## Notifications
 
-Prompt 20 focuses on the requested feature list, but notification contracts are
-already referenced by the mobile notification-preparation service and should
-remain available for backend planning.
+The mobile app now stores notification preferences through Supabase RPCs,
+schedules local reminders with `expo-notifications`, and attempts to register an
+Expo push token with the backend account API when a native build supplies one.
+`services/api/src/features/notifications/` contains the framework-neutral
+backend delivery service for token registration and Expo push sends. A deployed
+API runtime, push credentials, and scheduler/worker are still required for
+production remote push delivery.
 
 ```txt
 GET  /students/:studentId/notification-preferences
@@ -1101,10 +1111,52 @@ PUT  /students/:studentId/notification-preferences
 POST /students/:studentId/notifications/register-device
 POST /students/:studentId/notifications/unregister-device
 GET  /students/:studentId/notifications/prepared
+POST /notifications/send-due
 POST /notifications/weekly-reports
 ```
 
 Device tokens must be stored only on the backend, never in public docs or logs.
+Store encrypted token ciphertext and a stable token hash in
+`notification_devices`; logs should use opaque device IDs or hashes only.
+
+```ts
+type NotificationDevicePlatform = "ios" | "android" | "web";
+
+interface NotificationPreferencesRequest {
+  enabled: boolean;
+  timezone: string;
+  dailyAssignment: { enabled: boolean; timeOfDay: string };
+  streak: { enabled: boolean; timeOfDay: string };
+  incompleteAssignment: { enabled: boolean; timeOfDay: string };
+  weeklyReport: {
+    enabled: boolean;
+    timeOfDay: string;
+    weekday: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+  };
+}
+
+interface RegisterNotificationDeviceRequest {
+  expoPushToken: string;
+  idempotencyKey?: string;
+  platform: NotificationDevicePlatform;
+}
+
+interface RegisterNotificationDeviceResponse {
+  deviceId: string;
+  status: "registered";
+}
+
+interface SendDueNotificationsRequest {
+  dueBefore: string;
+  limit?: number;
+}
+
+interface SendDueNotificationsResponse {
+  failed: number;
+  sent: number;
+  skipped: number;
+}
+```
 
 ## Idempotency And Concurrency
 

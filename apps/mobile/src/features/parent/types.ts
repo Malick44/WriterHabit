@@ -234,15 +234,45 @@ export interface ParentGradeAdaptation {
 export interface ParentDashboardViewModel {
   assignments: ParentAssignmentSummary[];
   assignmentCompletionValue: number;
+  coachInsight: string;
+  confidenceGrowthPercent: number;
+  encouragementSummary: string;
   gradeAdaptation: ParentGradeAdaptation;
   isEmpty: boolean;
   isOffline: boolean;
+  milestones: ParentDashboardMilestone[];
+  recentRankPercent: number;
   selectedStudent: ParentStudentSummary | null;
   settingsSummary: ParentSettings;
   skillProgress: ParentSkillProgress[];
   students: ParentStudentSummary[];
+  upcomingItems: ParentDashboardUpcomingItem[];
+  writingLevel: ParentDashboardWritingLevel;
   weeklyProgress: ParentWeeklyProgress | null;
   weeklyProgressValue: number;
+}
+
+export type ParentDashboardWritingLevel = "advanced" | "developing" | "intermediate";
+
+export type ParentDashboardMilestoneKind = "assignment" | "skill" | "streak";
+
+export interface ParentDashboardMilestone {
+  description: string;
+  id: string;
+  kind: ParentDashboardMilestoneKind;
+  scorePercent?: number;
+  skillLabel?: string;
+  streakDays?: number;
+  title?: string;
+}
+
+export interface ParentDashboardUpcomingItem {
+  context: string;
+  id: string;
+  progressPercent: number;
+  status: ParentAssignmentSummary["status"];
+  submissionId: string;
+  title: string;
 }
 
 export interface ParentStudentReportViewModel {

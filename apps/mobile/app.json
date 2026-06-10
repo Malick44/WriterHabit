@@ -3,7 +3,14 @@
   "scheme": "writewise",
   "plugins": [
     "expo-font",
-    "expo-sqlite"
+    "expo-sqlite",
+    [
+      "expo-notifications",
+      {
+        "color": "#00327D",
+        "defaultChannel": "writewise-reminders"
+      }
+    ]
   ],
   "ios": {
     "bundleIdentifier": "com.writewise",

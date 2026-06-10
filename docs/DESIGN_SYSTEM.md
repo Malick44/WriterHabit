@@ -211,9 +211,46 @@ Testing strategy:
 ## Development Theme Tuning
 
 The development-only theme tuner is mounted from `apps/mobile/app/_layout.tsx`
-through `ThemeTuningPanel`.
+through `ThemeTuningPanel` from `apps/mobile/src/devtools/theme-tuner/`. It is
+guarded by `__DEV__` at the mount point and inside the component, never renders
+in production builds, and stores overrides separately from the source tokens.
 
-The base Glacier theme store lives in:
+The token-based tuner module layout:
+
+```txt
+apps/mobile/src/devtools/theme-tuner/
+  components/   ThemeTuningPanel, TokenEditor, ScreenRegistryView, ComponentInspector
+  store/        themeTunerStore (zustand + localJsonStorage persistence)
+  registry/     screenRegistry, componentRegistry
+  hooks/        useRegisterTunableScreen, useRegisterTunableComponent(s), useTunableToken(s)
+  types.ts      TokenKind, TunableScreenConfig, TunableComponentConfig, TokenOverrides
+```
+
+Usage:
+
+- A screen registers token definitions with `useRegisterTunableScreen(config)`
+  and section-level groups with `useRegisterTunableComponents(configs)`.
+- Screens read live values with `useTunableTokens(screenId, defaults)` or the
+  raw override map with `useTunableTokenOverrides(screenId)` plus
+  `overrideStyle(...)`, which resolves to `null` when nothing is tuned.
+- The panel supports per-token reset, per-screen reset, reset all, and
+  export of the override map as JSON (selectable text, native share sheet, and
+  Metro console log).
+- Dev overrides persist across reloads via
+  `apps/mobile/src/services/storage/localJsonStorage.ts` under
+  `devtools.themeTuner.overrides.v1`.
+
+`StudentHomeScreen` registers the `student-home` screen with header, today's
+assignment card, weekly progress cards, skill progress preview, continue draft
+card, recent feedback card, and bottom navigation components. Its tunable
+tokens cover screen/card surfaces, card border and radius, title/body sizes,
+primary/secondary text, primary button color, accent cyan, achievement gold,
+progress green, card padding, section spacing, and tab bar colors (applied in
+`apps/mobile/app/(student)/_layout.tsx`).
+
+The legacy Glacier control-based tuner remains available; its registered
+screens appear in the new panel under a legacy section and open the Glacier
+panel. The base Glacier theme store lives in:
 
 ```txt
 apps/mobile/src/shared/theme/glacierThemeStore.ts

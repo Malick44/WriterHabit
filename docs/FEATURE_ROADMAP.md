@@ -232,15 +232,16 @@ Primary areas:
 Work:
 
 - Maintain the implemented daily assignment selector, catalog, and mock assignment API wiring.
-- Maintain notification preference parsing and local persistence.
-- Maintain provider-free notification payload preparation for daily assignment, streak, incomplete assignment, and weekly report reminders.
-- Keep focused tests for daily assignment selection, streak continuation, notification preferences, and prepared notification payloads.
+- Maintain notification preference parsing, local persistence, and Supabase RPC sync.
+- Maintain notification payload preparation for daily assignment, streak, incomplete assignment, and weekly report reminders.
+- Maintain local device scheduling and notification response routing through `expo-notifications`.
+- Keep focused tests for daily assignment selection, streak continuation, notification preferences, prepared notification payloads, and scheduling request construction.
 
 Risks:
 
-- Notification preparation currently does not schedule real local notifications or push notifications.
-- Adding `expo-notifications`, permission prompts, APNs/FCM, or provider delivery will require native build and store review planning.
-- Backend persistence is still needed for cross-device preferences, device tokens, scheduling, and parent/teacher report delivery.
+- `expo-notifications` requires native build and store review planning.
+- Remote push delivery still needs deployed backend runtime, APNs/FCM credentials, worker scheduling, and production observability.
+- Parent/teacher report delivery is still not production-connected.
 
 ## Phase 9: Parent Experience
 

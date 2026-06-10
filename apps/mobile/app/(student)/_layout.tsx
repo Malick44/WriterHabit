@@ -1,13 +1,16 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
 import { RouteGate } from "@/core/navigation/RouteGate";
 import { colors } from "@/design/tokens";
+import { overrideStyle } from "@/devtools/theme-tuner";
+import { studentHomeTokenDefaults, useStudentHomeTokenOverrides } from "@/features/student-home/themeTuning";
 import { useI18n } from "@/i18n";
 
 export default function StudentLayout() {
   const { t } = useI18n();
+  const tuned = useStudentHomeTokenOverrides();
 
   return (
     <RouteGate
@@ -18,8 +21,9 @@ export default function StudentLayout() {
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: "#6D28D9",
-          tabBarInactiveTintColor: "#94A3B8",
+          tabBarActiveTintColor: tuned["bottomNav.activeTint"] ?? studentHomeTokenDefaults["bottomNav.activeTint"],
+          tabBarInactiveTintColor:
+            tuned["bottomNav.inactiveTint"] ?? studentHomeTokenDefaults["bottomNav.inactiveTint"],
           tabBarIcon: ({ color, focused, size }) => {
             switch (route.name) {
               case "home":
@@ -48,7 +52,10 @@ export default function StudentLayout() {
           },
           tabBarItemStyle: styles.tabBarItem,
           tabBarLabelStyle: styles.tabBarLabel,
-          tabBarStyle: styles.tabBar,
+          tabBarStyle: [
+            styles.tabBar,
+            overrideStyle<ViewStyle>({ backgroundColor: tuned["bottomNav.background"] }),
+          ],
         })}
       >
         <Tabs.Screen

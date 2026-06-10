@@ -103,7 +103,46 @@ describe("teacherViewModel", () => {
     expect(viewModel.isOffline).toBe(true);
     expect(viewModel.metrics.totalStudents).toBe(52);
     expect(viewModel.metrics.reviewQueue).toBe(1);
+    expect(viewModel.metrics.pendingReviewTotal).toBe(6);
+    expect(viewModel.metrics.classAverageScore).toBe(73);
+    expect(viewModel.metrics.activeStudentsToday).toBe(41);
     expect(viewModel.metrics.averageCompletionPercent).toBe(80);
+  });
+
+  it("builds dashboard watchlist and activity rows from submissions", () => {
+    const viewModel = buildTeacherDashboardViewModel({
+      ...baseDashboard,
+      submissions: [
+        ...baseDashboard.submissions,
+        {
+          assignmentId: "assignment-1",
+          assignmentTitle: "Paragraph",
+          classId: "class-1",
+          className: "Room 214",
+          gradeLevel: 7,
+          hasCanvas: false,
+          id: "submission-2",
+          priority: "normal",
+          scorePercent: 72,
+          status: "revision_requested",
+          studentId: "student-2",
+          studentName: "Jonah",
+          submittedLabel: "Yesterday",
+          wordCount: 140,
+        },
+      ],
+    });
+
+    expect(viewModel.watchlist).toMatchObject([
+      { action: "review", reason: "high_priority_review", studentName: "Maya" },
+      { action: "remind", reason: "revision_follow_up", studentName: "Jonah" },
+    ]);
+    expect(viewModel.activities).toHaveLength(2);
+    expect(viewModel.activities[1]).toMatchObject({
+      kind: "revision_requested",
+      scorePercent: 72,
+      studentName: "Jonah",
+    });
   });
 
   it("marks a dashboard with no classes as empty", () => {

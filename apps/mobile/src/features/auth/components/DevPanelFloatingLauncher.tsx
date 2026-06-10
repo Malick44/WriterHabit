@@ -376,7 +376,7 @@ export function DevPanelFloatingLauncher() {
     });
   }, [clearError, router, signOut, topAlert]);
 
-  if (!__DEV__ || !session) {
+  if (!__DEV__) {
     return null;
   }
 
@@ -391,7 +391,9 @@ export function DevPanelFloatingLauncher() {
           styles.floatingButton,
           {
             bottom: Math.max(insets.bottom, spacing.lg) + spacing.lg,
+            left: session ? undefined : spacing.lg,
             opacity: pressed ? 0.76 : 1,
+            right: session ? spacing.lg : undefined,
           },
         ]}
         testID="dev-panel-floating-button"
@@ -412,48 +414,59 @@ export function DevPanelFloatingLauncher() {
         titleKey="auth.demoUsers.floatingTitle"
         visible={isOpen}
       >
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text selectable style={styles.sectionTitle}>
-              {t("auth.demoUsers.devPanel.diagnostics.title")}
-            </Text>
-            <Text selectable style={styles.sectionDescription}>
-              {t("auth.demoUsers.devPanel.diagnostics.description")}
-            </Text>
-          </View>
-          <View style={styles.infoGrid}>
-            {diagnostics.map((item) => (
-              <DevInfoRow key={item.id} label={t(item.labelKey)} value={item.value} />
-            ))}
-          </View>
-        </View>
+        <DemoUserPanel
+          disabled={isBusy}
+          onboardingPreviewOptions={onboardingPreviewTargets}
+          onSelectDemoUser={handleSelectDemoUser}
+          onSelectOnboardingPreview={handleSelectOnboardingPreview}
+        />
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text selectable style={styles.sectionTitle}>
-              {t("auth.demoUsers.devPanel.routes.title")}
-            </Text>
-            <Text selectable style={styles.sectionDescription}>
-              {t("auth.demoUsers.devPanel.routes.description")}
-            </Text>
-          </View>
-          <View style={styles.shortcutGrid}>
-            {routeShortcuts.map((shortcut) => (
-              <Button
-                accessibilityLabel={t(shortcut.accessibilityKey)}
-                key={shortcut.id}
-                label={t(shortcut.labelKey)}
-                leftAccessory={<Ionicons color={colors.text.primary} name={shortcut.iconName} size={17} />}
-                onPress={() => {
-                  handleRoutePress(shortcut.route);
-                }}
-                size="sm"
-                style={styles.shortcutButton}
-                variant="secondary"
-              />
-            ))}
-          </View>
-        </View>
+        {session ? (
+          <>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text selectable style={styles.sectionTitle}>
+                  {t("auth.demoUsers.devPanel.diagnostics.title")}
+                </Text>
+                <Text selectable style={styles.sectionDescription}>
+                  {t("auth.demoUsers.devPanel.diagnostics.description")}
+                </Text>
+              </View>
+              <View style={styles.infoGrid}>
+                {diagnostics.map((item) => (
+                  <DevInfoRow key={item.id} label={t(item.labelKey)} value={item.value} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text selectable style={styles.sectionTitle}>
+                  {t("auth.demoUsers.devPanel.routes.title")}
+                </Text>
+                <Text selectable style={styles.sectionDescription}>
+                  {t("auth.demoUsers.devPanel.routes.description")}
+                </Text>
+              </View>
+              <View style={styles.shortcutGrid}>
+                {routeShortcuts.map((shortcut) => (
+                  <Button
+                    accessibilityLabel={t(shortcut.accessibilityKey)}
+                    key={shortcut.id}
+                    label={t(shortcut.labelKey)}
+                    leftAccessory={<Ionicons color={colors.text.primary} name={shortcut.iconName} size={17} />}
+                    onPress={() => {
+                      handleRoutePress(shortcut.route);
+                    }}
+                    size="sm"
+                    style={styles.shortcutButton}
+                    variant="secondary"
+                  />
+                ))}
+              </View>
+            </View>
+          </>
+        ) : null}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -485,27 +498,22 @@ export function DevPanelFloatingLauncher() {
               style={styles.shortcutButton}
               variant="secondary"
             />
-            <Button
-              accessibilityLabel={t("auth.demoUsers.devPanel.actions.signOutAccessibility")}
-              disabled={isBusy}
-              label={t("auth.demoUsers.devPanel.actions.signOut")}
-              leftAccessory={<Ionicons color={colors.feedback.error.text} name="log-out" size={17} />}
-              onPress={() => {
-                void handleSignOut();
-              }}
-              size="sm"
-              style={styles.shortcutButton}
-              variant="danger"
-            />
+            {session ? (
+              <Button
+                accessibilityLabel={t("auth.demoUsers.devPanel.actions.signOutAccessibility")}
+                disabled={isBusy}
+                label={t("auth.demoUsers.devPanel.actions.signOut")}
+                leftAccessory={<Ionicons color={colors.feedback.error.text} name="log-out" size={17} />}
+                onPress={() => {
+                  void handleSignOut();
+                }}
+                size="sm"
+                style={styles.shortcutButton}
+                variant="danger"
+              />
+            ) : null}
           </View>
         </View>
-
-        <DemoUserPanel
-          disabled={isBusy}
-          onboardingPreviewOptions={onboardingPreviewTargets}
-          onSelectDemoUser={handleSelectDemoUser}
-          onSelectOnboardingPreview={handleSelectOnboardingPreview}
-        />
       </Modal>
     </>
   );
@@ -521,7 +529,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: spacing.lg,
     position: "absolute",
-    right: spacing.lg,
     shadowColor: "#020617",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.24,

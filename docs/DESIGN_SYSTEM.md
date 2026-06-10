@@ -62,6 +62,7 @@ apps/mobile/src/shared/components/cards/
 apps/mobile/src/shared/components/forms/
 apps/mobile/src/shared/components/feedback/
 apps/mobile/src/shared/components/modals/
+apps/mobile/src/shared/components/navigation/
 ```
 
 Current primitives include:
@@ -73,8 +74,139 @@ Current primitives include:
 - Feedback: `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`, `StatusState`, `OfflineBanner`, `RetryButton`, `ProgressBar`
 - Top alerts: `TopAlertBanner`, `TopAlertProvider`, `useTopAlert`, `showTopAlert`, `hideTopAlert`
 - Modals: `Modal`, `BottomSheetModal`, `ModalProvider`, `useModal`, `modalManager`
+- Navigation: `AppHeader`
 
 Shared components accept user-facing labels and messages as props so feature screens can source copy from `apps/mobile/src/shared/i18n/`.
+
+## App Header
+
+The reusable screen header system lives in:
+
+```txt
+apps/mobile/src/shared/components/navigation/app-header/
+  AppHeader.tsx
+  AppHeaderAction.tsx
+  AppHeaderTitle.tsx
+  AppHeaderProgress.tsx
+  appHeader.constants.ts
+  appHeader.styles.ts
+  appHeader.types.ts
+  index.ts
+```
+
+The public API is typed around `TranslationKey`, so title, subtitle, action labels, accessibility labels, and progress labels resolve through `apps/mobile/src/shared/i18n/`.
+
+```ts
+import { AppHeader } from "@/shared/components/navigation";
+
+<AppHeader
+  variant="large"
+  titleKey="studentHome.title"
+  subtitleKey="studentHome.description"
+  leftAction={{
+    accessibilityLabelKey: "common.back",
+    type: "back",
+  }}
+  rightActions={[
+    {
+      accessibilityLabelKey: "common.notifications",
+      icon: "notifications-outline",
+      onPress: openNotifications,
+      type: "icon",
+    },
+  ]}
+/>;
+```
+
+Usage patterns:
+
+```ts
+// Home screen
+<AppHeader
+  variant="large"
+  titleKey="studentHome.title"
+  subtitleKey="studentHome.description"
+  rightActions={[
+    { accessibilityLabelKey: "common.notifications", icon: "notifications-outline", onPress: openNotifications, type: "icon" },
+  ]}
+/>;
+
+// Detail screen
+<AppHeader
+  titleKey="assignments.detail.title"
+  subtitleKey="assignments.detail.subtitle"
+  leftAction={{ accessibilityLabelKey: "common.back", type: "back" }}
+/>;
+
+// Modal screen
+<AppHeader
+  variant="centered"
+  titleKey="modal.examples.deleteTitle"
+  subtitleKey="modal.examples.deleteDescription"
+  leftAction={{ accessibilityLabelKey: "common.close", onPress: closeModal, type: "close" }}
+/>;
+
+// Onboarding screen
+<AppHeader
+  variant="transparent"
+  titleKey="onboarding.roleSelection.title"
+  subtitleKey="onboarding.roleSelection.description"
+  progress={{ labelKey: "onboarding.progressLabel", showValue: true, value: onboardingProgress }}
+/>;
+
+// Profile screen
+<AppHeader
+  titleKey="profileSettings.studentProfileTitle"
+  subtitleKey="profileSettings.studentProfilePlaceholderDescription"
+  rightActions={[
+    { accessibilityLabelKey: "studentHome.profile.accessibilityLabel", fallbackText: studentInitial, onPress: openProfile, type: "avatar" },
+  ]}
+/>;
+```
+
+Supported variants:
+
+- `default`
+- `large`
+- `compact`
+- `centered`
+- `transparent`
+- `blurred`
+- `floating`
+
+Supported actions:
+
+- `none`
+- `back`
+- `close`
+- `icon`
+- `avatar` with either `imageUri` or localized-user-data fallback text such as a student initial
+- `text`
+
+Current adoption:
+
+- `apps/mobile/src/features/student-home/screens/StudentHomeScreen.tsx` uses `AppHeader` for the home greeting and profile action.
+- `apps/mobile/src/features/assignments/screens/AssignmentDetailScreen.tsx` uses `AppHeader` for the detail back/title/action row.
+- `apps/mobile/src/features/assignments/screens/AssignmentHistoryScreen.tsx` uses `AppHeader` for the assignment history title and subtitle.
+- `apps/mobile/src/features/progress/screens/StudentProgressScreen.tsx`, `BadgesScreen.tsx`, `WeeklyReviewScreen.tsx`, and `SkillDetailScreen.tsx` use `AppHeader` for progress dashboard and drill-in headers.
+- `apps/mobile/src/features/profile-settings/screens/StudentProfileScreen.tsx`, `AppSettingsScreen.tsx`, and `AccessibilitySettingsScreen.tsx` use `AppHeader` for profile and settings headers.
+- `apps/mobile/src/features/parent/screens/ParentSettingsScreen.tsx` uses `AppHeader` for parent settings.
+
+Assignment detail intentionally does not expose a bookmark action yet. Bookmarking is deferred until the assignment feature has a backend-backed saved-assignment model, saved-list navigation, offline semantics, and RLS policy.
+
+Design and accessibility behavior:
+
+- Header colors, spacing, shadows, radius, and typography resolve through `apps/mobile/src/design/tokens/`.
+- Safe-area top insets are included by default with `showSafeArea`.
+- Back icons mirror under RTL through `I18nManager`.
+- Title and subtitle support long translated text with bounded line counts.
+- Actions use localized accessibility labels and the shared minimum touch target.
+- Optional progress uses `accessibilityRole="progressbar"` and localized labels.
+
+Testing strategy:
+
+- `AppHeader.test.tsx` covers localized title/subtitle/action rendering, back navigation fallback, icon and avatar action accessibility labels, and progress accessibility metadata.
+- `noHardcodedJsxText.test.ts` continues to guard hardcoded visible JSX copy and accessibility props.
 
 ## Development Theme Tuning
 

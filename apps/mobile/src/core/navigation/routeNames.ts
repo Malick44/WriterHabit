@@ -20,6 +20,7 @@ export const routes = {
   studentProgressBadges: "/(student)/progress/badges" as Href,
   studentProgressWeeklyReview: "/(student)/progress/weekly-review" as Href,
   studentProfile: "/(student)/profile" as Href,
+  studentSettings: "/(student)/settings" as Href,
   parentHome: "/(parent)/home" as Href,
   parentReports: "/(parent)/reports" as Href,
   parentAssignments: "/(parent)/assignments" as Href,

@@ -1,3 +1,5 @@
+import { StyleSheet } from "react-native";
+
 import type { AccessibilityTextSize } from "@/shared/utils/accessibility";
 import { Button } from "@/shared/components/buttons";
 import { ErrorState, LoadingState, SuccessState } from "@/shared/components/feedback";
@@ -5,6 +7,7 @@ import { CheckboxRow, ChoiceCard } from "@/shared/components/forms";
 import { Screen } from "@/shared/components/layout/Screen";
 import { PageSection } from "@/shared/components/layout/PageSection";
 import { Stack } from "@/shared/components/layout/Stack";
+import { AppHeader } from "@/shared/components/navigation";
 import { useT } from "@/shared/i18n/useT";
 
 import { useAccessibilitySettingsStore } from "../accessibility";
@@ -39,7 +42,13 @@ export function AccessibilitySettingsScreen() {
 
   if (!hydrated) {
     return (
-      <Screen title={t("accessibility.screen.title")}>
+      <Screen>
+        <AppHeader
+          showSafeArea={false}
+          style={styles.header}
+          titleKey="accessibility.screen.title"
+          variant="transparent"
+        />
         <LoadingState
           description={t("accessibility.screen.loadingDescription")}
           label={t("accessibility.screen.loadingTitle")}
@@ -49,10 +58,14 @@ export function AccessibilitySettingsScreen() {
   }
 
   return (
-    <Screen
-      subtitle={t("accessibility.screen.subtitle")}
-      title={t("accessibility.screen.title")}
-    >
+    <Screen>
+      <AppHeader
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="accessibility.screen.subtitle"
+        titleKey="accessibility.screen.title"
+        variant="transparent"
+      />
       <Stack gap="lg">
         {error ? (
           <ErrorState
@@ -147,3 +160,12 @@ export function AccessibilitySettingsScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

@@ -24,8 +24,6 @@ type DemoUserPanelProps = {
   onSelectOnboardingPreview?: (targetId: string) => Promise<void> | void;
 };
 
-const defaultDemoUserId: DemoUserId = "middle_school_student";
-
 export function DemoUserPanel({
   disabled = false,
   onSelectDemoUser,
@@ -36,13 +34,8 @@ export function DemoUserPanel({
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands.middle;
-  const [selectedDemoUserId, setSelectedDemoUserId] = useState<DemoUserId>(defaultDemoUserId);
   const [selectedPreviewId, setSelectedPreviewId] = useState(onboardingPreviewOptions[0]?.id ?? "");
 
-  const selectedDemoUser = useMemo(
-    () => demoUsers.find((user) => user.id === selectedDemoUserId) ?? demoUsers[0],
-    [selectedDemoUserId],
-  );
   const selectedPreview = useMemo(
     () => onboardingPreviewOptions.find((option) => option.id === selectedPreviewId) ?? onboardingPreviewOptions[0],
     [onboardingPreviewOptions, selectedPreviewId],
@@ -92,24 +85,13 @@ export function DemoUserPanel({
               label={t(demoUser.labelKey)}
               description={t(demoUser.descriptionKey)}
               onPress={() => {
-                setSelectedDemoUserId(demoUser.id);
+                void onSelectDemoUser(demoUser.id);
               }}
-              selected={demoUser.id === selectedDemoUserId}
+              selected={false}
               testID={`demo-user-option-${demoUser.id}`}
             />
           ))}
         </Stack>
-
-        <Button
-          disabled={disabled}
-          fullWidth
-          label={t("auth.demoUsers.signInCta", { user: t(selectedDemoUser.labelKey) })}
-          onPress={() => {
-            void onSelectDemoUser(selectedDemoUser.id);
-          }}
-          testID="demo-user-sign-in-button"
-          variant="secondary"
-        />
 
         {selectedPreview && onSelectOnboardingPreview ? (
           <View style={[styles.previewSection, { borderColor: accessibleColors.border }]}>

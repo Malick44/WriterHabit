@@ -55,6 +55,10 @@ export type AuthSignInInput = {
   password: string;
 };
 
+export type AuthLoginLinkInput = {
+  email: string;
+};
+
 export type AuthSignUpInput = {
   email: string;
   password: string;

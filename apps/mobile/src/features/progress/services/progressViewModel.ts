@@ -341,6 +341,7 @@ export function buildProgressDashboardViewModel({
   return {
     badgePreview: sortBadgesForPreview(badges).slice(0, gradeAdaptation.badgePreviewCount),
     badges,
+    dailyActivity: dashboard.dailyActivity,
     gradeAdaptation,
     gradeLevel: dashboard.gradeLevel,
     isEmpty: !hasProgressContent(dashboard),

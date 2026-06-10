@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
   getAccessibleColors,
@@ -30,10 +31,21 @@ export function WeeklyReviewScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("progress.weeklyReview.subtitle")}
       testID="progress-weekly-review-screen"
-      title={t("progress.weeklyReview.title")}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="progress.weeklyReview.subtitle"
+        titleKey="progress.weeklyReview.title"
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("progress.weeklyReview.loading.accessibility")}
@@ -170,3 +182,12 @@ export function WeeklyReviewScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

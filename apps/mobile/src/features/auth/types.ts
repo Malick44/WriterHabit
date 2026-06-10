@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type {
   AuthErrorCode,
+  AuthLoginLinkInput,
   AuthSignInInput,
   AuthSignUpInput,
   MockSessionRole,
@@ -21,6 +22,10 @@ export const signInInputSchema = z.object({
   password: z.string().min(1, { message: "auth.errors.passwordRequired" }),
 }) satisfies z.ZodType<AuthSignInInput>;
 
+export const loginLinkInputSchema = z.object({
+  email: emailSchema,
+}) satisfies z.ZodType<AuthLoginLinkInput>;
+
 export const signUpInputSchema = z.object({
   displayName: z.string().trim().min(1, { message: "auth.errors.displayNameRequired" }),
   email: emailSchema,
@@ -38,6 +43,7 @@ export const signUpFormSchema = signUpInputSchema
   });
 
 export type SignInFormValues = z.infer<typeof signInInputSchema>;
+export type LoginLinkFormValues = z.infer<typeof loginLinkInputSchema>;
 export type SignUpInputValues = z.infer<typeof signUpInputSchema>;
 export type SignUpFormValues = z.infer<typeof signUpFormSchema>;
 

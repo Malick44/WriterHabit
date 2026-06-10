@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
@@ -6,6 +7,7 @@ import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 
 import { AssignmentHistoryTabs, AssignmentListCard } from "../components";
 import { useAssignmentHistoryData } from "../hooks/useAssignments";
@@ -21,10 +23,17 @@ export function AssignmentHistoryScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("assignments.history.subtitle")}
       testID="assignment-history-screen"
-      title={t("assignments.history.title")}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="assignments.history.subtitle"
+        titleKey="assignments.history.title"
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("assignments.history.loadingAccessibility")}
@@ -119,3 +128,12 @@ export function AssignmentHistoryScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

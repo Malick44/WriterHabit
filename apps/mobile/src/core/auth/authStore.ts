@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type {
   AuthActionResult,
   AuthErrorCode,
+  AuthLoginLinkInput,
   AuthOnboardingCompletionInput,
   AuthOperationStatus,
   AuthSession,
@@ -24,6 +25,7 @@ type AuthStoreState = {
 type AuthStoreActions = {
   hydrateSession: () => Promise<void>;
   signInWithEmail: (input: AuthSignInInput) => Promise<AuthActionResult>;
+  signInWithEmailLink: (input: AuthLoginLinkInput) => Promise<AuthActionResult>;
   signUpWithEmail: (input: AuthSignUpInput) => Promise<AuthActionResult>;
   signInWithDemoUser: (demoUserId: DemoUserId) => Promise<AuthActionResult>;
   signInWithMockRole: (role: MockSessionRole, options?: { onboardingComplete?: boolean }) => Promise<AuthActionResult>;
@@ -123,6 +125,23 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     try {
       const { sessionService } = await import("./sessionService");
       const result = await sessionService.signInWithEmail(input);
+      set({
+        errorCode: null,
+        operationStatus: "idle",
+        session: result.session,
+        status: "ready",
+      });
+      return result;
+    } catch {
+      set({ errorCode: "sign_in_failed", operationStatus: "idle", session: null, status: "ready" });
+      return { errorCode: "sign_in_failed", session: null };
+    }
+  },
+  signInWithEmailLink: async (input) => {
+    set({ errorCode: null, operationStatus: "loading" });
+    try {
+      const { sessionService } = await import("./sessionService");
+      const result = await sessionService.signInWithEmailLink(input);
       set({
         errorCode: null,
         operationStatus: "idle",

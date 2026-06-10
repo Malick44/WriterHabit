@@ -1,4 +1,4 @@
-import type { AuthSignInInput, AuthSignUpInput } from "@/core/auth/authTypes";
+import type { AuthLoginLinkInput, AuthSignInInput, AuthSignUpInput } from "@/core/auth/authTypes";
 
 async function getSessionService() {
   const { sessionService } = await import("@/core/auth/sessionService");
@@ -12,6 +12,10 @@ export const authApi = {
 
   async signInWithEmail(input: AuthSignInInput) {
     return getSessionService().then((sessionService) => sessionService.signInWithEmail(input));
+  },
+
+  async signInWithEmailLink(input: AuthLoginLinkInput) {
+    return getSessionService().then((sessionService) => sessionService.signInWithEmailLink(input));
   },
 
   async signUpWithEmail(input: AuthSignUpInput) {

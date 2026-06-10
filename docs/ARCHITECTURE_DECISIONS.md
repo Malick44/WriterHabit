@@ -226,7 +226,7 @@ Consequences:
 
 Status: accepted
 
-The mobile auth/session foundation lives in core auth and uses the public Supabase mobile client for email/password sign-in, sign-up, session restore, auth-state subscriptions, onboarding completion metadata, and sign-out.
+The mobile auth/session foundation lives in core auth and uses the public Supabase mobile client for email login-link sign-in, email/password sign-up, session restore, auth-state subscriptions, onboarding completion metadata, and sign-out.
 
 Current evidence:
 
@@ -242,7 +242,7 @@ Consequences:
 - Mobile code may use only `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the compatibility fallback `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 - Service-role keys and admin credentials must not appear in app code, docs, screenshots, `.codex` files, committed files, or CI logs.
 - Route files remain thin; auth UI and validation live under `apps/mobile/src/features/auth/`.
-- Demo sessions remain available through `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` and the development-only demo-user panel on sign-in, but use `source: "mock"` and skip Supabase auth subscriptions.
+- Demo sessions remain available through `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` and the development-only demo-user panel on auth and signed-in screens, but use `source: "mock"` and skip Supabase auth subscriptions.
 - `apps/mobile/src/shared/state/session.ts` is only a compatibility wrapper over `apps/mobile/src/core/auth/useAuthSession.ts`.
 
 ## ADR-014: Student Onboarding Progress Is Feature-Owned And Locally Recoverable
@@ -320,6 +320,7 @@ Consequences:
 - History tabs are derived from status rather than hardcoded screen filters.
 - Students can start typed writing or canvas planning from details, then return to a guarded submission checklist.
 - Submission is allowed only when the assignment has student-created typed or canvas work.
+- Assignment bookmarking is deferred until a backend-backed saved-assignment model, filtered saved list, offline behavior, and RLS policy are designed together. The current release should not show a nonfunctional bookmark affordance.
 - The feature currently uses deterministic mock data. Backend persistence and real assignment submission APIs remain future work.
 - Assignment UI must continue to guide planning, drafting, revision, and submission without offering AI-completed work.
 

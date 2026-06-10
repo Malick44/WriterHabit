@@ -2,7 +2,7 @@
 
 This document tracks generated production-candidate visual assets for WriteWise AI.
 
-Current status: no generated app assets have been produced yet.
+Current status: generated app assets, an auth login illustration, and auth screenshot concept assets exist.
 
 ## Canonical Paths
 
@@ -29,6 +29,8 @@ Current status: no generated app assets have been produced yet.
 | Canvas/template thumbnails | `apps/mobile/assets/generated/canvas-templates/` | Not started |
 | Paywall visuals | `apps/mobile/assets/generated/paywall/` | Not started |
 | Store screenshot support | `apps/mobile/assets/generated/store/` | Not started |
+| Auth illustrations | `apps/mobile/assets/generated/auth/` | Partially complete (sign-in-coach-hero.png) |
+| Auth screenshot design concepts | `apps/mobile/assets/generated/auth-screenshots/futuristic/` | Complete for Launch, Welcome, Sign In, Sign Up, and Not Found |
 
 ## Review Checklist
 

@@ -1,4 +1,4 @@
-import { signInInputSchema, signUpFormSchema, toSignUpInput } from "./types";
+import { loginLinkInputSchema, signInInputSchema, signUpFormSchema, toSignUpInput } from "./types";
 
 describe("auth form schemas", () => {
   it("trims and accepts valid sign-in input", () => {
@@ -10,6 +10,16 @@ describe("auth form schemas", () => {
     ).toEqual({
       email: "student@example.test",
       password: "password",
+    });
+  });
+
+  it("trims and accepts valid login-link input", () => {
+    expect(
+      loginLinkInputSchema.parse({
+        email: " student@example.test ",
+      }),
+    ).toEqual({
+      email: "student@example.test",
     });
   });
 

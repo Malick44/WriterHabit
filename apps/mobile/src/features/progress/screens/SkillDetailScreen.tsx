@@ -1,14 +1,15 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
 import { colors, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState } from "@/shared/components/feedback";
 import { ProgressBar } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
   getAccessibleColors,
@@ -31,19 +32,30 @@ export function SkillDetailScreen() {
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const title =
-    state.status === "success"
-      ? t("progress.skillDetail.titleWithSkill", { skill: t(state.skill.labelKey) })
-      : t("progress.skillDetail.title");
+  const headerTitleKey: TranslationKey =
+    state.status === "success" ? "progress.skillDetail.titleWithSkill" : "progress.skillDetail.title";
+  const headerTitleParams = state.status === "success" ? { skill: t(state.skill.labelKey) } : undefined;
 
   return (
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("progress.skillDetail.subtitle")}
       testID="progress-skill-detail-screen"
-      title={title}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="progress.skillDetail.subtitle"
+        titleKey={headerTitleKey}
+        titleParams={headerTitleParams}
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("progress.skillDetail.loading.accessibility")}
@@ -216,3 +228,12 @@ export function SkillDetailScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

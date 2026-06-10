@@ -44,6 +44,7 @@ Current primary setup path skips the writing confidence screen and stores the de
 | Progress badges | `apps/mobile/app/(student)/progress/badges.tsx` | progress |
 | Weekly progress review | `apps/mobile/app/(student)/progress/weekly-review.tsx` | progress |
 | Student profile | `apps/mobile/app/(student)/profile.tsx` | profile-settings |
+| App settings | `apps/mobile/app/(student)/settings.tsx` | profile-settings |
 
 ## Canvas
 

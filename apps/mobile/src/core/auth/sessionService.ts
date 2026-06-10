@@ -1,5 +1,6 @@
 import type { Session as SupabaseSession, User as SupabaseUser } from "@supabase/supabase-js";
 import type { GradeLevel } from "@writewise/shared";
+import * as Linking from "expo-linking";
 import { z } from "zod";
 
 import { supabase } from "@/core/supabase/supabaseClient";
@@ -7,6 +8,7 @@ import { translate } from "@/i18n";
 
 import type {
   AuthActionResult,
+  AuthLoginLinkInput,
   AuthOnboardingCompletionInput,
   AuthSession,
   AuthSignInInput,
@@ -25,6 +27,22 @@ const userMetadataSchema = z.object({
   grade_level: z.coerce.number().int().min(1).max(12).optional(),
   subscription_status: subscriptionSchema.catch("free"),
 });
+
+function getAuthRedirectUrl(): string {
+  return Linking.createURL("/");
+}
+
+function getAuthCallbackParams(url: string): URLSearchParams {
+  const parsedUrl = new URL(url);
+  const params = new URLSearchParams(parsedUrl.search);
+  const hashParams = new URLSearchParams(parsedUrl.hash.startsWith("#") ? parsedUrl.hash.slice(1) : parsedUrl.hash);
+
+  hashParams.forEach((value, key) => {
+    params.set(key, value);
+  });
+
+  return params;
+}
 
 function getDisplayName(user: SupabaseUser, metadata: z.infer<typeof userMetadataSchema>): string {
   return metadata.display_name ?? metadata.full_name ?? user.email ?? translate("en", "common.fallbackUserName");
@@ -83,6 +101,64 @@ export const sessionService = {
     return {
       session: mapSupabaseSession(data.session),
     };
+  },
+
+  async signInWithEmailLink(input: AuthLoginLinkInput): Promise<AuthActionResult> {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: input.email.trim(),
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+        shouldCreateUser: false,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      session: null,
+      requiresEmailConfirmation: true,
+    };
+  },
+
+  async recoverSessionFromUrl(url: string): Promise<AuthSession | null> {
+    const params = getAuthCallbackParams(url);
+    const errorCode = params.get("error_code") ?? params.get("error");
+    const errorDescription = params.get("error_description");
+
+    if (errorCode) {
+      throw new Error(errorDescription ?? errorCode);
+    }
+
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const code = params.get("code");
+
+    if (accessToken && refreshToken) {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return mapSupabaseSession(data.session);
+    }
+
+    if (code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        throw error;
+      }
+
+      return mapSupabaseSession(data.session);
+    }
+
+    return null;
   },
 
   async signUpWithEmail(input: AuthSignUpInput): Promise<AuthActionResult> {

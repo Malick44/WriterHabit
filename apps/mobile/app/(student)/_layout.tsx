@@ -86,7 +86,7 @@ export default function StudentLayout() {
             tabBarAccessibilityLabel: t("navigation.tabs.student.profileAccessibility"),
           }}
         />
-        <Tabs.Screen name="assignments/[assignmentId]" options={{ href: null }} />
+        <Tabs.Screen name="assignments/[assignmentId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
         <Tabs.Screen name="assignments/submit" options={{ href: null }} />
         <Tabs.Screen name="canvas/[canvasId]" options={{ href: null }} />
         <Tabs.Screen name="canvas/templates" options={{ href: null }} />
@@ -98,6 +98,7 @@ export default function StudentLayout() {
         <Tabs.Screen name="review/[submissionId]/revision" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/rubric" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/summary" options={{ href: null }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="write/[assignmentId]" options={{ href: null }} />
       </Tabs>
     </RouteGate>

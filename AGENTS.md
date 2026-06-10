@@ -182,6 +182,7 @@ Mobile app commands from `apps/mobile/`:
 
 ```bash
 npm start
+npm run dev-client
 npm run ios
 npm run android
 npm run typecheck

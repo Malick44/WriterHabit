@@ -56,6 +56,7 @@ apps/mobile/app/
     progress/skills/[skillId].tsx
     progress/weekly-review.tsx
     profile.tsx
+    settings.tsx
     review/[submissionId]/index.tsx
     review/[submissionId]/summary.tsx
     review/[submissionId]/rubric.tsx
@@ -140,11 +141,11 @@ parent
 teacher
 ```
 
-In development builds, the sign-in screen also exposes a developer demo-user
-panel backed by `apps/mobile/src/core/auth/demoUsers.ts`. Selecting a demo user
-creates the same local `source: "mock"` session shape used by the env fallback,
-then normal route guards send the account to onboarding, student, parent, or
-teacher areas.
+In development builds, demo-user switching is available from the floating
+development panel backed by `apps/mobile/src/core/auth/demoUsers.ts`, including
+while signed out on auth screens. Tapping a demo user creates the same local
+`source: "mock"` session shape used by the env fallback, then normal route
+guards send the account to onboarding, student, parent, or teacher areas.
 
 The same panel also exposes onboarding screen previews backed by
 `apps/mobile/src/features/onboarding/services/onboardingPreviewService.ts`.
@@ -153,9 +154,9 @@ progress required for the selected step, and route directly to role selection,
 grade selection, writing goals, writing confidence, daily practice, or plan
 summary.
 
-Completed sessions also expose a development-only floating `Dev` button on
-student, parent, and teacher home screens. The button opens the same demo panel
-without sending the user back to the sign-in screen.
+Development builds expose a floating `Dev` button on auth, student, parent, and
+teacher screens. The button opens the demo panel without sending the user back
+to the sign-in screen.
 
 This is public demo state only. Demo sessions use `source: "mock"` and skip Supabase auth subscriptions so a persisted Supabase event does not override the selected demo user. Do not put service-role Supabase keys or other secrets in Expo public env vars, app code, docs, or `.codex` files.
 
@@ -284,7 +285,7 @@ Auth routes currently include:
 /(auth)/sign-up
 ```
 
-`/(auth)/welcome` offers Supabase sign-in/sign-up entry points and local demo role shortcuts. `/(auth)/sign-in` and `/(auth)/sign-up` submit through `apps/mobile/src/core/auth/authStore.ts`, which delegates real email/password operations to `apps/mobile/src/core/auth/sessionService.ts`.
+`/(auth)/welcome` offers Supabase sign-in/sign-up entry points and local demo role shortcuts. `/(auth)/sign-in` sends Supabase email login links and recovers sessions from auth deep-link callbacks through `apps/mobile/src/core/auth/sessionService.ts`. `/(auth)/sign-up` still submits email/password account creation through `apps/mobile/src/core/auth/authStore.ts`.
 
 `/paywall` exports `PaywallRouteScreen` from `apps/mobile/src/features/subscriptions/screens/PaywallRouteScreen.tsx`. The screen renders loading, empty, error, free, past-due, and active Plus states from the local subscription entitlement hook. Inline premium gates can send users to this route without blocking free writing flows.
 

@@ -214,6 +214,7 @@ export interface ProgressWeeklyReviewViewModel {
 export interface ProgressDashboardViewModel {
   badgePreview: ProgressBadgeViewModel[];
   badges: ProgressBadgeViewModel[];
+  dailyActivity: ProgressDailyActivity[];
   gradeAdaptation: ProgressGradeAdaptation;
   gradeLevel: GradeLevel;
   isEmpty: boolean;

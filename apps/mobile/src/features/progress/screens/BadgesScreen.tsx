@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { ErrorState, LoadingState } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
   getAccessibleColors,
@@ -30,10 +31,21 @@ export function BadgesScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("progress.badges.subtitle")}
       testID="progress-badges-screen"
-      title={t("progress.badges.title")}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="progress.badges.subtitle"
+        titleKey="progress.badges.title"
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("progress.badges.loading.accessibility")}
@@ -103,3 +115,12 @@ export function BadgesScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

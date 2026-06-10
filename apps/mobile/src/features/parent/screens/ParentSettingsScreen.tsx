@@ -1,4 +1,4 @@
-import { Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import { colors, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
@@ -6,6 +6,7 @@ import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
 import { CheckboxRow, ChoiceCard } from "@/shared/components/forms";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
   getAccessibleColors,
@@ -26,10 +27,17 @@ export function ParentSettingsScreen() {
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={t("parent.settings.subtitle")}
       testID="parent-settings-screen"
-      title={t("parent.settings.title")}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey="parent.settings.subtitle"
+        titleKey="parent.settings.title"
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("parent.loading.settingsAccessibility")}
@@ -229,3 +237,12 @@ export function ParentSettingsScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

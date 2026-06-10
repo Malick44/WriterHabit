@@ -416,10 +416,7 @@ describe("critical product logic", () => {
       clientVersion: 2,
       syncStatus: "local_only",
     });
-    expect(withStroke.strokes[0]?.points[1]).toMatchObject({
-      x: 1,
-      y: 0,
-    });
+    expect(withStroke.strokes[0]?.points).toEqual([{ pressure: 0.5, x: 1, y: 0 }]);
     expect(normalized.strokes).toHaveLength(MAX_CANVAS_STROKES);
     expect(normalized.strokes[0]?.points).toHaveLength(MAX_CANVAS_POINTS_PER_STROKE);
   });

@@ -1443,9 +1443,9 @@ export const en = {
     },
     surface: {
       accessibility: "Canvas drawing surface",
-      hint: "Tap anywhere on the page to add a mark with the selected tool.",
-      emptyHint: "Tap the page to add your first mark.",
-      drawPrompt: "Tap and drag to write or draw",
+      hint: "Touch and drag anywhere on the page to write or draw with the selected tool.",
+      emptyHint: "Touch and drag on the page to start writing or drawing.",
+      drawPrompt: "Touch and drag to write or draw",
     },
     workspace: {
       subtitle: "Use this page for planning, handwriting, annotation, and revision notes.",

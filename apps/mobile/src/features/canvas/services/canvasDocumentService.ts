@@ -160,6 +160,23 @@ export function createCanvasDocument(input: {
   });
 }
 
+/**
+ * Minimum normalized distance between sampled stroke points. Keeps slow drags
+ * from burning the 16-point budget on near-duplicate samples.
+ */
+export const MIN_STROKE_POINT_DISTANCE = 0.005;
+
+/**
+ * Maximum normalized distance at which the eraser removes a stroke. Beyond
+ * this, an erase gesture is a no-op instead of deleting far-away work.
+ */
+export const CANVAS_ERASE_DISTANCE = 0.08;
+
+export type AppendStrokePointResult =
+  | { document: CanvasDocument; status: "appended" }
+  | { status: "skipped" }
+  | { status: "stroke_full" };
+
 export function createCanvasStroke(input: {
   color: string;
   point: CanvasPoint;
@@ -167,22 +184,60 @@ export function createCanvasStroke(input: {
   width: number;
   timestamp?: string;
 }): CanvasStroke {
-  const point = clampPoint(input.point);
   const timestamp = input.timestamp ?? new Date().toISOString();
-  const offset = Math.min(0.018, input.width / 400);
 
   return {
     color: input.tool === "eraser" ? "#FFFFFF" : input.color,
     createdAt: timestamp,
     id: createStrokeId(),
     opacity: input.tool === "highlighter" ? 0.42 : 1,
-    points: [
-      { x: Math.max(0, point.x - offset), y: point.y, pressure: point.pressure },
-      point,
-      { x: Math.min(1, point.x + offset), y: Math.min(1, point.y + offset), pressure: point.pressure },
-    ],
+    points: [clampPoint(input.point)],
     tool: input.tool,
     width: input.tool === "highlighter" ? Math.max(input.width, 10) : input.width,
+  };
+}
+
+/**
+ * Appends a sampled drag point to an in-progress stroke. Builds the next
+ * document directly (without a full schema re-parse) because this runs on
+ * every sampled gesture point; bounds are enforced explicitly here and the
+ * document is still validated at the persistence boundary. Untouched stroke
+ * objects keep their identity so memoized stroke views do not re-render.
+ */
+export function appendPointToCanvasStroke(
+  document: CanvasDocument,
+  strokeId: string,
+  point: CanvasPoint,
+  minDistance = MIN_STROKE_POINT_DISTANCE,
+): AppendStrokePointResult {
+  const stroke = document.strokes.find((candidate) => candidate.id === strokeId);
+
+  if (!stroke) {
+    return { status: "skipped" };
+  }
+
+  if (stroke.points.length >= MAX_CANVAS_POINTS_PER_STROKE) {
+    return { status: "stroke_full" };
+  }
+
+  const nextPoint = clampPoint(point);
+  const lastPoint = stroke.points.at(-1);
+
+  if (lastPoint && Math.hypot(nextPoint.x - lastPoint.x, nextPoint.y - lastPoint.y) < minDistance) {
+    return { status: "skipped" };
+  }
+
+  const nextStroke: CanvasStroke = { ...stroke, points: [...stroke.points, nextPoint] };
+
+  return {
+    document: {
+      ...document,
+      clientVersion: getNextClientVersion(document),
+      strokes: document.strokes.map((candidate) => (candidate.id === strokeId ? nextStroke : candidate)),
+      syncStatus: "local_only",
+      updatedAt: new Date().toISOString(),
+    },
+    status: "appended",
   };
 }
 
@@ -196,29 +251,33 @@ export function addCanvasStroke(document: CanvasDocument, stroke: CanvasStroke):
   });
 }
 
-export function eraseNearestStroke(document: CanvasDocument, point: CanvasPoint): CanvasDocument {
+export function eraseNearestStroke(
+  document: CanvasDocument,
+  point: CanvasPoint,
+  maxDistance = CANVAS_ERASE_DISTANCE,
+): CanvasDocument {
   if (document.strokes.length === 0) {
     return document;
   }
 
   const target = clampPoint(point);
-  let nearestIndex = document.strokes.length - 1;
+  let nearestIndex = -1;
   let nearestDistance = Number.POSITIVE_INFINITY;
 
   document.strokes.forEach((stroke, index) => {
-    const firstPoint = stroke.points[0];
+    for (const strokePoint of stroke.points) {
+      const distance = Math.hypot(strokePoint.x - target.x, strokePoint.y - target.y);
 
-    if (!firstPoint) {
-      return;
-    }
-
-    const distance = Math.hypot(firstPoint.x - target.x, firstPoint.y - target.y);
-
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestIndex = index;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
     }
   });
+
+  if (nearestIndex === -1 || nearestDistance > maxDistance) {
+    return document;
+  }
 
   return normalizeCanvasDocument({
     ...document,

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Pressable, Text, View, type GestureResponderEvent } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Text, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
@@ -10,12 +11,18 @@ import {
 } from "@/shared/utils/accessibility";
 
 import type { CanvasDocument, CanvasGradeAdaptation, CanvasPoint, CanvasTemplate } from "../types";
+import { CanvasStrokePath } from "./CanvasStrokePath";
+
+/** Minimum drag distance in pixels before another point is sampled. */
+const MIN_SAMPLE_DISTANCE_PX = 3;
 
 interface StrokeCanvasAdapterProps {
   document: CanvasDocument;
   gradeAdaptation: CanvasGradeAdaptation;
   gradeBand: GradeBand;
-  onAddPoint: (point: CanvasPoint) => void;
+  onBeginStroke: (point: CanvasPoint) => void;
+  onEndStroke: () => void;
+  onExtendStroke: (point: CanvasPoint) => void;
 }
 
 function TemplateGuides({ template }: { template: CanvasTemplate }) {
@@ -142,20 +149,73 @@ export function StrokeCanvasAdapter({
   document,
   gradeAdaptation,
   gradeBand,
-  onAddPoint,
+  onBeginStroke,
+  onEndStroke,
+  onExtendStroke,
 }: StrokeCanvasAdapterProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
-  const [layout, setLayout] = useState({ height: gradeAdaptation.surfaceMinHeight, width: 1 });
+  const [layout, setLayout] = useState({ height: gradeAdaptation.surfaceMinHeight, width: 0 });
+  const layoutRef = useRef(layout);
+  const lastSampleRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handlePress = (event: GestureResponderEvent) => {
-    onAddPoint({
-      x: event.nativeEvent.locationX / Math.max(1, layout.width),
-      y: event.nativeEvent.locationY / Math.max(1, layout.height),
-    });
-  };
+  const handleSurfaceLayout = useCallback((nextLayout: { height: number; width: number }) => {
+    layoutRef.current = nextLayout;
+    setLayout(nextLayout);
+  }, []);
+
+  const toNormalizedPoint = useCallback((x: number, y: number): CanvasPoint => {
+    const { height, width } = layoutRef.current;
+
+    return {
+      x: x / Math.max(1, width),
+      y: y / Math.max(1, height),
+    };
+  }, []);
+
+  const handleDrawBegin = useCallback(
+    (x: number, y: number) => {
+      lastSampleRef.current = { x, y };
+      onBeginStroke(toNormalizedPoint(x, y));
+    },
+    [onBeginStroke, toNormalizedPoint],
+  );
+
+  const handleDrawUpdate = useCallback(
+    (x: number, y: number) => {
+      const lastSample = lastSampleRef.current;
+
+      if (lastSample && Math.hypot(x - lastSample.x, y - lastSample.y) < MIN_SAMPLE_DISTANCE_PX) {
+        return;
+      }
+
+      lastSampleRef.current = { x, y };
+      onExtendStroke(toNormalizedPoint(x, y));
+    },
+    [onExtendStroke, toNormalizedPoint],
+  );
+
+  const handleDrawEnd = useCallback(() => {
+    lastSampleRef.current = null;
+    onEndStroke();
+  }, [onEndStroke]);
+
+  /* eslint-disable react-hooks/refs -- the gesture builder only registers
+     these callbacks for touch events; they are never invoked during render */
+  const drawGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .minDistance(0)
+        .maxPointers(1)
+        .runOnJS(true)
+        .onBegin((event) => handleDrawBegin(event.x, event.y))
+        .onUpdate((event) => handleDrawUpdate(event.x, event.y))
+        .onFinalize(handleDrawEnd),
+    [handleDrawBegin, handleDrawEnd, handleDrawUpdate],
+  );
+  /* eslint-enable react-hooks/refs */
 
   return (
     <View
@@ -172,21 +232,23 @@ export function StrokeCanvasAdapter({
         ...shadows.card,
       }}
     >
-      <Pressable
-        accessibilityHint={t("canvas.surface.hint")}
-        accessibilityRole="button"
-        onLayout={(event) => {
-          setLayout({
-            height: event.nativeEvent.layout.height,
-            width: event.nativeEvent.layout.width,
-          });
-        }}
-        onPress={handlePress}
-        style={{
-          minHeight: gradeAdaptation.surfaceMinHeight,
-          padding: spacing.lg,
-        }}
-      >
+      <GestureDetector gesture={drawGesture}>
+        <View
+          accessibilityHint={t("canvas.surface.hint")}
+          accessibilityLabel={t("canvas.surface.accessibility")}
+          accessibilityRole="image"
+          accessible
+          onLayout={(event) => {
+            handleSurfaceLayout({
+              height: event.nativeEvent.layout.height,
+              width: event.nativeEvent.layout.width,
+            });
+          }}
+          style={{
+            minHeight: gradeAdaptation.surfaceMinHeight,
+            padding: spacing.lg,
+          }}
+        >
         <TemplateGuides template={document.template} />
 
         {document.strokes.length === 0 ? (
@@ -211,43 +273,36 @@ export function StrokeCanvasAdapter({
           </View>
         ) : null}
 
-        {document.strokes.map((stroke) =>
-          stroke.points.map((point, index) => (
-            <View
-              key={`${stroke.id}-${index}`}
-              pointerEvents="none"
-              style={{
-                backgroundColor: stroke.color,
-                borderRadius: radius.full,
-                height: stroke.width,
-                left: `${point.x * 100}%`,
-                opacity: stroke.opacity ?? 1,
-                position: "absolute",
-                top: `${point.y * 100}%`,
-                width: stroke.width,
-              }}
-            />
-          )),
-        )}
+          {layout.width > 0
+            ? document.strokes.map((stroke) => (
+                <CanvasStrokePath
+                  key={stroke.id}
+                  stroke={stroke}
+                  surfaceHeight={layout.height}
+                  surfaceWidth={layout.width}
+                />
+              ))
+            : null}
 
-        <View
-          pointerEvents="none"
-          style={{ alignItems: "center", bottom: spacing.md, left: spacing.lg, position: "absolute", right: spacing.lg }}
-        >
           <View
-            style={{
-              backgroundColor: colors.background.subtle,
-              borderRadius: radius.full,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.xs,
-            }}
+            pointerEvents="none"
+            style={{ alignItems: "center", bottom: spacing.md, left: spacing.lg, position: "absolute", right: spacing.lg }}
           >
-            <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
-              {t("canvas.surface.drawPrompt")}
-            </Text>
+            <View
+              style={{
+                backgroundColor: colors.background.subtle,
+                borderRadius: radius.full,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.xs,
+              }}
+            >
+              <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
+                {t("canvas.surface.drawPrompt")}
+              </Text>
+            </View>
           </View>
         </View>
-      </Pressable>
+      </GestureDetector>
     </View>
   );
 }

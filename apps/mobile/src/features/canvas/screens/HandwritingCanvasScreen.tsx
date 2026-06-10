@@ -160,7 +160,9 @@ export function HandwritingCanvasScreen() {
               document={state.viewModel.document}
               gradeAdaptation={state.viewModel.gradeAdaptation}
               gradeBand={state.gradeBand}
-              onAddPoint={state.addPoint}
+              onBeginStroke={state.beginStroke}
+              onEndStroke={state.endStroke}
+              onExtendStroke={state.extendStroke}
             />
           </PageSection>
 

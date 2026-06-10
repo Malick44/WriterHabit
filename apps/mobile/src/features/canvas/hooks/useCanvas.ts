@@ -7,6 +7,7 @@ import { typography, type GradeBand } from "@/design/tokens";
 import { canvasApi } from "../api/canvasApi";
 import {
   addCanvasStroke,
+  appendPointToCanvasStroke,
   createCanvasStroke,
   eraseNearestStroke,
   getCanvasGradeAdaptation,
@@ -18,11 +19,13 @@ import {
   createCanvasAutosaveScheduler,
   type CanvasAutosaveScheduler,
 } from "../services/canvasSyncService";
-import type {
-  CanvasDocument,
-  CanvasHomeViewModel,
-  CanvasPoint,
-  CanvasWorkspaceViewModel,
+import {
+  MAX_CANVAS_STROKES,
+  type CanvasDocument,
+  type CanvasHomeViewModel,
+  type CanvasPoint,
+  type CanvasTool,
+  type CanvasWorkspaceViewModel,
 } from "../types";
 import { useCanvasToolStore } from "../stores/canvasToolStore";
 
@@ -39,6 +42,9 @@ export type CanvasWorkspaceDataState =
   | {
       addPoint: (point: CanvasPoint) => void;
       attach: (assignmentId: string) => Promise<boolean>;
+      beginStroke: (point: CanvasPoint) => void;
+      endStroke: () => void;
+      extendStroke: (point: CanvasPoint) => void;
       gradeBand: GradeBand;
       isRefreshing: boolean;
       redo: () => void;
@@ -158,6 +164,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
   const latestDocumentRef = useRef<CanvasDocument | null>(null);
   const autosaveSchedulerRef = useRef<CanvasAutosaveScheduler | null>(null);
   const saveDocumentRef = useRef<(nextDocument?: CanvasDocument) => Promise<boolean>>(async () => false);
+  const activeStrokeRef = useRef<{ strokeId: string | null; tool: CanvasTool } | null>(null);
   const query = useQuery({
     enabled: Boolean(session && canvasId),
     queryFn: () => canvasApi.getCanvas({ canvasId: canvasId ?? "", gradeLevel, studentId }),
@@ -245,7 +252,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     [queueAutosave],
   );
 
-  const addPoint = useCallback(
+  const beginStroke = useCallback(
     (point: CanvasPoint) => {
       const currentDocument = latestDocumentRef.current;
 
@@ -253,23 +260,87 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
         return;
       }
 
+      // One undo snapshot per gesture, not per sampled point.
       undoHistoryRef.current = pushUndoSnapshot(undoHistoryRef.current, currentDocument.strokes);
       redoHistoryRef.current = [];
-
-      const stroke = createCanvasStroke({
-        color: useCanvasToolStore.getState().color,
-        point,
-        tool: useCanvasToolStore.getState().selectedTool,
-        width: useCanvasToolStore.getState().width,
-      });
-      const nextDocument =
-        stroke.tool === "eraser" ? eraseNearestStroke(currentDocument, point) : addCanvasStroke(currentDocument, stroke);
-
       setUndoCount(undoHistoryRef.current.length);
       setRedoCount(0);
-      setNextDocument(nextDocument);
+
+      const { color, selectedTool, width } = useCanvasToolStore.getState();
+
+      if (selectedTool === "eraser") {
+        activeStrokeRef.current = { strokeId: null, tool: selectedTool };
+        setNextDocument(eraseNearestStroke(currentDocument, point));
+        return;
+      }
+
+      const stroke = createCanvasStroke({ color, point, tool: selectedTool, width });
+
+      activeStrokeRef.current = { strokeId: stroke.id, tool: selectedTool };
+      setNextDocument(addCanvasStroke(currentDocument, stroke));
     },
     [setNextDocument],
+  );
+
+  const extendStroke = useCallback(
+    (point: CanvasPoint) => {
+      const currentDocument = latestDocumentRef.current;
+      const activeStroke = activeStrokeRef.current;
+
+      if (!currentDocument || !activeStroke) {
+        return;
+      }
+
+      if (activeStroke.tool === "eraser") {
+        const nextDocument = eraseNearestStroke(currentDocument, point);
+
+        if (nextDocument !== currentDocument) {
+          setNextDocument(nextDocument);
+        }
+
+        return;
+      }
+
+      if (!activeStroke.strokeId) {
+        return;
+      }
+
+      const result = appendPointToCanvasStroke(currentDocument, activeStroke.strokeId, point);
+
+      if (result.status === "appended") {
+        setNextDocument(result.document);
+        return;
+      }
+
+      if (result.status === "stroke_full") {
+        // Chain a continuation stroke so long handwriting keeps its fidelity
+        // while every stroke stays within the bounded point budget. Stop at
+        // the document stroke cap instead of silently dropping older work.
+        if (currentDocument.strokes.length >= MAX_CANVAS_STROKES) {
+          activeStrokeRef.current = null;
+          return;
+        }
+
+        const { color, width } = useCanvasToolStore.getState();
+        const continuationStroke = createCanvasStroke({ color, point, tool: activeStroke.tool, width });
+
+        activeStrokeRef.current = { strokeId: continuationStroke.id, tool: activeStroke.tool };
+        setNextDocument(addCanvasStroke(currentDocument, continuationStroke));
+      }
+    },
+    [setNextDocument],
+  );
+
+  const endStroke = useCallback(() => {
+    activeStrokeRef.current = null;
+  }, []);
+
+  const addPoint = useCallback(
+    (point: CanvasPoint) => {
+      beginStroke(point);
+      endStroke();
+    },
+    [beginStroke, endStroke],
   );
 
   const undo = useCallback(() => {
@@ -381,6 +452,9 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
   return {
     addPoint,
     attach,
+    beginStroke,
+    endStroke,
+    extendStroke,
     gradeBand: viewModel.gradeAdaptation.band,
     isRefreshing: query.isFetching,
     redo,

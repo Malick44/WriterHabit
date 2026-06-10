@@ -65,9 +65,26 @@ interface Stroke {
 }
 ```
 
-The adapter renders template guides and compact stroke dots in React Native. It
-does not create base64 previews or hold exported image buffers in JS memory.
-Preview images are a future file-system/object-storage feature.
+The adapter captures continuous drawing with a `react-native-gesture-handler`
+pan gesture (begin → sampled extend → end) and renders template guides plus
+strokes as connected line segments between sampled points
+(`CanvasStrokePath`). It does not create base64 previews or hold exported
+image buffers in JS memory. Preview images are a future
+file-system/object-storage feature.
+
+Input sampling and bounds:
+
+- Drag points are sampled at a minimum pixel distance in the adapter and a
+  minimum normalized distance (`MIN_STROKE_POINT_DISTANCE`) in
+  `canvasDocumentService.appendPointToCanvasStroke`.
+- A stroke holds at most `MAX_CANVAS_POINTS_PER_STROKE` points; longer drags
+  chain continuation strokes until `MAX_CANVAS_STROKES` is reached, then stop
+  instead of dropping older work.
+- One undo snapshot is recorded per gesture, not per sampled point, and the
+  undo stack stays bounded by `MAX_CANVAS_UNDO_STEPS`.
+- The eraser removes the nearest stroke only within `CANVAS_ERASE_DISTANCE`
+  of the touch; erase gestures far from any stroke are no-ops.
+- A single tap produces a one-point stroke rendered as a dot.
 
 ## Autosave
 

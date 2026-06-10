@@ -45,6 +45,10 @@ Current primary setup path skips the writing confidence screen and stores the de
 | Weekly progress review | `apps/mobile/app/(student)/progress/weekly-review.tsx` | progress |
 | Student profile | `apps/mobile/app/(student)/profile.tsx` | profile-settings |
 | App settings | `apps/mobile/app/(student)/settings.tsx` | profile-settings |
+| Edit profile settings | `apps/mobile/app/(student)/edit-profile.tsx` | profile-settings |
+| Writing goals settings | `apps/mobile/app/(student)/writing-goals.tsx` | profile-settings |
+| Notification settings | `apps/mobile/app/(student)/notification-settings.tsx` | profile-settings |
+| Language settings | `apps/mobile/app/(student)/language-settings.tsx` | profile-settings |
 
 ## Canvas
 

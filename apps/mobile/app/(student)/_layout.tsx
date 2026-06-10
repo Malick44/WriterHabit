@@ -93,6 +93,10 @@ export default function StudentLayout() {
         <Tabs.Screen name="progress/badges" options={{ href: null }} />
         <Tabs.Screen name="progress/skills/[skillId]" options={{ href: null }} />
         <Tabs.Screen name="progress/weekly-review" options={{ href: null }} />
+        <Tabs.Screen name="edit-profile" options={{ href: null }} />
+        <Tabs.Screen name="writing-goals" options={{ href: null }} />
+        <Tabs.Screen name="notification-settings" options={{ href: null }} />
+        <Tabs.Screen name="language-settings" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/complete" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/index" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/revision" options={{ href: null }} />

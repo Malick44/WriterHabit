@@ -2624,6 +2624,144 @@ export const en = {
     appSettingsPlaceholderDescription: "App settings implementation goes here.",
     accessibilityTitle: "Accessibility",
     accessibilityDescription: "Adjust reading, motion, speech, and interface preferences.",
+    loadingTitle: "Loading settings",
+    loadingDescription: "Checking saved profile choices on this device.",
+    loadErrorTitle: "Settings did not load",
+    loadErrorDescription: "Saved profile choices could not be opened. Try again.",
+    saveErrorTitle: "Settings were not saved",
+    saveErrorDescription: "Try saving again before leaving this screen.",
+    editProfile: {
+      fields: {
+        displayName: {
+          error: "Add a display name.",
+          hint: "This is how your name appears in WriteWise.",
+          label: "Display name",
+          placeholder: "Student name",
+        },
+        email: {
+          hint: "Email changes are handled by account settings.",
+          label: "Email",
+        },
+        focus: {
+          hint: "Optional note for your writing practice.",
+          label: "Learning focus",
+          placeholder: "Example: stronger paragraph endings",
+        },
+        grade: {
+          error: "Enter a grade from 1 to 12.",
+          hint: "Use a number from 1 to 12.",
+          label: "Grade",
+        },
+      },
+      headerBackAccessibility: "Go back from edit profile",
+      save: "Save profile",
+      saveAccessibility: "Save student profile settings",
+      savedDescription: "Profile details are saved on this device.",
+      savedTitle: "Profile saved",
+      subtitle: "Update the student details used across profile and practice screens.",
+      title: "Edit profile",
+    },
+    goals: {
+      dailyPracticeOptions: {
+        fifteen: {
+          description: "A steady writing habit for school weeks.",
+          label: "15 minutes",
+        },
+        five: {
+          description: "Quick practice on busy days.",
+          label: "5 minutes",
+        },
+        ten: {
+          description: "A short focused session.",
+          label: "10 minutes",
+        },
+        thirty: {
+          description: "Longer drafting and revision time.",
+          label: "30 minutes",
+        },
+        twenty: {
+          description: "More room for planning and revising.",
+          label: "20 minutes",
+        },
+      },
+      goalAccessibilityHint: "Toggle this writing goal.",
+      goalOptions: {
+        creative: {
+          description: "Practice voice, ideas, and story details.",
+          label: "Creative writing",
+        },
+        grammar: {
+          description: "Work on sentence accuracy and punctuation.",
+          label: "Grammar",
+        },
+        handwriting: {
+          description: "Use handwriting and canvas practice more often.",
+          label: "Handwriting",
+        },
+        paragraphs: {
+          description: "Build clearer topic sentences and supporting details.",
+          label: "Paragraphs",
+        },
+        spelling: {
+          description: "Practice careful spelling in drafts.",
+          label: "Spelling",
+        },
+      },
+      headerBackAccessibility: "Go back from writing goals",
+      save: "Save goals",
+      saveAccessibility: "Save writing goals",
+      savedDescription: "Writing goals are saved on this device.",
+      savedTitle: "Goals saved",
+      sections: {
+        dailyPractice: "Daily practice",
+        writingGoals: "Writing goals",
+      },
+      subtitle: "Choose the writing skills and practice time this profile should focus on.",
+      title: "Writing goals",
+      validationDescription: "Choose at least one writing goal before saving.",
+      validationTitle: "Choose a goal",
+    },
+    notifications: {
+      deliveryNoticeDescription: "These preferences are saved now and will be used when notification delivery is connected.",
+      deliveryNoticeTitle: "Reminder delivery is prepared",
+      headerBackAccessibility: "Go back from notifications",
+      save: "Save notifications",
+      saveAccessibility: "Save notification preferences",
+      savedDescription: "Notification preferences are saved on this device.",
+      savedTitle: "Notifications saved",
+      subtitle: "Choose which WriteWise reminders should be prepared for this student profile.",
+      title: "Notifications",
+      toggles: {
+        all: "All notifications",
+        dailyAssignment: "Daily assignment reminders",
+        incompleteAssignment: "Unfinished assignment reminders",
+        streak: "Streak reminders",
+        weeklyReport: "Weekly progress report",
+      },
+    },
+    language: {
+      headerBackAccessibility: "Go back from language settings",
+      options: {
+        en: {
+          description: "Use English for this profile.",
+          label: "English",
+        },
+        es: {
+          description: "Save Spanish as this profile's language preference.",
+          label: "Spanish",
+        },
+        fr: {
+          description: "Save French as this profile's language preference.",
+          label: "French",
+        },
+      },
+      save: "Save language",
+      saveAccessibility: "Save language preference",
+      savedDescription: "Language preference is saved on this device.",
+      savedTitle: "Language saved",
+      subtitle: "Choose the language preference for this student profile.",
+      title: "Language",
+    },
     settings: {
       account: {
         linkedAccounts: "Linked Accounts",
@@ -2665,6 +2803,7 @@ export const en = {
     profile: {
       account: {
         editProfile: "Edit Profile",
+        manageGoals: "Manage Goals",
         notifications: "Notifications",
         parentDashboard: "Parent Dashboard",
       },

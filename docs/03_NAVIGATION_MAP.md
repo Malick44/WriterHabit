@@ -57,6 +57,10 @@ apps/mobile/app/
     progress/weekly-review.tsx
     profile.tsx
     settings.tsx
+    edit-profile.tsx
+    writing-goals.tsx
+    notification-settings.tsx
+    language-settings.tsx
     review/[submissionId]/index.tsx
     review/[submissionId]/summary.tsx
     review/[submissionId]/rubric.tsx
@@ -180,6 +184,10 @@ Student detail routes are hidden from the tab bar:
 /(student)/progress/badges
 /(student)/progress/skills/[skillId]
 /(student)/progress/weekly-review
+/(student)/edit-profile
+/(student)/writing-goals
+/(student)/notification-settings
+/(student)/language-settings
 /(student)/review/[submissionId]
 /(student)/review/[submissionId]/summary
 /(student)/review/[submissionId]/rubric

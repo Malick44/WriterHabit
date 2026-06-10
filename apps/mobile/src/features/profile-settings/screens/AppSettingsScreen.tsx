@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
-import { routes } from "@/core/navigation/routeNames";
+import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { AppHeader } from "@/shared/components/navigation";
@@ -33,6 +33,7 @@ type SettingsRowConfig = {
   iconBackground: string;
   iconColor: string;
   labelKey: TranslationKey;
+  route?: AppRoute;
   valueKey?: TranslationKey;
   trailingIcon?: IconName;
 };
@@ -72,6 +73,7 @@ const accountRows: readonly SettingsRowConfig[] = [
     iconBackground: settingsColors.primaryContainer,
     iconColor: settingsColors.onPrimaryContainer,
     labelKey: "profileSettings.settings.account.personalInformation",
+    route: routes.studentEditProfile,
   },
   {
     id: "linked-accounts",
@@ -97,6 +99,7 @@ const preferenceRows: readonly SettingsRowConfig[] = [
     iconBackground: settingsColors.secondaryFixed,
     iconColor: settingsColors.onSecondaryContainer,
     labelKey: "profileSettings.settings.preferences.appLanguage",
+    route: routes.studentLanguageSettings,
     valueKey: "profileSettings.settings.preferences.english",
   },
   {
@@ -388,6 +391,24 @@ export function AppSettingsScreen() {
       type: "info",
     });
   }, [topAlert]);
+  const handleOpenRoute = useCallback(
+    (route: AppRoute) => {
+      router.push(route);
+    },
+    [router],
+  );
+  const getRowPressHandler = useCallback(
+    (row: SettingsRowConfig) => {
+      if (!row.route) {
+        return showUnavailableAlert;
+      }
+
+      const route = row.route;
+
+      return () => handleOpenRoute(route);
+    },
+    [handleOpenRoute, showUnavailableAlert],
+  );
 
   const handleLogOut = useCallback(() => {
     void signOut().then(() => {
@@ -432,7 +453,7 @@ export function AppSettingsScreen() {
                   iconBackground={row.iconBackground}
                   iconColor={row.iconColor}
                   label={t(row.labelKey)}
-                  onPress={showUnavailableAlert}
+                  onPress={getRowPressHandler(row)}
                   value={row.valueKey ? t(row.valueKey) : undefined}
                 />
                 {index < accountRows.length - 1 ? <Divider /> : null}
@@ -470,7 +491,7 @@ export function AppSettingsScreen() {
                   iconBackground={row.iconBackground}
                   iconColor={row.iconColor}
                   label={t(row.labelKey)}
-                  onPress={showUnavailableAlert}
+                  onPress={getRowPressHandler(row)}
                   value={row.valueKey ? t(row.valueKey) : undefined}
                 />
                 {index < preferenceRows.length - 1 ? <Divider /> : null}

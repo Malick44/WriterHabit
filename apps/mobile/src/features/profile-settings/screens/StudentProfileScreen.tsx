@@ -16,7 +16,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
-import { routes } from "@/core/navigation/routeNames";
+import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { layout, radius, shadows, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
@@ -112,16 +112,19 @@ const accountRows = [
   {
     icon: "person-outline",
     labelKey: "profileSettings.profile.account.editProfile",
+    route: routes.studentEditProfile,
   },
   {
-    icon: "people-outline",
-    labelKey: "profileSettings.profile.account.parentDashboard",
+    icon: "flag-outline",
+    labelKey: "profileSettings.profile.account.manageGoals",
+    route: routes.studentWritingGoals,
   },
   {
     icon: "notifications-outline",
     labelKey: "profileSettings.profile.account.notifications",
+    route: routes.studentNotificationSettings,
   },
-] as const satisfies ReadonlyArray<{ icon: IconName; labelKey: TranslationKey }>;
+] as const satisfies ReadonlyArray<{ icon: IconName; labelKey: TranslationKey; route: AppRoute }>;
 
 const supportRows = [
   {
@@ -379,6 +382,12 @@ export function StudentProfileScreen() {
   const handleOpenSettings = useCallback(() => {
     router.push(routes.studentSettings);
   }, [router]);
+  const handleOpenRoute = useCallback(
+    (route: AppRoute) => {
+      router.push(route);
+    },
+    [router],
+  );
   const handleLogOut = useCallback(() => {
     void signOut().then(() => {
       router.replace(routes.authWelcome);
@@ -544,7 +553,7 @@ export function StudentProfileScreen() {
                   icon={row.icon}
                   key={row.labelKey}
                   label={t(row.labelKey)}
-                  onPress={noopPress}
+                  onPress={() => handleOpenRoute(row.route)}
                 />
               ))}
             </View>
@@ -617,7 +626,7 @@ export function StudentProfileScreen() {
               <ProfileListRow
                 icon="language-outline"
                 label={t("profileSettings.profile.preferences.appLanguage")}
-                onPress={noopPress}
+                onPress={() => handleOpenRoute(routes.studentLanguageSettings)}
                 rightAccessory={
                   <View style={styles.languageValue}>
                     <Text

@@ -56,8 +56,24 @@ function getProfileSettingsKey(studentId: string): string {
   return `${STUDENT_PROFILE_SETTINGS_KEY_PREFIX}.${studentId}`;
 }
 
-function uniqueGoals(goals: WritingGoal[]): WritingGoal[] {
-  return writingGoalOptions.filter((goal) => goals.includes(goal));
+function isWritingGoal(value: unknown): value is WritingGoal {
+  return typeof value === "string" && writingGoalOptions.includes(value as WritingGoal);
+}
+
+function uniqueGoals(goals: unknown[]): WritingGoal[] {
+  const seenGoals = new Set<WritingGoal>();
+  const nextGoals: WritingGoal[] = [];
+
+  goals.forEach((goal) => {
+    if (!isWritingGoal(goal) || seenGoals.has(goal)) {
+      return;
+    }
+
+    seenGoals.add(goal);
+    nextGoals.push(goal);
+  });
+
+  return nextGoals;
 }
 
 function createPreferencesSchema(defaults: StudentProfileSettingsPreferences) {
@@ -74,7 +90,7 @@ function createPreferencesSchema(defaults: StudentProfileSettingsPreferences) {
     language: z.enum(profileLanguageOptions).catch(defaults.language),
     learningFocusNote: z.string().catch(defaults.learningFocusNote),
     writingGoals: z
-      .array(z.enum(writingGoalOptions))
+      .array(z.unknown())
       .catch(defaults.writingGoals)
       .transform((goals) => uniqueGoals(goals)),
   });

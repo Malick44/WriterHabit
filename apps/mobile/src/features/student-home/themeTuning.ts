@@ -68,7 +68,9 @@ export interface StudentHomeTokenValues {
   "radius.card": number;
   "spacing.cardPadding": number;
   "spacing.section": number;
+  "typography.bodyLineHeight": number;
   "typography.bodySize": number;
+  "typography.titleLineHeight": number;
   "typography.titleSize": number;
 }
 
@@ -91,7 +93,9 @@ export const studentHomeTokenDefaults: StudentHomeTokenValues = {
   "radius.card": homeRadius.xl,
   "spacing.cardPadding": homeSpacing.lg,
   "spacing.section": homeSpacing.section,
+  "typography.bodyLineHeight": 18,
   "typography.bodySize": 13,
+  "typography.titleLineHeight": 24,
   "typography.titleSize": 18,
 };
 
@@ -101,7 +105,9 @@ const studentHomeTokens: readonly TunableTokenDefinition<StudentHomeTokenPath>[]
   { defaultValue: studentHomeTokenDefaults["colors.cardBorder"], kind: "color", path: "colors.cardBorder" },
   { defaultValue: studentHomeTokenDefaults["radius.card"], kind: "radius", max: 32, path: "radius.card" },
   { defaultValue: studentHomeTokenDefaults["typography.titleSize"], kind: "fontSize", max: 32, min: 12, path: "typography.titleSize" },
+  { defaultValue: studentHomeTokenDefaults["typography.titleLineHeight"], kind: "lineHeight", max: 44, min: 14, path: "typography.titleLineHeight" },
   { defaultValue: studentHomeTokenDefaults["typography.bodySize"], kind: "fontSize", max: 24, min: 10, path: "typography.bodySize" },
+  { defaultValue: studentHomeTokenDefaults["typography.bodyLineHeight"], kind: "lineHeight", max: 36, min: 12, path: "typography.bodyLineHeight" },
   { defaultValue: studentHomeTokenDefaults["colors.textPrimary"], kind: "color", path: "colors.textPrimary" },
   { defaultValue: studentHomeTokenDefaults["colors.textSecondary"], kind: "color", path: "colors.textSecondary" },
   { defaultValue: studentHomeTokenDefaults["colors.buttonPrimary"], kind: "color", path: "colors.buttonPrimary" },
@@ -128,7 +134,7 @@ export const studentHomeComponentConfigs: readonly TunableComponentConfig<Studen
     id: "student-home-header",
     name: "Header",
     screenId: STUDENT_HOME_SCREEN_ID,
-    tokens: ["colors.screenBackground", "colors.textPrimary"],
+    tokens: ["colors.screenBackground", "colors.textPrimary", "colors.textSecondary"],
   },
   {
     id: "student-home-today-assignment-card",
@@ -140,6 +146,7 @@ export const studentHomeComponentConfigs: readonly TunableComponentConfig<Studen
       "radius.card",
       "spacing.cardPadding",
       "typography.titleSize",
+      "typography.titleLineHeight",
       "colors.buttonPrimary",
       "colors.textSecondary",
     ],
@@ -154,6 +161,7 @@ export const studentHomeComponentConfigs: readonly TunableComponentConfig<Studen
       "radius.card",
       "spacing.cardPadding",
       "typography.titleSize",
+      "typography.titleLineHeight",
       "colors.accentCyan",
       "colors.textSecondary",
     ],
@@ -180,6 +188,7 @@ export const studentHomeComponentConfigs: readonly TunableComponentConfig<Studen
       "colors.cardBackground",
       "colors.cardBorder",
       "radius.card",
+      "spacing.cardPadding",
       "colors.accentCyan",
       "colors.buttonPrimary",
       "colors.textSecondary",
@@ -193,7 +202,9 @@ export const studentHomeComponentConfigs: readonly TunableComponentConfig<Studen
       "colors.cardBackground",
       "colors.cardBorder",
       "radius.card",
+      "spacing.cardPadding",
       "typography.bodySize",
+      "typography.bodyLineHeight",
       "colors.textPrimary",
       "colors.progressGreen",
     ],

@@ -85,6 +85,8 @@ export interface AppHeaderProps {
   subtitleParams?: TranslationParams;
   variant?: AppHeaderVariant;
   colorScheme?: AppHeaderColorScheme;
+  /** Merged over the variant/scheme palette; values win over resolved colors. */
+  colorOverrides?: Partial<AppHeaderResolvedColors>;
   gradeBand?: GradeBand;
   showSafeArea?: boolean;
   sticky?: boolean;

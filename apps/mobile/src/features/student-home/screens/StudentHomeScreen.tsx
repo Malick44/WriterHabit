@@ -21,6 +21,7 @@ import {
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import {
+  overrideRecord,
   overrideStyle,
   useRegisterTunableComponents,
   useRegisterTunableScreen,
@@ -107,21 +108,36 @@ function getAssignmentStatusLabel(t: TFunction, assignment: StudentHomeAssignmen
 }
 
 // Dev-only style fragments for the theme tuner. They resolve to null unless a
-// token is overridden, which never happens in production builds.
-function tunedCardStyle(tuned: StudentHomeTokenOverrides, includePadding = false): ViewStyle | null {
+// token is overridden, which never happens in production builds. Compact cards
+// (draft, feedback) ship 4pt tighter than regular cards, so a tuned
+// `spacing.cardPadding` keeps that offset instead of unifying every card.
+const COMPACT_CARD_PADDING_OFFSET = homeSpacing.lg - homeSpacing.md;
+
+function tunedCardStyle(
+  tuned: StudentHomeTokenOverrides,
+  padding?: "regular" | "compact",
+): ViewStyle | null {
+  const cardPadding = tuned["spacing.cardPadding"];
+
   return overrideStyle<ViewStyle>({
     backgroundColor: tuned["colors.cardBackground"],
     borderColor: tuned["colors.cardBorder"],
     borderRadius: tuned["radius.card"],
-    padding: includePadding ? tuned["spacing.cardPadding"] : undefined,
+    padding:
+      padding === undefined || cardPadding === undefined
+        ? undefined
+        : padding === "compact"
+          ? Math.max(homeSpacing.xs, cardPadding - COMPACT_CARD_PADDING_OFFSET)
+          : cardPadding,
   });
 }
 
-function tunedTextStyle(color?: string, fontSize?: number): TextStyle | null {
+function tunedTextStyle(color?: string, fontSize?: number, lineHeight?: number): TextStyle | null {
   return overrideStyle<TextStyle>({
     color,
     fontSize,
-    lineHeight: fontSize === undefined ? undefined : Math.round(fontSize * 1.4),
+    lineHeight:
+      lineHeight ?? (fontSize === undefined ? undefined : Math.round(fontSize * 1.4)),
   });
 }
 
@@ -138,6 +154,12 @@ export function StudentHomeScreen() {
   const tuned = useStudentHomeTokenOverrides();
   const tunedScreenBackground = overrideStyle<ViewStyle>({
     backgroundColor: tuned["colors.screenBackground"],
+  });
+  const tunedHeaderColors = overrideRecord({
+    actionForeground: tuned["colors.textSecondary"],
+    background: tuned["colors.screenBackground"],
+    mutedText: tuned["colors.textSecondary"],
+    text: tuned["colors.textPrimary"],
   });
 
   const navigateToTarget = useCallback(
@@ -232,6 +254,7 @@ export function StudentHomeScreen() {
             type: "icon",
           },
         ]}
+        colorOverrides={tunedHeaderColors}
         contentStyle={isTablet ? styles.appHeaderContentTablet : undefined}
         showSafeArea={false}
         style={[styles.appHeader, isTablet ? styles.appHeaderTablet : null, tunedScreenBackground]}
@@ -459,7 +482,7 @@ function TodayAssignmentCard({
         styles.card,
         styles.assignmentCard,
         isTablet ? styles.assignmentCardTablet : null,
-        tunedCardStyle(tuned, true),
+        tunedCardStyle(tuned, "regular"),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-today-assignment"
@@ -471,7 +494,7 @@ function TodayAssignmentCard({
             numberOfLines={3}
             style={[
               styles.assignmentTitle,
-              tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"]),
+              tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
             ]}
           >
             {assignment.title}
@@ -561,7 +584,7 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
     <View
       accessible
       accessibilityLabel={`${stat.value}, ${stat.label}`}
-      style={[styles.card, styles.statCard, tunedCardStyle(tuned, true)]}
+      style={[styles.card, styles.statCard, tunedCardStyle(tuned, "regular")]}
     >
       <View style={[styles.statIconBubble, { backgroundColor: stat.backgroundColor }]}>
         <Ionicons name={stat.icon} size={23} color={stat.accentColor} />
@@ -574,7 +597,7 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
           numberOfLines={1}
           style={[
             styles.statValue,
-            tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"]),
+            tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
           ]}
         >
           {stat.value}
@@ -620,7 +643,7 @@ function SkillProgressCard({
       <View
         accessible
         accessibilityLabel={t("studentHome.skills.accessibility")}
-        style={[styles.card, styles.skillsCard, isTablet ? styles.skillsCardTablet : null, tunedCardStyle(tuned, true)]}
+        style={[styles.card, styles.skillsCard, isTablet ? styles.skillsCardTablet : null, tunedCardStyle(tuned, "regular")]}
       >
         {skills.length > 0 ? (
           skills.map((skill, index) => (
@@ -725,7 +748,7 @@ function ContinueDraftCard({
         styles.card,
         styles.draftCard,
         isTablet ? styles.draftCardTablet : null,
-        tunedCardStyle(tuned),
+        tunedCardStyle(tuned, "compact"),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-continue-draft"
@@ -801,7 +824,7 @@ function RecentFeedbackCard({
         styles.card,
         styles.feedbackCard,
         isTablet ? styles.feedbackCardTablet : null,
-        tunedCardStyle(tuned),
+        tunedCardStyle(tuned, "compact"),
         pressed ? styles.cardPressed : null,
       ]}
       testID="student-home-feedback"
@@ -813,7 +836,7 @@ function RecentFeedbackCard({
           numberOfLines={2}
           style={[
             styles.feedbackText,
-            tunedTextStyle(tuned["colors.textPrimary"], tuned["typography.bodySize"]),
+            tunedTextStyle(tuned["colors.textPrimary"], tuned["typography.bodySize"], tuned["typography.bodyLineHeight"]),
           ]}
         >
           {feedbackCopy}

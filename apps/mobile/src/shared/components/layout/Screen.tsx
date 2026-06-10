@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, layout, spacing, typography, type GradeBand } from "@/design/tokens";
+import { layout, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,

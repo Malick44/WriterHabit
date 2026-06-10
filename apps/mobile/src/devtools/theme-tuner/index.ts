@@ -28,4 +28,4 @@ export type {
   TunableScreenConfig,
   TunableTokenDefinition,
 } from "./types";
-export { overrideStyle } from "./utils/overrideStyle";
+export { overrideRecord, overrideStyle } from "./utils/overrideStyle";

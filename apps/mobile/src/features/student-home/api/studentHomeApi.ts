@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingGoal, WritingSkill } from "@writewise/shared";
+import type { GradeLevel, WritingSkill } from "@writewise/shared";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 import {

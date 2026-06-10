@@ -22,3 +22,26 @@ export function overrideStyle<TStyle extends ViewStyle | TextStyle | ImageStyle>
 
   return hasValue ? pruned : null;
 }
+
+/**
+ * Same pruning for plain prop records (e.g. a component's color-override
+ * prop). Returns undefined when nothing is overridden so memoized components
+ * keep their fast path in production.
+ */
+export function overrideRecord<T extends Record<string, unknown>>(
+  values: { [K in keyof T]: T[K] | undefined },
+): Partial<T> | undefined {
+  const pruned: Partial<T> = {};
+  let hasValue = false;
+
+  for (const key of Object.keys(values) as (keyof T)[]) {
+    const value = values[key];
+
+    if (value !== undefined) {
+      pruned[key] = value;
+      hasValue = true;
+    }
+  }
+
+  return hasValue ? pruned : undefined;
+}

@@ -22,6 +22,7 @@ export const AppHeader = memo(function AppHeader({
   subtitleParams,
   variant = "default",
   colorScheme = "light",
+  colorOverrides,
   gradeBand = "middle",
   showSafeArea = true,
   sticky = false,
@@ -37,10 +38,11 @@ export const AppHeader = memo(function AppHeader({
   const { settings } = useAccessibilityContext();
   const variantStyle = getAppHeaderVariantStyle(variant);
   const centered = variant === "centered";
-  const headerColors = useMemo(
-    () => getAppHeaderColors(variant, colorScheme, settings.highContrast),
-    [colorScheme, settings.highContrast, variant],
-  );
+  const headerColors = useMemo(() => {
+    const resolved = getAppHeaderColors(variant, colorScheme, settings.highContrast);
+
+    return colorOverrides ? { ...resolved, ...colorOverrides } : resolved;
+  }, [colorOverrides, colorScheme, settings.highContrast, variant]);
   const visibleRightActions = useMemo(
     () => rightActions.filter(isVisibleAction).slice(0, APP_HEADER_MAX_ACTIONS),
     [rightActions],

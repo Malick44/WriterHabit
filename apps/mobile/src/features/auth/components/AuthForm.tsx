@@ -19,7 +19,6 @@ import {
   type SignUpFormValues,
 } from "../types";
 
-type AuthFormMode = "signIn" | "signUp";
 type AuthFieldKey = keyof SignInFormValues | keyof SignUpFormValues;
 type FieldErrors = Partial<Record<AuthFieldKey, string>>;
 

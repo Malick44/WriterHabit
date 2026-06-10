@@ -41,6 +41,7 @@ export function TeacherSubmissionReviewScreen() {
   const type = typography.gradeBands[state.gradeBand];
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the saved teacher comment from the query into the editable field
     setComment(reviewComment);
   }, [reviewComment]);
 

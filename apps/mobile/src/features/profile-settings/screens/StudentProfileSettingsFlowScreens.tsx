@@ -75,12 +75,12 @@ const editableGoals = [
     labelKey: "profileSettings.goals.goalOptions.spelling.label",
     value: "improve_spelling",
   },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
   descriptionKey: TranslationKey;
   icon: IconName;
   labelKey: TranslationKey;
   value: WritingGoal;
-}>;
+}[];
 
 const dailyPracticeKeyByValue = {
   5: "five",
@@ -98,21 +98,21 @@ const dailyPracticeChoices = profileDailyPracticeOptions.map((value) => {
     labelKey: `profileSettings.goals.dailyPracticeOptions.${key}.label`,
     value,
   };
-}) as ReadonlyArray<{
+}) as readonly {
   descriptionKey: TranslationKey;
   labelKey: TranslationKey;
   value: ProfileDailyPracticeMinutes;
-}>;
+}[];
 
 const languageChoices = profileLanguageOptions.map((value) => ({
   descriptionKey: `profileSettings.language.options.${value}.description` as TranslationKey,
   labelKey: `profileSettings.language.options.${value}.label` as TranslationKey,
   value,
-})) as ReadonlyArray<{
+})) as readonly {
   descriptionKey: TranslationKey;
   labelKey: TranslationKey;
   value: ProfileLanguage;
-}>;
+}[];
 
 function ProfileSettingsScaffold({
   backAccessibilityLabelKey,
@@ -251,6 +251,7 @@ function useStudentProfilePreferenceState() {
   useEffect(() => {
     let active = true;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restarts the loading state whenever the storage fetch re-runs
     setLoadState("loading");
     void studentProfileSettingsPreferenceService
       .getPreferences(studentId, defaultPreferences)
@@ -325,6 +326,7 @@ export function EditProfileSettingsScreen() {
 
   useEffect(() => {
     if (loadState === "ready") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the stored grade level into the editable input once preferences load
       setGradeInput(String(preferences.gradeLevel));
     }
   }, [loadState, preferences.gradeLevel]);
@@ -677,6 +679,7 @@ export function NotificationSettingsScreen() {
   useEffect(() => {
     let active = true;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restarts the loading state whenever the storage fetch re-runs
     setLoadState("loading");
     void notificationPreferencesService
       .getPreferences(studentId)

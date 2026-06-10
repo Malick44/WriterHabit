@@ -29,7 +29,7 @@ export function LoadingState({
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const skeletonWidths: Array<ViewStyle["width"]> =
+  const skeletonWidths: ViewStyle["width"][] =
     gradeBand === "elementary" ? ["92%", "78%", "66%"] : ["88%", "72%", "56%"];
 
   return (

@@ -142,7 +142,7 @@ export function getMotionDuration(settings: AccessibilitySettings, durationMs: n
   return settings.reducedMotion ? 0 : durationMs;
 }
 
-export function buildAccessibilityLabel(parts: Array<string | number | null | undefined>): string {
+export function buildAccessibilityLabel(parts: (string | number | null | undefined)[]): string {
   return parts
     .filter((part): part is string | number => part !== null && part !== undefined && String(part).trim().length > 0)
     .map((part) => String(part).trim())
@@ -150,7 +150,7 @@ export function buildAccessibilityLabel(parts: Array<string | number | null | un
 }
 
 export function mergeAccessibilityState(
-  ...states: Array<AccessibilityState | null | undefined>
+  ...states: (AccessibilityState | null | undefined)[]
 ): AccessibilityState {
   return states.reduce<AccessibilityState>((merged, state) => {
     if (!state) {

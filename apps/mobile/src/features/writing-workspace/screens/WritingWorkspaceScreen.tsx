@@ -63,16 +63,16 @@ export function WritingWorkspaceScreen() {
   // Rubric completions computation
   const assignment = successState?.viewModel.assignment ?? null;
   const rubricTotal = assignment?.rubric?.length ?? 0;
+  const rubricMetrics = successState?.viewModel.metrics ?? null;
   const completedRubricCount = useMemo(() => {
-    if (!successState) return 0;
+    if (!rubricMetrics) return 0;
     let completed = 0;
-    const metrics = successState.viewModel.metrics;
-    if (rubricTotal > 0 && metrics.wordCount >= 10) completed++;
-    if (rubricTotal > 1 && metrics.sentenceCount >= 2) completed++;
-    if (rubricTotal > 2 && metrics.paragraphCount >= 1) completed++;
-    if (rubricTotal > 3 && metrics.wordCount >= 40) completed++;
+    if (rubricTotal > 0 && rubricMetrics.wordCount >= 10) completed++;
+    if (rubricTotal > 1 && rubricMetrics.sentenceCount >= 2) completed++;
+    if (rubricTotal > 2 && rubricMetrics.paragraphCount >= 1) completed++;
+    if (rubricTotal > 3 && rubricMetrics.wordCount >= 40) completed++;
     return Math.min(completed, rubricTotal);
-  }, [successState?.viewModel.metrics, rubricTotal]);
+  }, [rubricMetrics, rubricTotal]);
 
   const stickyFooter = successState && successState.viewModel.assignment ? (
     <View

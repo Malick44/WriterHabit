@@ -1,4 +1,3 @@
-import type { GradeLevel } from "@writewise/shared";
 
 import {
   parentAssignmentReviewApiResponseSchema,

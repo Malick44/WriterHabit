@@ -14,7 +14,6 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
   cancelAnimation,
-  interpolate,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -23,7 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, duration, layout, radius, spacing, typography } from "@/design/tokens";
+import { duration, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleHitSlop,

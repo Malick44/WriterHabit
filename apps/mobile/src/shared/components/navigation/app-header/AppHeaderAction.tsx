@@ -10,8 +10,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { colors, layout, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, layout, radius, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { Pill } from "@/shared/components/pills";
 import {
   getAccessibleHitSlop,
   getAccessibleTextStyle,
@@ -130,44 +131,28 @@ export const AppHeaderAction = memo(function AppHeaderAction({
     );
   }
 
-  if (action.type === "text") {
+  if (action.type === "text" || action.type === "pill") {
     const label = t(action.labelKey, action.labelParams);
 
     return (
-      <Pressable
+      <Pill
         accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: action.disabled }}
+        colorOverrides={{
+          background: actionBackground,
+          border: actionBorder,
+          foreground: actionForeground,
+          pressedBackground: colors.action.ghost.pressed,
+        }}
         disabled={action.disabled}
-        hitSlop={getAccessibleHitSlop(settings)}
+        gradeBand={gradeBand}
+        label={label}
+        leadingIcons={action.type === "pill" ? action.leadingIcons : undefined}
         onPress={handlePress}
-        style={({ pressed }) => [
-          {
-            alignItems: "center",
-            backgroundColor: pressed && !action.disabled ? colors.action.ghost.pressed : actionBackground,
-            borderColor: actionBorder,
-            borderRadius: radius.full,
-            borderWidth: APP_HEADER_BORDER_WIDTH,
-            justifyContent: "center",
-            minHeight: minTouchTarget,
-            paddingHorizontal: spacing.md,
-          },
-          style,
-        ]}
+        style={style}
         testID={testID}
-      >
-        <Text
-          numberOfLines={1}
-          style={[
-            getAccessibleTextStyle(type.button, settings),
-            styles.actionText,
-            { color: actionForeground },
-          ]}
-        >
-          {label}
-        </Text>
-      </Pressable>
+        trailingIcons={action.type === "pill" ? action.trailingIcons : undefined}
+      />
     );
   }
 

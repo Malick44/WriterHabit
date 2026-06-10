@@ -27,13 +27,13 @@ const gradeGroups = [
     grades: [9, 10, 11, 12],
     titleKey: "onboarding.gradeSelection.highTitle",
   },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
   grades: readonly GradeLevel[];
   titleKey:
     | "onboarding.gradeSelection.elementaryTitle"
     | "onboarding.gradeSelection.middleTitle"
     | "onboarding.gradeSelection.highTitle";
-}>;
+}[];
 
 export function GradeSelectionScreen() {
   const router = useRouter();

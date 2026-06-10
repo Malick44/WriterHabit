@@ -6,8 +6,7 @@ import { colors, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
-import { EmptyState, ErrorState, LoadingState } from "@/shared/components/feedback";
-import { ProgressBar } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState , ProgressBar } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
 import {

@@ -62,12 +62,12 @@ export const GRADE_GROUPS = [
     titleKey: "onboarding.gradeSelection.highTitle",
     descriptionKey: "onboarding.gradeSelection.highDescription",
   },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
   band: GradeBand;
   grades: readonly GradeLevel[];
   titleKey: TranslationKey;
   descriptionKey: TranslationKey;
-}>;
+}[];
 
 export const WRITING_GOAL_OPTIONS = [
   "improve_spelling",

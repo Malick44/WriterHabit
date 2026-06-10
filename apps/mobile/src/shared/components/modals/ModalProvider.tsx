@@ -195,11 +195,15 @@ export function ModalProvider({ children }: PropsWithChildren) {
   useEffect(() => modalManager.register(api), [api]);
 
   useEffect(() => {
+    // The map instance is stable for the provider's lifetime; capturing it
+    // here keeps the cleanup independent of later ref reads.
+    const pendingResolvers = pendingResolversRef.current;
+
     return () => {
-      pendingResolversRef.current.forEach((pending) => {
+      pendingResolvers.forEach((pending) => {
         pending.resolve(pending.dismissValue);
       });
-      pendingResolversRef.current.clear();
+      pendingResolvers.clear();
     };
   }, []);
 

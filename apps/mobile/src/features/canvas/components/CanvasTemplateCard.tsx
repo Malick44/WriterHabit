@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text } from "react-native";
 
 import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";

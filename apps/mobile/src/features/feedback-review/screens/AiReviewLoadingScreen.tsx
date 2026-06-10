@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Animated, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,9 +28,10 @@ export function AiReviewLoadingScreen() {
   const { fontSizeScale, primaryColor } = useGlacierThemeStore();
   const type = typography.gradeBands[state.gradeBand];
 
-  // Animation values
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
+  // Animation values: lazy state keeps the instances stable across renders
+  // without reading a ref during render.
+  const [pulseAnim] = useState(() => new Animated.Value(1));
+  const [rotateAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     Animated.loop(

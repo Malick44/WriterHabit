@@ -17,16 +17,18 @@ export function useOnboarding() {
   const onboarding = useOnboardingStore();
   const session = auth.session;
   const userId = session?.user.id;
+  const userRole = session?.user.role;
+  const hydrateProgress = onboarding.hydrateProgress;
 
   useEffect(() => {
-    if (!userId || !session) {
+    if (!userId || !userRole) {
       return;
     }
 
-    void onboarding.hydrateProgress(userId, {
-      defaultRole: session.user.role === "admin" ? undefined : session.user.role,
+    void hydrateProgress(userId, {
+      defaultRole: userRole === "admin" ? undefined : userRole,
     });
-  }, [onboarding.hydrateProgress, session?.user.role, userId]);
+  }, [hydrateProgress, userRole, userId]);
 
   const validationError = getOnboardingValidationError(onboarding.progress);
   const firstIncompleteStep = getFirstIncompleteOnboardingStep(onboarding.progress);

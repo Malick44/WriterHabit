@@ -5,14 +5,13 @@ import {
   assignmentDetailResponseSchema,
   assignmentHistoryResponseSchema,
   assignmentScenarioSchema,
-  assignmentSubmissionResponseSchema,
   type AssignmentDetailResponse,
   type AssignmentHistoryResponse,
   type AssignmentRecord,
   type AssignmentScenario,
   type AssignmentSubmissionResponse,
 } from "../types";
-import { canSubmitAssignment, getNextStatusOnStart } from "../services/assignmentStatusService";
+import { getNextStatusOnStart } from "../services/assignmentStatusService";
 import {
   selectDailyAssignment,
   type DailyAssignmentHistoryItem,

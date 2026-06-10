@@ -173,6 +173,7 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     }
 
     latestDocumentRef.current = query.data.document;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the freshly fetched document into editable canvas state exactly once per fetch
     setDocument(query.data.document);
     undoHistoryRef.current = [];
     redoHistoryRef.current = [];
@@ -217,18 +218,20 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
     },
     [gradeLevel, studentId],
   );
-  saveDocumentRef.current = saveDocument;
-
-  if (!autosaveSchedulerRef.current) {
-    autosaveSchedulerRef.current = createCanvasAutosaveScheduler({
-      delayMs: CANVAS_AUTOSAVE_DEBOUNCE_MS,
-      save: (nextDocument) => saveDocumentRef.current(nextDocument),
-    });
-  }
+  useEffect(() => {
+    saveDocumentRef.current = saveDocument;
+  }, [saveDocument]);
 
   const queueAutosave = useCallback(
     (nextDocument: CanvasDocument) => {
-      autosaveSchedulerRef.current?.schedule(nextDocument);
+      if (!autosaveSchedulerRef.current) {
+        autosaveSchedulerRef.current = createCanvasAutosaveScheduler({
+          delayMs: CANVAS_AUTOSAVE_DEBOUNCE_MS,
+          save: (documentToSave) => saveDocumentRef.current(documentToSave),
+        });
+      }
+
+      autosaveSchedulerRef.current.schedule(nextDocument);
     },
     [],
   );

@@ -17,13 +17,6 @@ import { canvasPersistenceService } from "./canvasPersistenceService";
 export const CANVAS_AUTOSAVE_DEBOUNCE_MS = 700;
 
 const canvasConnectionStatusSchema = z.enum(["online", "offline_cached"]);
-const canvasBackendSyncStatusSchema = z.enum([
-  "backend_disabled",
-  "offline",
-  "synced",
-  "sync_failed",
-]);
-
 export const canvasSignedUploadPlaceholderSchema = z.object({
   contentType: z.string().min(1),
   expiresAt: z.string().datetime(),
@@ -53,7 +46,7 @@ export const canvasExportPlaceholderSchema = z.object({
 });
 
 export type CanvasConnectionStatus = z.infer<typeof canvasConnectionStatusSchema>;
-export type CanvasBackendSyncStatus = z.infer<typeof canvasBackendSyncStatusSchema>;
+export type CanvasBackendSyncStatus = "backend_disabled" | "offline" | "synced" | "sync_failed";
 export type CanvasSignedUploadPlaceholder = z.infer<typeof canvasSignedUploadPlaceholderSchema>;
 export type CanvasBackendMetadata = z.infer<typeof canvasBackendMetadataSchema>;
 export type CanvasExportPlaceholder = z.infer<typeof canvasExportPlaceholderSchema>;

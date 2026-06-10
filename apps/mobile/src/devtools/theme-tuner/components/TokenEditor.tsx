@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -59,22 +59,24 @@ interface TokenEditorProps {
 function ColorValueEditor({ definition, onChange, value }: Pick<TokenEditorProps, "definition" | "onChange" | "value">) {
   const { t } = useI18n();
   const currentValue = typeof value === "string" ? value : String(value);
-  const [draft, setDraft] = useState(currentValue);
-
-  useEffect(() => {
-    setDraft(currentValue);
-  }, [currentValue]);
+  // The draft only applies while it belongs to the committed value; swatch
+  // taps and resets change `currentValue`, which invalidates stale drafts
+  // without needing a sync effect.
+  const [draftState, setDraftState] = useState({ source: currentValue, text: currentValue });
+  const draft = draftState.source === currentValue ? draftState.text : currentValue;
 
   const handleChangeText = useCallback(
     (text: string) => {
-      setDraft(text);
       const trimmed = text.trim();
+      const isValid = HEX_COLOR_PATTERN.test(trimmed);
 
-      if (HEX_COLOR_PATTERN.test(trimmed)) {
+      setDraftState({ source: isValid ? trimmed : currentValue, text });
+
+      if (isValid) {
         onChange(trimmed);
       }
     },
-    [onChange],
+    [currentValue, onChange],
   );
 
   const swatches = [

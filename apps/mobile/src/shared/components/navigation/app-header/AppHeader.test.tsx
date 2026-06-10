@@ -75,6 +75,31 @@ describe("AppHeader", () => {
     expect(onNotificationsPress).toHaveBeenCalledTimes(1);
   });
 
+  it("renders localized pill actions with icons", async () => {
+    const onPress = jest.fn();
+
+    const rendered = await renderHeader(
+      <AppHeader
+        rightActions={[
+          {
+            accessibilityLabelKey: "common.notifications",
+            labelKey: "common.notifications",
+            leadingIcons: [{ name: "notifications-outline", testID: "header-pill-icon" }],
+            onPress,
+            type: "pill",
+          },
+        ]}
+        titleKey="common.appName"
+      />,
+    );
+
+    expect(rendered.getByText("Notifications")).toBeTruthy();
+    expect(rendered.getByTestId("header-pill-icon")).toBeTruthy();
+
+    await fireEvent.press(rendered.getByLabelText("Notifications"));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
   it("renders avatar actions with localized accessibility labels", async () => {
     const onProfilePress = jest.fn();
 

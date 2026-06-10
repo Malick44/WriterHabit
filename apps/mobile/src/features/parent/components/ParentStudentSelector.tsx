@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, radius, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Card } from "@/shared/components/cards";
 import { Inline, Stack } from "@/shared/components/layout";

@@ -19,7 +19,7 @@ import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/
 import { useAuth } from "../hooks/useAuth";
 import { DemoUserPanel } from "./DemoUserPanel";
 
-type DevInfoRow = {
+type DevInfoRowItem = {
   id: string;
   labelKey: TranslationKey;
   value: string;
@@ -232,7 +232,7 @@ export function DevPanelFloatingLauncher() {
     return segments.length > 0 ? `/${segments.join("/")}` : "/";
   }, [segments]);
 
-  const diagnostics = useMemo<DevInfoRow[]>(() => {
+  const diagnostics = useMemo<DevInfoRowItem[]>(() => {
     if (!session) {
       return [];
     }

@@ -74,7 +74,7 @@ const weeklyActivity = [
   { height: 50, labelKey: "profileSettings.profile.days.fri" },
   { height: 95, labelKey: "profileSettings.profile.days.sat" },
   { height: 70, labelKey: "profileSettings.profile.days.sun" },
-] as const satisfies ReadonlyArray<{ height: number; labelKey: TranslationKey }>;
+] as const satisfies readonly { height: number; labelKey: TranslationKey }[];
 
 const achievements = [
   {
@@ -101,12 +101,12 @@ const achievements = [
     icon: "sparkles-outline",
     labelKey: "profileSettings.profile.achievements.perfectScore",
   },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
   backgroundColor: string;
   foregroundColor: string;
   icon: IconName;
   labelKey: TranslationKey;
-}>;
+}[];
 
 const accountRows = [
   {
@@ -124,7 +124,7 @@ const accountRows = [
     labelKey: "profileSettings.profile.account.notifications",
     route: routes.studentNotificationSettings,
   },
-] as const satisfies ReadonlyArray<{ icon: IconName; labelKey: TranslationKey; route: AppRoute }>;
+] as const satisfies readonly { icon: IconName; labelKey: TranslationKey; route: AppRoute }[];
 
 const supportRows = [
   {
@@ -135,9 +135,9 @@ const supportRows = [
     icon: "information-circle-outline",
     labelKey: "profileSettings.profile.support.about",
   },
-] as const satisfies ReadonlyArray<{ icon: IconName; labelKey: TranslationKey }>;
+] as const satisfies readonly { icon: IconName; labelKey: TranslationKey }[];
 
-const growthMetrics: ReadonlyArray<GrowthMetric> = [
+const growthMetrics: readonly GrowthMetric[] = [
   {
     fillColor: profileColors.primary,
     labelKey: "profileSettings.profile.progress.assignmentsCompleted",
@@ -416,13 +416,13 @@ export function StudentProfileScreen() {
       label: t("profileSettings.profile.stats.streak"),
       value: t("profileSettings.profile.stats.streakValue", { count: 7 }),
     },
-  ] as const satisfies ReadonlyArray<{
+  ] as const satisfies readonly {
     accessibilityLabel: string;
     color: string;
     icon: IconName;
     label: string;
     value: string;
-  }>;
+  }[];
 
   return (
     <View style={styles.root}>

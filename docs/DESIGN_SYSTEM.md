@@ -96,6 +96,11 @@ apps/mobile/src/shared/components/navigation/app-header/
 
 The public API is typed around `TranslationKey`, so title, subtitle, action labels, accessibility labels, and progress labels resolve through `apps/mobile/src/shared/i18n/`.
 
+`colorOverrides?: Partial<AppHeaderResolvedColors>` merges over the resolved
+variant/scheme palette (background, border, text, mutedText, action colors,
+progress colors). The dev theme tuner uses it to live-tune header colors;
+production callers normally omit it.
+
 ```ts
 import { AppHeader } from "@/shared/components/navigation";
 
@@ -243,7 +248,8 @@ Usage:
 `StudentHomeScreen` registers the `student-home` screen with header, today's
 assignment card, weekly progress cards, skill progress preview, continue draft
 card, recent feedback card, and bottom navigation components. Its tunable
-tokens cover screen/card surfaces, card border and radius, title/body sizes,
+tokens cover screen/card surfaces, card border and radius, title/body sizes
+and line heights,
 primary/secondary text, primary button color, accent cyan, achievement gold,
 progress green, card padding, section spacing, and tab bar colors (applied in
 `apps/mobile/app/(student)/_layout.tsx`).

@@ -260,6 +260,7 @@ export const Modal = memo(function Modal({
 
   useEffect(() => {
     if (visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mounts the native modal on visibility so the exit animation can finish before unmount
       setMounted(true);
       return;
     }

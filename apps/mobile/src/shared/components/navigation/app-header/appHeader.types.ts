@@ -4,6 +4,7 @@ import type { Ionicons } from "@expo/vector-icons";
 
 import type { GradeBand } from "@/design/tokens";
 import type { TranslationKey, TranslationParams } from "@/i18n";
+import type { PillIconConfig } from "@/shared/components/pills";
 
 export type AppHeaderVariant =
   | "default"
@@ -65,6 +66,15 @@ export type HeaderAction =
       type: "text";
       labelKey: TranslationKey;
       labelParams?: TranslationParams;
+      onPress: () => void;
+      accessibilityLabelKey: TranslationKey;
+    })
+  | (HeaderActionBase & {
+      type: "pill";
+      labelKey: TranslationKey;
+      labelParams?: TranslationParams;
+      leadingIcons?: readonly PillIconConfig[];
+      trailingIcons?: readonly PillIconConfig[];
       onPress: () => void;
       accessibilityLabelKey: TranslationKey;
     });

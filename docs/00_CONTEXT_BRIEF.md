@@ -1,6 +1,6 @@
-# WriteWise AI — Context Brief
+# WriterHabit AI — Context Brief
 
-WriteWise AI is an AI-powered writing assistant app for students in Grades 1–12.
+WriterHabit AI is an AI-powered writing assistant app for students in Grades 1–12.
 
 ## Product Vision
 A safe AI writing coach that helps students practice writing every day, complete assignments, use handwriting or typed work, and visibly improve over time.

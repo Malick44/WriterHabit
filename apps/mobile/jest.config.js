@@ -16,7 +16,7 @@ module.exports = {
     '^@/core/(.*)$': '<rootDir>/src/core/$1',
     '^@/features/(.*)$': '<rootDir>/src/features/$1',
     '^@/shared/(.*)$': '<rootDir>/src/shared/$1',
-    '^@writewise/shared$': '<rootDir>/../../packages/shared/src',
+    '^@WriterHabit/shared$': '<rootDir>/../../packages/shared/src',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

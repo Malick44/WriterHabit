@@ -9,7 +9,7 @@ Design an elegant, futuristic Writing Confidence screen that gauges how the stud
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 4 of 6: Writing Confidence). The design must feel high-fidelity, emotionally intelligent, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 4 of 6: Writing Confidence). The design must feel high-fidelity, emotionally intelligent, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Emotional & Visual Connection**: The selection should evoke confidence. Use color gradients that transition from a soft, cautious warm amber (Getting Started) to an empowered, glowing emerald/cyan (Ready to Shine).

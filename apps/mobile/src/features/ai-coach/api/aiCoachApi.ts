@@ -25,7 +25,7 @@ export class AiCoachApiError extends Error {
 }
 
 function readScenario(): AiCoachScenario {
-  const parsed = aiCoachScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_AI_COACH_SCENARIO);
+  const parsed = aiCoachScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_AI_COACH_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }

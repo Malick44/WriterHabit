@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { typography, type GradeBand } from "@/design/tokens";
@@ -26,18 +26,18 @@ export type WritingWorkspaceDataState =
   | { status: "error"; gradeBand: GradeBand; refetch: () => void }
   | { status: "missing"; gradeBand: GradeBand; refetch: () => void; viewModel: WritingWorkspaceViewModel }
   | {
-      status: "success";
-      gradeLevel: GradeLevel;
-      gradeBand: GradeBand;
-      isRefreshing: boolean;
-      refetch: () => void;
-      saveNow: () => Promise<boolean>;
-      setText: (text: string) => void;
-      submitDraft: () => Promise<WritingSubmissionResponse | null>;
-      submitStatus: "idle" | "loading" | "error" | "success";
-      studentId: string;
-      viewModel: WritingWorkspaceViewModel;
-    };
+    status: "success";
+    gradeLevel: GradeLevel;
+    gradeBand: GradeBand;
+    isRefreshing: boolean;
+    refetch: () => void;
+    saveNow: () => Promise<boolean>;
+    setText: (text: string) => void;
+    submitDraft: () => Promise<WritingSubmissionResponse | null>;
+    submitStatus: "idle" | "loading" | "error" | "success";
+    studentId: string;
+    viewModel: WritingWorkspaceViewModel;
+  };
 
 function getFallbackGradeBand(gradeLevel?: number): GradeBand {
   return gradeLevel ? typography.getGradeBandForGrade(gradeLevel) : "middle";
@@ -59,9 +59,9 @@ function buildViewModel(input: {
     canSubmit: validation.canSubmit && input.autosaveStatus !== "saving",
     draft: input.response.draft
       ? {
-          ...input.response.draft,
-          text: input.text,
-        }
+        ...input.response.draft,
+        text: input.text,
+      }
       : null,
     gradeAdaptation,
     isEmptyDraft: metrics.wordCount === 0,

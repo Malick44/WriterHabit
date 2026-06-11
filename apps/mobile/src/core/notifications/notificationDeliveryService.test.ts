@@ -5,7 +5,7 @@ import { routes } from "@/core/navigation/routeNames";
 import {
   buildScheduledNotificationRequests,
   resolveExpoProjectId,
-  WRITEWISE_NOTIFICATION_CHANNEL_ID,
+  WriterHabit_NOTIFICATION_CHANNEL_ID,
 } from "./notificationDeliveryService";
 import { defaultNotificationPreferences } from "./notificationService";
 
@@ -15,26 +15,26 @@ describe("notificationDeliveryService", () => {
 
     expect(requests).toHaveLength(4);
     expect(requests.map((request) => request.identifier)).toEqual([
-      "writewise.student-1.daily_assignment",
-      "writewise.student-1.incomplete_assignment",
-      "writewise.student-1.streak",
-      "writewise.student-1.weekly_report",
+      "WriterHabit.student-1.daily_assignment",
+      "WriterHabit.student-1.incomplete_assignment",
+      "WriterHabit.student-1.streak",
+      "WriterHabit.student-1.weekly_report",
     ]);
     expect(requests[0]?.trigger).toEqual({
-      channelId: WRITEWISE_NOTIFICATION_CHANNEL_ID,
+      channelId: WriterHabit_NOTIFICATION_CHANNEL_ID,
       hour: 16,
       minute: 0,
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
     });
     expect(requests[3]?.trigger).toEqual({
-      channelId: WRITEWISE_NOTIFICATION_CHANNEL_ID,
+      channelId: WriterHabit_NOTIFICATION_CHANNEL_ID,
       hour: 17,
       minute: 0,
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 1,
     });
     expect(requests[0]?.content.data).toMatchObject({
-      source: "writewise",
+      source: "WriterHabit",
       studentId: "student-1",
       targetRoute: String(routes.studentAssignmentsHistory),
     });
@@ -72,7 +72,7 @@ describe("notificationDeliveryService", () => {
         expoConfig: {
           extra: {
             eas: {
-              projectId: "WRITEWISE_EAS_PROJECT_ID_REQUIRED",
+              projectId: "WriterHabit_EAS_PROJECT_ID_REQUIRED",
             },
           },
         },

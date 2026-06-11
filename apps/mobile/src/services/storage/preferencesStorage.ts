@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const PREFERENCES_PREFIX = 'writewise.pref.';
+const PREFERENCES_PREFIX = 'WriterHabit.pref.';
 const secureStoreKeyPattern = /[^A-Za-z0-9._-]/g;
 
 function toPreferenceKey(key: string) {

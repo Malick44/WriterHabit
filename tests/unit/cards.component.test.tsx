@@ -7,7 +7,7 @@ import { I18nProvider } from "@/shared/i18n";
 import { DailyAssignmentCard } from "@/features/assignments/components/DailyAssignmentCard";
 import { FeedbackSummaryCard } from "@/features/feedback-review/components/FeedbackSummaryCard";
 import type { FeedbackReview } from "@/features/feedback-review/types";
-import type { Assignment } from "@writewise/shared";
+import type { Assignment } from "@WriterHabit/shared";
 
 function createAssignment(): Assignment {
   return {

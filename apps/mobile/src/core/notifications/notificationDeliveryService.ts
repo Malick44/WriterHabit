@@ -13,13 +13,13 @@ import {
   type NotificationWeekday,
 } from "./notificationService";
 
-export const WRITEWISE_NOTIFICATION_CHANNEL_ID = "writewise-reminders";
+export const WriterHabit_NOTIFICATION_CHANNEL_ID = "WriterHabit-reminders";
 
 type ScheduleTrigger =
   | Notifications.DailyTriggerInput
   | Notifications.WeeklyTriggerInput;
 
-export interface ScheduledWriteWiseNotificationRequest {
+export interface ScheduledWriterHabitNotificationRequest {
   content: Notifications.NotificationContentInput;
   identifier: string;
   trigger: ScheduleTrigger;
@@ -67,7 +67,7 @@ function parseTimeOfDay(value: string): { hour: number; minute: number } {
 }
 
 function getNotificationIdentifier(studentId: string, type: NotificationType): string {
-  return `writewise.${studentId}.${type}`;
+  return `WriterHabit.${studentId}.${type}`;
 }
 
 function getWeekdayNumber(weekday: NotificationWeekday): number {
@@ -113,7 +113,7 @@ function createContent({
     body: translate("en", bodyKey, params),
     data: {
       notificationType: type,
-      source: "writewise",
+      source: "WriterHabit",
       studentId,
       targetRoute: route,
     },
@@ -129,7 +129,7 @@ function createDailyNotificationRequest(input: {
   studentId: string;
   titleKey: TranslationKey;
   type: NotificationType;
-}): ScheduledWriteWiseNotificationRequest {
+}): ScheduledWriterHabitNotificationRequest {
   const time = parseTimeOfDay(input.preferencesTimeOfDay);
 
   return {
@@ -143,7 +143,7 @@ function createDailyNotificationRequest(input: {
     }),
     identifier: getNotificationIdentifier(input.studentId, input.type),
     trigger: {
-      channelId: WRITEWISE_NOTIFICATION_CHANNEL_ID,
+      channelId: WriterHabit_NOTIFICATION_CHANNEL_ID,
       hour: time.hour,
       minute: time.minute,
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -160,7 +160,7 @@ function createWeeklyNotificationRequest(input: {
   titleKey: TranslationKey;
   type: NotificationType;
   weekday: NotificationWeekday;
-}): ScheduledWriteWiseNotificationRequest {
+}): ScheduledWriterHabitNotificationRequest {
   const time = parseTimeOfDay(input.preferencesTimeOfDay);
 
   return {
@@ -174,7 +174,7 @@ function createWeeklyNotificationRequest(input: {
     }),
     identifier: getNotificationIdentifier(input.studentId, input.type),
     trigger: {
-      channelId: WRITEWISE_NOTIFICATION_CHANNEL_ID,
+      channelId: WriterHabit_NOTIFICATION_CHANNEL_ID,
       hour: time.hour,
       minute: time.minute,
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
@@ -187,12 +187,12 @@ function createWeeklyNotificationRequest(input: {
 export function buildScheduledNotificationRequests(
   studentId: string,
   preferences: NotificationPreferences,
-): ScheduledWriteWiseNotificationRequest[] {
+): ScheduledWriterHabitNotificationRequest[] {
   if (!preferences.enabled) {
     return [];
   }
 
-  const requests: ScheduledWriteWiseNotificationRequest[] = [];
+  const requests: ScheduledWriterHabitNotificationRequest[] = [];
 
   if (preferences.dailyAssignment.enabled) {
     requests.push(
@@ -275,13 +275,13 @@ async function configureAndroidChannel(): Promise<void> {
     return;
   }
 
-  await Notifications.setNotificationChannelAsync(WRITEWISE_NOTIFICATION_CHANNEL_ID, {
+  await Notifications.setNotificationChannelAsync(WriterHabit_NOTIFICATION_CHANNEL_ID, {
     importance: Notifications.AndroidImportance.DEFAULT,
     name: translate("en", "notifications.channel.name"),
   });
 }
 
-export async function cancelWriteWiseScheduledNotifications(studentId: string): Promise<void> {
+export async function cancelWriterHabitScheduledNotifications(studentId: string): Promise<void> {
   await Promise.all(
     (["daily_assignment", "incomplete_assignment", "streak", "weekly_report"] as const).map((type) =>
       Notifications.cancelScheduledNotificationAsync(getNotificationIdentifier(studentId, type)).catch(() => undefined),
@@ -333,7 +333,7 @@ export const notificationDeliveryService = {
   }): Promise<NotificationDeliverySyncResult> {
     const permissionStatus = await ensureNotificationPermission();
 
-    await cancelWriteWiseScheduledNotifications(studentId);
+    await cancelWriterHabitScheduledNotifications(studentId);
 
     if (permissionStatus !== "granted") {
       return {

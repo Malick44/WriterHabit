@@ -21,18 +21,18 @@ import {
 } from "./canvasSyncService";
 
 describe("canvasSyncService", () => {
-  const originalCanvasScenario = process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO;
-  const originalBackendSync = process.env.EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC;
+  const originalCanvasScenario = process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO;
+  const originalBackendSync = process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC;
 
   beforeEach(() => {
     mockStore.clear();
-    delete process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO;
-    delete process.env.EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC;
+    delete process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO;
+    delete process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC;
   });
 
   afterAll(() => {
-    process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO = originalCanvasScenario;
-    process.env.EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC = originalBackendSync;
+    process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO = originalCanvasScenario;
+    process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC = originalBackendSync;
   });
 
   it("saves locally first and records backend placeholder metadata by default", async () => {
@@ -61,7 +61,7 @@ describe("canvasSyncService", () => {
   });
 
   it("preserves local strokes when backend sync fails", async () => {
-    process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO = "sync_failed";
+    process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO = "sync_failed";
     const document = createCanvasDocument({
       studentId: "student-1",
       template: "mind_map",
@@ -88,7 +88,7 @@ describe("canvasSyncService", () => {
   });
 
   it("attaches a canvas locally before backend sync status is applied", async () => {
-    process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO = "offline";
+    process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO = "offline";
     const document = await canvasPersistenceService.saveDocument(
       createCanvasDocument({
         studentId: "student-1",

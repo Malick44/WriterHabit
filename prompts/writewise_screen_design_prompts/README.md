@@ -1,6 +1,6 @@
-# WriteWise AI — Screen Design Prompt Pack
+# WriterHabit AI — Screen Design Prompt Pack
 
-This ZIP contains ready-to-use prompts you can paste into an AI design agent to generate or design each major screen for the WriteWise AI app.
+This ZIP contains ready-to-use prompts you can paste into an AI design agent to generate or design each major screen for the WriterHabit AI app.
 
 ## Included
 - 48 individual screen prompt files

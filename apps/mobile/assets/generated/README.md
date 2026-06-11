@@ -1,6 +1,6 @@
 # Generated Assets
 
-Production-candidate generated assets and design-support screenshots for the WriteWise mobile app belong here.
+Production-candidate generated assets and design-support screenshots for the WriterHabit mobile app belong here.
 
 Current status: generated onboarding, empty-state, badge, auth illustration, and auth screenshot concept assets exist.
 

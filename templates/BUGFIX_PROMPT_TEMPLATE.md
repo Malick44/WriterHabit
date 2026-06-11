@@ -3,7 +3,7 @@
 ```txt
 You are a senior debugging engineer.
 
-Fix this issue in WriteWise AI:
+Fix this issue in WriterHabit AI:
 [describe bug]
 
 ## Expected Behavior

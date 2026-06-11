@@ -259,7 +259,7 @@ The feedback review flow additionally handles:
 - completion celebration at `/(student)/review/[submissionId]/complete`
 
 Current mock scenarios can be selected with
-`EXPO_PUBLIC_WRITEWISE_AI_COACH_SCENARIO`:
+`EXPO_PUBLIC_WriterHabit_AI_COACH_SCENARIO`:
 
 - `success`
 - `empty`

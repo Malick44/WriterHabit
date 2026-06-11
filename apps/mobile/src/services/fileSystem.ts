@@ -1,7 +1,7 @@
 /**
  * Local file cache for canvas artifacts.
  *
- * WriteWise's canvas feature is the only part of the app that writes meaningful
+ * WriterHabit's canvas feature is the only part of the app that writes meaningful
  * local files: editable stroke documents, exported preview images, and shareable
  * exports (see docs/07_CANVAS_ARCHITECTURE.md). This module is the thin,
  * feature-agnostic facade over the device file system so feature code never

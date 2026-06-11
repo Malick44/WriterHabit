@@ -1,6 +1,6 @@
-# WriteWise AI — Ordered AI Agent Implementation Prompts
+# WriterHabit AI — Ordered AI Agent Implementation Prompts
 
-This ZIP contains ordered implementation prompts you can give to AI coding agents to build WriteWise AI using a feature-based architecture.
+This ZIP contains ordered implementation prompts you can give to AI coding agents to build WriterHabit AI using a feature-based architecture.
 
 ## How to Use
 

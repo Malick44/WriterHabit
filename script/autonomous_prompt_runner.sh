@@ -155,7 +155,7 @@ build_prompt() {
   local number="$1"
   local path="$2"
   cat <<PROMPT
-Run WriteWise implementation Prompt ${number}.
+Run WriterHabit implementation Prompt ${number}.
 
 Working directory:
 ${ROOT_DIR}

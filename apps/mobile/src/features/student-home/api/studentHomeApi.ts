@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingSkill } from "@writewise/shared";
+import type { GradeLevel, WritingSkill } from "@WriterHabit/shared";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 import {
@@ -14,7 +14,7 @@ interface GetStudentHomeDashboardInput {
 }
 
 function readScenario(): StudentHomeScenario {
-  const parsed = studentHomeScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_STUDENT_HOME_SCENARIO);
+  const parsed = studentHomeScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_STUDENT_HOME_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -124,58 +124,58 @@ function createDashboard(input: GetStudentHomeDashboardInput, scenario: StudentH
     recentFeedback: isEmpty
       ? []
       : [
-          {
-            createdLabel: "Yesterday",
-            improvement:
-              gradeLevel <= 5
-                ? "Add one more detail so the reader can picture it."
-                : gradeLevel <= 8
-                  ? "Use a clearer example after your topic sentence."
-                  : "Connect the evidence back to the claim with one analysis sentence.",
-            revisionTask:
-              gradeLevel <= 5
-                ? "Add one describing word to your favorite sentence."
-                : gradeLevel <= 8
-                  ? "Revise one sentence so the reason is more specific."
-                  : "Revise the last sentence to explain why the evidence matters.",
-            skill: gradeLevel <= 5 ? "vocabulary" : gradeLevel <= 8 ? "clarity" : "evidence_usage",
-            strength:
-              gradeLevel <= 5
-                ? "You used a clear beginning."
-                : gradeLevel <= 8
-                  ? "Your paragraph has a clear opinion."
-                  : "Your claim is focused and arguable.",
-            submissionId: "feedback-latest",
-            title: gradeLevel <= 5 ? "Story detail feedback" : gradeLevel <= 8 ? "Paragraph feedback" : "Argument feedback",
-          },
-        ],
+        {
+          createdLabel: "Yesterday",
+          improvement:
+            gradeLevel <= 5
+              ? "Add one more detail so the reader can picture it."
+              : gradeLevel <= 8
+                ? "Use a clearer example after your topic sentence."
+                : "Connect the evidence back to the claim with one analysis sentence.",
+          revisionTask:
+            gradeLevel <= 5
+              ? "Add one describing word to your favorite sentence."
+              : gradeLevel <= 8
+                ? "Revise one sentence so the reason is more specific."
+                : "Revise the last sentence to explain why the evidence matters.",
+          skill: gradeLevel <= 5 ? "vocabulary" : gradeLevel <= 8 ? "clarity" : "evidence_usage",
+          strength:
+            gradeLevel <= 5
+              ? "You used a clear beginning."
+              : gradeLevel <= 8
+                ? "Your paragraph has a clear opinion."
+                : "Your claim is focused and arguable.",
+          submissionId: "feedback-latest",
+          title: gradeLevel <= 5 ? "Story detail feedback" : gradeLevel <= 8 ? "Paragraph feedback" : "Argument feedback",
+        },
+      ],
     revisionNudges: isEmpty
       ? []
       : [
-          gradeLevel <= 5
-            ? "Try rereading one sentence out loud before you submit."
-            : gradeLevel <= 8
-              ? "Check that each detail supports the topic sentence."
-              : "Make sure every evidence sentence is followed by your own analysis.",
-        ],
+        gradeLevel <= 5
+          ? "Try rereading one sentence out loud before you submit."
+          : gradeLevel <= 8
+            ? "Check that each detail supports the topic sentence."
+            : "Make sure every evidence sentence is followed by your own analysis.",
+      ],
     skillProgress: isEmpty
       ? []
       : gradeLevel <= 5
         ? [
-            { currentScore: 68, label: "Sentences", previousScore: 61, skill: "sentence_structure" },
-            { currentScore: 58, label: "Word choice", previousScore: 54, skill: "vocabulary" },
-          ]
+          { currentScore: 68, label: "Sentences", previousScore: 61, skill: "sentence_structure" },
+          { currentScore: 58, label: "Word choice", previousScore: 54, skill: "vocabulary" },
+        ]
         : gradeLevel <= 8
           ? [
-              { currentScore: 72, label: "Organization", previousScore: 66, skill: "organization" },
-              { currentScore: 64, label: "Clarity", previousScore: 60, skill: "clarity" },
-              { currentScore: 59, label: "Revision", previousScore: 52, skill: "revision_quality" },
-            ]
+            { currentScore: 72, label: "Organization", previousScore: 66, skill: "organization" },
+            { currentScore: 64, label: "Clarity", previousScore: 60, skill: "clarity" },
+            { currentScore: 59, label: "Revision", previousScore: 52, skill: "revision_quality" },
+          ]
           : [
-              { currentScore: 76, label: "Evidence", previousScore: 70, skill: "evidence_usage" },
-              { currentScore: 69, label: "Argument", previousScore: 64, skill: "argument_strength" },
-              { currentScore: 62, label: "Revision", previousScore: 57, skill: "revision_quality" },
-            ],
+            { currentScore: 76, label: "Evidence", previousScore: 70, skill: "evidence_usage" },
+            { currentScore: 69, label: "Argument", previousScore: 64, skill: "argument_strength" },
+            { currentScore: 62, label: "Revision", previousScore: 57, skill: "revision_quality" },
+          ],
     streak: {
       bestDays: isEmpty ? 0 : 9,
       currentDays: isEmpty ? 0 : 4,
@@ -376,19 +376,19 @@ export const studentHomeApi = {
       );
       const todayAssignment = todaySa
         ? {
-            assignmentType: todaySa.assignments.assignment_type,
-            coachSuggestion: "Follow the coaching prompts inside the workspace.",
-            dueLabel: "Today",
-            estimatedMinutes: todaySa.assignments.estimated_minutes,
-            gradeLevelMax: todaySa.assignments.grade_level_max,
-            gradeLevelMin: todaySa.assignments.grade_level_min,
-            id: todaySa.assignment_id,
-            prompt: todaySa.assignments.prompt_fallback,
-            rubricFocus: todaySa.assignments.instructions || [],
-            skillFocus: todaySa.assignments.skill_focus || [],
-            status: todaySa.status,
-            title: todaySa.assignments.title_fallback,
-          }
+          assignmentType: todaySa.assignments.assignment_type,
+          coachSuggestion: "Follow the coaching prompts inside the workspace.",
+          dueLabel: "Today",
+          estimatedMinutes: todaySa.assignments.estimated_minutes,
+          gradeLevelMax: todaySa.assignments.grade_level_max,
+          gradeLevelMin: todaySa.assignments.grade_level_min,
+          id: todaySa.assignment_id,
+          prompt: todaySa.assignments.prompt_fallback,
+          rubricFocus: todaySa.assignments.instructions || [],
+          skillFocus: todaySa.assignments.skill_focus || [],
+          status: todaySa.status,
+          title: todaySa.assignments.title_fallback,
+        }
         : null;
 
       const practicedToday = progress.practiced_today_on === new Date().toISOString().split("T")[0];

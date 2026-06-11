@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-11
 
-This document defines how WriteWise distinguishes client-localized copy from
+This document defines how WriterHabit distinguishes client-localized copy from
 server-authored content, closing audit finding P1-12 ("Service-generated user
 copy is not fully localized") via the documented-strategy option.
 

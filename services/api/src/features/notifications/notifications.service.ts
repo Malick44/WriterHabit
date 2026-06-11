@@ -197,7 +197,7 @@ export class NotificationsService {
         data: {
           notificationId: notification.id,
           notificationType: notification.notificationType,
-          source: "writewise",
+          source: "WriterHabit",
           targetParams: notification.targetParams,
           targetRoute: notification.targetRoute,
         },

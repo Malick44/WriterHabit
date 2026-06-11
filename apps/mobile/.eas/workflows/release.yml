@@ -1,4 +1,4 @@
-name: WriteWise Mobile Release
+name: WriterHabit Mobile Release
 
 on:
   workflow_dispatch:
@@ -48,7 +48,7 @@ jobs:
     params:
       branch: ${{ inputs.update_branch }}
       platform: all
-      message: WriteWise OTA update from EAS Workflow
+      message: WriterHabit OTA update from EAS Workflow
 
   build_android:
     name: Build Android

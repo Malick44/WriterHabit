@@ -107,7 +107,7 @@ Current implementation:
 - `apps/mobile/src/features/canvas/services/canvasSyncService.ts` saves
   locally first, debounces autosave scheduling, creates deterministic signed
   upload/export placeholders by default, and can call future backend endpoints
-  only when `EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`.
+  only when `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`.
 - Backend sync is scaffolded in
   `services/api/src/features/canvas/canvas.service.ts` and
   `services/api/src/features/canvas/canvas.contracts.ts`. There is still no

@@ -38,7 +38,7 @@ describe("apiClient", () => {
   beforeEach(() => {
     fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
     global.fetch = fetchMock;
-    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.writewise.test/api/v1";
+    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.WriterHabit.test/api/v1";
     devGlobal.__DEV__ = false;
     mockGetApiAccessToken.mockReset();
     mockGetApiAccessToken.mockResolvedValue(null);
@@ -190,7 +190,7 @@ describe("apiClient", () => {
         body: {
           error: {
             code: "system.unavailable",
-            fallbackMessage: "WriteWise is temporarily unavailable.",
+            fallbackMessage: "WriterHabit is temporarily unavailable.",
             requestId: "req_backend_500",
             retryable: true,
           },

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import type { GradeBand } from "@/design/tokens";
 import { assignmentRecordSchema, type AssignmentRecord } from "@/features/assignments/types";

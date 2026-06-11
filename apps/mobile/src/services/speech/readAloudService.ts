@@ -1,7 +1,7 @@
 /**
  * Read-aloud (text-to-speech) for accessibility.
  *
- * WriteWise reads coaching text aloud for younger students — the Grades 1–2
+ * WriterHabit reads coaching text aloud for younger students — the Grades 1–2
  * tone explicitly calls for "optional read-aloud" (docs/06_AI_COACH_ARCHITECTURE)
  * — and the shared TextActionBar exposes a read-aloud action over coach messages
  * and feedback.

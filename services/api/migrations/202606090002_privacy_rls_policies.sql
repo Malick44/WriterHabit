@@ -1,5 +1,5 @@
--- WriteWise AI privacy and RLS draft.
--- Requires the schema from 202606090001_initial_writewise_schema.sql.
+-- WriterHabit AI privacy and RLS draft.
+-- Requires the schema from 202606090001_initial_WriterHabit_schema.sql.
 
 create or replace function public.current_user_role()
 returns text
@@ -13,7 +13,7 @@ as $$
   where u.id = (select auth.uid())
 $$;
 
-create or replace function public.is_writewise_admin()
+create or replace function public.is_WriterHabit_admin()
 returns boolean
 language sql
 security definer
@@ -115,7 +115,7 @@ set search_path = public, pg_temp
 stable
 as $$
   select
-    public.is_writewise_admin()
+    public.is_WriterHabit_admin()
     or public.is_student_owner(target_student_profile_id)
     or public.is_parent_for_student(target_student_profile_id)
     or public.is_teacher_for_student(target_student_profile_id)
@@ -129,7 +129,7 @@ set search_path = public, pg_temp
 stable
 as $$
   select
-    public.is_writewise_admin()
+    public.is_WriterHabit_admin()
     or public.is_teacher_for_class(target_class_id)
     or public.is_student_in_class(target_class_id)
     or exists (
@@ -153,7 +153,7 @@ as $$
     from public.assignments a
     where a.id = target_assignment_id
       and (
-        public.is_writewise_admin()
+        public.is_WriterHabit_admin()
         or a.created_by_user_id = (select auth.uid())
         or (a.status = 'published' and a.class_id is null)
         or (a.class_id is not null and public.can_read_class(a.class_id))
@@ -228,7 +228,7 @@ as $$
 $$;
 
 revoke all on function public.current_user_role() from public;
-revoke all on function public.is_writewise_admin() from public;
+revoke all on function public.is_WriterHabit_admin() from public;
 revoke all on function public.is_student_owner(uuid) from public;
 revoke all on function public.is_parent_for_student(uuid) from public;
 revoke all on function public.is_teacher_for_class(uuid) from public;
@@ -243,7 +243,7 @@ revoke all on function public.can_read_canvas_document(uuid) from public;
 revoke all on function public.can_teacher_comment_on_submission(uuid) from public;
 
 grant execute on function public.current_user_role() to authenticated;
-grant execute on function public.is_writewise_admin() to authenticated;
+grant execute on function public.is_WriterHabit_admin() to authenticated;
 grant execute on function public.is_student_owner(uuid) to authenticated;
 grant execute on function public.is_parent_for_student(uuid) to authenticated;
 grant execute on function public.is_teacher_for_class(uuid) to authenticated;
@@ -337,13 +337,13 @@ alter table public.audit_logs force row level security;
 drop policy if exists users_select_self_or_admin on public.users;
 create policy users_select_self_or_admin on public.users
 for select to authenticated
-using (id = (select auth.uid()) or public.is_writewise_admin());
+using (id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists users_admin_all on public.users;
 create policy users_admin_all on public.users
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists student_profiles_select_visible on public.student_profiles;
 create policy student_profiles_select_visible on public.student_profiles
@@ -359,20 +359,20 @@ with check (public.is_student_owner(id));
 drop policy if exists student_profiles_admin_all on public.student_profiles;
 create policy student_profiles_admin_all on public.student_profiles
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists parent_profiles_owner_select_update on public.parent_profiles;
 create policy parent_profiles_owner_select_update on public.parent_profiles
 for all to authenticated
-using (user_id = (select auth.uid()) or public.is_writewise_admin())
-with check (user_id = (select auth.uid()) or public.is_writewise_admin());
+using (user_id = (select auth.uid()) or public.is_WriterHabit_admin())
+with check (user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists parent_settings_owner_select_update on public.parent_settings;
 create policy parent_settings_owner_select_update on public.parent_settings
 for all to authenticated
-using (parent_user_id = (select auth.uid()) or public.is_writewise_admin())
-with check (parent_user_id = (select auth.uid()) or public.is_writewise_admin());
+using (parent_user_id = (select auth.uid()) or public.is_WriterHabit_admin())
+with check (parent_user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists parent_student_links_select_visible on public.parent_student_links;
 create policy parent_student_links_select_visible on public.parent_student_links
@@ -380,7 +380,7 @@ for select to authenticated
 using (
   parent_user_id = (select auth.uid())
   or public.is_student_owner(student_profile_id)
-  or public.is_writewise_admin()
+  or public.is_WriterHabit_admin()
 );
 
 drop policy if exists parent_student_links_parent_accept on public.parent_student_links;
@@ -392,14 +392,14 @@ with check (parent_user_id = (select auth.uid()));
 drop policy if exists parent_student_links_admin_all on public.parent_student_links;
 create policy parent_student_links_admin_all on public.parent_student_links
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists teacher_profiles_owner_select_update on public.teacher_profiles;
 create policy teacher_profiles_owner_select_update on public.teacher_profiles
 for all to authenticated
-using (user_id = (select auth.uid()) or public.is_writewise_admin())
-with check (user_id = (select auth.uid()) or public.is_writewise_admin());
+using (user_id = (select auth.uid()) or public.is_WriterHabit_admin())
+with check (user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists classes_select_visible on public.classes;
 create policy classes_select_visible on public.classes
@@ -409,9 +409,9 @@ using (public.can_read_class(id));
 drop policy if exists classes_teacher_manage on public.classes;
 create policy classes_teacher_manage on public.classes
 for all to authenticated
-using (public.is_teacher_for_class(id) or public.is_writewise_admin())
+using (public.is_teacher_for_class(id) or public.is_WriterHabit_admin())
 with check (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.teacher_profiles tp
@@ -428,19 +428,19 @@ using (public.can_read_class(class_id));
 drop policy if exists class_students_teacher_manage on public.class_students;
 create policy class_students_teacher_manage on public.class_students
 for all to authenticated
-using (public.is_teacher_for_class(class_id) or public.is_writewise_admin())
-with check (public.is_teacher_for_class(class_id) or public.is_writewise_admin());
+using (public.is_teacher_for_class(class_id) or public.is_WriterHabit_admin())
+with check (public.is_teacher_for_class(class_id) or public.is_WriterHabit_admin());
 
 drop policy if exists rubrics_select_available on public.rubrics;
 create policy rubrics_select_available on public.rubrics
 for select to authenticated
-using (status = 'active' or created_by_user_id = (select auth.uid()) or public.is_writewise_admin());
+using (status = 'active' or created_by_user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists rubrics_creator_manage on public.rubrics;
 create policy rubrics_creator_manage on public.rubrics
 for all to authenticated
-using (created_by_user_id = (select auth.uid()) or public.is_writewise_admin())
-with check (created_by_user_id = (select auth.uid()) or public.is_writewise_admin());
+using (created_by_user_id = (select auth.uid()) or public.is_WriterHabit_admin())
+with check (created_by_user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists rubric_criteria_select_available on public.rubric_criteria;
 create policy rubric_criteria_select_available on public.rubric_criteria
@@ -450,7 +450,7 @@ using (
     select 1
     from public.rubrics r
     where r.id = rubric_id
-      and (r.status = 'active' or r.created_by_user_id = (select auth.uid()) or public.is_writewise_admin())
+      and (r.status = 'active' or r.created_by_user_id = (select auth.uid()) or public.is_WriterHabit_admin())
   )
 );
 
@@ -458,7 +458,7 @@ drop policy if exists rubric_criteria_creator_manage on public.rubric_criteria;
 create policy rubric_criteria_creator_manage on public.rubric_criteria
 for all to authenticated
 using (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.rubrics r
@@ -467,7 +467,7 @@ using (
   )
 )
 with check (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.rubrics r
@@ -484,9 +484,9 @@ using (public.can_read_assignment(id));
 drop policy if exists assignments_creator_manage on public.assignments;
 create policy assignments_creator_manage on public.assignments
 for all to authenticated
-using (created_by_user_id = (select auth.uid()) or public.is_writewise_admin())
+using (created_by_user_id = (select auth.uid()) or public.is_WriterHabit_admin())
 with check (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or (
     created_by_user_id = (select auth.uid())
     and (class_id is null or public.is_teacher_for_class(class_id))
@@ -504,19 +504,19 @@ for all to authenticated
 using (
   public.is_student_owner(student_profile_id)
   or (class_id is not null and public.is_teacher_for_class(class_id))
-  or public.is_writewise_admin()
+  or public.is_WriterHabit_admin()
 )
 with check (
   public.is_student_owner(student_profile_id)
   or (class_id is not null and public.is_teacher_for_class(class_id))
-  or public.is_writewise_admin()
+  or public.is_WriterHabit_admin()
 );
 
 drop policy if exists writing_drafts_owner_all on public.writing_drafts;
 create policy writing_drafts_owner_all on public.writing_drafts
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists submissions_select_visible_summary on public.submissions;
 create policy submissions_select_visible_summary on public.submissions
@@ -526,14 +526,14 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists submissions_owner_manage on public.submissions;
 create policy submissions_owner_manage on public.submissions
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists submission_contents_owner_all on public.submission_contents;
 create policy submission_contents_owner_all on public.submission_contents
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists canvas_documents_select_visible_summary on public.canvas_documents;
 create policy canvas_documents_select_visible_summary on public.canvas_documents
@@ -543,14 +543,14 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists canvas_documents_owner_manage on public.canvas_documents;
 create policy canvas_documents_owner_manage on public.canvas_documents
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists canvas_document_contents_owner_all on public.canvas_document_contents;
 create policy canvas_document_contents_owner_all on public.canvas_document_contents
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists submission_canvas_documents_select_visible on public.submission_canvas_documents;
 create policy submission_canvas_documents_select_visible on public.submission_canvas_documents
@@ -561,7 +561,7 @@ drop policy if exists submission_canvas_documents_owner_manage on public.submiss
 create policy submission_canvas_documents_owner_manage on public.submission_canvas_documents
 for all to authenticated
 using (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.submissions s
@@ -570,7 +570,7 @@ using (
   )
 )
 with check (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.submissions s
@@ -582,13 +582,13 @@ with check (
 drop policy if exists review_jobs_owner_select on public.review_jobs;
 create policy review_jobs_owner_select on public.review_jobs
 for select to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists review_jobs_owner_manage on public.review_jobs;
 create policy review_jobs_owner_manage on public.review_jobs
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists feedback_select_visible on public.feedback;
 create policy feedback_select_visible on public.feedback
@@ -598,8 +598,8 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists feedback_admin_manage on public.feedback;
 create policy feedback_admin_manage on public.feedback
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists revision_tasks_select_visible on public.revision_tasks;
 create policy revision_tasks_select_visible on public.revision_tasks
@@ -609,8 +609,8 @@ using (public.can_read_feedback(feedback_id));
 drop policy if exists revision_tasks_admin_manage on public.revision_tasks;
 create policy revision_tasks_admin_manage on public.revision_tasks
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists feedback_rubric_scores_select_visible on public.feedback_rubric_scores;
 create policy feedback_rubric_scores_select_visible on public.feedback_rubric_scores
@@ -620,8 +620,8 @@ using (public.can_read_feedback(feedback_id));
 drop policy if exists feedback_rubric_scores_admin_manage on public.feedback_rubric_scores;
 create policy feedback_rubric_scores_admin_manage on public.feedback_rubric_scores
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists grammar_suggestions_select_visible on public.grammar_suggestions;
 create policy grammar_suggestions_select_visible on public.grammar_suggestions
@@ -631,8 +631,8 @@ using (public.can_read_feedback(feedback_id));
 drop policy if exists grammar_suggestions_admin_manage on public.grammar_suggestions;
 create policy grammar_suggestions_admin_manage on public.grammar_suggestions
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists submission_revisions_select_visible on public.submission_revisions;
 create policy submission_revisions_select_visible on public.submission_revisions
@@ -642,8 +642,8 @@ using (public.can_read_submission(submission_id));
 drop policy if exists submission_revisions_owner_manage on public.submission_revisions;
 create policy submission_revisions_owner_manage on public.submission_revisions
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists teacher_submission_comments_select_visible on public.teacher_submission_comments;
 create policy teacher_submission_comments_select_visible on public.teacher_submission_comments
@@ -667,7 +667,7 @@ drop policy if exists teacher_submission_comments_teacher_update on public.teach
 create policy teacher_submission_comments_teacher_update on public.teacher_submission_comments
 for update to authenticated
 using (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.teacher_profiles tp
@@ -676,7 +676,7 @@ using (
   )
 )
 with check (
-  public.is_writewise_admin()
+  public.is_WriterHabit_admin()
   or exists (
     select 1
     from public.teacher_profiles tp
@@ -688,8 +688,8 @@ with check (
 drop policy if exists ai_coach_interactions_owner_all on public.ai_coach_interactions;
 create policy ai_coach_interactions_owner_all on public.ai_coach_interactions
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists student_progress_totals_select_visible on public.student_progress_totals;
 create policy student_progress_totals_select_visible on public.student_progress_totals
@@ -699,8 +699,8 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists student_progress_totals_owner_or_admin_manage on public.student_progress_totals;
 create policy student_progress_totals_owner_or_admin_manage on public.student_progress_totals
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists student_skill_progress_select_visible on public.student_skill_progress;
 create policy student_skill_progress_select_visible on public.student_skill_progress
@@ -710,8 +710,8 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists student_skill_progress_owner_or_admin_manage on public.student_skill_progress;
 create policy student_skill_progress_owner_or_admin_manage on public.student_skill_progress
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists student_activity_days_select_visible on public.student_activity_days;
 create policy student_activity_days_select_visible on public.student_activity_days
@@ -721,8 +721,8 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists student_activity_days_owner_or_admin_manage on public.student_activity_days;
 create policy student_activity_days_owner_or_admin_manage on public.student_activity_days
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists weekly_reviews_select_visible on public.weekly_reviews;
 create policy weekly_reviews_select_visible on public.weekly_reviews
@@ -732,19 +732,19 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists weekly_reviews_owner_or_admin_manage on public.weekly_reviews;
 create policy weekly_reviews_owner_or_admin_manage on public.weekly_reviews
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists badges_select_active on public.badges;
 create policy badges_select_active on public.badges
 for select to authenticated
-using (active or public.is_writewise_admin());
+using (active or public.is_WriterHabit_admin());
 
 drop policy if exists badges_admin_manage on public.badges;
 create policy badges_admin_manage on public.badges
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists student_badges_select_visible on public.student_badges;
 create policy student_badges_select_visible on public.student_badges
@@ -754,25 +754,25 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists student_badges_owner_or_admin_manage on public.student_badges;
 create policy student_badges_owner_or_admin_manage on public.student_badges
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists entitlements_owner_select on public.entitlements;
 create policy entitlements_owner_select on public.entitlements
 for select to authenticated
-using (owner_user_id = (select auth.uid()) or public.is_writewise_admin());
+using (owner_user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists entitlements_admin_manage on public.entitlements;
 create policy entitlements_admin_manage on public.entitlements
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists entitlement_provider_events_admin_all on public.entitlement_provider_events;
 create policy entitlement_provider_events_admin_all on public.entitlement_provider_events
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());
 
 drop policy if exists notification_preferences_select_visible on public.notification_preferences;
 create policy notification_preferences_select_visible on public.notification_preferences
@@ -785,19 +785,19 @@ for all to authenticated
 using (
   public.is_student_owner(student_profile_id)
   or public.is_parent_for_student(student_profile_id)
-  or public.is_writewise_admin()
+  or public.is_WriterHabit_admin()
 )
 with check (
   public.is_student_owner(student_profile_id)
   or public.is_parent_for_student(student_profile_id)
-  or public.is_writewise_admin()
+  or public.is_WriterHabit_admin()
 );
 
 drop policy if exists notification_devices_owner_all on public.notification_devices;
 create policy notification_devices_owner_all on public.notification_devices
 for all to authenticated
-using (user_id = (select auth.uid()) or public.is_writewise_admin())
-with check (user_id = (select auth.uid()) or public.is_writewise_admin());
+using (user_id = (select auth.uid()) or public.is_WriterHabit_admin())
+with check (user_id = (select auth.uid()) or public.is_WriterHabit_admin());
 
 drop policy if exists prepared_notifications_select_visible on public.prepared_notifications;
 create policy prepared_notifications_select_visible on public.prepared_notifications
@@ -807,11 +807,11 @@ using (public.can_read_student(student_profile_id));
 drop policy if exists prepared_notifications_owner_or_admin_manage on public.prepared_notifications;
 create policy prepared_notifications_owner_or_admin_manage on public.prepared_notifications
 for all to authenticated
-using (public.is_student_owner(student_profile_id) or public.is_writewise_admin())
-with check (public.is_student_owner(student_profile_id) or public.is_writewise_admin());
+using (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin())
+with check (public.is_student_owner(student_profile_id) or public.is_WriterHabit_admin());
 
 drop policy if exists audit_logs_admin_all on public.audit_logs;
 create policy audit_logs_admin_all on public.audit_logs
 for all to authenticated
-using (public.is_writewise_admin())
-with check (public.is_writewise_admin());
+using (public.is_WriterHabit_admin())
+with check (public.is_WriterHabit_admin());

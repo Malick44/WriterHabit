@@ -1,11 +1,11 @@
-# WriteWise Database Schema
+# WriterHabit Database Schema
 
 Status: Supabase/Postgres schema draft, applied to the configured development
 Supabase instance on 2026-06-09. The current mobile app still uses Supabase
 auth, feature-owned deterministic mock APIs, and local device storage. The
 migration drafts live in:
 
-- `services/api/migrations/202606090001_initial_writewise_schema.sql`
+- `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`
 - `services/api/migrations/202606090002_privacy_rls_policies.sql`
 
 No backend runtime, deployment pipeline, or production migration runner has been
@@ -147,7 +147,7 @@ admin access.
 The RLS migration defines security-definer helpers:
 
 - `current_user_role()`
-- `is_writewise_admin()`
+- `is_WriterHabit_admin()`
 - `is_student_owner(student_profile_id)`
 - `is_parent_for_student(student_profile_id)`
 - `is_teacher_for_class(class_id)`

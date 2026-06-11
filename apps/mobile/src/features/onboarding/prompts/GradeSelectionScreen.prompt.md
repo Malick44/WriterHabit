@@ -9,7 +9,7 @@ Design an elegant, futuristic, and highly engaging Grade Selection screen that g
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist. 
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 2 of 6: Grade Selection). The design must feel high-fidelity, interactive, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 2 of 6: Grade Selection). The design must feel high-fidelity, interactive, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Rich Aesthetics**: Utilize advanced layouts such as glassmorphism, dynamic organic background gradients, and smooth spatial elevation.

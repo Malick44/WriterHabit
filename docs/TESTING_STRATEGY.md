@@ -1,6 +1,6 @@
 # Testing Strategy
 
-WriteWise testing is organized around the current Expo mobile app in `apps/mobile/` and the provider-free service boundaries under `services/api/`. The mobile Jest command is the active automated test entry point:
+WriterHabit testing is organized around the current Expo mobile app in `apps/mobile/` and the provider-free service boundaries under `services/api/`. The mobile Jest command is the active automated test entry point:
 
 ```bash
 ./script/build_and_run.sh --test

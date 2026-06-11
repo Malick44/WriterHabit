@@ -1,4 +1,4 @@
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import { assignmentsApi, type AssignmentRecord } from "@/features/assignments";
 import { canvasApi } from "@/features/canvas";

@@ -1,4 +1,4 @@
-import type { AssignmentType, GradeLevel, WritingGoal, WritingSkill } from "@writewise/shared";
+import type { AssignmentType, GradeLevel, WritingGoal, WritingSkill } from "@WriterHabit/shared";
 
 import type { AssignmentDifficulty, AssignmentRubricCriterion } from "../types";
 

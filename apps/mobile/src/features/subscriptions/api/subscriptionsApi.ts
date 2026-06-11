@@ -19,21 +19,21 @@ import {
 
 const generatedAt = "2026-06-09T09:00:00.000Z";
 const trustLinks = {
-  privacyUrl: "https://writewise.app/privacy",
-  termsUrl: "https://writewise.app/terms",
+  privacyUrl: "https://WriterHabit.app/privacy",
+  termsUrl: "https://WriterHabit.app/terms",
 };
 
 const defaultPlans: SubscriptionPlan[] = [
   {
     billingPeriod: "month",
-    id: "writewise_plus_monthly",
+    id: "WriterHabit_plus_monthly",
     isRecommended: false,
     priceLabel: "$9.99",
     trialDays: 7,
   },
   {
     billingPeriod: "year",
-    id: "writewise_plus_yearly",
+    id: "WriterHabit_plus_yearly",
     isRecommended: true,
     priceLabel: "$79.99",
     trialDays: 7,
@@ -79,7 +79,7 @@ const defaultFeatures: SubscriptionFeature[] = [
 ];
 
 function readScenario(): SubscriptionScenario {
-  const parsed = subscriptionScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_SUBSCRIPTION_SCENARIO);
+  const parsed = subscriptionScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_SUBSCRIPTION_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -112,7 +112,7 @@ function createEntitlementResponse(
   const status = overrideStatus ?? getStatus(scenario, input.sessionSubscriptionStatus);
   const isPremium = status === "active" || status === "trial";
   const isEmpty = scenario === "empty";
-  const planId = overridePlanId ?? (isPremium ? "writewise_plus_yearly" : null);
+  const planId = overridePlanId ?? (isPremium ? "WriterHabit_plus_yearly" : null);
 
   const response: SubscriptionApiResponse = {
     canAccessPremium: isPremium,

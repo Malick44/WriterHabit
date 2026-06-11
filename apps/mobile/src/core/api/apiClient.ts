@@ -109,7 +109,7 @@ function createConfigError(input: {
     kind: "config",
     requestId: input.requestId,
     retryable: false,
-    safeMessage: input.safeMessage ?? "The app is not configured to reach WriteWise services.",
+    safeMessage: input.safeMessage ?? "The app is not configured to reach WriterHabit services.",
   });
 }
 
@@ -181,7 +181,7 @@ function buildRequestUrl(path: string, query: ApiQueryParams | undefined, reques
     throw createConfigError({
       code: "config.api_path_must_be_relative",
       requestId,
-      safeMessage: "The app is not configured to reach WriteWise services.",
+      safeMessage: "The app is not configured to reach WriterHabit services.",
     });
   }
 
@@ -342,7 +342,7 @@ async function parseResponsePayload(response: Response, requestId: string): Prom
       kind: "validation",
       requestId,
       retryable: false,
-      safeMessage: "WriteWise received an unexpected response. Please try again.",
+      safeMessage: "WriterHabit received an unexpected response. Please try again.",
       status: response.status,
     });
   }
@@ -350,11 +350,11 @@ async function parseResponsePayload(response: Response, requestId: string): Prom
 
 function parseBackendError(payload: unknown):
   | {
-      code?: string;
-      fallbackMessage?: string;
-      requestId?: string;
-      retryable?: boolean;
-    }
+    code?: string;
+    fallbackMessage?: string;
+    requestId?: string;
+    retryable?: boolean;
+  }
   | null {
   const parsed = apiErrorResponseSchema.safeParse(payload);
   return parsed.success ? parsed.data.error : null;
@@ -438,7 +438,7 @@ function getSafeMessageForStatus(status: number): string {
   }
 
   if (status >= 500) {
-    return "WriteWise services are temporarily unavailable. Please try again.";
+    return "WriterHabit services are temporarily unavailable. Please try again.";
   }
 
   return "The request could not be completed. Please try again.";
@@ -479,7 +479,7 @@ function validatePayload<T>(payload: unknown, schema: ZodType<T> | undefined, in
       kind: "validation",
       requestId: input.requestId,
       retryable: false,
-      safeMessage: "WriteWise received an unexpected response. Please try again.",
+      safeMessage: "WriterHabit received an unexpected response. Please try again.",
       status: input.status,
     });
   }
@@ -523,7 +523,7 @@ function createFetchError(cause: unknown, input: {
     kind: "network",
     requestId: input.requestId,
     retryable: true,
-    safeMessage: "WriteWise services are unavailable. Check your connection and try again.",
+    safeMessage: "WriterHabit services are unavailable. Check your connection and try again.",
   });
 }
 

@@ -9,7 +9,7 @@ Design a futuristic and highly polished Writing Goals screen (select up to 3 goa
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 3 of 6: Writing Goals). The design must feel high-fidelity, interactive, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 3 of 6: Writing Goals). The design must feel high-fidelity, interactive, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Rich Aesthetics**: Avoid simple checkmarks. Use glowing interactive tiles, glassmorphism cards, and fluid transition animations.

@@ -1,8 +1,8 @@
-# WriteWise App Implementation Audit
+# WriterHabit App Implementation Audit
 
 Audit run: 2026-06-10 23:24 PDT  
 Remediation pass: 2026-06-11 (see "Remediation Update" below)  
-Workspace: `/Users/malickdes/WorkSpace/writewise`  
+Workspace: `/Users/malickdes/WorkSpace/WriterHabit`  
 Goal: plan and audit the entire implementation so the app can reach UI `9.5/10` and production functionality `10/10`.
 
 ## Executive Verdict
@@ -25,7 +25,7 @@ The original remediation pass was validated with `tsc --noEmit`, `eslint . --max
 
 | Finding | Status | What changed |
 | --- | --- | --- |
-| P0-3 mock auth in production | **Closed** | `authStore` ignores `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` and rejects demo/mock sign-in unless `__DEV__`; three new tests cover production rejection and hydration fall-through. |
+| P0-3 mock auth in production | **Closed** | `authStore` ignores `EXPO_PUBLIC_WriterHabit_MOCK_SESSION` and rejects demo/mock sign-in unless `__DEV__`; three new tests cover production rejection and hydration fall-through. |
 | P0-5 unchecked workflow writes (client portion) | **Improved** | `submitAssignment` now checks and throws on every Supabase write error (submission contents, review job, feedback, revision task). Server-side state machines still require the backend runtime (open). |
 | P0-6 submission/revision truth | **Closed (client)** | `writingWorkspaceApi.submitDraft` now submits through `assignmentsApi.submitAssignment` and only routes to review with the backend-acknowledged submission id; `feedbackReviewApi.submitRevision` persists to `submission_revisions` (idempotent upsert) and fails loudly instead of faking completion; revision drafts are deleted only after acceptance. |
 | P0-7 autosave stale writes | **Closed** | Writing and canvas saves are serialized through a promise chain; results from superseded saves can no longer overwrite newer work; status only reports "saved" when the latest text is durable. New deferred-promise race test in `useWritingWorkspace.test.tsx`. |
@@ -65,7 +65,7 @@ I used a focused sub-agent fan-out rather than hundreds of agents. Hundreds were
 
 ## Current Validation Results
 
-Commands run from `/Users/malickdes/WorkSpace/writewise` unless noted. Updated 2026-06-11 after the remediation pass.
+Commands run from `/Users/malickdes/WorkSpace/WriterHabit` unless noted. Updated 2026-06-11 after the remediation pass.
 
 | Check | Result | Notes |
 | --- | --- | --- |
@@ -133,7 +133,7 @@ Fix:
 
 Evidence:
 
-- `apps/mobile/src/core/auth/authStore.ts` reads `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION`.
+- `apps/mobile/src/core/auth/authStore.ts` reads `EXPO_PUBLIC_WriterHabit_MOCK_SESSION`.
 - Hydration prefers a mock session before Supabase when that env var is present.
 
 Impact: a misconfigured production build could enter a local/demo session path.
@@ -148,8 +148,8 @@ Fix:
 
 Evidence:
 
-- `services/api/migrations/202606090001_initial_writewise_schema.sql` allows `users.role = 'admin'`.
-- `services/api/migrations/202606090002_privacy_rls_policies.sql` uses `public.users.role` for `is_writewise_admin()`.
+- `services/api/migrations/202606090001_initial_WriterHabit_schema.sql` allows `users.role = 'admin'`.
+- `services/api/migrations/202606090002_privacy_rls_policies.sql` uses `public.users.role` for `is_WriterHabit_admin()`.
 - `services/api/migrations/202606100001_profile_settings_notification_sync.sql` creates a self-update policy on `public.users` without an obvious column restriction.
 
 Impact: a user may be able to update their own `users.role` and become admin, depending on grants and runtime execution.
@@ -262,7 +262,7 @@ Evidence:
 
 - Updated 2026-06-11: `expo-updates` is installed, `apps/mobile/app.json` has `runtimeVersion.policy: "fingerprint"`, OTA update config, and `extra.eas.projectId`, `apps/mobile/eas.json` defines development/preview/production profiles, `apps/mobile/.eas/workflows/release.yml` exists, and `.github/workflows/mobile-release.yml` runs release gates.
 - `npx eas-cli@latest init --non-interactive` could not complete because the logged-in user has multiple Expo owners (`malickb` and `ai-orbit-studio`) and the app config does not choose one.
-- The committed EAS project id is the documented placeholder `WRITEWISE_EAS_PROJECT_ID_REQUIRED` until the owner links the real EAS project.
+- The committed EAS project id is the documented placeholder `WriterHabit_EAS_PROJECT_ID_REQUIRED` until the owner links the real EAS project.
 
 Impact: there is now a reproducible local/CI release surface and OTA runtime policy, but EAS-hosted update/build/push-token behavior is blocked until the real EAS project id and credentials are configured.
 

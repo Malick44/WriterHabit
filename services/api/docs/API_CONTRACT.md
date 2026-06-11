@@ -1,4 +1,4 @@
-# WriteWise Backend API Contract
+# WriterHabit Backend API Contract
 
 Status: planned contract for the future backend service. The current mobile app
 uses Supabase client auth, Supabase RPCs for student profile settings and
@@ -513,7 +513,7 @@ The mobile canvas stores compact stroke documents locally and saves locally
 before any backend attempt. `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
 now scaffolds backend sync with deterministic signed upload and export
 placeholders by default. It only calls these planned API routes when
-`EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`; this repository still
+`EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`; this repository still
 does not contain a running backend server.
 
 Backend canvas storage splits editable payloads from metadata:
@@ -1040,7 +1040,7 @@ interface EntitlementsResponse {
   role: UserRole;
   status: SubscriptionStatus;
   canAccessPremium: boolean;
-  currentPlanId: "writewise_plus_monthly" | "writewise_plus_yearly" | null;
+  currentPlanId: "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly" | null;
   renewalLabel: string | null;
   connectionStatus: ConnectionStatus;
   generatedAt: string;
@@ -1054,7 +1054,7 @@ interface EntitlementsResponse {
 }
 
 interface SubscriptionPlan {
-  id: "writewise_plus_monthly" | "writewise_plus_yearly";
+  id: "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly";
   billingPeriod: "month" | "year";
   priceLabel: string;
   trialDays: number;

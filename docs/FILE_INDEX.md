@@ -21,7 +21,7 @@ services/api/docs/AUTHORIZATION_RULES.md
 services/api/docs/DATABASE_SCHEMA.md
 services/api/docs/DATA_RELATIONSHIPS.md
 services/api/docs/ERROR_CODES.md
-services/api/migrations/202606090001_initial_writewise_schema.sql
+services/api/migrations/202606090001_initial_WriterHabit_schema.sql
 services/api/migrations/202606090002_privacy_rls_policies.sql
 services/api/src/features/audit/audit.contracts.ts
 services/api/src/features/audit/audit.service.ts

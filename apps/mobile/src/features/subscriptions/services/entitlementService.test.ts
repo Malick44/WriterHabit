@@ -43,14 +43,14 @@ function createEntitlement(overrides: Partial<SubscriptionApiResponse> = {}): Su
     plans: [
       {
         billingPeriod: "month",
-        id: "writewise_plus_monthly",
+        id: "WriterHabit_plus_monthly",
         isRecommended: false,
         priceLabel: "$9.99",
         trialDays: 7,
       },
       {
         billingPeriod: "year",
-        id: "writewise_plus_yearly",
+        id: "WriterHabit_plus_yearly",
         isRecommended: true,
         priceLabel: "$79.99",
         trialDays: 7,
@@ -60,8 +60,8 @@ function createEntitlement(overrides: Partial<SubscriptionApiResponse> = {}): Su
     role: "student",
     status: "free",
     trustLinks: {
-      privacyUrl: "https://writewise.app/privacy",
-      termsUrl: "https://writewise.app/terms",
+      privacyUrl: "https://WriterHabit.app/privacy",
+      termsUrl: "https://WriterHabit.app/terms",
     },
     userId: "student-1",
     ...overrides,
@@ -87,7 +87,7 @@ describe("entitlementService", () => {
     const viewModel = buildSubscriptionViewModel(createEntitlement(), { gradeLevel: 4 });
 
     expect(viewModel.isPremium).toBe(false);
-    expect(viewModel.recommendedPlan?.id).toBe("writewise_plus_yearly");
+    expect(viewModel.recommendedPlan?.id).toBe("WriterHabit_plus_yearly");
     expect(viewModel.visibleBenefits).toHaveLength(3);
     expect(viewModel.visibleBenefits[0]?.feature.id).toBe("safe_ai_coach");
   });
@@ -108,7 +108,7 @@ describe("entitlementService", () => {
       evaluateEntitlementGate(
         createEntitlement({
           canAccessPremium: true,
-          currentPlanId: "writewise_plus_yearly",
+          currentPlanId: "WriterHabit_plus_yearly",
           status: "active",
         }),
         "rubric_detail",

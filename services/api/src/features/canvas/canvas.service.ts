@@ -62,9 +62,9 @@ export class CanvasService {
       objectPath,
       requiredHeaders: {
         "content-type": input.request.contentType,
-        "x-writewise-canvas-client-version": String(input.request.clientVersion),
+        "x-WriterHabit-canvas-client-version": String(input.request.clientVersion),
       },
-      uploadUrl: `placeholder://writewise-storage/${objectPath}`,
+      uploadUrl: `placeholder://WriterHabit-storage/${objectPath}`,
     };
   }
 

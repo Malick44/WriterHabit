@@ -48,7 +48,7 @@ Each domain will evolve independently. Feature-based architecture prevents the p
 ## Recommended Monorepo
 
 ```txt
-writewise-ai/
+WriterHabit-ai/
   apps/
     mobile/                  # Expo React Native app
     teacher-web/             # Optional Next.js teacher/admin portal

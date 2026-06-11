@@ -2,14 +2,14 @@ import { useEffect } from "react";
 import { useRouter, type Href } from "expo-router";
 import * as Notifications from "expo-notifications";
 
-function isWriteWiseRoute(value: unknown): value is Href {
+function isWriterHabitRoute(value: unknown): value is Href {
   return typeof value === "string" && value.startsWith("/");
 }
 
 function getTargetRoute(response: Notifications.NotificationResponse | null): Href | null {
   const data = response?.notification.request.content.data;
 
-  if (!data || data.source !== "writewise" || !isWriteWiseRoute(data.targetRoute)) {
+  if (!data || data.source !== "WriterHabit" || !isWriterHabitRoute(data.targetRoute)) {
     return null;
   }
 

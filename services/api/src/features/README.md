@@ -1,6 +1,6 @@
 # Backend Feature Boundaries
 
-This folder is the framework-neutral scaffold for the planned WriteWise backend.
+This folder is the framework-neutral scaffold for the planned WriterHabit backend.
 It intentionally does not choose NestJS, Spring Boot, or another runtime yet.
 
 Each feature folder owns its controllers/services/contracts once a backend

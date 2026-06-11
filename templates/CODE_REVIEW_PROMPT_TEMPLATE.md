@@ -3,7 +3,7 @@
 ```txt
 You are a senior code reviewer.
 
-Review [feature/module] in WriteWise AI.
+Review [feature/module] in WriterHabit AI.
 
 Check architecture boundaries, TypeScript quality, state management, accessibility, localization readiness, loading/empty/error states, tests, performance, safety, and privacy.
 

@@ -1,6 +1,6 @@
-# WriteWise Codex Setup
+# WriterHabit Codex Setup
 
-This directory contains project-local Codex configuration for `/Users/malickdes/WorkSpace/writewise`.
+This directory contains project-local Codex configuration for `/Users/malickdes/WorkSpace/WriterHabit`.
 
 ## Required Startup Context
 

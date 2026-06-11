@@ -1,9 +1,9 @@
-# WriteWise Canvas Feature Prompt
+# WriterHabit Canvas Feature Prompt
 
-Use this prompt when implementing, reviewing, or extending the WriteWise mobile
+Use this prompt when implementing, reviewing, or extending the WriterHabit mobile
 canvas feature.
 
-WriteWise AI is a K-12 writing coach. Canvas work must help students plan,
+WriterHabit AI is a K-12 writing coach. Canvas work must help students plan,
 handwrite, draw, annotate, and revise their own writing. Do not add flows that
 complete assignments for students or turn canvas content into a polished final
 answer without student work.
@@ -76,7 +76,7 @@ Important reality check:
 - Backend canvas code is framework-neutral scaffolding only. There is no running
   backend API server in this repository.
 - Backend sync calls are gated behind
-  `EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`.
+  `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`.
 - Do not document or code as if production canvas upload/export/recognition is
   fully deployed.
 

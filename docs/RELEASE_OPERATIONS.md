@@ -15,7 +15,7 @@ npx eas-cli@latest config
 
 ## Required Owner Action
 
-The committed app config contains the placeholder `WRITEWISE_EAS_PROJECT_ID_REQUIRED` because `npx eas-cli@latest init --non-interactive` could not choose between the available Expo owners (`malickb` and `ai-orbit-studio`) without an owner decision.
+The committed app config contains the placeholder `WriterHabit_EAS_PROJECT_ID_REQUIRED` because `npx eas-cli@latest init --non-interactive` could not choose between the available Expo owners (`malickb` and `ai-orbit-studio`) without an owner decision.
 
 The owner must choose the Expo account or organization, then run:
 
@@ -56,14 +56,14 @@ npm run typecheck
 npm run lint -- --max-warnings=0
 npm test -- --runInBand
 npx expo-doctor
-npx expo export --platform ios --output-dir /tmp/writewise-release-ios
-npx expo export --platform android --output-dir /tmp/writewise-release-android
+npx expo export --platform ios --output-dir /tmp/WriterHabit-release-ios
+npx expo export --platform android --output-dir /tmp/WriterHabit-release-android
 ```
 
 Manual EAS update/build steps are gated behind:
 
 - GitHub secret `EXPO_TOKEN`.
-- A real committed EAS project id or repository variable `WRITEWISE_EAS_PROJECT_ID`.
+- A real committed EAS project id or repository variable `WriterHabit_EAS_PROJECT_ID`.
 - Manual workflow-dispatch inputs.
 
 Do not store Apple, Google, APNs, FCM, service-role, or Expo tokens in the repository. Use EAS managed credentials and GitHub secrets/variables.
@@ -94,7 +94,7 @@ Production OTA update for JS-only changes:
 
 ```bash
 cd apps/mobile
-npx eas-cli@latest update --branch production --platform all --message "WriteWise production update"
+npx eas-cli@latest update --branch production --platform all --message "WriterHabit production update"
 ```
 
 Any dependency, native module, config plugin, app config, permission, entitlement, bundle id, icon, splash, EAS project identity, OTA URL, or push-notification capability change requires a new native build before users can receive it safely.

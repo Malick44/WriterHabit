@@ -1,4 +1,4 @@
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import {
   canSubmitAssignment,
@@ -189,7 +189,7 @@ function createEntitlement(overrides: Partial<SubscriptionApiResponse> = {}): Su
     plans: [
       {
         billingPeriod: "year",
-        id: "writewise_plus_yearly",
+        id: "WriterHabit_plus_yearly",
         isRecommended: true,
         priceLabel: "$79.99",
         trialDays: 7,
@@ -199,8 +199,8 @@ function createEntitlement(overrides: Partial<SubscriptionApiResponse> = {}): Su
     role: "student",
     status: "free",
     trustLinks: {
-      privacyUrl: "https://writewise.app/privacy",
-      termsUrl: "https://writewise.app/terms",
+      privacyUrl: "https://WriterHabit.app/privacy",
+      termsUrl: "https://WriterHabit.app/terms",
     },
     userId: "student-1",
     ...overrides,
@@ -435,7 +435,7 @@ describe("critical product logic", () => {
       evaluateEntitlementGate(
         createEntitlement({
           canAccessPremium: true,
-          currentPlanId: "writewise_plus_yearly",
+          currentPlanId: "WriterHabit_plus_yearly",
           status: "active",
         }),
         "rubric_detail",

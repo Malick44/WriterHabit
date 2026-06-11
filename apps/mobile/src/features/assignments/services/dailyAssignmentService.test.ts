@@ -1,4 +1,4 @@
-import type { AssignmentType } from "@writewise/shared";
+import type { AssignmentType } from "@WriterHabit/shared";
 
 import {
   selectDailyAssignment,

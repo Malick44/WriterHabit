@@ -1,4 +1,4 @@
-# WriteWise Data Relationships
+# WriterHabit Data Relationships
 
 Status: planned relationship map for the database drafts in
 `services/api/migrations/`. The current mobile app has not been wired to these

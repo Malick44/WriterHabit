@@ -71,8 +71,8 @@ describe("auth mock sessions outside development", () => {
   });
 
   it("ignores the mock session env flag during hydration in production builds", async () => {
-    const originalScenario = process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION;
-    process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION = "student";
+    const originalScenario = process.env.EXPO_PUBLIC_WriterHabit_MOCK_SESSION;
+    process.env.EXPO_PUBLIC_WriterHabit_MOCK_SESSION = "student";
 
     try {
       await useAuthStore.getState().hydrateSession();
@@ -82,9 +82,9 @@ describe("auth mock sessions outside development", () => {
       expect(useAuthStore.getState().session?.source).not.toBe("mock");
     } finally {
       if (originalScenario === undefined) {
-        delete process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION;
+        delete process.env.EXPO_PUBLIC_WriterHabit_MOCK_SESSION;
       } else {
-        process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION = originalScenario;
+        process.env.EXPO_PUBLIC_WriterHabit_MOCK_SESSION = originalScenario;
       }
     }
   });

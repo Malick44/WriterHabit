@@ -1,12 +1,12 @@
 ---
 name: writing-screen-review
-description: Review WriteWise's core student-facing screens — the writing workspace, handwriting canvas, AI review/feedback, and revision screens — for correctness, age-appropriate UX, accessibility, draft-safety, and academic-integrity guardrails. Use when building or reviewing any screen under features/writing-workspace, features/canvas, or features/feedback-review, or any Expo Router route a student spends sustained time on. Output should flag draft-loss risks, missing states, integrity/safety gaps, and accessibility issues with concrete fixes.
+description: Review WriterHabit's core student-facing screens — the writing workspace, handwriting canvas, AI review/feedback, and revision screens — for correctness, age-appropriate UX, accessibility, draft-safety, and academic-integrity guardrails. Use when building or reviewing any screen under features/writing-workspace, features/canvas, or features/feedback-review, or any Expo Router route a student spends sustained time on. Output should flag draft-loss risks, missing states, integrity/safety gaps, and accessibility issues with concrete fixes.
 ---
 
 # Writing Screen Review
 
 The screens where a student actually writes, draws, and revises are the heart of
-WriteWise. A bug here loses a child's work, confuses a young user, or quietly lets the
+WriterHabit. A bug here loses a child's work, confuses a young user, or quietly lets the
 AI cross from coaching into ghostwriting. This skill makes review of those screens a
 deliberate checklist rather than a glance.
 

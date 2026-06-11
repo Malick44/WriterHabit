@@ -1,8 +1,8 @@
-# WriteWise AI — Agent Guide
+# WriterHabit AI — Agent Guide
 
-WriteWise AI is an AI-powered writing coach for students in Grades 1-12. It helps students think, plan, draft, revise, and improve their own writing across typed and handwriting/canvas workflows. It must never become a cheating or assignment-completion tool.
+WriterHabit AI is an AI-powered writing coach for students in Grades 1-12. It helps students think, plan, draft, revise, and improve their own writing across typed and handwriting/canvas workflows. It must never become a cheating or assignment-completion tool.
 
-This file governs all coding and documentation work in `/Users/malickdes/WorkSpace/writewise`. Read it before making changes, then keep it aligned with the real repository state.
+This file governs all coding and documentation work in `/Users/malickdes/WorkSpace/WriterHabit`. Read it before making changes, then keep it aligned with the real repository state.
 
 ## Required Startup Context
 
@@ -57,7 +57,7 @@ After that, read the task-specific implementation prompt, screen prompt, project
 ## Repository Layout
 
 ```txt
-writewise/
+WriterHabit/
   apps/
     mobile/                         Expo React Native app
   packages/
@@ -66,7 +66,7 @@ writewise/
     api/                            Backend API contract docs and framework-neutral feature stubs
   docs/                             Architecture, roadmap, API, AI, canvas, security docs
   prompts/                          Implementation prompts and specialist prompts
-  prompts/writewise_screen_design_prompts/
+  prompts/WriterHabit_screen_design_prompts/
                                     Screen-by-screen design prompts
   skills/                           Project-specific agent skills
   templates/                        Prompt templates
@@ -78,7 +78,7 @@ writewise/
 Important current facts:
 
 - `services/api/` now has framework-neutral contract docs in `services/api/docs/`, database schema and relationship docs in `services/api/docs/`, migration drafts in `services/api/migrations/`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; no backend runtime framework, package manifest, production migration runner, or running API server exists yet.
-- `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@writewise/shared`.
+- `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@WriterHabit/shared`.
 - No native `apps/mobile/ios/` or `apps/mobile/android/` folders should be kept unless the workflow intentionally changes from Expo CNG/prebuild.
 
 ## Mobile App Layout
@@ -276,9 +276,9 @@ Screen design prompt workflow:
 - Before any screen-specific prompt, read:
   - `docs/00_CONTEXT_BRIEF.md`
   - `prompts/01_master_agent_rules.md`
-  - `prompts/writewise_screen_design_prompts/MASTER_SYSTEM_PROMPT.md`
-  - `prompts/writewise_screen_design_prompts/README.md`
-  - `prompts/writewise_screen_design_prompts/SCREEN_INVENTORY.md`
+  - `prompts/WriterHabit_screen_design_prompts/MASTER_SYSTEM_PROMPT.md`
+  - `prompts/WriterHabit_screen_design_prompts/README.md`
+  - `prompts/WriterHabit_screen_design_prompts/SCREEN_INVENTORY.md`
 - Use one screen prompt at a time.
 
 Asset generation workflow:
@@ -337,7 +337,7 @@ node scripts/supabase-admin.mjs buckets
 
 ## Product Safety Rules
 
-WriteWise AI is a learning app, not a cheating app.
+WriterHabit AI is a learning app, not a cheating app.
 
 Forbidden CTAs and flows:
 

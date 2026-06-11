@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingSkill } from "@writewise/shared";
+import type { GradeLevel, WritingSkill } from "@WriterHabit/shared";
 
 import { aiCoachApi } from "../api/aiCoachApi";
 import { buildAiCoachPrompt } from "../prompts/coachPrompt";
@@ -46,7 +46,7 @@ function makeContext(overrides: Partial<AiCoachContextBuilderInput> = {}): AiCoa
 
 describe("aiCoachPolicyService", () => {
   afterEach(() => {
-    delete process.env.EXPO_PUBLIC_WRITEWISE_AI_COACH_SCENARIO;
+    delete process.env.EXPO_PUBLIC_WriterHabit_AI_COACH_SCENARIO;
   });
 
   it("builds bounded AI coach context for a request", () => {

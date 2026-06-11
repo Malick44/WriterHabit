@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import type { WritingGoal } from "@writewise/shared";
+import type { WritingGoal } from "@WriterHabit/shared";
 
 import { routes } from "@/core/navigation/routeNames";
 import { colors, getGradeBandForGrade } from "@/design/tokens";

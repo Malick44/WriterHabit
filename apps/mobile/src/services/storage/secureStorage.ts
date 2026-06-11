@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const SECURE_PREFIX = 'writewise.secure.';
+const SECURE_PREFIX = 'WriterHabit.secure.';
 const secureStoreKeyPattern = /[^A-Za-z0-9._-]/g;
 
 function toSecureKey(key: string) {

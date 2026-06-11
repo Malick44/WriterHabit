@@ -1,4 +1,4 @@
-# WriteWise AI — Feature-Based Project Architecture
+# WriterHabit AI — Feature-Based Project Architecture
 
 This package defines a production-ready, feature-based architecture for an AI writing assistant app for students in Grades 1–12.
 
@@ -64,7 +64,7 @@ Shared code lives in `packages/shared` or `apps/mobile/src/shared`.
 ## Top-Level Structure
 
 ```txt
-writewise-ai/
+WriterHabit-ai/
   apps/
     mobile/
     teacher-web/

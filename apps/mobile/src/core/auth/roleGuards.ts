@@ -1,4 +1,4 @@
-import type { UserRole } from "@writewise/shared";
+import type { UserRole } from "@WriterHabit/shared";
 
 import type { AuthSession, NavigableUserRole } from "./authTypes";
 

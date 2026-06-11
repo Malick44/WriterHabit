@@ -1,4 +1,4 @@
-import type { WritingGoal } from "@writewise/shared";
+import type { WritingGoal } from "@WriterHabit/shared";
 
 import type { TranslationKey } from "@/i18n";
 

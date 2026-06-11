@@ -1,11 +1,11 @@
 ---
 name: expo-ota-vs-rebuild
-description: Decide whether a WriteWise mobile change can ship as an Expo OTA update (eas update) or requires a new native build (eas build / store submission). Use whenever you add or change a dependency, native module, Expo config plugin, app.json/app.config, permissions, entitlements, deep links, splash/icon, or anything that touches the native layer. Output should classify the change as OTA-safe, dev-build-required, or rebuild-and-resubmit, with the reason.
+description: Decide whether a WriterHabit mobile change can ship as an Expo OTA update (eas update) or requires a new native build (eas build / store submission). Use whenever you add or change a dependency, native module, Expo config plugin, app.json/app.config, permissions, entitlements, deep links, splash/icon, or anything that touches the native layer. Output should classify the change as OTA-safe, dev-build-required, or rebuild-and-resubmit, with the reason.
 ---
 
 # Expo OTA vs Rebuild
 
-WriteWise ships as an Expo + Expo Router app (`apps/mobile`). Most product work is
+WriterHabit ships as an Expo + Expo Router app (`apps/mobile`). Most product work is
 JavaScript/TypeScript and can ship instantly over the air with `eas update`. But a
 class of changes touches the **native runtime** and will silently break — or simply
 not apply — if pushed as an OTA update over a build that does not contain the matching
@@ -75,7 +75,7 @@ A new build that must go through App Store / Play review before users get it. Us
 - Bundle identifier, app name, app icon, or splash changes that are part of the binary
 - Anything in bucket 2 that ships to production users (not just internal testers)
 
-## WriteWise-Specific Watch List
+## WriterHabit-Specific Watch List
 
 These are the parts of this app most likely to cross the native boundary:
 

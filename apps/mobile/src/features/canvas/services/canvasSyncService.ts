@@ -78,11 +78,11 @@ export interface CanvasAutosaveScheduler {
 }
 
 function isBackendSyncEnabled(): boolean {
-  return process.env.EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC === "true";
+  return process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC === "true";
 }
 
 export function readCanvasScenario(): CanvasScenario {
-  const parsed = canvasScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_CANVAS_SCENARIO);
+  const parsed = canvasScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -113,7 +113,7 @@ function getSignedUploadPlaceholder(document: CanvasDocument): CanvasSignedUploa
     objectPath: getCanvasObjectPath(document),
     requiredHeaders: {
       "content-type": "application/json",
-      "x-writewise-canvas-client-version": String(getClientVersion(document)),
+      "x-WriterHabit-canvas-client-version": String(getClientVersion(document)),
     },
     uploadUrl: `placeholder://canvas-upload/${encodeURIComponent(document.id)}`,
   });

@@ -4,7 +4,7 @@ Paste this template into your AI agent and replace the placeholders.
 
 ---
 You are a senior product designer and mobile UI specialist.
-Design a polished, realistic screen for WriteWise AI.
+Design a polished, realistic screen for WriterHabit AI.
 
 Screen name: [SCREEN NAME]
 Target user: [TARGET USER]

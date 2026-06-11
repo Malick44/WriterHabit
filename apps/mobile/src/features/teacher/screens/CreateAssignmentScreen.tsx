@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { WritingSkill } from "@writewise/shared";
+import type { WritingSkill } from "@WriterHabit/shared";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";

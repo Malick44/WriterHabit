@@ -658,7 +658,7 @@ const teacherSubmissionReviews: Record<string, TeacherSubmissionReview> = {
 };
 
 function readScenario(): TeacherScenario {
-  const parsed = teacherScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_TEACHER_SCENARIO);
+  const parsed = teacherScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_TEACHER_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -835,9 +835,9 @@ export const teacherApi = {
       generatedAt,
       review: teacherSubmissionReviews[input.submissionId]
         ? {
-            ...teacherSubmissionReviews[input.submissionId],
-            teacherComment: input.comment.trim(),
-          }
+          ...teacherSubmissionReviews[input.submissionId],
+          teacherComment: input.comment.trim(),
+        }
         : null,
     });
   },

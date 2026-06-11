@@ -1,5 +1,5 @@
 import type { Session as SupabaseSession, User as SupabaseUser } from "@supabase/supabase-js";
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 import * as Linking from "expo-linking";
 import { z } from "zod";
 

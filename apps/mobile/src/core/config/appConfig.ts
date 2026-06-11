@@ -1,5 +1,5 @@
 export const appConfig = {
-  appName: "WriteWise AI",
+  appName: "WriterHabit AI",
   supportEmail: "support@ai-orbit-studio.com",
   defaultLanguage: "en",
   dailyAssignmentRefreshHour: 5,

@@ -9,7 +9,7 @@ Design a futuristic, elegant, and immersive Role Selection screen for onboarding
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist. 
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 1 of 6: Role Selection). The design must feel high-fidelity, extremely polished, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 1 of 6: Role Selection). The design must feel high-fidelity, extremely polished, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Rich Aesthetics**: Avoid generic styles, solid grey cards, or standard system defaults. Incorporate sleek dark/light adaptive mode, smooth color-shifting gradients, glow/reflection effects, or dynamic glassmorphism (layered translucent sheets with background blur).

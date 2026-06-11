@@ -1,4 +1,4 @@
-import type { WritingSkill } from "@writewise/shared";
+import type { WritingSkill } from "@WriterHabit/shared";
 
 import { typography } from "@/design/tokens";
 import { translate, type TranslationKey } from "@/i18n";
@@ -274,13 +274,13 @@ function hasProgressContent(dashboard: ProgressApiResponse): boolean {
 
   return Boolean(
     dashboard.skills.length > 0 ||
-      totals.aiFeedbackApplied > 0 ||
-      totals.assignmentsCompleted > 0 ||
-      totals.handwritingMinutes > 0 ||
-      totals.minutesThisWeek > 0 ||
-      totals.revisionsCompleted > 0 ||
-      totals.rubricImprovement > 0 ||
-      totals.wordsWritten > 0,
+    totals.aiFeedbackApplied > 0 ||
+    totals.assignmentsCompleted > 0 ||
+    totals.handwritingMinutes > 0 ||
+    totals.minutesThisWeek > 0 ||
+    totals.revisionsCompleted > 0 ||
+    totals.rubricImprovement > 0 ||
+    totals.wordsWritten > 0,
   );
 }
 

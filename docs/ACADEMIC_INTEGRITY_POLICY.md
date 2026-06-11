@@ -1,12 +1,12 @@
 # Academic Integrity Policy
 
-Status: Prompt 25 policy for WriteWise AI coaching and review. This policy is
+Status: Prompt 25 policy for WriterHabit AI coaching and review. This policy is
 implemented today in local mobile AI coach guards and framework-neutral backend
 AI service scaffolds. A production backend AI provider is not connected yet.
 
 ## Product Rule
 
-WriteWise is a learning app. AI features must help students think, plan, draft,
+WriterHabit is a learning app. AI features must help students think, plan, draft,
 revise, and improve their own writing. They must not complete assignments,
 produce final drafts for submission, or silently replace student thinking.
 

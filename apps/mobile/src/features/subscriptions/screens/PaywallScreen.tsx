@@ -25,7 +25,7 @@ export function PaywallScreen() {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const state = useSubscriptions();
-  const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>("writewise_plus_yearly");
+  const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>("WriterHabit_plus_yearly");
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const title =
@@ -100,8 +100,8 @@ export function PaywallScreen() {
                 description={
                   state.viewModel.entitlement.renewalLabel
                     ? t("subscriptions.active.descriptionWithRenewal", {
-                        renewal: state.viewModel.entitlement.renewalLabel,
-                      })
+                      renewal: state.viewModel.entitlement.renewalLabel,
+                    })
                     : t("subscriptions.active.description")
                 }
                 gradeBand={state.gradeBand}

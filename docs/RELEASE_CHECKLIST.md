@@ -93,7 +93,7 @@ Current decision: do not release publicly yet.
 - [x] Expo Doctor passes.
 - [x] EAS build profiles are configured for development, preview, and production in `apps/mobile/eas.json`.
 - [x] `expo-updates`, `runtimeVersion.policy`, `updates.url`, and `extra.eas.projectId` are wired in app config.
-- [ ] Expo project owner links the real EAS project id and replaces `WRITEWISE_EAS_PROJECT_ID_REQUIRED`.
+- [ ] Expo project owner links the real EAS project id and replaces `WriterHabit_EAS_PROJECT_ID_REQUIRED`.
 - [ ] EAS/APNs/FCM credentials are configured for iOS and Android push delivery.
 - [ ] iOS and Android store metadata, privacy labels, age rating, and screenshots are prepared.
 - [ ] Crash reporting, analytics, support diagnostics, and safe metadata logging are selected.
@@ -110,8 +110,8 @@ Run from the project root unless noted:
 ./script/build_and_run.sh --doctor
 cd apps/mobile && npx expo install --check
 cd apps/mobile && npm run lint -- --max-warnings=0
-cd apps/mobile && npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
-cd apps/mobile && npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
+cd apps/mobile && npx expo export --platform ios --output-dir /tmp/WriterHabit-expo-export-ios
+cd apps/mobile && npx expo export --platform android --output-dir /tmp/WriterHabit-expo-export-android
 ```
 
 If web is declared in scope, also run:

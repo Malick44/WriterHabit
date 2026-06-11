@@ -135,7 +135,7 @@ apps/mobile/src/features/auth/components/AuthForm.tsx
 apps/mobile/src/features/auth/types.ts
 ```
 
-Default behavior is signed out. For local development, `EXPO_PUBLIC_WRITEWISE_MOCK_SESSION` can still be set to:
+Default behavior is signed out. For local development, `EXPO_PUBLIC_WriterHabit_MOCK_SESSION` can still be set to:
 
 ```txt
 signed_out
@@ -242,18 +242,18 @@ Teacher detail routes are hidden from the tab bar:
 Current helper routes are centralized in `apps/mobile/src/core/navigation/deepLinks.ts`:
 
 ```txt
-writewise://student/assignments/assignment_123
-writewise://student/canvas/canvas_123
-writewise://student/canvas/templates
-writewise://student/write/assignment_123
-writewise://student/review/submission_123
-writewise://student/review/submission_123/summary
-writewise://student/review/submission_123/rubric
-writewise://student/review/submission_123/revision
-writewise://student/review/submission_123/complete
-writewise://parent/students/student_123/report
-writewise://teacher/classes/class_123/progress
-writewise://teacher/submissions/submission_123
+WriterHabit://student/assignments/assignment_123
+WriterHabit://student/canvas/canvas_123
+WriterHabit://student/canvas/templates
+WriterHabit://student/write/assignment_123
+WriterHabit://student/review/submission_123
+WriterHabit://student/review/submission_123/summary
+WriterHabit://student/review/submission_123/rubric
+WriterHabit://student/review/submission_123/revision
+WriterHabit://student/review/submission_123/complete
+WriterHabit://parent/students/student_123/report
+WriterHabit://teacher/classes/class_123/progress
+WriterHabit://teacher/submissions/submission_123
 ```
 
 These helpers return Expo Router `Href` objects for:

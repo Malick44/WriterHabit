@@ -78,7 +78,7 @@ const defaultSettings: ParentSettings = {
 };
 
 function readScenario(): ParentScenario {
-  const parsed = parentScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_PARENT_SCENARIO);
+  const parsed = parentScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_PARENT_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -408,7 +408,7 @@ function buildAssignmentReview(student: ParentStudentSummary, submissionId: stri
           score: 3,
         },
       ],
-      safetyNote: "WriteWise gives hints and revision tasks, not finished student work.",
+      safetyNote: "WriterHabit gives hints and revision tasks, not finished student work.",
       studentId: student.id,
       studentName: student.displayName,
       submittedLabel: "Yesterday",
@@ -456,7 +456,7 @@ function buildAssignmentReview(student: ParentStudentSummary, submissionId: stri
           score: 3,
         },
       ],
-      safetyNote: "WriteWise keeps feedback focused on coaching and student-owned revision.",
+      safetyNote: "WriterHabit keeps feedback focused on coaching and student-owned revision.",
       studentId: student.id,
       studentName: student.displayName,
       submittedLabel: "Today",
@@ -517,7 +517,7 @@ function buildAssignmentReview(student: ParentStudentSummary, submissionId: stri
         score: 3,
       },
     ],
-    safetyNote: "WriteWise does not generate final drafts; it gives coaching signals and revision tasks.",
+    safetyNote: "WriterHabit does not generate final drafts; it gives coaching signals and revision tasks.",
     studentId: student.id,
     studentName: student.displayName,
     submittedLabel: "Today",

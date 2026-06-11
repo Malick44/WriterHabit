@@ -1,4 +1,4 @@
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import {
   progressApiResponseSchema,
@@ -16,7 +16,7 @@ interface GetProgressDashboardInput {
 }
 
 function readScenario(): ProgressScenario {
-  const parsed = progressScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_PROGRESS_SCENARIO);
+  const parsed = progressScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_PROGRESS_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }

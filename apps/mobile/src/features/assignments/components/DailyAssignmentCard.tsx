@@ -1,7 +1,7 @@
 import { Text } from "react-native";
 import { InfoCard } from "@/shared/components/cards/InfoCard";
 import { colors, spacing, typography } from "@/design/tokens";
-import type { Assignment } from "@writewise/shared";
+import type { Assignment } from "@WriterHabit/shared";
 
 interface DailyAssignmentCardProps {
   assignment: Assignment;

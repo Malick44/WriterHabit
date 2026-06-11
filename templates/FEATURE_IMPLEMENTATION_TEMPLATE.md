@@ -3,7 +3,7 @@
 ```txt
 You are a senior [role].
 
-Implement the [feature name] feature for WriteWise AI.
+Implement the [feature name] feature for WriterHabit AI.
 
 Use 00_CONTEXT_BRIEF.md and prompts/01_master_agent_rules.md as context.
 

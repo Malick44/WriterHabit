@@ -1,4 +1,4 @@
-import type { AssignmentType, GradeLevel, WritingSkill } from "@writewise/shared";
+import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
 import { z } from "zod";
 
 import type { GradeBand } from "@/design/tokens";

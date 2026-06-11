@@ -180,7 +180,7 @@ Risks:
 
 - File system facade currently has TODO implementations.
 - Current canvas rendering uses a local React Native stroke adapter rather than a production drawing engine.
-- Canvas backend sync is scaffolded but disabled unless `EXPO_PUBLIC_WRITEWISE_ENABLE_CANVAS_BACKEND_SYNC=true`.
+- Canvas backend sync is scaffolded but disabled unless `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`.
 - Canvas artifacts can become memory-sensitive; keep stroke and undo bounds in place and operate on URIs for future exports.
 
 ## Phase 6: AI Coach and Feedback Review

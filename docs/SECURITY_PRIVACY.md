@@ -1,7 +1,7 @@
 # Security And Privacy
 
 Status: Prompt 25 security/privacy requirements and current implementation map.
-WriteWise currently has an Expo mobile app, Supabase public-client auth,
+WriterHabit currently has an Expo mobile app, Supabase public-client auth,
 framework-neutral backend contracts, draft migrations, and deterministic local
 feature mocks. A production backend runtime and migration runner do not exist
 yet.
@@ -22,7 +22,7 @@ yet.
   `services/api/docs/AUTHORIZATION_RULES.md`
 - Planned database schema and RLS drafts:
   `services/api/docs/DATABASE_SCHEMA.md`,
-  `services/api/migrations/202606090001_initial_writewise_schema.sql`,
+  `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`,
   `services/api/migrations/202606090002_privacy_rls_policies.sql`
 - Audit scaffold:
   `services/api/src/features/audit/`

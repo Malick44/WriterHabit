@@ -1,4 +1,4 @@
--- WriteWise AI database schema draft.
+-- WriterHabit AI database schema draft.
 -- Target: Supabase Postgres.
 -- Status: draft migration; backend runtime and production apply workflow are not selected yet.
 
@@ -922,7 +922,7 @@ create table if not exists public.entitlements (
   constraint entitlements_scope_type_check check (scope_type in ('personal', 'family', 'class', 'school')),
   constraint entitlements_status_check check (status in ('free', 'trial', 'active', 'past_due', 'canceled')),
   constraint entitlements_current_plan_id_check check (
-    current_plan_id is null or current_plan_id in ('writewise_plus_monthly', 'writewise_plus_yearly')
+    current_plan_id is null or current_plan_id in ('WriterHabit_plus_monthly', 'WriterHabit_plus_yearly')
   ),
   constraint entitlements_billing_period_check check (
     billing_period is null or billing_period in ('month', 'year')

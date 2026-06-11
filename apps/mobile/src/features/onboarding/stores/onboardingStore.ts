@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingGoal } from "@writewise/shared";
+import type { GradeLevel, WritingGoal } from "@WriterHabit/shared";
 import { create } from "zustand";
 
 import type { MockSessionRole } from "@/core/auth/authTypes";

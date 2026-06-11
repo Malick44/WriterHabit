@@ -1,6 +1,6 @@
 import "expo-sqlite/localStorage/install";
 
-const LOCAL_JSON_PREFIX = "writewise.local.";
+const LOCAL_JSON_PREFIX = "WriterHabit.local.";
 const localStorageKeyPattern = /[^A-Za-z0-9._-]/g;
 
 function toLocalJsonKey(key: string) {

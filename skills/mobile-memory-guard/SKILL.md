@@ -1,12 +1,12 @@
 ---
 name: mobile-memory-guard
-description: Review and guide WriteWise Expo/React Native work for memory efficiency and retention safety. Use when tasks involve long assignment/progress lists, large typed drafts, canvas stroke data, image previews/exports, AI feedback payloads, autosave, offline canvas storage, background sync, or repeated rerenders. Do not use for pure visual polish with no data, canvas, or lifecycle impact. Output should identify memory hotspots, leak risks, bounded-cache decisions, and concrete fixes.
+description: Review and guide WriterHabit Expo/React Native work for memory efficiency and retention safety. Use when tasks involve long assignment/progress lists, large typed drafts, canvas stroke data, image previews/exports, AI feedback payloads, autosave, offline canvas storage, background sync, or repeated rerenders. Do not use for pure visual polish with no data, canvas, or lifecycle impact. Output should identify memory hotspots, leak risks, bounded-cache decisions, and concrete fixes.
 ---
 
 # Mobile Memory Guard
 
-This skill exists to make memory efficiency a hard engineering constraint in WriteWise's
-Expo / React Native app. WriteWise runs on student devices — including older, low-memory
+This skill exists to make memory efficiency a hard engineering constraint in WriterHabit's
+Expo / React Native app. WriterHabit runs on student devices — including older, low-memory
 Android tablets in classrooms — and holds work that must not be lost: typed drafts,
 handwriting strokes, and AI feedback. Memory pressure here corrupts or drops a child's
 work.
@@ -145,7 +145,7 @@ For review tasks:
 4. Scan for list/canvas rendering inefficiencies.
 5. Report concrete fixes, not generic advice.
 
-You can run `scripts/check-memory.sh` for a heuristic static scan of WriteWise-specific
+You can run `scripts/check-memory.sh` for a heuristic static scan of WriterHabit-specific
 hotspots before reviewing manually.
 
 ## Trigger phrases and examples

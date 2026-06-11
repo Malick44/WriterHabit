@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WriteWise memory audit — scans for memory hotspots, leak risks, and
+# WriterHabit memory audit — scans for memory hotspots, leak risks, and
 # retention smells specific to this Expo / React Native writing-assistant app.
 set -euo pipefail
 
@@ -79,7 +79,7 @@ count_search() {
 }
 
 cat > "$REPORT_FILE" <<EOF
-WriteWise Memory Audit
+WriterHabit Memory Audit
 Generated: $(date)
 Root: $ROOT
 
@@ -93,7 +93,7 @@ Excluded: node_modules android ios .expo docs skills reports
 Legend:
   HIGH   — often worth checking first
   MEDIUM — pattern may be valid, but can hide memory pressure
-  WW     — WriteWise-specific hotspot
+  WW     — WriterHabit-specific hotspot
 
 EOF
 
@@ -158,7 +158,7 @@ run_search "MEDIUM: repeated transforms in render paths" \
 run_search "MEDIUM: handwriting recognition / image-to-text (large intermediates)" \
 'handwritingRecognition|recognizeText|convertToText|extractTextFrom|imageToText|ocr'
 
-# ── WriteWise-SPECIFIC checks ───────────────────────────────────────────────
+# ── WriterHabit-SPECIFIC checks ───────────────────────────────────────────────
 
 run_search "WW: Canvas undo/redo history — ensure it is bounded" \
 'undoStack|redoStack|undoHistory|history\.push|maxUndo|undoLimit|snapshotStack'
@@ -202,7 +202,7 @@ Canvas/stroke matches:      $STROKE_COUNT
 AI coach/review matches:    $AI_COUNT
 
 ================================================================================
-MANUAL REVIEW CHECKLIST (WriteWise)
+MANUAL REVIEW CHECKLIST (WriterHabit)
 ================================================================================
 1. Store / workspace state shape
    - Are full drafts, stroke documents, base64 previews, or large server payloads

@@ -9,7 +9,7 @@ Design a futuristic, highly motivating Daily Practice Goal selection screen. The
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 5 of 6: Daily Practice Goal). The design must feel motivating, gamified, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 5 of 6: Daily Practice Goal). The design must feel motivating, gamified, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Motivating & Gamified UI**: Select time goals (e.g., 10, 15, 20 minutes) presented as energy levels, orbit paths, or glowing power cores.

@@ -2,7 +2,7 @@ import type { Href } from "expo-router";
 
 import { routes } from "./routeNames";
 
-export const deepLinkPrefixes = ["writewise://", "https://writewise.app"] as const;
+export const deepLinkPrefixes = ["WriterHabit://", "https://WriterHabit.app"] as const;
 
 export const deepLinkRoutes = {
   assignmentDetail: "/(student)/assignments/[assignmentId]",

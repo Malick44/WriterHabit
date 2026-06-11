@@ -9,7 +9,7 @@ Design the final Personalized Plan Summary screen showcasing a futuristic custom
 ## Prompt
 
 You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriteWise AI (onboarding step 6 of 6: Personalized Plan Summary). The design must feel celebratory, premium, and visually stunning.
+Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 6 of 6: Personalized Plan Summary). The design must feel celebratory, premium, and visually stunning.
 
 ### Futuristic Design & Aesthetic Directives:
 - **Celebratory UI**: Display generated custom plan parameters using glowing data visualizations, timeline graphics, and high-fidelity card panels.

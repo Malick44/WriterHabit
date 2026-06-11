@@ -1,4 +1,4 @@
-# WriteWise Audio — offline sherpa-tts Native Module (packages/expo-sherpa-tts)
+# WriterHabit Audio — offline sherpa-tts Native Module (packages/expo-sherpa-tts)
 
 This package is the design contract for a custom Expo native module that would wrap the **next-gen sherpa-onnx** offline TTS engine. Any future implementation under `/packages/expo-sherpa-tts/` must adhere strictly to these native implementation, memory, lifecycle, and API constraints.
 

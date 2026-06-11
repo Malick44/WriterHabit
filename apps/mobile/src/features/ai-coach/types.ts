@@ -1,4 +1,4 @@
-import type { AssignmentType, GradeLevel, WritingSkill } from "@writewise/shared";
+import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
 import { z } from "zod";
 
 export const MAX_AI_COACH_DRAFT_EXCERPT_LENGTH = 1_200;

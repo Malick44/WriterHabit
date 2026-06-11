@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingSkill } from "@writewise/shared";
+import type { GradeLevel, WritingSkill } from "@WriterHabit/shared";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 import { assignmentsApi, type AssignmentRecord } from "@/features/assignments";
@@ -43,7 +43,7 @@ export class FeedbackReviewApiError extends Error {
 }
 
 function readScenario(): FeedbackReviewScenario {
-  const parsed = feedbackReviewScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_FEEDBACK_REVIEW_SCENARIO);
+  const parsed = feedbackReviewScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_FEEDBACK_REVIEW_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }

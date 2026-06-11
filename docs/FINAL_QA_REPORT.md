@@ -54,8 +54,8 @@ not complete.
 | `./script/build_and_run.sh --typecheck` | Pass | `tsc --noEmit` completed. |
 | `./script/build_and_run.sh --test` | Pass | 31 test suites and 114 tests passed. |
 | `./script/build_and_run.sh --doctor` | Pass | Expo Doctor reported 21/21 checks passed. |
-| `npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios` | Pass | iOS production JS bundle exported to a temp directory. |
-| `npx expo export --platform android --output-dir /tmp/writewise-expo-export-android` | Pass | Android production JS bundle exported to a temp directory. |
+| `npx expo export --platform ios --output-dir /tmp/WriterHabit-expo-export-ios` | Pass | iOS production JS bundle exported to a temp directory. |
+| `npx expo export --platform android --output-dir /tmp/WriterHabit-expo-export-android` | Pass | Android production JS bundle exported to a temp directory. |
 | `npm run lint` from `apps/mobile/` | Fail | `eslint` is referenced by the script but is not installed/configured. |
 | `./script/build_and_run.sh --export-web` | Fail | Web export requires `react-native-web`, which is not installed. This is a tooling/product-surface decision because the primary app is mobile. |
 
@@ -100,7 +100,7 @@ matrix in this QA pass.
 
 ## Release Assessment
 
-WriteWise is strong enough for internal stakeholder demos and controlled QA with
+WriterHabit is strong enough for internal stakeholder demos and controlled QA with
 deterministic mock data. It should not be marketed as production-ready and
 should not process real student/classroom workloads until the P0 backend,
 authorization, payment, privacy, and audit gates are implemented and verified.

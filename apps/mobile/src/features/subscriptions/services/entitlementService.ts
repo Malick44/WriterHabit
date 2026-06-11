@@ -14,12 +14,12 @@ import type {
 } from "../types";
 
 const planCopy = {
-  writewise_plus_monthly: {
+  WriterHabit_plus_monthly: {
     cadenceKey: "subscriptions.plans.monthly.cadence",
     descriptionKey: "subscriptions.plans.monthly.description",
     titleKey: "subscriptions.plans.monthly.title",
   },
-  writewise_plus_yearly: {
+  WriterHabit_plus_yearly: {
     badgeKey: "subscriptions.plans.yearly.badge",
     cadenceKey: "subscriptions.plans.yearly.cadence",
     descriptionKey: "subscriptions.plans.yearly.description",

@@ -82,7 +82,7 @@ fi
 
 build_prompt() {
   cat <<PROMPT
-You are running the WriteWise ${REVIEW_NAME}.
+You are running the WriterHabit ${REVIEW_NAME}.
 
 Working directory:
 ${ROOT_DIR}

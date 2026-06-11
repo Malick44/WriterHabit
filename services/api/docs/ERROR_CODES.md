@@ -1,4 +1,4 @@
-# WriteWise API Error Codes
+# WriterHabit API Error Codes
 
 Status: planned backend error catalog.
 
@@ -116,7 +116,7 @@ interface ApiErrorResponse {
 | --- | --- | --- | --- |
 | `rate_limit.ai_daily_limit` | 429 | false | You have reached today's coaching limit. |
 | `rate_limit.too_many_requests` | 429 | true | Slow down and try again soon. |
-| `system.unavailable` | 503 | true | WriteWise is temporarily unavailable. |
+| `system.unavailable` | 503 | true | WriterHabit is temporarily unavailable. |
 | `system.unexpected` | 500 | true | Something went wrong. Try again. |
 
 ## Error Response Example

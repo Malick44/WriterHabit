@@ -1,8 +1,8 @@
-# AI Coding Agent Prompt — Implement WriteWise AI Feature-Based Architecture
+# AI Coding Agent Prompt — Implement WriterHabit AI Feature-Based Architecture
 
 You are a senior Expo/React Native engineer and product-minded full-stack architect.
 
-Implement the WriteWise AI project using the feature-based architecture in this repository.
+Implement the WriterHabit AI project using the feature-based architecture in this repository.
 
 ## Critical Rules
 

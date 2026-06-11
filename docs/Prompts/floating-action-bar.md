@@ -1,4 +1,4 @@
-Build a reusable Expo / React Native text action bar component for WriteWise, inspired by the attached image.
+Build a reusable Expo / React Native text action bar component for WriterHabit, inspired by the attached image.
 
 Goal:
 Create a compact floating action bar that can be embedded anywhere coaching text appears across the app — AI coach messages, feedback summary cards, hints, rubric notes, brainstorm suggestions, and revision-task descriptions. It lives in the shared layer so any feature can drop it under a block of text.
@@ -26,7 +26,7 @@ Theme:
 - Use radius.full for the pill, spacing.* for gaps and padding, and colors.* for surfaces, icons, and disabled states.
 
 Architecture requirements:
-Separate UI from business logic, following WriteWise's layering (route file -> feature screen -> components -> hooks -> services).
+Separate UI from business logic, following WriterHabit's layering (route file -> feature screen -> components -> hooks -> services).
 
 Implement this in 3 layers:
 1. Presentational UI component (shared/components/text/TextActionBar.tsx)
@@ -55,7 +55,7 @@ Technical constraints:
 - Use @expo/vector-icons (already a dependency) for icons
 - Do not mix feature-specific business rules into the visual component
 
-Academic-integrity note (WriteWise-specific):
+Academic-integrity note (WriterHabit-specific):
 - The action bar attaches to coaching output (hints, feedback, suggestions), never to a generated full essay or final answer — the AI coach does not produce those.
 - "Copy" copies the coaching text (e.g. a hint or a stronger-word suggestion); it must not become a path to copy a ghostwritten answer.
 - "Read-aloud" is for accessibility/young learners; route it through the controller's handler, not the UI.

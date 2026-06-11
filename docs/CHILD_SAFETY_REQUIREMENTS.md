@@ -6,7 +6,7 @@ compliance certification.
 
 ## Safety Principles
 
-- WriteWise serves students in Grades 1-12, so privacy, age-appropriate coaching,
+- WriterHabit serves students in Grades 1-12, so privacy, age-appropriate coaching,
   and student-owned work are core requirements.
 - AI must coach. It must not complete assignments, produce final drafts for
   submission, or encourage cheating.
@@ -72,7 +72,7 @@ Minimum handling:
 
 ## Communication And Social Features
 
-WriteWise currently has no student-to-student messaging or public sharing
+WriterHabit currently has no student-to-student messaging or public sharing
 surfaces. Future communication features must require a separate safety design,
 moderation plan, reporting flow, audit plan, and parent/teacher visibility model
 before implementation.

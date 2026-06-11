@@ -1,4 +1,4 @@
--- WriteWise AI profile settings and notification sync backend.
+-- WriterHabit AI profile settings and notification sync backend.
 -- Adds RPCs used by the mobile app to sync student profile settings and
 -- notification preferences while preserving RLS-protected table access.
 
@@ -74,14 +74,14 @@ begin
   from public.student_profiles sp
   where sp.user_id = v_user_id;
 
-  if v_existing_role is not null and v_existing_role <> 'student' and not public.is_writewise_admin() then
+  if v_existing_role is not null and v_existing_role <> 'student' and not public.is_WriterHabit_admin() then
     raise exception 'Current user is not a student'
       using errcode = '42501';
   end if;
 
   v_grade_level := coalesce(p_grade_level, 5);
   v_language := coalesce(nullif(btrim(p_language), ''), v_existing_profile_language, v_existing_locale, 'en');
-  v_display_name := coalesce(nullif(btrim(p_display_name), ''), v_existing_display_name, 'WriteWise student');
+  v_display_name := coalesce(nullif(btrim(p_display_name), ''), v_existing_display_name, 'WriterHabit student');
 
   if v_grade_level < 1 or v_grade_level > 12 then
     raise exception 'Grade level must be between 1 and 12'
@@ -96,7 +96,7 @@ begin
   insert into public.users (id, email, display_name, role, locale)
   values (
     v_user_id,
-    coalesce(v_email, concat(v_user_id::text, '@writewise.local')::citext),
+    coalesce(v_email, concat(v_user_id::text, '@WriterHabit.local')::citext),
     v_display_name,
     'student',
     v_language

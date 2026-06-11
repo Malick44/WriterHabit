@@ -1,6 +1,6 @@
 # Asset Generation Plan
 
-This document tracks generated production-candidate visual assets for WriteWise AI.
+This document tracks generated production-candidate visual assets for WriterHabit AI.
 
 Current status: generated app assets, an auth login illustration, and auth screenshot concept assets exist.
 

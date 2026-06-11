@@ -364,8 +364,8 @@ Current Prompt 27 passing checks:
 ./script/build_and_run.sh --doctor
 ./script/build_and_run.sh --typecheck
 ./script/build_and_run.sh --test
-npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
-npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
+npx expo export --platform ios --output-dir /tmp/WriterHabit-expo-export-ios
+npx expo export --platform android --output-dir /tmp/WriterHabit-expo-export-android
 ```
 
 Current Prompt 27 release-check gaps:
@@ -495,8 +495,8 @@ Prompt 27 validation:
 ./script/build_and_run.sh --typecheck
 ./script/build_and_run.sh --test
 ./script/build_and_run.sh --doctor
-npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
-npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
+npx expo export --platform ios --output-dir /tmp/WriterHabit-expo-export-ios
+npx expo export --platform android --output-dir /tmp/WriterHabit-expo-export-android
 cd apps/mobile && npm run lint
 ./script/build_and_run.sh --export-web
 ```
@@ -573,7 +573,7 @@ The public self-hosted Supabase `/mcp` endpoint is intentionally blocked by Kong
 
 ## Product Safety Reminder
 
-WriteWise AI is a learning app, not a cheating app.
+WriterHabit AI is a learning app, not a cheating app.
 
 Forbidden CTAs:
 

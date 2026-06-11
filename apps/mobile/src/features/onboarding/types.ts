@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingGoal } from "@writewise/shared";
+import type { GradeLevel, WritingGoal } from "@WriterHabit/shared";
 import { z } from "zod";
 
 import { routes, type AppRoute } from "@/core/navigation/routeNames";

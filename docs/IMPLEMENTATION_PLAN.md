@@ -1,8 +1,8 @@
-# WriteWise AI Implementation Plan
+# WriterHabit AI Implementation Plan
 
 ## Scope
 
-This document records the current repository audit and phased implementation plan before feature work continues. It is based on the real repository state under `/Users/malickdes/WorkSpace/writewise` and the product rules in `docs/00_CONTEXT_BRIEF.md` and `prompts/01_master_agent_rules.md`.
+This document records the current repository audit and phased implementation plan before feature work continues. It is based on the real repository state under `/Users/malickdes/WorkSpace/WriterHabit` and the product rules in `docs/00_CONTEXT_BRIEF.md` and `prompts/01_master_agent_rules.md`.
 
 No product features are implemented by this document.
 

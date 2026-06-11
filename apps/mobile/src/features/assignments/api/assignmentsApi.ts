@@ -1,4 +1,4 @@
-import type { GradeLevel, WritingGoal, WritingSkill } from "@writewise/shared";
+import type { GradeLevel, WritingGoal, WritingSkill } from "@WriterHabit/shared";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 import {
@@ -31,7 +31,7 @@ interface AssignmentDetailRequestInput extends AssignmentRequestInput {
 }
 
 function readScenario(): AssignmentScenario {
-  const parsed = assignmentScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WRITEWISE_ASSIGNMENTS_SCENARIO);
+  const parsed = assignmentScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_ASSIGNMENTS_SCENARIO);
 
   return parsed.success ? parsed.data : "success";
 }
@@ -413,12 +413,12 @@ export const assignmentsApi = {
             difficulty: sa.assignments.difficulty,
             draft: draft
               ? {
-                  canvasPageCount: draft.canvas_document_ids?.length || 0,
-                  lastEditedLabel: "Saved recently",
-                  preview: draft.text_preview || "Start writing...",
-                  revisionNumber: draft.revision_number || 1,
-                  wordCount: draft.word_count || 0,
-                }
+                canvasPageCount: draft.canvas_document_ids?.length || 0,
+                lastEditedLabel: "Saved recently",
+                preview: draft.text_preview || "Start writing...",
+                revisionNumber: draft.revision_number || 1,
+                wordCount: draft.word_count || 0,
+              }
               : null,
             dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
             estimatedMinutes: sa.assignments.estimated_minutes,
@@ -513,12 +513,12 @@ export const assignmentsApi = {
         difficulty: sa.assignments.difficulty,
         draft: draft
           ? {
-              canvasPageCount: draft.canvas_document_ids?.length || 0,
-              lastEditedLabel: "Saved recently",
-              preview: draft.text_preview || "Start writing...",
-              revisionNumber: draft.revision_number || 1,
-              wordCount: draft.word_count || 0,
-            }
+            canvasPageCount: draft.canvas_document_ids?.length || 0,
+            lastEditedLabel: "Saved recently",
+            preview: draft.text_preview || "Start writing...",
+            revisionNumber: draft.revision_number || 1,
+            wordCount: draft.word_count || 0,
+          }
           : null,
         dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
         estimatedMinutes: sa.assignments.estimated_minutes,

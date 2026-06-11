@@ -30,7 +30,7 @@ Mobile API base URL:
 ## Current Implementation Reality
 
 The mobile app has a production-safe fetch boundary for planned backend calls,
-but there is still no running WriteWise backend runtime. Most product areas
+but there is still no running WriterHabit backend runtime. Most product areas
 currently use a mix of public Supabase auth, feature-owned deterministic mock
 APIs, direct Supabase persistence, and local device persistence:
 

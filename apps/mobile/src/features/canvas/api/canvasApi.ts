@@ -1,4 +1,4 @@
-import type { GradeLevel } from "@writewise/shared";
+import type { GradeLevel } from "@WriterHabit/shared";
 
 import {
   canvasDetailResponseSchema,

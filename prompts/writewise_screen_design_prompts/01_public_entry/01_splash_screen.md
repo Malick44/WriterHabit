@@ -4,12 +4,12 @@
 Student / Parent / Teacher
 
 ## Goal
-Create a premium splash screen for WriteWise AI. Include the app logo, calm educational background, and subtle loading indicator. The screen should establish trust and a modern learning-app tone.
+Create a premium splash screen for WriterHabit AI. Include the app logo, calm educational background, and subtle loading indicator. The screen should establish trust and a modern learning-app tone.
 
 ## Prompt
 
 You are a senior product designer and mobile UI specialist.
-Design a polished, realistic mobile app screen for WriteWise AI, an AI writing assistant for Grades 1–12 students.
+Design a polished, realistic mobile app screen for WriterHabit AI, an AI writing assistant for Grades 1–12 students.
 The app should feel educational, trustworthy, premium, friendly, and implementation-ready.
 Use iPhone-style mobile UI patterns unless otherwise stated.
 
@@ -25,7 +25,7 @@ Core product principles:
 - Localization-ready copy and practical UX patterns.
 
 Brand direction:
-- Product name: WriteWise AI
+- Product name: WriterHabit AI
 - Tagline direction: Build better writing skills every day.
 - Audience: students, parents, teachers
 - Core capabilities: daily assignments, typed writing, handwriting canvas, AI feedback, revision, progress tracking
@@ -41,7 +41,7 @@ Required output style:
 Now design the **Splash Screen** for the **Student / Parent / Teacher** flow.
 
 Purpose of this screen:
-Create a premium splash screen for WriteWise AI. Include the app logo, calm educational background, and subtle loading indicator. The screen should establish trust and a modern learning-app tone.
+Create a premium splash screen for WriterHabit AI. Include the app logo, calm educational background, and subtle loading indicator. The screen should establish trust and a modern learning-app tone.
 
 Must include:
 Full-screen logo area, short brand tagline, minimal loading treatment, premium background illustration or soft gradient.
@@ -51,7 +51,7 @@ No main CTA; splash only.
 
 Screen-specific instructions:
 - Make the layout highly believable for a real iPhone app.
-- Use content and microcopy that fit the WriteWise AI product.
+- Use content and microcopy that fit the WriterHabit AI product.
 - Keep the screen consistent with the rest of the app.
 - Include thoughtful states, indicators, and navigation elements that make sense for this screen.
 - Show enough detail that an engineer or AI coding agent could implement it.

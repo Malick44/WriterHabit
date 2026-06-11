@@ -71,7 +71,7 @@ function readDefaultScenario(): MockSessionScenario {
     return "signed_out";
   }
 
-  const scenario = process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION;
+  const scenario = process.env.EXPO_PUBLIC_WriterHabit_MOCK_SESSION;
 
   switch (scenario) {
     case "student_onboarding":

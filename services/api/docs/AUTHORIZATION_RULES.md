@@ -1,4 +1,4 @@
-# WriteWise API Authorization Rules
+# WriterHabit API Authorization Rules
 
 Status: planned backend authorization model. Database RLS and migration details
 now live in `services/api/docs/DATABASE_SCHEMA.md`,
@@ -150,7 +150,7 @@ document defines service-level rules for API handlers.
 
 Framework-neutral audit event contracts and metadata sanitization live in
 `services/api/src/features/audit/`. The draft database row shape is
-`public.audit_logs` in `services/api/migrations/202606090001_initial_writewise_schema.sql`.
+`public.audit_logs` in `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`.
 
 Audit the following backend actions:
 

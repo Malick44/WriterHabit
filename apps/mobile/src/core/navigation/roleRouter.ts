@@ -1,4 +1,4 @@
-import type { UserRole } from "@writewise/shared";
+import type { UserRole } from "@WriterHabit/shared";
 
 import type { AuthSession, AuthSessionSnapshot } from "@/core/auth/authTypes";
 import { canAccessRoleArea, hasCompletedOnboarding, isAuthenticatedSession } from "@/core/auth/roleGuards";
@@ -9,13 +9,13 @@ export type RouteAccessArea = "auth" | "onboarding" | "student" | "parent" | "te
 
 export type RouteAccessDecision =
   | {
-      allowed: true;
-    }
+    allowed: true;
+  }
   | {
-      allowed: false;
-      redirectTo: AppRoute;
-      reason: "unauthenticated" | "onboarding_incomplete" | "already_authenticated" | "role_mismatch";
-    };
+    allowed: false;
+    redirectTo: AppRoute;
+    reason: "unauthenticated" | "onboarding_incomplete" | "already_authenticated" | "role_mismatch";
+  };
 
 export function getHomeRouteForRole(role: UserRole): AppRoute {
   switch (role) {

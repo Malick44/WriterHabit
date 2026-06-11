@@ -57,6 +57,6 @@ Automated Codex specialist actions are configured in `.codex/environments/enviro
 
 ## Screen Design Prompts
 
-Screen design prompts live in `prompts/writewise_screen_design_prompts/`.
+Screen design prompts live in `prompts/WriterHabit_screen_design_prompts/`.
 
-Use `prompts/writewise_screen_design_prompts/MASTER_SYSTEM_PROMPT.md` before any screen-specific prompt in that folder.
+Use `prompts/WriterHabit_screen_design_prompts/MASTER_SYSTEM_PROMPT.md` before any screen-specific prompt in that folder.

@@ -1,9 +1,9 @@
-You are working in the WriteWise Expo / React Native app. Implement a complete Storage & Data Management Center that reflects the current codebase reality and the app's child-privacy obligations.
+You are working in the WriterHabit Expo / React Native app. Implement a complete Storage & Data Management Center that reflects the current codebase reality and the app's child-privacy obligations.
 
 Date of audit baseline: June 8, 2026.
 
 Context and current state
-- WriteWise is a Grades 1–12 student writing assistant. Read docs/10_SECURITY_PRIVACY.md before coding: this app serves children, so data export and deletion are core product requirements, not nice-to-haves. Parents can request data deletion; inactive drafts should be deleted after a retention period; keep audit logs without storing full student text where possible.
+- WriterHabit is a Grades 1–12 student writing assistant. Read docs/10_SECURITY_PRIVACY.md before coding: this app serves children, so data export and deletion are core product requirements, not nice-to-haves. Parents can request data deletion; inactive drafts should be deleted after a retention period; keep audit logs without storing full student text where possible.
 - There is no storage/data-management UI yet. Settings live in the profile-settings feature:
   - apps/mobile/src/features/profile-settings/screens/AppSettingsScreen.tsx
   - apps/mobile/src/features/profile-settings/screens/AccessibilitySettingsScreen.tsx

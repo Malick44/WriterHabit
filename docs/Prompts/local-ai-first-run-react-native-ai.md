@@ -1,7 +1,7 @@
-Implement the On-First-Run Local AI setup flow for WriteWise using React Native AI from Callstack.
+Implement the On-First-Run Local AI setup flow for WriterHabit using React Native AI from Callstack.
 
 Goal:
-Add an optional first-run Local AI capability gate that checks the device profile before offering any model download. Local AI is a latency/cost optimization for small, low-risk writing-coach helpers only. The flow must keep WriteWise usable on every device by always preserving cloud fallback and a Later path, and it must never weaken WriteWise's child-safety, moderation, or academic-integrity guarantees.
+Add an optional first-run Local AI capability gate that checks the device profile before offering any model download. Local AI is a latency/cost optimization for small, low-risk writing-coach helpers only. The flow must keep WriterHabit usable on every device by always preserving cloud fallback and a Later path, and it must never weaken WriterHabit's child-safety, moderation, or academic-integrity guarantees.
 
 Repository context:
 - This is a Grades 1–12 student writing-assistant. Read README.md and docs/06_AI_COACH_ARCHITECTURE.md and docs/10_SECURITY_PRIVACY.md before coding. The AI is a coach, not a ghostwriter.
@@ -34,7 +34,7 @@ Provider strategy:
    - Android-first and cross-platform local path.
    - Use GGUF model IDs in the format owner/repo/filename.gguf.
    - Use model file helpers when available: downloadModel, isModelDownloaded, getModelPath, getDownloadedModels, removeModel.
-   - Prefer a small Qwen/SmolLM-class model before any 3B+ model — WriteWise local tasks are short helpers, not long generation.
+   - Prefer a small Qwen/SmolLM-class model before any 3B+ model — WriterHabit local tasks are short helpers, not long generation.
 
 3. MLC as an optional high-capability tier only.
    - Package: @react-native-ai/mlc.
@@ -60,7 +60,7 @@ apps/mobile/src/features/ai-setup/
 Responsibilities:
 - localAi/types.ts: provider IDs, model IDs, device profile shape, setup state, readiness state, download progress, and the allowed local task types.
 - localAi/deviceProfile.ts: probe platform, OS version, free disk, memory tier (if available), low power mode (if available), network type (if available), emulator state (if available), and runtime support.
-- localAi/modelCatalog.ts: the approved WriteWise model tiers with estimated disk/memory budgets.
+- localAi/modelCatalog.ts: the approved WriterHabit model tiers with estimated disk/memory budgets.
 - localAi/reactNativeAiEngine.ts: adapt Apple, Llama/GGUF, and optional MLC behind one typed interface.
 - localAi/aiSetupRepository.ts: persisted setup state (AsyncStorage/SecureStore), installed-model checks, provider readiness, download, prepare, unload, remove.
 - ai-setup/api/aiSetupApi.ts: TanStack Query hooks and mutations only.
@@ -72,7 +72,7 @@ Implement a conservative decision matrix:
 - appleSystem: eligible iOS device; no model download; prepare lazily on first AI action.
 - localLite: enough storage and memory for a small GGUF model; offer this before larger models.
 - localFull: high-memory, high-storage device; offer a larger small-class GGUF or optional MLC only with explicit consent.
-- cloudOnly: unsupported runtime, low storage, low memory, parent-disabled AI, or declined download; route AI tasks to the WriteWise cloud API.
+- cloudOnly: unsupported runtime, low storage, low memory, parent-disabled AI, or declined download; route AI tasks to the WriterHabit cloud API.
 - deferred: user taps Later; keep cloud as default and expose setup from profile-settings.
 
 Do not auto-download models on first launch. Always ask for explicit consent and show approximate model size, available storage, Wi-Fi recommendation, and fallback behavior. For younger students, gate consent behind the parent/guardian where required.
@@ -94,7 +94,7 @@ Use local AI only for small, low-risk coaching helpers, and always within the ac
 - one brainstorming starter question
 - short hint generation
 
-Keep these cloud-first through the WriteWise API and never local-only:
+Keep these cloud-first through the WriterHabit API and never local-only:
 - full rubric review and feedback summary
 - anything that could approach rewriting a whole response
 - any task for a student whose parent has restricted AI access

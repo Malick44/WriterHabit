@@ -101,13 +101,13 @@ jobs:
 
       - name: Export iOS bundle
         run: |
-          rm -rf /tmp/writewise-release-ios
-          npx expo export --platform ios --output-dir /tmp/writewise-release-ios
+          rm -rf /tmp/WriterHabit-release-ios
+          npx expo export --platform ios --output-dir /tmp/WriterHabit-release-ios
 
       - name: Export Android bundle
         run: |
-          rm -rf /tmp/writewise-release-android
-          npx expo export --platform android --output-dir /tmp/writewise-release-android
+          rm -rf /tmp/WriterHabit-release-android
+          npx expo export --platform android --output-dir /tmp/WriterHabit-release-android
 
   eas-release:
     name: Gated EAS Release
@@ -119,7 +119,7 @@ jobs:
         working-directory: apps/mobile
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      WRITEWISE_EAS_PROJECT_ID: ${{ vars.WRITEWISE_EAS_PROJECT_ID }}
+      WriterHabit_EAS_PROJECT_ID: ${{ vars.WriterHabit_EAS_PROJECT_ID }}
       EAS_PROFILE: ${{ inputs.eas_profile }}
       EAS_UPDATE_BRANCH: ${{ inputs.eas_update_branch }}
     steps:
@@ -142,12 +142,12 @@ jobs:
           node <<'NODE'
           const fs = require("node:fs");
 
-          const placeholder = "WRITEWISE_EAS_PROJECT_ID_REQUIRED";
+          const placeholder = "WriterHabit_EAS_PROJECT_ID_REQUIRED";
           const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           const configPath = "app.json";
           const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
           const committedProjectId = config.extra?.eas?.projectId;
-          const overrideProjectId = process.env.WRITEWISE_EAS_PROJECT_ID;
+          const overrideProjectId = process.env.WriterHabit_EAS_PROJECT_ID;
           const projectId = uuidPattern.test(overrideProjectId || "") ? overrideProjectId : committedProjectId;
 
           if (uuidPattern.test(projectId || "")) {
@@ -166,7 +166,7 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_OUTPUT, "ready=true\n");
           } else {
             if (committedProjectId === placeholder || !committedProjectId) {
-              console.log("No real EAS project ID is configured. Set vars.WRITEWISE_EAS_PROJECT_ID or commit the project ID from eas init.");
+              console.log("No real EAS project ID is configured. Set vars.WriterHabit_EAS_PROJECT_ID or commit the project ID from eas init.");
             } else {
               console.log("Configured EAS project ID is not UUID-shaped.");
             }
@@ -186,7 +186,7 @@ jobs:
       - name: Publish OTA update
         if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true' && inputs.run_eas_update
         run: |
-          npx eas-cli@latest update --branch "$EAS_UPDATE_BRANCH" --platform all --message "WriteWise ${GITHUB_SHA}" --non-interactive
+          npx eas-cli@latest update --branch "$EAS_UPDATE_BRANCH" --platform all --message "WriterHabit ${GITHUB_SHA}" --non-interactive
 
       - name: Build Android
         if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true' && inputs.run_android_build

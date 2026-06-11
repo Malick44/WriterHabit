@@ -1,4 +1,4 @@
-import type { GradeLevel, UserRole, WritingGoal } from "@writewise/shared";
+import type { GradeLevel, UserRole, WritingGoal } from "@WriterHabit/shared";
 
 export type NavigableUserRole = Extract<UserRole, "student" | "parent" | "teacher" | "admin">;
 

@@ -188,7 +188,7 @@ describe("notifications backend service", () => {
         data: {
           notificationId: "notification-1",
           notificationType: "daily_assignment",
-          source: "writewise",
+          source: "WriterHabit",
           targetParams: {
             assignmentId: "assignment-1",
           },
@@ -238,7 +238,7 @@ describe("notifications backend service", () => {
     const result = await provider.send([
       {
         body: "Body",
-        data: { source: "writewise" },
+        data: { source: "WriterHabit" },
         sound: "default",
         title: "Title",
         to: "ExpoPushToken[device]",
@@ -252,7 +252,7 @@ describe("notifications backend service", () => {
         body: JSON.stringify([
           {
             body: "Body",
-            data: { source: "writewise" },
+            data: { source: "WriterHabit" },
             sound: "default",
             title: "Title",
             to: "ExpoPushToken[device]",

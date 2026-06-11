@@ -21,7 +21,7 @@ export type SubscriptionScenario = z.infer<typeof subscriptionScenarioSchema>;
 export const subscriptionConnectionStatusSchema = z.enum(["online", "offline_cached"]);
 export type SubscriptionConnectionStatus = z.infer<typeof subscriptionConnectionStatusSchema>;
 
-export const subscriptionPlanIdSchema = z.enum(["writewise_plus_monthly", "writewise_plus_yearly"]);
+export const subscriptionPlanIdSchema = z.enum(["WriterHabit_plus_monthly", "WriterHabit_plus_yearly"]);
 export type SubscriptionPlanId = z.infer<typeof subscriptionPlanIdSchema>;
 
 export const subscriptionFeatureIdSchema = z.enum([
@@ -158,9 +158,9 @@ export interface SubscriptionViewModel {
 
 export type EntitlementGateDecision =
   | {
-      allowed: true;
-    }
+    allowed: true;
+  }
   | {
-      allowed: false;
-      reason: "premium_required" | "payment_issue";
-    };
+    allowed: false;
+    reason: "premium_required" | "payment_issue";
+  };

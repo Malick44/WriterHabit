@@ -7,6 +7,7 @@ import { createDatabaseFromConfig, type Database } from "./data";
 import { createAuthenticateHook, createSupabaseJwtVerifier, type AuthVerifier } from "./runtime/auth";
 import { loadConfig, type ApiConfig } from "./runtime/config";
 import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
+import { registerAiReviewRoutes } from "./routes/ai-review";
 import { registerAssignmentRoutes } from "./routes/assignments";
 import { dashboardImplementedEndpoints } from "./routes/dashboards-shared";
 import { registerHealthRoutes } from "./routes/health";
@@ -121,6 +122,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
       if (database) {
         await registerAssignmentRoutes(v1, authenticate, database);
         await registerSubmissionRoutes(v1, authenticate, database);
+        await registerAiReviewRoutes(v1, authenticate, database);
         await registerProgressRoutes(v1, authenticate, database);
         await registerParentRoutes(v1, authenticate, database);
         await registerTeacherRoutes(v1, authenticate, database);

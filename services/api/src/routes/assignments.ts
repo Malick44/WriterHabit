@@ -7,8 +7,9 @@ import {
   listVisibleStudentProfileIds,
   requirePrincipal,
 } from "../runtime/authorization";
-import { createResourceNotFoundError } from "../runtime/errors";
+import { createForbiddenError, createResourceNotFoundError } from "../runtime/errors";
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
+import { getNextAssignmentStatusOnStart } from "../features/workflows/writing-workflow-state-machine";
 import {
   mapDailySelection,
   mapDraftSummary,
@@ -25,6 +26,11 @@ const studentParamsSchema = z.object({
 
 const assignmentParamsSchema = z.object({
   assignmentId: z.string().min(1).max(128),
+});
+
+const studentAssignmentActionParamsSchema = z.object({
+  assignmentId: z.string().min(1).max(128),
+  studentId: z.string().min(1).max(128),
 });
 
 const listQuerySchema = z.object({
@@ -125,6 +131,41 @@ export async function registerAssignmentRoutes(
         record.teacherNoteKey && record.teacherNoteFallback
           ? { fallback: record.teacherNoteFallback, key: record.teacherNoteKey }
           : null,
+    };
+  });
+
+  app.post("/students/:studentId/assignments/:assignmentId/start", { preHandler: authenticate }, async (request) => {
+    const principal = requirePrincipal(request);
+    const params = validateRequestParams(request, studentAssignmentActionParamsSchema);
+
+    if (principal.role !== "student") {
+      throw createForbiddenError({ details: params });
+    }
+
+    const profile = await authorizeStudentScopeRead(database, principal, params.studentId);
+    const record = await database.findStudentAssignmentForStudents(params.assignmentId, [profile.id]);
+
+    if (!record) {
+      throw createResourceNotFoundError({ assignmentId: params.assignmentId, studentId: params.studentId });
+    }
+
+    const nextStatus = getNextAssignmentStatusOnStart(record.status);
+    const startedAt = record.startedAt ?? new Date().toISOString();
+
+    await database.updateStudentAssignment(record.id, {
+      ...(nextStatus !== record.status ? { status: nextStatus } : {}),
+      ...(record.startedAt ? {} : { startedAt }),
+    });
+
+    const updated = await database.getStudentAssignmentById(record.id);
+
+    if (!updated) {
+      throw createResourceNotFoundError({ studentAssignmentId: record.id });
+    }
+
+    return {
+      ...mapStudentAssignmentSummary(updated),
+      startedAt,
     };
   });
 }

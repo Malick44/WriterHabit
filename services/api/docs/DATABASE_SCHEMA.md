@@ -90,7 +90,7 @@ Privacy boundary:
 | Table | Purpose | Important constraints and indexes |
 | --- | --- | --- |
 | `review_jobs` | Idempotent AI review work queue metadata. | FK to submission/student, status allow-list, safety flag allow-list, unique submission/idempotency key. |
-| `feedback` | Completed review summary. | One row per submission, one strength, one improvement, one next revision task represented as localization keys/fallbacks. |
+| `feedback` | Completed review summary. | One row per submission, one strength, one improvement, one next revision task, and progress-earned metadata represented as localization keys/fallbacks plus bounded counters. |
 | `revision_tasks` | Focused revision task attached to feedback. | FK to feedback, target writing skill, bounded original excerpt. |
 | `feedback_rubric_scores` | Rubric score rows. | FK to feedback and rubric criterion, score 1-4, unique feedback/criterion pair. |
 | `grammar_suggestions` | Coaching-oriented grammar suggestions. | FK to feedback and bounded original excerpt. |
@@ -117,6 +117,14 @@ derive them from submissions, revisions, feedback application, canvas activity,
 and assignment completion events. Public clients can read authorized rows but
 cannot directly mutate progress totals, skill progress, activity days, weekly
 reviews, or student badge state.
+
+`202606110003_workflow_state_machines.sql` adds trusted transaction functions
+for submission creation, feedback publication, and revision completion.
+`202606110004_review_job_lifecycle.sql` adds the trusted review-job lifecycle
+transition function for request start, failed review, and safety-blocked review
+states. The revision-completion function updates `student_progress_totals` and
+`student_activity_days` in the same workflow as the revision row and completion
+status transition.
 
 ## Entitlements And Notifications
 
@@ -205,9 +213,14 @@ The RLS migration defines security-definer helpers:
 - `can_read_feedback(feedback_id)`
 - `can_read_canvas_document(canvas_document_id)`
 - `can_teacher_comment_on_submission(submission_id)`
+- `writerhabit_submit_assignment_workflow(...)`
+- `writerhabit_transition_review_job_workflow(...)`
+- `writerhabit_publish_feedback_workflow(...)`
+- `writerhabit_complete_revision_workflow(...)`
 
 The policies wrap `auth.uid()` calls in helper functions and rely on indexed
-relationship columns to keep access checks bounded.
+relationship columns to keep access checks bounded. The `writerhabit_*`
+workflow functions are callable by the backend service role only.
 
 ## Migration Notes
 

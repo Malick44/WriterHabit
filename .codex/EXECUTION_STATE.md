@@ -36,9 +36,21 @@ Last updated: 2026-06-11
   `services/api/tests/rls/resource-policy-verification.sql` covers role
   escalation, student isolation, parent revocation, teacher roster removal,
   system-owned row write denial, and trusted service/admin transitions.
+- WW-REL-004 server-side workflow state machines are implemented locally.
+  Backend workflow routes and database transactions now own assignment start,
+  submission creation, AI review feedback publication, revision completion, and
+  progress side effects. AI review request start, failure, and safety-block
+  terminal states persist through
+  `202606110004_review_job_lifecycle.sql`. Public-client RLS writes to
+  workflow-owned assignment, submission, feedback, revision, review-job, and
+  progress rows are denied by `202606110003_workflow_state_machines.sql`; the
+  workflow migrations through `202606110004_review_job_lifecycle.sql` were
+  applied and verified against the configured development Supabase on
+  2026-06-11.
 - Next recommended engineering step: close remaining P0/P1 release blockers in
-  `docs/KNOWN_ISSUES.md`, starting with resource-level API authorization,
-  payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
+  `docs/KNOWN_ISSUES.md`, starting with payment entitlement sync, mobile E2E
+  automation, production AI provider/worker integration, canvas storage sync,
+  and backend lint/CI wiring.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -51,9 +63,9 @@ Last updated: 2026-06-11
   `202606110002_resource_rls_hardening.sql`.
 - `services/api/` now has a Fastify TypeScript runtime with health, request IDs,
   CORS, request logging, Supabase JWT verification, standard API errors,
-  authenticated session/profile smoke endpoints, fail-closed feature route
-  shells, package scripts, trusted-role derivation from server-owned
-  `app_metadata.role`, and Vitest integration tests.
+  authenticated session/profile smoke endpoints, writing-loop workflow routes,
+  fail-closed feature route shells, package scripts, trusted-role derivation
+  from server-owned `app_metadata.role`, and Vitest integration tests.
 - WW-REL task 02 round 2 server-derived role hardening is implemented locally:
   mobile session mapping ignores client-writable role/entitlement metadata,
   sign-up/onboarding no longer write role metadata, production onboarding only
@@ -551,12 +563,12 @@ Test status: Jest is configured with the Expo preset and has smoke coverage for 
 - Auth feature screens, form validation, and demo-role entry points live in `apps/mobile/src/features/auth/`.
 - Student onboarding progress, validation, and plan generation live in `apps/mobile/src/features/onboarding/`.
 - Student home dashboard data, state, view-model logic, and cards live in `apps/mobile/src/features/student-home/`.
-- Current student home data is deterministic mock/API data validated with Zod. Real progress and feedback persistence remains future backend work.
+- Current student home data is deterministic mock/API data validated with Zod. Backend revision-completion workflows now persist progress totals and activity-day updates; full dashboard read-model sync remains future work.
 - Assignment history, detail, status transitions, and submission confirmation live in `apps/mobile/src/features/assignments/`.
-- Current assignment data is deterministic mock/API data validated with Zod. Real assignment persistence, backend submission APIs, and feedback review remain future backend work.
+- Current assignment data is deterministic mock/API data validated with Zod. Authenticated start/submission/review/revision-completion mutations are backend-owned workflow transitions.
 - Typed writing workspace, local draft autosave, recovery states, writing metrics, rubric checklist, canvas preview, and safe coach entry points live in `apps/mobile/src/features/writing-workspace/`.
 - Current writing drafts are device-local, non-secret data persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and capped before storage. Backend draft persistence remains future work.
-- Student writing submission currently validates non-empty student text and routes to AI review loading. Full AI review and feedback summary remain future work.
+- Student writing submission currently validates non-empty student text and calls the backend submission workflow before routing to AI review loading. Backend feedback review uses a deterministic mock AI provider until production model/provider infrastructure is wired.
 - Canvas home, template picker, handwriting/drawing adapter, toolbar, local autosave, attachment, bounded undo/redo, and canvas persistence live in `apps/mobile/src/features/canvas/`.
 - Current canvas documents are device-local, non-secret stroke documents persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and bounded to 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots. Backend canvas sync, preview image export, object storage, and handwriting recognition remain future work.
 - Prompt 26 adds same-student/same-assignment recovery for oversized local drafts, same-student canvas recovery for oversized stored stroke documents, per-summary canvas index filtering, shared offline/retry UI primitives, loading skeletons, bounded TanStack Query cache defaults, and history pagination placeholders. The mobile app still does not include a real network status listener dependency.

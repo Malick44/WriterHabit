@@ -1,5 +1,7 @@
 import type { GradeLevel, WritingSkill } from "@WriterHabit/shared";
+import { z } from "zod";
 
+import { apiClient } from "@/core/api/apiClient";
 import { supabase } from "@/core/supabase/supabaseClient";
 import { assignmentsApi, type AssignmentRecord } from "@/features/assignments";
 import { createWritingDraft, draftPersistenceService } from "@/features/writing-workspace/services/draftPersistenceService";
@@ -10,6 +12,7 @@ import {
   MAX_FEEDBACK_REVIEW_EXCERPT_LENGTH,
   feedbackReviewResponseSchema,
   feedbackReviewScenarioSchema,
+  feedbackReviewSchema,
   feedbackRevisionCompletionSchema,
   type FeedbackReview,
   type FeedbackReviewConnectionStatus,
@@ -30,6 +33,35 @@ interface FeedbackReviewRequestInput {
 interface SubmitRevisionInput extends FeedbackReviewRequestInput {
   originalExcerpt: string;
   revisedText: string;
+}
+
+const backendFeedbackResponseSchema = z.object({
+  generatedAt: z.string().datetime(),
+  review: feedbackReviewSchema.nullable(),
+  reviewJobStatus: z.enum(["queued", "processing", "completed", "failed", "safety_blocked"]),
+  status: z.enum(["processing", "completed", "failed", "safety_blocked"]),
+  submissionId: z.string().min(1),
+});
+
+const backendReviewRequestResponseSchema = z.object({
+  feedbackId: z.string().min(1).nullable(),
+  status: z.enum(["queued", "processing", "completed", "failed", "safety_blocked"]),
+});
+
+const backendRevisionResponseSchema = z.object({
+  createdAt: z.string().datetime(),
+  id: z.string().min(1),
+  revisedExcerpt: z.string().min(1),
+  revisionTaskId: z.string().min(1).nullable(),
+  submissionId: z.string().min(1),
+});
+
+function encodePathSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function createClientIdempotencyKey(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export class FeedbackReviewApiError extends Error {
@@ -330,6 +362,83 @@ function createResponse(input: {
   });
 }
 
+async function getBackendFeedbackReview(input: FeedbackReviewRequestInput): Promise<FeedbackReviewResponse | null> {
+  const { data: authData } = await supabase.auth.getSession();
+
+  if (!authData.session) {
+    return null;
+  }
+
+  const feedbackResponse = await apiClient.get(
+    `/submissions/${encodePathSegment(input.submissionId)}/feedback`,
+    {
+      retry: false,
+      schema: backendFeedbackResponseSchema,
+    },
+  );
+
+  if (feedbackResponse.status === "completed" && feedbackResponse.review) {
+    return createResponse({
+      connectionStatus: "online",
+      gradeLevel: feedbackResponse.review.gradeLevel,
+      review: feedbackResponse.review,
+      status: "completed",
+      studentId: feedbackResponse.review.studentId,
+    });
+  }
+
+  if (feedbackResponse.status === "failed" || feedbackResponse.status === "safety_blocked") {
+    throw new FeedbackReviewApiError("review_failed", "Feedback review failed on the backend");
+  }
+
+  const reviewRequest = await apiClient.post(
+    `/ai/review/submissions/${encodePathSegment(input.submissionId)}`,
+    {
+      idempotencyKey: createClientIdempotencyKey(`review-${input.submissionId}`),
+    },
+    {
+      retry: false,
+      schema: backendReviewRequestResponseSchema,
+    },
+  );
+
+  if (reviewRequest.status !== "completed") {
+    return createResponse({
+      connectionStatus: "online",
+      gradeLevel: getGradeLevel(input),
+      review: null,
+      status: "processing",
+      studentId: input.studentId,
+    });
+  }
+
+  const completedFeedback = await apiClient.get(
+    `/submissions/${encodePathSegment(input.submissionId)}/feedback`,
+    {
+      retry: false,
+      schema: backendFeedbackResponseSchema,
+    },
+  );
+
+  if (completedFeedback.status !== "completed" || !completedFeedback.review) {
+    return createResponse({
+      connectionStatus: "online",
+      gradeLevel: getGradeLevel(input),
+      review: null,
+      status: "processing",
+      studentId: input.studentId,
+    });
+  }
+
+  return createResponse({
+    connectionStatus: "online",
+    gradeLevel: completedFeedback.review.gradeLevel,
+    review: completedFeedback.review,
+    status: "completed",
+    studentId: completedFeedback.review.studentId,
+  });
+}
+
 export const feedbackReviewApi = {
   async getFeedbackReview(input: FeedbackReviewRequestInput): Promise<FeedbackReviewResponse> {
     const scenario = readScenario();
@@ -339,6 +448,12 @@ export const feedbackReviewApi = {
     }
 
     const gradeLevel = getGradeLevel(input);
+
+    const backendReview = await getBackendFeedbackReview(input);
+
+    if (backendReview) {
+      return backendReview;
+    }
 
     if (scenario === "processing") {
       return createResponse({
@@ -413,48 +528,24 @@ export const feedbackReviewApi = {
     let revisionId = `revision-${input.submissionId}`;
 
     if (session) {
-      // With a real session, completion is only reported once the backend
-      // accepted the revision row. Failures throw so the student keeps the
-      // revision text on screen and can retry.
-      const { data: profile, error: profileErr } = await supabase
-        .from("student_profiles")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .single();
+      const revision = await apiClient.post(
+        `/submissions/${encodePathSegment(input.submissionId)}/revisions`,
+        {
+          idempotencyKey: createClientIdempotencyKey(`revision-${input.submissionId}`),
+          revisedExcerpt: getExcerpt(input.revisedText, 4000),
+          revisionTaskId: response.review.revisionTask.id,
+        },
+        {
+          retry: false,
+          schema: backendRevisionResponseSchema,
+        },
+      );
 
-      if (profileErr || !profile) {
-        throw new FeedbackReviewApiError("submit_failed", "Student profile not found for revision submit");
-      }
-
-      const { data: revision, error: revisionErr } = await supabase
-        .from("submission_revisions")
-        .upsert(
-          {
-            idempotency_key: `revision-${input.submissionId}`,
-            revised_excerpt: getExcerpt(input.revisedText, 4000),
-            student_profile_id: profile.id,
-            submission_id: input.submissionId,
-          },
-          { onConflict: "submission_id,idempotency_key" },
-        )
-        .select("id")
-        .single();
-
-      if (revisionErr || !revision) {
+      if (!revision) {
         throw new FeedbackReviewApiError("submit_failed", "Revision was not accepted by the backend");
       }
 
       revisionId = revision.id;
-
-      const { error: statusErr } = await supabase
-        .from("student_assignments")
-        .update({ status: "completed" })
-        .eq("current_submission_id", input.submissionId)
-        .eq("student_profile_id", profile.id);
-
-      if (statusErr) {
-        throw new FeedbackReviewApiError("submit_failed", "Assignment completion was not recorded");
-      }
     }
 
     return feedbackRevisionCompletionSchema.parse({

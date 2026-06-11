@@ -48,9 +48,18 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - WW-REL-002 database migration/RLS verification is implemented and verified
   against the configured development Supabase through
   `node scripts/supabase-migrations.mjs apply-and-verify`.
+- WW-REL-004 server-side workflow state machines are implemented locally:
+  submission, review publication, revision completion, assignment status, and
+  progress updates run through backend workflow transactions. AI review request
+  start/failure/safety-block lifecycle states are persisted by a backend-only
+  review-job transition workflow; public-client RLS writes to workflow-owned
+  tables are denied. Workflow migrations through
+  `202606110004_review_job_lifecycle.sql` have been applied and verified against
+  the configured development Supabase.
 - Next recommended engineering step: close remaining P0/P1 release blockers in
-  `docs/KNOWN_ISSUES.md`, starting with resource-level API authorization,
-  payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
+  `docs/KNOWN_ISSUES.md`, starting with payment entitlement sync, mobile E2E
+  automation, production AI provider/worker integration, canvas storage sync,
+  and backend lint/CI wiring.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -83,7 +92,7 @@ WriterHabit/
 
 Important current facts:
 
-- `services/api/` now has a Fastify TypeScript runtime shell, package manifest, local build/test scripts, `/api/v1/health`, Supabase JWT verification, request IDs, standard API error middleware, authenticated session/profile smoke endpoints, fail-closed feature route shells, framework-neutral contract docs in `services/api/docs/`, migration files in `services/api/migrations/`, a controlled Supabase migration/RLS runner in `scripts/supabase-migrations.mjs`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; no deployed API or production feature persistence exists yet.
+- `services/api/` now has a Fastify TypeScript runtime shell, package manifest, local build/test scripts, `/api/v1/health`, Supabase JWT verification, request IDs, standard API error middleware, authenticated session/profile smoke endpoints, fail-closed feature route shells, implemented writing-loop workflow routes, framework-neutral contract docs in `services/api/docs/`, migration files in `services/api/migrations/`, a controlled Supabase migration/RLS runner in `scripts/supabase-migrations.mjs`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; deployment, production provider integrations, and several non-writing feature persistence paths remain incomplete.
 - `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@WriterHabit/shared`.
 - No native `apps/mobile/ios/` or `apps/mobile/android/` folders should be kept unless the workflow intentionally changes from Expo CNG/prebuild.
 

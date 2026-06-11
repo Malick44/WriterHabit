@@ -77,12 +77,15 @@ The mobile academic-integrity service redirects blocked completion, full-rewrite
 and answer-seeking requests toward approved coaching actions such as hints,
 brainstorming, questions, sentence checks, and revision help.
 
-The current feedback review implementation is also a deterministic local mock
-boundary. It reads assignment mock data plus the locally saved typed draft,
-returns bounded excerpts, and renders structured feedback with one strength, one
-improvement, one revision task, rubric scores, grammar suggestion cards, and a
-completion celebration. It does not rewrite the student's assignment or persist
-progress to a backend yet.
+The feedback review implementation uses a deterministic coaching boundary.
+Authenticated mobile sessions request backend review for persisted submissions;
+the backend currently runs the framework-neutral mock AI provider, publishes
+feedback through the workflow transaction, persists failed and safety-blocked
+review-job terminal states through a backend-only lifecycle transaction, and
+lets revision completion persist progress updates. Local mock fallback remains
+for no-session demo paths. The review output is structured around one strength,
+one improvement, one revision task, rubric scores, grammar suggestion cards, and
+a completion celebration. It does not rewrite the student's assignment.
 
 Framework-neutral backend AI services now live in:
 

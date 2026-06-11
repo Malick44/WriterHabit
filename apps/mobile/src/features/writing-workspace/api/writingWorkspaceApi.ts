@@ -126,8 +126,11 @@ export const writingWorkspaceApi = {
     // throw, which keeps the draft on screen instead of faking a review.
     const submission = await assignmentsApi.submitAssignment({
       assignmentId: input.assignmentId,
+      canvasDocumentIds: input.draft.canvasAttachment ? [input.draft.canvasAttachment.canvasId] : [],
+      clientDraftVersion: Math.max(1, input.draft.revisionNumber + 1),
       gradeLevel: input.gradeLevel,
       studentId: input.studentId,
+      typedText: input.draft.text,
     });
 
     return writingSubmissionResponseSchema.parse({

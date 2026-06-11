@@ -10,9 +10,15 @@ import type {
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
+  FeedbackRecord,
+  FeedbackRubricScoreRecord,
+  FeedbackWithDetails,
+  GrammarSuggestionRecord,
   ListStudentAssignmentsOptions,
   ListSubmissionQueueOptions,
   ParentLinkedStudentRecord,
+  PublishFeedbackInput,
+  RevisionTaskRecord,
   ReviewJobRecord,
   RubricCriterionRecord,
   SaveDraftInput,
@@ -29,8 +35,11 @@ import type {
   SubmissionRecord,
   SubmissionRevisionRecord,
   TeacherProfileRecord,
+  TransitionReviewJobInput,
   WeeklyReviewRecord,
 } from "./types";
+import { ApiHttpError, createResourceNotFoundError } from "../runtime/errors";
+import { assertReviewJobTransition } from "../features/workflows/writing-workflow-state-machine";
 
 export interface MemoryParentLink {
   parentUserId: string;
@@ -62,9 +71,13 @@ export interface MemoryDatabaseSeed {
   classStudents?: MemoryClassStudent[];
   classes?: ClassRecord[];
   drafts?: DraftRecord[];
+  feedback?: FeedbackRecord[];
+  feedbackRubricScores?: FeedbackRubricScoreRecord[];
+  grammarSuggestions?: GrammarSuggestionRecord[];
   parentLinks?: MemoryParentLink[];
   progressTotals?: StudentProgressTotalsRecord[];
   rubricCriteria?: RubricCriterionRecord[];
+  revisionTasks?: RevisionTaskRecord[];
   skillProgress?: StudentSkillProgressRecord[];
   studentAssignments?: StudentAssignmentRecord[];
   studentBadges?: StudentBadgeRecord[];
@@ -95,9 +108,13 @@ export class MemoryDatabase implements Database {
   readonly classStudents: MemoryClassStudent[];
   readonly classes: ClassRecord[];
   readonly drafts: DraftRecord[];
+  readonly feedback: FeedbackRecord[];
+  readonly feedbackRubricScores: FeedbackRubricScoreRecord[];
+  readonly grammarSuggestions: GrammarSuggestionRecord[];
   readonly parentLinks: MemoryParentLink[];
   readonly progressTotals: StudentProgressTotalsRecord[];
   readonly reviewJobs: ReviewJobRecord[] = [];
+  readonly revisionTasks: RevisionTaskRecord[];
   readonly rubricCriteria: RubricCriterionRecord[];
   readonly skillProgress: StudentSkillProgressRecord[];
   readonly studentAssignments: StudentAssignmentRecord[];
@@ -118,9 +135,13 @@ export class MemoryDatabase implements Database {
     this.classStudents = [...(seed.classStudents ?? [])];
     this.classes = [...(seed.classes ?? [])];
     this.drafts = [...(seed.drafts ?? [])];
+    this.feedback = [...(seed.feedback ?? [])];
+    this.feedbackRubricScores = [...(seed.feedbackRubricScores ?? [])];
+    this.grammarSuggestions = [...(seed.grammarSuggestions ?? [])];
     this.parentLinks = [...(seed.parentLinks ?? [])];
     this.progressTotals = [...(seed.progressTotals ?? [])];
     this.rubricCriteria = [...(seed.rubricCriteria ?? [])];
+    this.revisionTasks = [...(seed.revisionTasks ?? [])];
     this.skillProgress = [...(seed.skillProgress ?? [])];
     this.studentAssignments = [...(seed.studentAssignments ?? [])];
     this.studentBadges = [...(seed.studentBadges ?? [])];
@@ -158,6 +179,44 @@ export class MemoryDatabase implements Database {
     }
 
     return { ...record, assignment: { ...assignment } };
+  }
+
+  private withFeedbackDetails(feedback: FeedbackRecord): FeedbackWithDetails | null {
+    const submission = this.submissions.find((candidate) => candidate.id === feedback.submissionId);
+
+    if (!submission) {
+      return null;
+    }
+
+    const studentAssignment = this.studentAssignments.find(
+      (candidate) => candidate.id === submission.studentAssignmentId,
+    );
+
+    if (!studentAssignment) {
+      return null;
+    }
+
+    const assignment = this.assignments.find((candidate) => candidate.id === studentAssignment.assignmentId);
+
+    if (!assignment) {
+      return null;
+    }
+
+    return {
+      assignment: { ...assignment, skillFocus: [...assignment.skillFocus] },
+      feedback: { ...feedback },
+      grammarSuggestions: this.grammarSuggestions
+        .filter((record) => record.feedbackId === feedback.id)
+        .map((record) => ({ ...record })),
+      revisionTask: this.revisionTasks.find((record) => record.feedbackId === feedback.id)
+        ? { ...this.revisionTasks.find((record) => record.feedbackId === feedback.id)! }
+        : null,
+      rubricScores: this.feedbackRubricScores
+        .filter((record) => record.feedbackId === feedback.id)
+        .map((record) => ({ ...record })),
+      studentAssignment: { ...studentAssignment, dailySelectionMetadata: { ...studentAssignment.dailySelectionMetadata } },
+      submission: { ...submission, canvasDocumentIds: [...submission.canvasDocumentIds] },
+    };
   }
 
   async countClassActiveAssignments(classId: string): Promise<number> {
@@ -206,8 +265,11 @@ export class MemoryDatabase implements Database {
     this.submissions.push(submission);
     this.submissionContents.set(submission.id, input.typedText);
     this.reviewJobs.push({
+      createdAt: timestamp,
       id: randomUUID(),
       idempotencyKey: input.idempotencyKey,
+      queuedAt: timestamp,
+      safetyFlags: [],
       status: "queued",
       studentProfileId: input.studentProfileId,
       submissionId: submission.id,
@@ -228,6 +290,15 @@ export class MemoryDatabase implements Database {
   }
 
   async createSubmissionRevision(input: CreateSubmissionRevisionInput): Promise<SubmissionRevisionRecord> {
+    const existing = this.submissionRevisions.find(
+      (record) => record.submissionId === input.submissionId && record.idempotencyKey === input.idempotencyKey,
+    );
+
+    if (existing) {
+      return { ...existing };
+    }
+
+    const submission = this.submissions.find((candidate) => candidate.id === input.submissionId);
     const revision: SubmissionRevisionRecord = {
       createdAt: nowIso(),
       id: randomUUID(),
@@ -239,6 +310,80 @@ export class MemoryDatabase implements Database {
     };
 
     this.submissionRevisions.push(revision);
+
+    if (submission) {
+      submission.status = "completed";
+      const studentAssignment = this.studentAssignments.find(
+        (candidate) => candidate.id === submission.studentAssignmentId,
+      );
+      const feedback = this.feedback.find((candidate) => candidate.submissionId === submission.id);
+      const timestamp = nowIso();
+
+      if (studentAssignment) {
+        studentAssignment.status = "completed";
+        studentAssignment.completedAt = timestamp;
+        studentAssignment.updatedAt = timestamp;
+      }
+
+      const progress = this.progressTotals.find(
+        (record) => record.studentProfileId === input.studentProfileId,
+      );
+
+      if (progress) {
+        progress.aiFeedbackApplied += 1;
+        progress.assignmentsCompleted += 1;
+        progress.minutesThisWeek += feedback?.progressMinutes ?? 0;
+        progress.revisionsCompleted += 1;
+        progress.wordsWritten += submission.wordCount;
+        progress.practicedTodayOn = timestamp.slice(0, 10);
+        progress.streakStatus = "continued";
+      } else {
+        this.progressTotals.push({
+          aiFeedbackApplied: 1,
+          assignmentsCompleted: 1,
+          bestStreakDays: 0,
+          currentStreakDays: 0,
+          handwritingMinutes: 0,
+          minutesThisWeek: feedback?.progressMinutes ?? 0,
+          practicedTodayOn: timestamp.slice(0, 10),
+          revisionsCompleted: 1,
+          rubricImprovement: 0,
+          streakStatus: "continued",
+          studentProfileId: input.studentProfileId,
+          weeklyMinutesGoal: 0,
+          wordsWritten: submission.wordCount,
+        });
+      }
+
+      const today = timestamp.slice(0, 10);
+      const activity = this.activityDays.find(
+        (record) => record.studentProfileId === input.studentProfileId && record.activityDate === today,
+      );
+
+      if (activity) {
+        activity.assignmentsCompleted += 1;
+        activity.feedbackApplied += 1;
+        activity.minutesPracticed += feedback?.progressMinutes ?? 0;
+        activity.revisionsCompleted += 1;
+        activity.wordsWritten += submission.wordCount;
+        activity.practicedSkills = [
+          ...new Set([...activity.practicedSkills, feedback?.progressSkill ?? "revision_quality"]),
+        ];
+      } else {
+        this.activityDays.push({
+          activityDate: today,
+          assignmentsCompleted: 1,
+          feedbackApplied: 1,
+          handwritingMinutes: 0,
+          minutesPracticed: feedback?.progressMinutes ?? 0,
+          practicedSkills: [feedback?.progressSkill ?? "revision_quality"],
+          revisionsCompleted: 1,
+          studentProfileId: input.studentProfileId,
+          wordsWritten: submission.wordCount,
+        });
+      }
+    }
+
     return { ...revision };
   }
 
@@ -295,6 +440,11 @@ export class MemoryDatabase implements Database {
     return draft ? { ...draft, canvasDocumentIds: [...draft.canvasDocumentIds] } : null;
   }
 
+  async getFeedbackBySubmissionId(submissionId: string): Promise<FeedbackWithDetails | null> {
+    const feedback = this.feedback.find((record) => record.submissionId === submissionId);
+    return feedback ? this.withFeedbackDetails(feedback) : null;
+  }
+
   async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
     const [latest] = this.weeklyReviews
       .filter((record) => record.studentProfileId === studentProfileId)
@@ -307,6 +457,14 @@ export class MemoryDatabase implements Database {
     return this.submissions
       .filter((record) => record.studentAssignmentId === studentAssignmentId)
       .reduce((max, record) => Math.max(max, record.revisionNumber), 0);
+  }
+
+  async getReviewJobBySubmissionId(submissionId: string): Promise<ReviewJobRecord | null> {
+    const [job] = this.reviewJobs
+      .filter((record) => record.submissionId === submissionId)
+      .sort((a, b) => (b.queuedAt ?? "").localeCompare(a.queuedAt ?? ""));
+
+    return job ? { ...job, safetyFlags: [...(job.safetyFlags ?? [])] } : null;
   }
 
   async getStudentAssignmentById(id: string): Promise<StudentAssignmentWithAssignment | null> {
@@ -538,6 +696,116 @@ export class MemoryDatabase implements Database {
     return [...new Set([...enrolled, ...direct])];
   }
 
+  async publishFeedback(input: PublishFeedbackInput): Promise<FeedbackWithDetails> {
+    const existing = await this.getFeedbackBySubmissionId(input.submissionId);
+
+    if (existing) {
+      return existing;
+    }
+
+    const submission = this.submissions.find((candidate) => candidate.id === input.submissionId);
+
+    if (!submission) {
+      throw new Error(`MemoryDatabase seed is missing submission ${input.submissionId}`);
+    }
+
+    const studentAssignment = this.studentAssignments.find(
+      (candidate) => candidate.id === submission.studentAssignmentId,
+    );
+
+    if (!studentAssignment) {
+      throw new Error(`MemoryDatabase seed is missing student assignment ${submission.studentAssignmentId}`);
+    }
+
+    const timestamp = nowIso();
+    const feedback: FeedbackRecord = {
+      createdAt: timestamp,
+      gradeLevel: input.feedback.gradeLevel,
+      id: randomUUID(),
+      improvementFallback: input.feedback.improvementFallback,
+      improvementKey: input.feedback.improvementKey,
+      nextRevisionTaskFallback: input.feedback.nextRevisionTaskFallback,
+      nextRevisionTaskKey: input.feedback.nextRevisionTaskKey,
+      progressMinutes: input.feedback.progressMinutes,
+      progressPoints: input.feedback.progressPoints,
+      progressSkill: input.feedback.progressSkill,
+      strengthFallback: input.feedback.strengthFallback,
+      strengthKey: input.feedback.strengthKey,
+      studentProfileId: input.studentProfileId,
+      submissionId: input.submissionId,
+      submittedTextExcerpt: input.feedback.submittedTextExcerpt,
+      updatedAt: timestamp,
+    };
+    const revisionTask: RevisionTaskRecord = {
+      createdAt: timestamp,
+      feedbackId: feedback.id,
+      guidingQuestionFallback: input.revisionTask.guidingQuestionFallback,
+      guidingQuestionKey: input.revisionTask.guidingQuestionKey,
+      id: randomUUID(),
+      instructionFallback: input.revisionTask.instructionFallback,
+      instructionKey: input.revisionTask.instructionKey,
+      originalExcerpt: input.revisionTask.originalExcerpt,
+      targetSkill: input.revisionTask.targetSkill,
+      updatedAt: timestamp,
+    };
+
+    this.feedback.push(feedback);
+    this.revisionTasks.push(revisionTask);
+    this.feedbackRubricScores.push(
+      ...input.rubricScores.map((score) => {
+        const criterion = this.rubricCriteria.find((record) => record.id === score.criterionId);
+
+        return {
+          coachingNoteFallback: score.coachingNoteFallback,
+          coachingNoteKey: score.coachingNoteKey,
+          criterionDescriptionFallback: criterion?.descriptionFallback ?? "Criterion detail",
+          criterionDescriptionKey: criterion?.descriptionKey ?? "rubrics.unknown.description",
+          criterionId: score.criterionId,
+          criterionLabelFallback: criterion?.labelFallback ?? "Criterion",
+          criterionLabelKey: criterion?.labelKey ?? "rubrics.unknown.label",
+          feedbackId: feedback.id,
+          id: randomUUID(),
+          level: score.level,
+          maxScore: 4 as const,
+          score: score.score,
+        };
+      }),
+    );
+    this.grammarSuggestions.push(
+      ...input.grammarSuggestions.map((suggestion) => ({
+        explanationFallback: suggestion.explanationFallback,
+        explanationKey: suggestion.explanationKey,
+        feedbackId: feedback.id,
+        id: randomUUID(),
+        originalExcerpt: suggestion.originalExcerpt,
+        studentActionFallback: suggestion.studentActionFallback,
+        studentActionKey: suggestion.studentActionKey,
+        titleFallback: suggestion.titleFallback,
+        titleKey: suggestion.titleKey,
+      })),
+    );
+
+    submission.status = "feedback_ready";
+    studentAssignment.status = "feedback_ready";
+    studentAssignment.updatedAt = timestamp;
+
+    const reviewJob = this.reviewJobs.find((record) => record.submissionId === input.submissionId);
+    if (reviewJob) {
+      reviewJob.completedAt = timestamp;
+      reviewJob.safetyFlags = [...input.safetyFlags];
+      reviewJob.status = "completed";
+      reviewJob.startedAt = reviewJob.startedAt ?? timestamp;
+    }
+
+    const details = this.withFeedbackDetails(feedback);
+
+    if (!details) {
+      throw new Error(`MemoryDatabase could not compose feedback ${feedback.id}`);
+    }
+
+    return details;
+  }
+
   async saveDraft(input: SaveDraftInput): Promise<DraftRecord> {
     const timestamp = nowIso();
     const existing = this.drafts.find((draft) => draft.studentAssignmentId === input.studentAssignmentId);
@@ -573,6 +841,79 @@ export class MemoryDatabase implements Database {
 
     this.drafts.push(draft);
     return { ...draft, canvasDocumentIds: [...draft.canvasDocumentIds] };
+  }
+
+  async transitionReviewJob(input: TransitionReviewJobInput): Promise<ReviewJobRecord> {
+    const submission = this.submissions.find((candidate) => candidate.id === input.submissionId);
+
+    if (!submission || submission.studentProfileId !== input.studentProfileId) {
+      throw createResourceNotFoundError({ submissionId: input.submissionId });
+    }
+
+    const timestamp = nowIso();
+    const activeStatuses = new Set<ReviewJobRecord["status"]>(["queued", "processing"]);
+    let reviewJob = this.reviewJobs
+      .filter((record) => record.submissionId === input.submissionId && activeStatuses.has(record.status))
+      .sort((a, b) => (b.queuedAt ?? "").localeCompare(a.queuedAt ?? ""))[0];
+
+    if (!reviewJob && input.transition === "start_review") {
+      const existingByKey = this.reviewJobs.find(
+        (record) => record.submissionId === input.submissionId && record.idempotencyKey === input.idempotencyKey,
+      );
+
+      if (existingByKey) {
+        reviewJob = existingByKey;
+      } else {
+        reviewJob = {
+          createdAt: timestamp,
+          failureCode: null,
+          failedAt: null,
+          id: randomUUID(),
+          idempotencyKey: input.idempotencyKey,
+          queuedAt: timestamp,
+          safetyFlags: [],
+          startedAt: null,
+          status: "queued",
+          studentProfileId: input.studentProfileId,
+          submissionId: input.submissionId,
+        };
+        this.reviewJobs.push(reviewJob);
+      }
+    }
+
+    if (!reviewJob) {
+      throw createResourceNotFoundError({ submissionId: input.submissionId, transition: input.transition });
+    }
+
+    assertReviewJobTransition(reviewJob.status, input.transition);
+
+    if (input.transition === "start_review") {
+      reviewJob.completedAt = null;
+      reviewJob.failedAt = null;
+      reviewJob.failureCode = null;
+      reviewJob.safetyFlags = [];
+      reviewJob.startedAt = reviewJob.startedAt ?? timestamp;
+      reviewJob.status = "processing";
+    } else if (input.transition === "fail_review") {
+      reviewJob.failedAt = timestamp;
+      reviewJob.failureCode = input.failureCode ?? "ai.review_failed";
+      reviewJob.safetyFlags = [...(input.safetyFlags ?? [])];
+      reviewJob.startedAt = reviewJob.startedAt ?? timestamp;
+      reviewJob.status = "failed";
+    } else if (input.transition === "safety_block_review") {
+      reviewJob.failedAt = timestamp;
+      reviewJob.failureCode = input.failureCode ?? "ai_safety.blocked";
+      reviewJob.safetyFlags = [...(input.safetyFlags ?? [])];
+      reviewJob.startedAt = reviewJob.startedAt ?? timestamp;
+      reviewJob.status = "safety_blocked";
+    } else {
+      throw new ApiHttpError({
+        code: "conflict.status_transition_invalid",
+        details: { requestedTransition: input.transition, resource: "review_job" },
+      });
+    }
+
+    return { ...reviewJob, safetyFlags: [...(reviewJob.safetyFlags ?? [])] };
   }
 
   async updateStudentAssignment(id: string, update: StudentAssignmentUpdate): Promise<void> {

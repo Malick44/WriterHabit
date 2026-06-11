@@ -80,7 +80,7 @@ Definition of done:
 - Student can write and save draft
 - Empty drafts cannot be submitted
 - Student can submit for review loading
-- Backend submission persistence remains future work
+- Authenticated submissions use the backend submission workflow; local fallback remains for demo/offline-only sessions
 
 ## Phase 5 — Canvas
 

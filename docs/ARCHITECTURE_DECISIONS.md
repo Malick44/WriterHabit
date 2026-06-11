@@ -357,9 +357,17 @@ Consequences:
 
 - Route file `apps/mobile/app/(student)/write/[assignmentId].tsx` remains a thin feature export.
 - Draft state is explicit: restoring, unsaved, saving, saved, failed, empty, offline cached, and submitted-for-review paths are visible in the feature UI.
-- Drafts are device-local until backend draft contracts are implemented. They are validated with Zod and capped before persistence.
+- Drafts are saved locally first, then authenticated sessions can sync through
+  backend draft endpoints. They are validated with Zod and capped before
+  persistence.
 - AI coach entry points are limited to approved learning actions: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
-- Backend submission persistence remains future work. The current feedback-review feature can render local mock review results after submission.
+- Authenticated submission uses the backend workflow transaction to create
+  submission/content/review-job rows and advance assignment status. Local/demo
+  sessions can still render deterministic mock review results.
+- Authenticated AI review requests persist review-job lifecycle transitions on
+  the backend: start moves the job to `processing`, failed requests move it to
+  `failed`, and academic-integrity blocks move it to `safety_blocked` with
+  safety flags before the API response is returned.
 
 ## ADR-018: Canvas Uses a Local Stroke Adapter Until a Drawing Engine Is Chosen
 
@@ -439,11 +447,14 @@ Consequences:
 Status: accepted
 
 The feedback-review feature is owned by
-`apps/mobile/src/features/feedback-review/`. The current implementation uses a
-deterministic local mock API instead of a backend AI review job. It reads
-assignment mock data and the locally saved typed draft, validates review payloads
-with Zod, and returns bounded excerpts for feedback and revision screens rather
-than retaining the full draft in review state.
+`apps/mobile/src/features/feedback-review/`. Authenticated production sessions
+read feedback from `GET /api/v1/submissions/:submissionId/feedback` and request
+review through `POST /api/v1/ai/review/submissions/:submissionId`. The backend
+currently uses the deterministic mock provider behind the service boundary,
+persists feedback/revision-task rows, and returns bounded excerpts for feedback
+and revision screens rather than retaining the full draft in review state.
+Local/demo sessions without a Supabase bearer token still use the deterministic
+local mock API.
 
 Current evidence:
 
@@ -465,8 +476,11 @@ Consequences:
 - Feedback is framed as one strength, one improvement, one revision task, rubric coaching, and grammar suggestions.
 - Revision asks the student to write one focused revised passage; it does not auto-apply or generate a polished final draft.
 - In-progress revision text is locally autosaved and restored, then cleared after successful submission.
-- Progress earned now links into the local progress dashboard. Persisted progress aggregation and backend progress sync remain future backend work.
-- Backend AI review jobs, feedback persistence, audit-safe metadata logging, and usage limits remain future work.
+- Progress earned now links into the local progress dashboard, and backend
+  revision completion updates progress totals/activity rows through the workflow
+  transaction.
+- Production AI provider integration, durable async workers, audit-safe metadata
+  logging, and persisted usage limits remain future work.
 
 ## ADR-021: Progress Tracking Uses Local Analytics Contracts Until Backend Exists
 

@@ -1,5 +1,7 @@
 import type { GradeLevel, WritingGoal, WritingSkill } from "@WriterHabit/shared";
+import { z } from "zod";
 
+import { apiClient } from "@/core/api/apiClient";
 import { supabase } from "@/core/supabase/supabaseClient";
 import {
   assignmentDetailResponseSchema,
@@ -28,6 +30,34 @@ interface AssignmentRequestInput {
 
 interface AssignmentDetailRequestInput extends AssignmentRequestInput {
   assignmentId: string;
+}
+
+interface AssignmentSubmitRequestInput extends AssignmentDetailRequestInput {
+  canvasDocumentIds?: string[];
+  clientDraftVersion?: number;
+  idempotencyKey?: string;
+  typedText?: string;
+}
+
+const backendDraftResponseSchema = z.object({
+  autosaveVersion: z.number().int().min(1),
+  canvasDocumentIds: z.array(z.string().min(1)),
+  text: z.string(),
+});
+
+const backendSubmissionResponseSchema = z.object({
+  id: z.string().min(1),
+  status: z.literal("submitted"),
+  submittedAt: z.string().datetime(),
+  studentAssignmentId: z.string().min(1),
+});
+
+function encodePathSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function createClientIdempotencyKey(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function readScenario(): AssignmentScenario {
@@ -431,6 +461,7 @@ export const assignmentsApi = {
             rubricId: sa.assignments.rubric_id,
             skillFocus: sa.assignments.skill_focus || [],
             status: sa.status,
+            studentAssignmentId: sa.id,
             submittedLabel: sa.submitted_at ? "Submitted recently" : undefined,
             teacherNote: sa.teacher_note_fallback || undefined,
             title: sa.assignments.title_fallback,
@@ -531,6 +562,7 @@ export const assignmentsApi = {
         rubricId: sa.assignments.rubric_id,
         skillFocus: sa.assignments.skill_focus || [],
         status: sa.status,
+        studentAssignmentId: sa.id,
         submittedLabel: sa.submitted_at ? "Submitted recently" : undefined,
         teacherNote: sa.teacher_note_fallback || undefined,
         title: sa.assignments.title_fallback,
@@ -568,43 +600,18 @@ export const assignmentsApi = {
       return { ...detail.assignment, status: nextStatus };
     }
 
-    const { data: profile } = await supabase
-      .from("student_profiles")
-      .select("id")
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!profile) throw new Error("Profile not found");
-
-    const { data: sa } = await supabase
-      .from("student_assignments")
-      .select("status")
-      .eq("student_profile_id", profile.id)
-      .eq("assignment_id", input.assignmentId)
-      .single();
-
-    if (!sa) throw new Error("Student assignment not found");
-
-    const nextStatus = getNextStatusOnStart(sa.status);
-    if (!nextStatus) throw new Error("Assignment cannot be started");
-
-    const { error } = await supabase
-      .from("student_assignments")
-      .update({
-        status: nextStatus,
-        started_at: new Date().toISOString(),
-      })
-      .eq("student_profile_id", profile.id)
-      .eq("assignment_id", input.assignmentId);
-
-    if (error) throw error;
+    await apiClient.post(
+      `/students/${encodePathSegment(input.studentId)}/assignments/${encodePathSegment(input.assignmentId)}/start`,
+      {},
+      { retry: false },
+    );
 
     const updated = await this.getAssignmentDetail(input);
     if (!updated.assignment) throw new Error("Failed to load updated assignment");
     return updated.assignment;
   },
 
-  async submitAssignment(input: AssignmentDetailRequestInput): Promise<AssignmentSubmissionResponse> {
+  async submitAssignment(input: AssignmentSubmitRequestInput): Promise<AssignmentSubmissionResponse> {
     const { data: authData } = await supabase.auth.getSession();
     const session = authData?.session;
 
@@ -619,128 +626,41 @@ export const assignmentsApi = {
       };
     }
 
-    const { data: profile } = await supabase
-      .from("student_profiles")
-      .select("id, grade_level")
-      .eq("user_id", session.user.id)
-      .single();
+    const detail = await this.getAssignmentDetail(input);
+    const studentAssignmentId = detail.assignment?.studentAssignmentId;
 
-    if (!profile) throw new Error("Profile not found");
-
-    const { data: sa } = await supabase
-      .from("student_assignments")
-      .select("id, status")
-      .eq("student_profile_id", profile.id)
-      .eq("assignment_id", input.assignmentId)
-      .single();
-
-    if (!sa) throw new Error("Student assignment not found");
-
-    // Fetch the draft content
-    const { data: draft } = await supabase
-      .from("writing_drafts")
-      .select("*")
-      .eq("student_assignment_id", sa.id)
-      .maybeSingle();
-
-    const text = draft?.text_content || "";
-    const excerpt = text.slice(0, 1000);
-
-    // Create a submission record
-    const { data: submission, error: subErr } = await supabase
-      .from("submissions")
-      .insert({
-        student_assignment_id: sa.id,
-        student_profile_id: profile.id,
-        status: "submitted",
-        typed_text_excerpt: excerpt,
-        word_count: draft?.word_count || 0,
-        sentence_count: draft?.sentence_count || 0,
-        paragraph_count: draft?.paragraph_count || 0,
-        idempotency_key: Math.random().toString(),
-      })
-      .select("*")
-      .single();
-
-    if (subErr) throw subErr;
-
-    // Create submission contents
-    const { error: contentsErr } = await supabase
-      .from("submission_contents")
-      .insert({
-        submission_id: submission.id,
-        student_profile_id: profile.id,
-        typed_text: text,
-      });
-
-    if (contentsErr) throw contentsErr;
-
-    // Create a review job
-    const { error: reviewJobErr } = await supabase
-      .from("review_jobs")
-      .insert({
-        submission_id: submission.id,
-        student_profile_id: profile.id,
-        status: "completed",
-        idempotency_key: Math.random().toString(),
-      });
-
-    if (reviewJobErr) throw reviewJobErr;
-
-    // Generate immediate feedback to simulate completed AI review
-    const { data: feedback, error: feedbackErr } = await supabase
-      .from("feedback")
-      .insert({
-        submission_id: submission.id,
-        student_profile_id: profile.id,
-        grade_level: profile.grade_level || 7,
-        submitted_text_excerpt: excerpt,
-        strength_key: "feedback.strength.elementary",
-        strength_fallback: "Your introduction has a clear setup and main idea.",
-        improvement_key: "feedback.improvement.elementary",
-        improvement_fallback: "Try adding one more specific detail about your main idea.",
-        next_revision_task_key: "feedback.revision.elementary",
-        next_revision_task_fallback: "Polish your body paragraph to explain the connection clearly.",
-      })
-      .select("*")
-      .single();
-
-    if (feedbackErr) throw feedbackErr;
-
-    if (feedback) {
-      const { error: revisionTaskErr } = await supabase
-        .from("revision_tasks")
-        .insert({
-          feedback_id: feedback.id,
-          target_skill: "clarity",
-          instruction_key: "revision.vocab.instructions",
-          instruction_fallback: "Add a clarifying sentence.",
-          guiding_question_key: "revision.vocab.question",
-          guiding_question_fallback: "Why does that detail support your claim?",
-          original_excerpt: excerpt,
-        });
-
-      if (revisionTaskErr) throw revisionTaskErr;
+    if (!detail.assignment || !studentAssignmentId) {
+      throw new Error("Student assignment not found");
     }
 
-    // Update assignment status to 'feedback_ready'
-    const { error: updateErr } = await supabase
-      .from("student_assignments")
-      .update({
-        status: "feedback_ready",
-        submitted_at: new Date().toISOString(),
-        current_submission_id: submission.id,
-      })
-      .eq("id", sa.id);
-
-    if (updateErr) throw updateErr;
+    const backendDraft =
+      input.typedText === undefined
+        ? await apiClient.get(`/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`, {
+            schema: backendDraftResponseSchema,
+          })
+        : null;
+    const typedText = input.typedText ?? backendDraft?.text ?? "";
+    const canvasDocumentIds = input.canvasDocumentIds ?? backendDraft?.canvasDocumentIds ?? [];
+    const clientDraftVersion = input.clientDraftVersion ?? backendDraft?.autosaveVersion ?? 1;
+    const response = await apiClient.post(
+      `/student-assignments/${encodePathSegment(studentAssignmentId)}/submissions`,
+      {
+        canvasDocumentIds,
+        clientDraftVersion,
+        idempotencyKey: input.idempotencyKey ?? createClientIdempotencyKey(`submit-${studentAssignmentId}`),
+        typedText,
+      },
+      {
+        retry: false,
+        schema: backendSubmissionResponseSchema,
+      },
+    );
 
     return {
       assignmentId: input.assignmentId,
-      status: "feedback_ready" as any,
+      status: "submitted",
       submittedLabel: "Submitted just now",
-      submissionId: submission.id,
+      submissionId: response.id,
     };
   },
 };
-

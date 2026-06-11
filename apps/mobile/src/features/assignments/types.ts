@@ -88,6 +88,7 @@ export const assignmentRecordSchema = z.object({
   rubricId: z.string().min(1),
   skillFocus: z.array(writingSkillSchema).min(1),
   status: assignmentStatusSchema,
+  studentAssignmentId: z.string().min(1).optional(),
   submittedLabel: z.string().min(1).optional(),
   teacherNote: z.string().min(1).optional(),
   title: z.string().min(1),

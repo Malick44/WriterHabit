@@ -11,7 +11,11 @@ Runtime implementation status:
 - `GET /api/v1/health` is implemented and public.
 - `GET /api/v1/auth/session` and `GET /api/v1/me/profile` are implemented as
   authenticated Supabase JWT smoke endpoints.
-- Remaining feature routes are registered and fail closed with
+- Writing-loop assignment reads, draft persistence, submission creation, AI
+  review request/status, feedback reads, revision submission, and progress
+  side effects are implemented in `services/api/` when the database is
+  configured.
+- Remaining incomplete feature routes are registered and fail closed with
   `501 feature.disabled` until persistence, resource authorization, and provider
   integrations are implemented.
 
@@ -375,7 +379,6 @@ GET  /students/:studentId/daily-assignment
 GET  /students/:studentId/assignments
 GET  /assignments/:assignmentId
 POST /students/:studentId/assignments/:assignmentId/start
-POST /students/:studentId/assignments/:assignmentId/submit
 ```
 
 Query parameters for `GET /students/:studentId/assignments`:
@@ -465,8 +468,13 @@ Daily assignment example response:
 
 ## Submissions And Drafts
 
-The typed writing workspace currently persists drafts locally. Backend draft and
-submission sync is planned here.
+The typed writing workspace saves local drafts first, then syncs authenticated
+draft and submission writes through the backend. Submission creation is a
+server-owned state-machine transition: the backend transaction stores the
+submission row, full content row, canvas links, queued review job, and
+`student_assignments.current_submission_id/status/submitted_at` together.
+Public mobile clients cannot write submission, review, feedback, revision, or
+assignment workflow rows directly through RLS.
 
 ```txt
 GET    /student-assignments/:studentAssignmentId/draft
@@ -515,7 +523,7 @@ interface SubmissionResponse {
 
 interface SubmitRevisionRequest {
   revisedExcerpt: string;
-  revisionTaskId: string;
+  revisionTaskId: string; // must be the backend-generated task id from feedback
   idempotencyKey: string;
 }
 ```
@@ -529,6 +537,17 @@ Submission example:
   "clientDraftVersion": 4,
   "idempotencyKey": "ios-device-generated-uuid"
 }
+```
+
+Allowed workflow transitions:
+
+```txt
+not_started -> in_progress                       via start/draft save
+in_progress -> submitted                         via submission transaction
+submitted -> feedback_ready                      via trusted AI review publish
+feedback_ready -> revision_in_progress           via revision draft save/start
+revision_in_progress -> submitted                via revision submission transaction
+feedback_ready | revision_in_progress -> completed via backend revision completion
 ```
 
 ## Canvas
@@ -778,13 +797,17 @@ Coach response example:
 
 ## AI Review And Feedback
 
-The current mobile feedback review feature uses a deterministic local mock
-facade. Backend AI review jobs, feedback persistence, and progress sync are
-planned here. Framework-neutral backend review service scaffolding now exists in
-`services/api/src/features/ai/review/`; it creates review job responses, parses
-structured feedback from the mock provider, validates output policy, and returns
-one strength, one improvement, one next revision task, rubric scores, grammar
-suggestions, and progress-earned metadata.
+Authenticated mobile feedback review calls the backend first. The backend uses
+the framework-neutral review service in
+`services/api/src/features/ai/review/`, currently backed by the deterministic
+mock provider, then persists feedback and the revision task through a trusted
+database workflow. Review-job lifecycle state is also persisted by backend-only
+workflow transitions: the review request moves the job to `processing`, failed
+requests move it to `failed`, and policy-blocked requests move it to
+`safety_blocked` with safety flags before the API returns the error. Local
+deterministic review remains only for local/demo sessions without a Supabase
+bearer token. A production model provider, durable worker queue, usage metering
+persistence, and audit log persistence are still separate release work.
 
 ```txt
 POST /ai/review/submissions/:submissionId

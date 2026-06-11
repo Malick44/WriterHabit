@@ -106,6 +106,10 @@ Key lifecycle fields:
   conflict detection for future sync APIs.
 - `submissions.idempotency_key` and `submission_revisions.idempotency_key`
   support retry-safe writes.
+- Assignment submission, feedback publication, and revision completion are
+  backend-owned workflow transitions. Public clients cannot forge
+  `submissions`, `review_jobs`, `feedback`, `revision_tasks`,
+  `submission_revisions`, assignment completion state, or progress rows.
 
 Catalog assignments have `assignments.class_id = null`. Teacher assignments
 point at `classes.id`.

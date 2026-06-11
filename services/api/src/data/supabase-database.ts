@@ -11,9 +11,16 @@ import type {
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
+  FeedbackRecord,
+  FeedbackRubricScoreRecord,
+  FeedbackWithDetails,
+  GrammarSuggestionRecord,
   ListStudentAssignmentsOptions,
   ListSubmissionQueueOptions,
   ParentLinkedStudentRecord,
+  PublishFeedbackInput,
+  RevisionTaskRecord,
+  ReviewJobRecord,
   RubricCriterionRecord,
   SaveDraftInput,
   StudentActivityDayRecord,
@@ -28,6 +35,7 @@ import type {
   SubmissionRecord,
   SubmissionRevisionRecord,
   TeacherProfileRecord,
+  TransitionReviewJobInput,
   WeeklyReviewRecord,
 } from "./types";
 
@@ -47,6 +55,27 @@ function toDatabaseError(error: SupabaseErrorLike, operation: string): Error {
   if (error.code === uniqueViolationCode) {
     return new ApiHttpError({
       code: "conflict.duplicate_idempotency_key",
+      details: { operation },
+    });
+  }
+
+  if (error.message.includes("workflow_state_transition_invalid")) {
+    return new ApiHttpError({
+      code: "conflict.status_transition_invalid",
+      details: { operation },
+    });
+  }
+
+  if (error.message.includes("workflow_revision_task_invalid")) {
+    return new ApiHttpError({
+      code: "conflict.status_transition_invalid",
+      details: { operation, reason: "revision_task_invalid" },
+    });
+  }
+
+  if (error.message.includes("workflow_resource_missing")) {
+    return new ApiHttpError({
+      code: "resource.not_found",
       details: { operation },
     });
   }
@@ -82,6 +111,30 @@ const submissionSelect =
 
 const revisionSelect =
   "id, submission_id, student_profile_id, revision_task_id, revised_excerpt, idempotency_key, created_at";
+
+const reviewJobSelect =
+  "id, submission_id, student_profile_id, status, idempotency_key, safety_flags, queued_at, started_at, completed_at, failed_at, failure_code, created_at";
+
+const feedbackSelect =
+  "id, submission_id, student_profile_id, grade_level, submitted_text_excerpt, strength_key, strength_fallback, improvement_key, improvement_fallback, next_revision_task_key, next_revision_task_fallback, progress_minutes, progress_points, progress_skill, created_at, updated_at";
+
+const revisionTaskSelect =
+  "id, feedback_id, target_skill, instruction_key, instruction_fallback, guiding_question_key, guiding_question_fallback, original_excerpt, created_at, updated_at";
+
+const grammarSuggestionSelect =
+  "id, feedback_id, title_key, title_fallback, explanation_key, explanation_fallback, original_excerpt, student_action_key, student_action_fallback";
+
+const feedbackRubricScoreSelect = [
+  "id",
+  "feedback_id",
+  "rubric_criterion_id",
+  "score",
+  "max_score",
+  "level",
+  "coaching_note_key",
+  "coaching_note_fallback",
+  "rubric_criterion:rubric_criteria(id, label_key, label_fallback, description_key, description_fallback)",
+].join(", ");
 
 function mapAssignmentRow(row: Record<string, unknown>): AssignmentRecord {
   return {
@@ -179,6 +232,92 @@ function mapRevisionRow(row: Record<string, unknown>): SubmissionRevisionRecord 
     revisionTaskId: (row.revision_task_id as string | null) ?? null,
     studentProfileId: row.student_profile_id as string,
     submissionId: row.submission_id as string,
+  };
+}
+
+function mapReviewJobRow(row: Record<string, unknown>): ReviewJobRecord {
+  return {
+    completedAt: (row.completed_at as string | null) ?? null,
+    createdAt: row.created_at as string,
+    failureCode: (row.failure_code as string | null) ?? null,
+    failedAt: (row.failed_at as string | null) ?? null,
+    id: row.id as string,
+    idempotencyKey: row.idempotency_key as string,
+    queuedAt: row.queued_at as string,
+    safetyFlags: (row.safety_flags as string[] | null) ?? [],
+    startedAt: (row.started_at as string | null) ?? null,
+    status: row.status as ReviewJobRecord["status"],
+    studentProfileId: row.student_profile_id as string,
+    submissionId: row.submission_id as string,
+  };
+}
+
+function mapFeedbackRow(row: Record<string, unknown>): FeedbackRecord {
+  return {
+    createdAt: row.created_at as string,
+    gradeLevel: row.grade_level as number,
+    id: row.id as string,
+    improvementFallback: row.improvement_fallback as string,
+    improvementKey: row.improvement_key as string,
+    nextRevisionTaskFallback: row.next_revision_task_fallback as string,
+    nextRevisionTaskKey: row.next_revision_task_key as string,
+    progressMinutes: row.progress_minutes as number,
+    progressPoints: row.progress_points as number,
+    progressSkill: row.progress_skill as string,
+    strengthFallback: row.strength_fallback as string,
+    strengthKey: row.strength_key as string,
+    studentProfileId: row.student_profile_id as string,
+    submissionId: row.submission_id as string,
+    submittedTextExcerpt: row.submitted_text_excerpt as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapRevisionTaskRow(row: Record<string, unknown>): RevisionTaskRecord {
+  return {
+    createdAt: row.created_at as string,
+    feedbackId: row.feedback_id as string,
+    guidingQuestionFallback: row.guiding_question_fallback as string,
+    guidingQuestionKey: row.guiding_question_key as string,
+    id: row.id as string,
+    instructionFallback: row.instruction_fallback as string,
+    instructionKey: row.instruction_key as string,
+    originalExcerpt: row.original_excerpt as string,
+    targetSkill: row.target_skill as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapGrammarSuggestionRow(row: Record<string, unknown>): GrammarSuggestionRecord {
+  return {
+    explanationFallback: row.explanation_fallback as string,
+    explanationKey: row.explanation_key as string,
+    feedbackId: row.feedback_id as string,
+    id: row.id as string,
+    originalExcerpt: row.original_excerpt as string,
+    studentActionFallback: row.student_action_fallback as string,
+    studentActionKey: row.student_action_key as string,
+    titleFallback: row.title_fallback as string,
+    titleKey: row.title_key as string,
+  };
+}
+
+function mapFeedbackRubricScoreRow(row: Record<string, unknown>): FeedbackRubricScoreRecord {
+  const criterion = firstJoinRow(row.rubric_criterion);
+
+  return {
+    coachingNoteFallback: row.coaching_note_fallback as string,
+    coachingNoteKey: row.coaching_note_key as string,
+    criterionDescriptionFallback: (criterion?.description_fallback as string | undefined) ?? "",
+    criterionDescriptionKey: (criterion?.description_key as string | undefined) ?? "",
+    criterionId: row.rubric_criterion_id as string,
+    criterionLabelFallback: (criterion?.label_fallback as string | undefined) ?? "",
+    criterionLabelKey: (criterion?.label_key as string | undefined) ?? "",
+    feedbackId: row.feedback_id as string,
+    id: row.id as string,
+    level: row.level as FeedbackRubricScoreRecord["level"],
+    maxScore: 4,
+    score: row.score as FeedbackRubricScoreRecord["score"],
   };
 }
 
@@ -395,104 +534,54 @@ export class SupabaseDatabase implements Database {
   }
 
   async createSubmission(input: CreateSubmissionInput): Promise<SubmissionRecord> {
-    const submittedAt = new Date().toISOString();
-    const { data, error } = await this.client
-      .from("submissions")
-      .insert({
-        idempotency_key: input.idempotencyKey,
-        paragraph_count: input.paragraphCount,
-        revision_number: input.revisionNumber,
-        sentence_count: input.sentenceCount,
-        status: "submitted",
-        student_assignment_id: input.studentAssignmentId,
-        student_profile_id: input.studentProfileId,
-        submitted_at: submittedAt,
-        typed_text_excerpt: input.typedTextExcerpt,
-        word_count: input.wordCount,
-      })
-      .select(
-        "id, student_assignment_id, student_profile_id, status, typed_text_excerpt, word_count, sentence_count, paragraph_count, revision_number, idempotency_key, submitted_at, created_at, updated_at",
-      )
-      .single();
+    const { data, error } = await this.client.rpc("writerhabit_submit_assignment_workflow", {
+      p_canvas_document_ids: input.canvasDocumentIds,
+      p_idempotency_key: input.idempotencyKey,
+      p_paragraph_count: input.paragraphCount,
+      p_sentence_count: input.sentenceCount,
+      p_student_assignment_id: input.studentAssignmentId,
+      p_student_profile_id: input.studentProfileId,
+      p_typed_text: input.typedText,
+      p_typed_text_excerpt: input.typedTextExcerpt,
+      p_word_count: input.wordCount,
+    });
 
     if (error || !data) {
-      throw toDatabaseError(error ?? { message: "missing inserted submission row" }, "submissions.insert");
+      throw toDatabaseError(error ?? { message: "missing workflow submission row" }, "workflow.submit");
     }
 
-    const submissionRow = data as Record<string, unknown>;
-    const submissionId = submissionRow.id as string;
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
 
-    const contents = await this.client.from("submission_contents").insert({
-      student_profile_id: input.studentProfileId,
-      submission_id: submissionId,
-      typed_text: input.typedText,
-    });
-
-    if (contents.error) {
-      throw toDatabaseError(contents.error, "submission_contents.insert");
-    }
-
-    if (input.canvasDocumentIds.length > 0) {
-      const links = await this.client.from("submission_canvas_documents").insert(
-        input.canvasDocumentIds.map((canvasDocumentId) => ({
-          canvas_document_id: canvasDocumentId,
-          submission_id: submissionId,
-        })),
-      );
-
-      if (links.error) {
-        throw toDatabaseError(links.error, "submission_canvas_documents.insert");
-      }
-    }
-
-    const reviewJob = await this.client.from("review_jobs").insert({
-      idempotency_key: input.idempotencyKey,
-      status: "queued",
-      student_profile_id: input.studentProfileId,
-      submission_id: submissionId,
-    });
-
-    if (reviewJob.error) {
-      throw toDatabaseError(reviewJob.error, "review_jobs.insert");
-    }
-
-    const studentAssignment = await this.client
-      .from("student_assignments")
-      .update({
-        current_submission_id: submissionId,
-        status: "submitted",
-        submitted_at: submittedAt,
-      })
-      .eq("id", input.studentAssignmentId);
-
-    if (studentAssignment.error) {
-      throw toDatabaseError(studentAssignment.error, "student_assignments.update");
+    if (!row) {
+      throw toDatabaseError({ message: "missing workflow submission row" }, "workflow.submit");
     }
 
     return {
-      ...mapSubmissionRow({ ...submissionRow, submission_canvas_documents: [] }),
+      ...mapSubmissionRow({ ...row, submission_canvas_documents: [] }),
       canvasDocumentIds: [...input.canvasDocumentIds],
     };
   }
 
   async createSubmissionRevision(input: CreateSubmissionRevisionInput): Promise<SubmissionRevisionRecord> {
-    const { data, error } = await this.client
-      .from("submission_revisions")
-      .insert({
-        idempotency_key: input.idempotencyKey,
-        revised_excerpt: input.revisedExcerpt,
-        revision_task_id: input.revisionTaskId,
-        student_profile_id: input.studentProfileId,
-        submission_id: input.submissionId,
-      })
-      .select(revisionSelect)
-      .single();
+    const { data, error } = await this.client.rpc("writerhabit_complete_revision_workflow", {
+      p_idempotency_key: input.idempotencyKey,
+      p_revised_excerpt: input.revisedExcerpt,
+      p_revision_task_id: input.revisionTaskId,
+      p_student_profile_id: input.studentProfileId,
+      p_submission_id: input.submissionId,
+    });
 
     if (error || !data) {
-      throw toDatabaseError(error ?? { message: "missing inserted revision row" }, "submission_revisions.insert");
+      throw toDatabaseError(error ?? { message: "missing workflow revision row" }, "workflow.revision");
     }
 
-    return mapRevisionRow(data as Record<string, unknown>);
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+
+    if (!row) {
+      throw toDatabaseError({ message: "missing workflow revision row" }, "workflow.revision");
+    }
+
+    return mapRevisionRow(row);
   }
 
   async deleteDraft(studentAssignmentId: string): Promise<void> {
@@ -594,6 +683,78 @@ export class SupabaseDatabase implements Database {
     return data ? mapDraftRow(data as Record<string, unknown>) : null;
   }
 
+  async getFeedbackBySubmissionId(submissionId: string): Promise<FeedbackWithDetails | null> {
+    const feedbackResult = await this.client
+      .from("feedback")
+      .select(feedbackSelect)
+      .eq("submission_id", submissionId)
+      .maybeSingle();
+
+    if (feedbackResult.error) {
+      throw toDatabaseError(feedbackResult.error, "feedback.getBySubmissionId");
+    }
+
+    if (!feedbackResult.data) {
+      return null;
+    }
+
+    const feedback = mapFeedbackRow(feedbackResult.data as Record<string, unknown>);
+    const submission = await this.getSubmissionById(submissionId);
+
+    if (!submission) {
+      return null;
+    }
+
+    const studentAssignment = await this.getStudentAssignmentById(submission.studentAssignmentId);
+
+    if (!studentAssignment) {
+      return null;
+    }
+
+    const [revisionTaskResult, rubricScoresResult, grammarSuggestionsResult] = await Promise.all([
+      this.client
+        .from("revision_tasks")
+        .select(revisionTaskSelect)
+        .eq("feedback_id", feedback.id)
+        .order("created_at", { ascending: true })
+        .limit(1),
+      this.client
+        .from("feedback_rubric_scores")
+        .select(feedbackRubricScoreSelect)
+        .eq("feedback_id", feedback.id),
+      this.client
+        .from("grammar_suggestions")
+        .select(grammarSuggestionSelect)
+        .eq("feedback_id", feedback.id),
+    ]);
+
+    if (revisionTaskResult.error) {
+      throw toDatabaseError(revisionTaskResult.error, "revision_tasks.listByFeedback");
+    }
+    if (rubricScoresResult.error) {
+      throw toDatabaseError(rubricScoresResult.error, "feedback_rubric_scores.listByFeedback");
+    }
+    if (grammarSuggestionsResult.error) {
+      throw toDatabaseError(grammarSuggestionsResult.error, "grammar_suggestions.listByFeedback");
+    }
+
+    const revisionTaskRow = (revisionTaskResult.data as Record<string, unknown>[] | null)?.[0];
+
+    return {
+      assignment: studentAssignment.assignment,
+      feedback,
+      grammarSuggestions: ((grammarSuggestionsResult.data as Record<string, unknown>[] | null) ?? []).map(
+        (row) => mapGrammarSuggestionRow(row),
+      ),
+      revisionTask: revisionTaskRow ? mapRevisionTaskRow(revisionTaskRow) : null,
+      rubricScores: ((rubricScoresResult.data as unknown as Record<string, unknown>[] | null) ?? []).map((row) =>
+        mapFeedbackRubricScoreRow(row),
+      ),
+      studentAssignment,
+      submission,
+    };
+  }
+
   async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
     const { data, error } = await this.client
       .from("weekly_reviews")
@@ -626,6 +787,22 @@ export class SupabaseDatabase implements Database {
 
     const row = (data as Array<{ revision_number: number }> | null)?.[0];
     return row?.revision_number ?? 0;
+  }
+
+  async getReviewJobBySubmissionId(submissionId: string): Promise<ReviewJobRecord | null> {
+    const { data, error } = await this.client
+      .from("review_jobs")
+      .select(reviewJobSelect)
+      .eq("submission_id", submissionId)
+      .order("queued_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      throw toDatabaseError(error, "review_jobs.getBySubmissionId");
+    }
+
+    const row = (data as Record<string, unknown>[] | null)?.[0];
+    return row ? mapReviewJobRow(row) : null;
   }
 
   async getStudentAssignmentById(id: string): Promise<StudentAssignmentWithAssignment | null> {
@@ -1079,6 +1256,31 @@ export class SupabaseDatabase implements Database {
     return [...new Set(studentProfileIds)];
   }
 
+  async publishFeedback(input: PublishFeedbackInput): Promise<FeedbackWithDetails> {
+    const { error } = await this.client.rpc("writerhabit_publish_feedback_workflow", {
+      p_feedback: input.feedback,
+      p_grammar_suggestions: input.grammarSuggestions,
+      p_idempotency_key: input.idempotencyKey,
+      p_revision_task: input.revisionTask,
+      p_rubric_scores: input.rubricScores,
+      p_safety_flags: input.safetyFlags,
+      p_student_profile_id: input.studentProfileId,
+      p_submission_id: input.submissionId,
+    });
+
+    if (error) {
+      throw toDatabaseError(error, "workflow.publishFeedback");
+    }
+
+    const feedback = await this.getFeedbackBySubmissionId(input.submissionId);
+
+    if (!feedback) {
+      throw toDatabaseError({ message: "workflow_resource_missing: feedback" }, "workflow.publishFeedback");
+    }
+
+    return feedback;
+  }
+
   async saveDraft(input: SaveDraftInput): Promise<DraftRecord> {
     const { data, error } = await this.client
       .from("writing_drafts")
@@ -1106,6 +1308,29 @@ export class SupabaseDatabase implements Database {
     }
 
     return mapDraftRow(data as Record<string, unknown>);
+  }
+
+  async transitionReviewJob(input: TransitionReviewJobInput): Promise<ReviewJobRecord> {
+    const { data, error } = await this.client.rpc("writerhabit_transition_review_job_workflow", {
+      p_failure_code: input.failureCode ?? null,
+      p_idempotency_key: input.idempotencyKey,
+      p_safety_flags: input.safetyFlags ?? [],
+      p_student_profile_id: input.studentProfileId,
+      p_submission_id: input.submissionId,
+      p_transition: input.transition,
+    });
+
+    if (error || !data) {
+      throw toDatabaseError(error ?? { message: "missing workflow review job row" }, "workflow.reviewJob");
+    }
+
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+
+    if (!row) {
+      throw toDatabaseError({ message: "missing workflow review job row" }, "workflow.reviewJob");
+    }
+
+    return mapReviewJobRow(row);
   }
 
   async updateStudentAssignment(id: string, update: StudentAssignmentUpdate): Promise<void> {

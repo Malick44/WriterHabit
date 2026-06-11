@@ -275,9 +275,11 @@ interface WritingDraft {
 
 Typed drafts are capped at 20,000 characters before persistence. The workspace
 derives word, sentence, and paragraph counts locally for display and submission
-validation. Empty drafts cannot be submitted. Submission currently routes to the
-AI review loading screen with a deterministic local `submissionId`; backend draft
-and submission persistence remain future work.
+validation. Empty drafts cannot be submitted. Authenticated production
+submission calls now go through `POST /api/v1/student-assignments/:id/submissions`,
+where the backend transaction creates the submission/content/review-job rows and
+advances assignment status. If the backend call fails, the local draft remains
+available for retry.
 
 ### WritingSubmission
 

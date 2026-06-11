@@ -4,8 +4,9 @@ Status: service-level authorization model. The API runtime now verifies
 Supabase bearer JWTs before protected route shells run, and the database has a
 repeatable migration/RLS verification command for core student, parent, teacher,
 system-owned, and service/admin boundaries. Resource-level API handler
-authorization is still incomplete for production workflows. Database RLS and
-migration details live in
+authorization is implemented for the student writing-loop routes; non-writing
+feature routes still need production handlers. Database RLS and migration
+details live in
 `services/api/docs/DATABASE_SCHEMA.md`, `services/api/docs/DATA_RELATIONSHIPS.md`,
 and `services/api/migrations/`.
 
@@ -25,6 +26,10 @@ Current runtime guard:
   to least privilege.
 - Registered but incomplete feature routes authenticate first, then return
   `501 feature.disabled`.
+- Writing-loop routes authorize student, parent, and teacher read scope, and
+  keep draft/submission/revision mutations student-owned. Assignment status,
+  submission, review job, feedback, revision completion, and progress side
+  effects run through backend service-role transactions.
 - If JWT verification is not configured with `SUPABASE_JWT_SECRET`,
   `SUPABASE_URL`, or `SUPABASE_JWKS_URL`, protected routes fail closed with
   `503 system.unavailable`.
@@ -70,17 +75,21 @@ implementations.
   a database admin or Supabase `service_role`. The same migration keeps legacy
   `auth.users` sync hooks, when present, from copying client-writable
   `raw_user_meta_data.role` into `public.users.role`.
-- `202606110002_resource_rls_hardening.sql` makes parent link state, class
-  roster membership, AI coach interaction logs, review jobs, progress tables,
-  weekly reviews, student badges, and prepared notifications backend/admin-owned
-  writes. Public clients can read authorized rows through scoped policies, but
-  cannot forge relationship or derived system state.
+- `202606110002_resource_rls_hardening.sql`,
+  `202606110003_workflow_state_machines.sql`, and
+  `202606110004_review_job_lifecycle.sql` make parent link state, class roster
+  membership, assignment workflow state, submission rows, submission contents,
+  review jobs, feedback rows, revision tasks, revision completion, progress
+  tables, weekly reviews, student badges, and prepared notifications
+  backend/admin-owned writes. Public clients can read authorized rows through
+  scoped policies, but cannot forge relationship, workflow, or derived system
+  state.
 - `node scripts/supabase-migrations.mjs apply-and-verify` verifies the
   configured development Supabase rejects authenticated
   student-to-parent/teacher/admin role changes, rejects auth metadata role
   escalation, enforces student/parent/teacher read boundaries, denies public
-  writes to system-owned review/AI/progress rows, and still permits the trusted
-  service/admin SQL path.
+  writes to system-owned review/AI/workflow/progress rows, and still permits
+  the trusted service/admin SQL path.
 - Teacher access requires an invite/admin/server approval flow that creates the
   trusted role/profile/class ownership state. Parent access requires an active
   server-backed `parent_student_links` row.
@@ -143,8 +152,14 @@ implementations.
 - Parent and teacher review endpoints return bounded excerpts and feedback
   summaries unless a future policy explicitly expands access.
 - Submitting a draft requires non-empty student-authored content.
+- Submission creation is allowed only from `in_progress` or
+  `revision_in_progress` student-assignment states and is idempotent by
+  `(student_assignment_id, idempotency_key)`.
 - Revision submissions must contain student-written revised text for the focused
   task. The backend must not accept AI-generated final draft replacement flows.
+- Revision submissions must reference the backend-generated `revision_tasks.id`
+  for the submission's feedback; public clients cannot invent revision tasks or
+  mark assignments complete directly.
 
 ### Canvas
 
@@ -184,6 +199,9 @@ implementations.
 - Review job retries must be idempotent by submission ID and idempotency key.
 - Review jobs, feedback rows, rubric scores, grammar suggestions, AI coach
   interaction logs, and progress transitions are backend/service-owned writes.
+- Feedback publication advances submission and student-assignment state to
+  `feedback_ready`; revision completion advances both to `completed` and updates
+  progress totals/activity rows in the same backend workflow transaction.
 
 ### Progress
 

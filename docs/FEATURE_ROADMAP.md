@@ -200,7 +200,7 @@ Work:
 Risks:
 
 - AI coach currently uses deterministic local mock responses on mobile; backend AI service scaffolding exists in `services/api/src/features/ai/` but is not wired to production route handlers or an external model provider.
-- AI feedback review currently uses deterministic local mock responses and local progress earned payloads; backend AI review service scaffolding exists, but feedback persistence and progress sync remain future work.
+- AI feedback review uses deterministic coaching responses. Authenticated sessions route through backend review workflow persistence, while no-session demo paths still use local mock responses; production external model/provider wiring, durable workers, usage metering, and audit logging remain future work.
 - AI feedback must not rewrite student assignments.
 
 ## Phase 7: Progress

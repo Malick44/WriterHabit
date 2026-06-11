@@ -1,7 +1,7 @@
 import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 
-import type { Database, StudentAssignmentStatus } from "../data/types";
+import type { Database } from "../data/types";
 import {
   authorizeOwnedStudentAssignment,
   authorizeOwnedSubmission,
@@ -17,6 +17,10 @@ import {
   mapSubmissionResponse,
   toExcerpt,
 } from "./writing-shared";
+import {
+  assertAssignmentTransition,
+  assertSubmissionTransition,
+} from "../features/workflows/writing-workflow-state-machine";
 
 const studentAssignmentParamsSchema = z.object({
   studentAssignmentId: z.string().min(1).max(128),
@@ -44,18 +48,6 @@ const createRevisionBodySchema = z.strictObject({
   revisedExcerpt: z.string().max(4000),
   revisionTaskId: z.string().min(1).max(128),
 });
-
-/**
- * Student assignment states from which a new submission may be created.
- * `submitted`, `reviewing`, and `completed` reject with
- * 409 conflict.status_transition_invalid per the contract state machine.
- */
-const submittableStatuses: readonly StudentAssignmentStatus[] = [
-  "not_started",
-  "in_progress",
-  "feedback_ready",
-  "revision_in_progress",
-];
 
 export async function registerSubmissionRoutes(
   app: FastifyInstance,
@@ -181,16 +173,7 @@ export async function registerSubmissionRoutes(
         });
       }
 
-      if (!submittableStatuses.includes(studentAssignment.status)) {
-        throw new ApiHttpError({
-          code: "conflict.status_transition_invalid",
-          details: {
-            allowedStatuses: [...submittableStatuses],
-            currentStatus: studentAssignment.status,
-            requestedTransition: "submit",
-          },
-        });
-      }
+      assertAssignmentTransition(studentAssignment.status, "submit_work");
 
       const stats = computeTextStats(typedText);
       const revisionNumber = (await database.getMaxSubmissionRevisionNumber(studentAssignment.id)) + 1;
@@ -265,6 +248,40 @@ export async function registerSubmissionRoutes(
         details: { idempotencyKey: body.idempotencyKey },
       });
     }
+
+    const feedback = await database.getFeedbackBySubmissionId(submission.id);
+
+    if (!feedback || !feedback.revisionTask) {
+      throw new ApiHttpError({
+        code: "conflict.status_transition_invalid",
+        details: {
+          currentStatus: submission.status,
+          requestedTransition: "complete_revision",
+          resource: "submission",
+          reason: "feedback_not_ready",
+        },
+      });
+    }
+
+    if (feedback.revisionTask.id !== body.revisionTaskId) {
+      throw new ApiHttpError({
+        code: "conflict.status_transition_invalid",
+        details: {
+          requestedRevisionTaskId: body.revisionTaskId,
+          resource: "revision_task",
+          reason: "revision_task_mismatch",
+        },
+      });
+    }
+
+    const studentAssignment = await database.getStudentAssignmentById(submission.studentAssignmentId);
+
+    if (!studentAssignment) {
+      throw createResourceNotFoundError({ studentAssignmentId: submission.studentAssignmentId });
+    }
+
+    assertSubmissionTransition(submission.status, "complete_revision");
+    assertAssignmentTransition(studentAssignment.status, "complete_revision");
 
     const revision = await database.createSubmissionRevision({
       idempotencyKey: body.idempotencyKey,

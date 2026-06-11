@@ -79,6 +79,11 @@ begin
         (tablename = 'parent_student_links' and policyname = 'parent_student_links_parent_accept')
         or (tablename = 'class_students' and policyname = 'class_students_teacher_manage')
         or (tablename = 'review_jobs' and policyname = 'review_jobs_owner_manage')
+        or (tablename = 'student_assignments' and policyname = 'student_assignments_student_or_teacher_manage')
+        or (tablename = 'submissions' and policyname = 'submissions_owner_manage')
+        or (tablename = 'submission_contents' and policyname = 'submission_contents_owner_all')
+        or (tablename = 'submission_canvas_documents' and policyname = 'submission_canvas_documents_owner_manage')
+        or (tablename = 'submission_revisions' and policyname = 'submission_revisions_owner_manage')
         or (tablename = 'ai_coach_interactions' and policyname = 'ai_coach_interactions_owner_all')
         or (tablename = 'student_progress_totals' and policyname = 'student_progress_totals_owner_or_admin_manage')
         or (tablename = 'student_skill_progress' and policyname = 'student_skill_progress_owner_or_admin_manage')
@@ -531,6 +536,140 @@ begin
   if v_rows <> 0 then
     raise exception 'Student updated another student submission';
   end if;
+
+  begin
+    update public.student_assignments
+    set status = 'feedback_ready'
+    where id = '03000000-0000-4000-8000-000000000801'::uuid;
+    get diagnostics v_rows = row_count;
+
+    if v_rows <> 0 then
+      raise exception 'Student public client updated own assignment workflow status';
+    end if;
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  begin
+    insert into public.submissions (
+      student_assignment_id,
+      student_profile_id,
+      status,
+      typed_text_excerpt,
+      word_count,
+      sentence_count,
+      paragraph_count,
+      revision_number,
+      idempotency_key
+    )
+    values (
+      '03000000-0000-4000-8000-000000000801'::uuid,
+      '03000000-0000-4000-8000-000000000201'::uuid,
+      'submitted',
+      'Forged public-client submission.',
+      4,
+      1,
+      1,
+      99,
+      'forged-public-submission'
+    );
+
+    raise exception 'Student public client inserted a workflow submission';
+  exception
+    when insufficient_privilege or check_violation or with_check_option_violation then
+      null;
+  end;
+
+  begin
+    insert into public.submission_contents (
+      submission_id,
+      student_profile_id,
+      typed_text
+    )
+    values (
+      '03000000-0000-4000-8000-000000000901'::uuid,
+      '03000000-0000-4000-8000-000000000201'::uuid,
+      'Forged full text.'
+    );
+
+    raise exception 'Student public client inserted submission contents';
+  exception
+    when insufficient_privilege or check_violation or with_check_option_violation or unique_violation then
+      null;
+  end;
+
+  begin
+    insert into public.review_jobs (
+      submission_id,
+      student_profile_id,
+      status,
+      idempotency_key
+    )
+    values (
+      '03000000-0000-4000-8000-000000000901'::uuid,
+      '03000000-0000-4000-8000-000000000201'::uuid,
+      'completed',
+      'forged-public-review-job'
+    );
+
+    raise exception 'Student public client inserted a review job';
+  exception
+    when insufficient_privilege or check_violation or with_check_option_violation then
+      null;
+  end;
+
+  begin
+    insert into public.feedback (
+      submission_id,
+      student_profile_id,
+      grade_level,
+      submitted_text_excerpt,
+      strength_key,
+      strength_fallback,
+      improvement_key,
+      improvement_fallback,
+      next_revision_task_key,
+      next_revision_task_fallback
+    )
+    values (
+      '03000000-0000-4000-8000-000000000901'::uuid,
+      '03000000-0000-4000-8000-000000000201'::uuid,
+      7,
+      'Forged excerpt.',
+      'forged.strength',
+      'Forged strength.',
+      'forged.improvement',
+      'Forged improvement.',
+      'forged.revision',
+      'Forged revision task.'
+    );
+
+    raise exception 'Student public client inserted feedback';
+  exception
+    when insufficient_privilege or check_violation or with_check_option_violation or unique_violation then
+      null;
+  end;
+
+  begin
+    insert into public.submission_revisions (
+      submission_id,
+      student_profile_id,
+      revised_excerpt,
+      idempotency_key
+    )
+    values (
+      '03000000-0000-4000-8000-000000000901'::uuid,
+      '03000000-0000-4000-8000-000000000201'::uuid,
+      'Forged revision.',
+      'forged-public-revision'
+    );
+
+    raise exception 'Student public client inserted a revision completion';
+  exception
+    when insufficient_privilege or check_violation or with_check_option_violation then
+      null;
+  end;
 end;
 $$;
 

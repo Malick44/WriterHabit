@@ -168,4 +168,42 @@ describe("useWritingWorkspace autosave", () => {
       expect(getSuccessState().viewModel.autosaveStatus).toBe("saved");
     });
   });
+
+  it("keeps the local draft visible when backend submission fails", async () => {
+    writingWorkspaceApi.saveDraft.mockResolvedValue(createDraft("student text ready to submit"));
+    writingWorkspaceApi.submitDraft.mockRejectedValue(new Error("offline"));
+
+    const { result } = await renderHook(() => useWritingWorkspace("assignment-1"), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current?.status).toBe("success");
+    });
+
+    const getSuccessState = () => {
+      if (result.current?.status !== "success") {
+        throw new Error("Expected workspace success state");
+      }
+      return result.current;
+    };
+
+    await act(async () => {
+      getSuccessState().setText("student text ready to submit");
+    });
+
+    await act(async () => {
+      const response = await getSuccessState().submitDraft();
+      expect(response).toBeNull();
+    });
+
+    expect(writingWorkspaceApi.saveDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({ text: "student text ready to submit" }),
+      }),
+    );
+    expect(getSuccessState().submitStatus).toBe("error");
+    expect(getSuccessState().viewModel.submitError).toBe("submit_failed");
+    expect(getSuccessState().viewModel.text).toBe("student text ready to submit");
+  });
 });

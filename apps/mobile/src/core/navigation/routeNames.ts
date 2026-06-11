@@ -25,6 +25,7 @@ export const routes = {
   studentWritingGoals: "/(student)/writing-goals" as Href,
   studentNotificationSettings: "/(student)/notification-settings" as Href,
   studentLanguageSettings: "/(student)/language-settings" as Href,
+  studentAccessibilitySettings: "/(student)/accessibility-settings" as Href,
   parentHome: "/(parent)/home" as Href,
   parentReports: "/(parent)/reports" as Href,
   parentAssignments: "/(parent)/assignments" as Href,
@@ -33,6 +34,8 @@ export const routes = {
   teacherAssignments: "/(teacher)/assignments" as Href,
   teacherCreateAssignment: "/(teacher)/assignments/create" as Href,
   teacherSubmissions: "/(teacher)/submissions" as Href,
+  teacherSettings: "/(teacher)/settings" as Href,
+  teacherAccessibilitySettings: "/(teacher)/accessibility-settings" as Href,
   paywall: "/paywall" as Href,
 } as const;
 
@@ -58,4 +61,5 @@ export const teacherTabRoutes = [
   routes.teacherDashboard,
   routes.teacherAssignments,
   routes.teacherSubmissions,
+  routes.teacherSettings,
 ] as const;

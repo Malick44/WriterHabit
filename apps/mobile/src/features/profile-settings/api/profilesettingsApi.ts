@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { z } from "zod";
 
 import { apiClient } from "@/core/api/apiClient";
 import { getApiAccessToken } from "@/core/api/apiTokenProvider";
@@ -22,6 +23,15 @@ export interface UnregisterNotificationDeviceInput {
   studentId: string;
 }
 
+export const registerNotificationDeviceResultSchema = z.object({
+  deviceId: z.string().min(1).optional(),
+  status: z.enum(["registered", "skipped"]),
+});
+
+export const unregisterNotificationDeviceResultSchema = z.object({
+  status: z.enum(["unregistered", "skipped"]),
+});
+
 function getNotificationPlatform(): NotificationDevicePlatform {
   if (Platform.OS === "ios" || Platform.OS === "android") {
     return Platform.OS;
@@ -30,16 +40,9 @@ function getNotificationPlatform(): NotificationDevicePlatform {
   return "web";
 }
 
-async function getAuthHeaders(): Promise<Record<string, string> | null> {
+async function hasAuthSession(): Promise<boolean> {
   const accessToken = await getApiAccessToken();
-
-  if (!accessToken) {
-    return null;
-  }
-
-  return {
-    Authorization: `Bearer ${accessToken}`,
-  };
+  return Boolean(accessToken);
 }
 
 export const profilesettingsApi = {
@@ -49,9 +52,7 @@ export const profilesettingsApi = {
     platform = getNotificationPlatform(),
     studentId,
   }: RegisterNotificationDeviceInput): Promise<RegisterNotificationDeviceResult> {
-    const headers = await getAuthHeaders();
-
-    if (!headers) {
+    if (!(await hasAuthSession())) {
       return { status: "skipped" };
     }
 
@@ -62,7 +63,7 @@ export const profilesettingsApi = {
         idempotencyKey,
         platform,
       },
-      { auth: "manual", headers },
+      { schema: registerNotificationDeviceResultSchema },
     );
   },
 
@@ -70,9 +71,7 @@ export const profilesettingsApi = {
     expoPushToken,
     studentId,
   }: UnregisterNotificationDeviceInput): Promise<{ status: "unregistered" | "skipped" }> {
-    const headers = await getAuthHeaders();
-
-    if (!headers) {
+    if (!(await hasAuthSession())) {
       return { status: "skipped" };
     }
 
@@ -81,7 +80,7 @@ export const profilesettingsApi = {
       {
         expoPushToken,
       },
-      { auth: "manual", headers },
+      { schema: unregisterNotificationDeviceResultSchema },
     );
   },
 };

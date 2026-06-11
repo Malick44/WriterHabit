@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -11,11 +11,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuthSession } from "@/core/auth/useAuthSession";
 import { getTeacherClassProgressRoute, getTeacherSubmissionReviewRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
+import { colors } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
+import { preferencesStorage } from "@/services/storage/preferencesStorage";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import {
+  getAccessibleColors,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import { useTeacherDashboardData } from "../hooks/useTeacher";
 import type {
@@ -27,31 +35,29 @@ import type {
 type IconName = keyof typeof Ionicons.glyphMap;
 
 const TABLET_BREAKPOINT = 768;
+const INSIGHT_DISMISSED_KEY_PREFIX = "teacher.dashboard.insight-dismissed";
 
 const teacherColors = {
-  background: "#f8f9ff",
-  card: "#ffffff",
-  error: "#ba1a1a",
-  errorContainer: "#ffdad6",
-  inverseSurface: "#213145",
-  inverseText: "#eaf1ff",
-  onPrimary: "#ffffff",
-  onPrimaryContainer: "#a5bdff",
-  onSecondaryContainer: "#00714d",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primaryContainer: "#0047ab",
-  primaryFixed: "#dae2ff",
-  secondary: "#006c49",
-  secondaryContainer: "#6cf8bb",
-  surface: "#f8f9ff",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerLow: "#eff4ff",
-  surfaceVariant: "#d3e4fe",
-  tertiaryContainer: "#ffddb8",
+  background: colors.dashboard.background,
+  card: colors.dashboard.card,
+  error: colors.dashboard.error,
+  inverseSurface: colors.dashboard.inverseSurface,
+  inverseText: colors.dashboard.inverseOnSurface,
+  onPrimary: colors.dashboard.onPrimary,
+  onSecondaryContainer: colors.dashboard.onSecondaryContainer,
+  onSurface: colors.dashboard.onSurface,
+  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
+  outline: colors.dashboard.outline,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  primaryContainer: colors.dashboard.primaryContainer,
+  primaryFixed: colors.dashboard.primaryFixed,
+  secondary: colors.dashboard.secondary,
+  secondaryContainer: colors.dashboard.secondaryContainer,
+  surface: colors.dashboard.surface,
+  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
+  surfaceContainerLow: colors.dashboard.surfaceContainerLow,
+  tertiaryContainer: colors.dashboard.tertiaryContainer,
 } as const;
 
 const teacherSpacing = {
@@ -131,11 +137,34 @@ function getActivityIconStyle(kind: TeacherDashboardActivityItem["kind"]) {
 export function TeacherDashboardScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { session } = useAuthSession();
   const { width } = useWindowDimensions();
   const state = useTeacherDashboardData();
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
-  const [isInsightVisible, setIsInsightVisible] = useState(true);
+  const [isInsightVisible, setIsInsightVisible] = useState(false);
+  const insightDismissedKey = `${INSIGHT_DISMISSED_KEY_PREFIX}.${session?.user.id ?? "preview-teacher"}`;
+
+  useEffect(() => {
+    let active = true;
+
+    void preferencesStorage
+      .getPreference<boolean>(insightDismissedKey, false)
+      .then((dismissed) => {
+        if (active) {
+          setIsInsightVisible(!dismissed);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsInsightVisible(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [insightDismissedKey]);
 
   const handleCreateAssignment = useCallback(() => {
     router.push(routes.teacherCreateAssignment);
@@ -143,6 +172,10 @@ export function TeacherDashboardScreen() {
 
   const handleOpenReviewQueue = useCallback(() => {
     router.push(routes.teacherSubmissions);
+  }, [router]);
+
+  const handleOpenSettings = useCallback(() => {
+    router.push(routes.teacherSettings);
   }, [router]);
 
   const handleOpenClassReport = useCallback(() => {
@@ -176,20 +209,21 @@ export function TeacherDashboardScreen() {
 
   const handleDismissInsight = useCallback(() => {
     setIsInsightVisible(false);
-  }, []);
+    void preferencesStorage.setPreference(insightDismissedKey, true).catch(() => undefined);
+  }, [insightDismissedKey]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
       <AppHeader
         contentStyle={isTablet ? styles.headerContentTablet : undefined}
         gradeBand={state.gradeBand}
-        leftAction={{
-          accessibilityLabelKey: "teacher.dashboard.header.logoAccessibility",
-          icon: "book-outline",
-          onPress: handleOpenClassReport,
-          type: "icon",
-        }}
         rightActions={[
+          {
+            accessibilityLabelKey: "teacher.dashboard.header.settingsAccessibility",
+            icon: "settings-outline",
+            onPress: handleOpenSettings,
+            type: "icon",
+          },
         ]}
         showSafeArea={false}
         style={[styles.header, isTablet ? styles.headerTablet : null]}
@@ -281,13 +315,27 @@ export function TeacherDashboardScreen() {
 
 function DashboardIntro() {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={styles.intro}>
-      <Text maxFontSizeMultiplier={1.1} numberOfLines={2} style={styles.pageTitle}>
+      <Text
+        numberOfLines={2}
+        style={[
+          getAccessibleTextStyle(styles.pageTitle, settings),
+          settings.highContrast ? { color: accessibleColors.text } : null,
+        ]}
+      >
         {t("teacher.dashboard.title")}
       </Text>
-      <Text maxFontSizeMultiplier={1.08} numberOfLines={3} style={styles.pageSubtitle}>
+      <Text
+        numberOfLines={3}
+        style={[
+          getAccessibleTextStyle(styles.pageSubtitle, settings),
+          settings.highContrast ? { color: accessibleColors.mutedText } : null,
+        ]}
+      >
         {t("teacher.dashboard.subtitle")}
       </Text>
     </View>
@@ -311,6 +359,8 @@ function PerformanceOverview({
 
 function ClassAverageCard({ viewModel }: { viewModel: TeacherDashboardViewModel }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const score = viewModel.metrics.classAverageScore;
 
   return (
@@ -322,22 +372,36 @@ function ClassAverageCard({ viewModel }: { viewModel: TeacherDashboardViewModel 
       <View style={styles.performanceContent}>
         <View style={styles.performanceHeader}>
           <View style={styles.performanceCopy}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.overline}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.overline, settings),
+                settings.highContrast ? { color: accessibleColors.mutedText } : null,
+              ]}
+            >
               {t("teacher.dashboard.performance.label")}
             </Text>
             <View style={styles.scoreRow}>
               <Text
                 adjustsFontSizeToFit
-                maxFontSizeMultiplier={1}
                 minimumFontScale={0.72}
                 numberOfLines={1}
-                style={styles.scoreText}
+                style={[
+                  getAccessibleTextStyle(styles.scoreText, settings),
+                  settings.highContrast ? { color: accessibleColors.text } : null,
+                ]}
               >
                 {t("teacher.dashboard.performance.percent", { count: score })}
               </Text>
               <View style={styles.growthChip}>
                 <Ionicons color={teacherColors.secondary} name="trending-up-outline" size={16} />
-                <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.growthChipText}>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    getAccessibleTextStyle(styles.growthChipText, settings),
+                    settings.highContrast ? { color: accessibleColors.text } : null,
+                  ]}
+                >
                   {t("teacher.dashboard.performance.growthChip", {
                     count: viewModel.metrics.weeklyGrowthPercent,
                   })}
@@ -347,17 +411,39 @@ function ClassAverageCard({ viewModel }: { viewModel: TeacherDashboardViewModel 
           </View>
 
           <View style={styles.gradeRing}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.gradeText}>
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1.05}
+              minimumFontScale={0.72}
+              numberOfLines={1}
+              style={[
+                styles.gradeText,
+                settings.highContrast ? { color: accessibleColors.text } : null,
+              ]}
+            >
               {viewModel.metrics.classAverageGrade}
             </Text>
           </View>
         </View>
 
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={3} style={styles.performanceInsight}>
-          <Text style={styles.performanceInsightMuted}>
+        <Text
+          numberOfLines={3}
+          style={[
+            getAccessibleTextStyle(styles.performanceInsight, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
+          <Text style={settings.highContrast ? { color: accessibleColors.mutedText } : styles.performanceInsightMuted}>
             {t("teacher.dashboard.performance.growthLead")}
           </Text>
-          <Text style={styles.performanceInsightStrong}>{viewModel.topTrendLabel}</Text>
+          <Text
+            style={[
+              styles.performanceInsightStrong,
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
+            {viewModel.topTrendLabel}
+          </Text>
         </Text>
       </View>
 
@@ -373,6 +459,8 @@ function ClassAverageCard({ viewModel }: { viewModel: TeacherDashboardViewModel 
 
 function ActiveStudentsCard({ viewModel }: { viewModel: TeacherDashboardViewModel }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const active = viewModel.metrics.activeStudentsToday;
   const total = viewModel.metrics.activeStudentsTodayTotal;
   const percent = viewModel.metrics.activeStudentsTodayPercent;
@@ -386,10 +474,22 @@ function ActiveStudentsCard({ viewModel }: { viewModel: TeacherDashboardViewMode
       <View style={styles.activeIconBubble}>
         <Ionicons color={teacherColors.primary} name="checkbox-outline" size={24} />
       </View>
-      <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.activeValue}>
+      <Text
+        numberOfLines={1}
+        style={[
+          getAccessibleTextStyle(styles.activeValue, settings),
+          settings.highContrast ? { color: accessibleColors.text } : null,
+        ]}
+      >
         {t("teacher.dashboard.activeToday.value", { active, total })}
       </Text>
-      <Text maxFontSizeMultiplier={1.05} numberOfLines={2} style={styles.activeLabel}>
+      <Text
+        numberOfLines={2}
+        style={[
+          getAccessibleTextStyle(styles.activeLabel, settings),
+          settings.highContrast ? { color: accessibleColors.mutedText } : null,
+        ]}
+      >
         {t("teacher.dashboard.activeToday.label")}
       </Text>
       <View
@@ -464,6 +564,8 @@ function QuickActionButton({
   tone: "neutral" | "primary" | "secondary";
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <Pressable
@@ -486,12 +588,12 @@ function QuickActionButton({
       />
       <Text
         adjustsFontSizeToFit
-        maxFontSizeMultiplier={1.05}
         minimumFontScale={0.76}
         numberOfLines={1}
         style={[
-          styles.actionButtonText,
+          getAccessibleTextStyle(styles.actionButtonText, settings),
           tone === "primary" ? styles.actionButtonTextPrimary : styles.actionButtonTextDefault,
+          settings.highContrast && tone !== "primary" ? { color: accessibleColors.text } : null,
         ]}
       >
         {t(labelKey, labelParams)}
@@ -510,18 +612,32 @@ function WatchlistSection({
   onActionPress: (item: TeacherDashboardWatchlistItem) => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={[styles.section, isTablet ? styles.watchlistColumn : null]}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleGroup}>
           <Ionicons color={teacherColors.error} name="warning-outline" size={22} />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.sectionTitle}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.sectionTitle, settings),
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
             {t("teacher.dashboard.watchlist.title")}
           </Text>
         </View>
         <View style={styles.countChip}>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.countChipText}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.countChipText, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
             {t("teacher.dashboard.watchlist.count", { count: items.length })}
           </Text>
         </View>
@@ -551,6 +667,8 @@ function WatchlistRow({
   onActionPress: (item: TeacherDashboardWatchlistItem) => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const actionLabel =
     item.action === "review"
       ? t("teacher.dashboard.watchlist.reviewCta")
@@ -567,15 +685,27 @@ function WatchlistRow({
     >
       <View style={styles.watchlistIdentity}>
         <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.avatarText}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.avatarText, settings),
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
             {item.initials}
           </Text>
         </View>
         <View style={styles.watchlistCopy}>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.watchlistName}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.watchlistName, settings),
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
             {item.studentName}
           </Text>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.watchlistReason}>
+          <Text numberOfLines={1} style={getAccessibleTextStyle(styles.watchlistReason, settings)}>
             {getWatchlistReasonLabel(t, item)}
           </Text>
         </View>
@@ -591,7 +721,13 @@ function WatchlistRow({
         onPress={() => onActionPress(item)}
         style={({ pressed }) => [styles.watchlistButton, pressed ? styles.pressed : null]}
       >
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.watchlistButtonText}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.watchlistButtonText, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {actionLabel}
         </Text>
       </Pressable>
@@ -607,6 +743,8 @@ function ActivitySection({
   onActivityPress: (item: TeacherDashboardActivityItem) => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const router = useRouter();
 
   const handleViewAll = useCallback(() => {
@@ -616,7 +754,13 @@ function ActivitySection({
   return (
     <View style={[styles.section, styles.activityColumn]}>
       <View style={styles.sectionHeader}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.sectionTitle}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.sectionTitle, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {t("teacher.dashboard.activity.title")}
         </Text>
         <Pressable
@@ -626,7 +770,13 @@ function ActivitySection({
           onPress={handleViewAll}
           style={({ pressed }) => [styles.viewAllButton, pressed ? styles.pressed : null]}
         >
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.viewAllText}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.viewAllText, settings),
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
             {t("common.viewAll")}
           </Text>
         </Pressable>
@@ -656,6 +806,8 @@ function ActivityRow({
   showDivider: boolean;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const iconStyle = getActivityIconStyle(item.kind);
 
   return (
@@ -675,15 +827,33 @@ function ActivityRow({
         <Ionicons color={iconStyle.color} name={getActivityIcon(item.kind)} size={20} />
       </View>
       <View style={styles.activityCopy}>
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={2} style={styles.activityTitle}>
+        <Text
+          numberOfLines={2}
+          style={[
+            getAccessibleTextStyle(styles.activityTitle, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {getActivityLabel(t, item)}
         </Text>
         <View style={styles.activityMetaRow}>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.activityMeta}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.activityMeta, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
             {item.className}
           </Text>
           <View style={styles.metaDot} />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.activityMeta}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.activityMeta, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
             {item.submittedLabel}
           </Text>
         </View>
@@ -691,7 +861,13 @@ function ActivityRow({
       {item.scorePercent === null ? (
         <Ionicons color={teacherColors.outline} name="chevron-forward" size={20} />
       ) : (
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.activityScore}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.activityScore, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {t("teacher.dashboard.activity.score", { score: item.scorePercent })}
         </Text>
       )}
@@ -707,6 +883,7 @@ function AiInsightCard({
   safetyNote: string;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
 
   return (
     <View
@@ -718,13 +895,13 @@ function AiInsightCard({
         <Ionicons color={teacherColors.onPrimary} name="sparkles-outline" size={22} />
       </View>
       <View style={styles.insightCopy}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.insightTitle}>
+        <Text numberOfLines={1} style={getAccessibleTextStyle(styles.insightTitle, settings)}>
           {t("teacher.dashboard.insight.title")}
         </Text>
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={3} style={styles.insightText}>
+        <Text numberOfLines={3} style={getAccessibleTextStyle(styles.insightText, settings)}>
           {t("teacher.dashboard.insight.description")}
         </Text>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={3} style={styles.insightSafety}>
+        <Text numberOfLines={3} style={getAccessibleTextStyle(styles.insightSafety, settings)}>
           {safetyNote}
         </Text>
       </View>

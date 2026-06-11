@@ -44,6 +44,10 @@ export function AccessibilitySettingsScreen() {
     return (
       <Screen>
         <AppHeader
+          leftAction={{
+            accessibilityLabelKey: "common.back",
+            type: "back",
+          }}
           showSafeArea={false}
           style={styles.header}
           titleKey="accessibility.screen.title"
@@ -60,6 +64,10 @@ export function AccessibilitySettingsScreen() {
   return (
     <Screen>
       <AppHeader
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
         showSafeArea={false}
         style={styles.header}
         subtitleKey="accessibility.screen.subtitle"

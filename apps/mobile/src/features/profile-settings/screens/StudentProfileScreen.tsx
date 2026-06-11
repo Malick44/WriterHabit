@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
-import { layout, radius, shadows, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, shadows, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
@@ -44,26 +44,26 @@ const avatarImageUri =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuC6oDyvp4o2Z_ZD1dWq1_OEZzz-ukxizaeW8WqBns1USXqSkaQeJHGGqJLTVK4Xb_n4qrx71aq_895XxqhC4WhZzxdNpA7kZhP5Cjr8V3OoDc2VeoJNmide0Ty3XMg1ktEBr-C52uZAb5THoQrRwCoalVtsU81Nx8ZEu10GRbpBZHZzo8lBj838ZnK3i0rCN5qQLBSS-zoWI84EFCtmdrrRUSd6i-zDK04GcuqIc6w5Gl8C3_MeIGE_hexVFWFPfIddbCSztsX6Mxg";
 
 const profileColors = {
-  background: "#f8f9ff",
-  error: "#ba1a1a",
-  errorContainer: "#ffdad6",
-  glass: "rgba(255, 255, 255, 0.8)",
-  onErrorContainer: "#93000a",
-  onPrimaryContainer: "#a5bdff",
-  onSecondary: "#ffffff",
-  onSecondaryContainer: "#00714d",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primaryContainer: "#0047ab",
-  secondary: "#006c49",
-  secondaryContainer: "#6cf8bb",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerHighest: "#d3e4fe",
-  surfaceContainerLow: "#eff4ff",
-  surfaceLowest: "#ffffff",
+  background: colors.dashboard.background,
+  error: colors.dashboard.error,
+  errorContainer: colors.dashboard.errorContainer,
+  glass: colors.dashboard.glass,
+  onErrorContainer: colors.dashboard.onErrorContainer,
+  onPrimaryContainer: colors.dashboard.onPrimaryContainer,
+  onSecondary: colors.dashboard.onSecondary,
+  onSecondaryContainer: colors.dashboard.onSecondaryContainer,
+  onSurface: colors.dashboard.onSurface,
+  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
+  outline: colors.dashboard.outline,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  primaryContainer: colors.dashboard.primaryContainer,
+  secondary: colors.dashboard.secondary,
+  secondaryContainer: colors.dashboard.secondaryContainer,
+  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
+  surfaceContainerHighest: colors.dashboard.surfaceContainerHighest,
+  surfaceContainerLow: colors.dashboard.surfaceContainerLow,
+  surfaceLowest: colors.dashboard.surfaceLowest,
 } as const;
 
 const weeklyActivity = [

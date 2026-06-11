@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { WritingGoal } from "@WriterHabit/shared";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,18 +7,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { notificationDeliveryService } from "@/core/notifications/notificationDeliveryService";
 import { defaultNotificationPreferences, type NotificationPreferences } from "@/core/notifications/notificationService";
-import { layout, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
-import { CheckboxRow, ChoiceCard, TextField } from "@/shared/components/forms";
+import { CheckboxRow, ChoiceCard, SettingsToggleRow, TextField } from "@/shared/components/forms";
 import { AppHeader } from "@/shared/components/navigation";
-import {
-  getAccessibleTextStyle,
-  getMinimumTouchTarget,
-  useAccessibilityContext,
-} from "@/shared/utils/accessibility";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { notificationPreferencesService } from "../services/notificationPreferencesService";
 import {
@@ -35,13 +31,12 @@ type IconName = ComponentProps<typeof Ionicons>["name"];
 type LoadState = "loading" | "ready" | "error";
 
 const settingsFlowColors = {
-  background: "#F8F9FF",
-  border: "#C3C6D5",
-  muted: "#434653",
-  primary: "#00327D",
-  surface: "#FFFFFF",
-  surfaceSoft: "#EFF4FF",
-  text: "#0B1C30",
+  background: colors.dashboard.background,
+  border: colors.dashboard.outlineVariant,
+  muted: colors.dashboard.onSurfaceVariant,
+  primary: colors.dashboard.primary,
+  surfaceSoft: colors.dashboard.surfaceContainerLow,
+  text: colors.dashboard.onSurface,
 } as const;
 
 const editableGoals = [
@@ -623,45 +618,17 @@ function NotificationSwitchRow({
   onValueChange: (value: boolean) => void;
   value: boolean;
 }) {
-  const { settings } = useAccessibilityContext();
-  const minimumTouchTarget = getMinimumTouchTarget(settings);
-
   return (
-    <View
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      accessible
-      style={[
-        styles.notificationRow,
-        { minHeight: Math.max(64, minimumTouchTarget + spacing.lg) },
-        disabled ? styles.disabledRow : null,
-      ]}
-    >
-      <View style={styles.notificationRowLabel}>
-        <View style={styles.iconBadge}>
-          <Ionicons color={settingsFlowColors.primary} name={icon} size={22} />
-        </View>
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[getAccessibleTextStyle(typography.gradeBands.middle.body, settings), styles.notificationRowText]}
-        >
-          {label}
-        </Text>
-      </View>
-      <Switch
-        accessibilityLabel={label}
-        disabled={disabled}
-        ios_backgroundColor={settingsFlowColors.border}
-        onValueChange={onValueChange}
-        thumbColor={settingsFlowColors.surface}
-        trackColor={{
-          false: settingsFlowColors.border,
-          true: settingsFlowColors.primary,
-        }}
-        value={value}
-      />
-    </View>
+    <SettingsToggleRow
+      disabled={disabled}
+      icon={icon}
+      iconBackground={settingsFlowColors.surfaceSoft}
+      iconColor={settingsFlowColors.primary}
+      label={label}
+      onValueChange={onValueChange}
+      value={value}
+      variant="outlined"
+    />
   );
 }
 
@@ -914,9 +881,6 @@ const styles = StyleSheet.create({
     maxWidth: layout.maxContentWidth,
     width: "100%",
   },
-  disabledRow: {
-    opacity: 0.48,
-  },
   header: {
     backgroundColor: settingsFlowColors.background,
     borderBottomColor: settingsFlowColors.border,
@@ -935,28 +899,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   iconRowBody: {
-    flex: 1,
-  },
-  notificationRow: {
-    alignItems: "center",
-    backgroundColor: settingsFlowColors.surface,
-    borderColor: settingsFlowColors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.md,
-    justifyContent: "space-between",
-    padding: spacing.lg,
-  },
-  notificationRowLabel: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: spacing.md,
-    minWidth: 0,
-  },
-  notificationRowText: {
-    color: settingsFlowColors.text,
     flex: 1,
   },
   root: {

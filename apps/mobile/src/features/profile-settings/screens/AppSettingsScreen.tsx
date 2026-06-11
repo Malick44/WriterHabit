@@ -1,70 +1,61 @@
-import { useCallback, useState, type ComponentProps, type ReactNode } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
+import { notificationDeliveryService } from "@/core/notifications/notificationDeliveryService";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
-import { layout, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { AppHeader } from "@/shared/components/navigation";
+import { SettingsRow, SettingsToggleRow, type SettingsRowIconName } from "@/shared/components/forms";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import {
-  getAccessibleHitSlop,
   getAccessibleTextStyle,
-  getMinimumTouchTarget,
   useAccessibilityContext,
+  type AccessibilityTextSize,
 } from "@/shared/utils/accessibility";
 
-type IconName = ComponentProps<typeof Ionicons>["name"];
-type AppearanceMode = "light" | "dark";
+import { notificationPreferencesService } from "../services/notificationPreferencesService";
 
 type SettingsRowConfig = {
   id: string;
-  icon: IconName;
+  icon: SettingsRowIconName;
   iconBackground: string;
   iconColor: string;
   labelKey: TranslationKey;
   route?: AppRoute;
   valueKey?: TranslationKey;
-  trailingIcon?: IconName;
+  trailingIcon?: SettingsRowIconName;
 };
 
 const settingsColors = {
-  background: "#F8F9FF",
-  border: "#C3C6D5",
-  error: "#BA1A1A",
-  errorContainer: "#FFDAD6",
-  onPrimary: "#FFFFFF",
-  onPrimaryContainer: "#A5BDFF",
-  onSecondaryContainer: "#00714D",
-  onSurface: "#0B1C30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#C3C6D5",
-  primary: "#00327D",
-  primaryContainer: "#0047AB",
-  primaryFixed: "#DAE2FF",
-  secondary: "#006C49",
-  secondaryContainer: "#6CF8BB",
-  secondaryFixed: "#6FFBBE",
-  surface: "#F8F9FF",
-  surfaceContainer: "#E5EEFF",
-  surfaceContainerHigh: "#DCE9FF",
-  surfaceContainerHighest: "#D3E4FE",
-  surfaceContainerLow: "#EFF4FF",
-  surfaceLowest: "#FFFFFF",
-  tertiaryFixed: "#FFDDB8",
-  tertiaryText: "#653E00",
+  background: colors.dashboard.background,
+  error: colors.dashboard.error,
+  errorContainer: colors.dashboard.errorContainer,
+  onPrimaryContainer: colors.dashboard.onPrimaryContainer,
+  onSecondaryContainer: colors.dashboard.onSecondaryContainer,
+  outline: colors.dashboard.outline,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  primaryContainer: colors.dashboard.primaryContainer,
+  primaryFixed: colors.dashboard.primaryFixed,
+  secondaryContainer: colors.dashboard.secondaryContainer,
+  secondaryFixed: colors.dashboard.secondaryFixed,
+  surface: colors.dashboard.surface,
+  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
+  surfaceLowest: colors.dashboard.surfaceLowest,
+  tertiaryFixed: colors.dashboard.tertiaryFixed,
+  tertiaryText: colors.dashboard.tertiaryText,
 } as const;
+
+const textSizeValueKeys = {
+  default: "accessibility.textSize.defaultLabel",
+  extraLarge: "accessibility.textSize.extraLargeLabel",
+  large: "accessibility.textSize.largeLabel",
+} as const satisfies Record<AccessibilityTextSize, TranslationKey>;
 
 const accountRows: readonly SettingsRowConfig[] = [
   {
@@ -89,26 +80,6 @@ const accountRows: readonly SettingsRowConfig[] = [
     iconBackground: settingsColors.surfaceContainerHigh,
     iconColor: settingsColors.outline,
     labelKey: "profileSettings.settings.account.manageData",
-  },
-] as const;
-
-const preferenceRows: readonly SettingsRowConfig[] = [
-  {
-    id: "app-language",
-    icon: "language-outline",
-    iconBackground: settingsColors.secondaryFixed,
-    iconColor: settingsColors.onSecondaryContainer,
-    labelKey: "profileSettings.settings.preferences.appLanguage",
-    route: routes.studentLanguageSettings,
-    valueKey: "profileSettings.settings.preferences.english",
-  },
-  {
-    id: "font-size",
-    icon: "text-outline",
-    iconBackground: settingsColors.surfaceContainerHigh,
-    iconColor: settingsColors.outline,
-    labelKey: "profileSettings.settings.preferences.fontSize",
-    valueKey: "profileSettings.settings.preferences.medium",
   },
 ] as const;
 
@@ -164,231 +135,49 @@ function Divider() {
   return <View style={styles.divider} />;
 }
 
-function IconBadge({
-  backgroundColor,
-  color,
-  icon,
-}: {
-  backgroundColor: string;
-  color: string;
-  icon: IconName;
-}) {
-  return (
-    <View style={[styles.iconBadge, { backgroundColor }]}>
-      <Ionicons color={color} name={icon} size={22} />
-    </View>
-  );
-}
-
-function SettingsRow({
-  icon,
-  iconBackground,
-  iconColor,
-  label,
-  onPress,
-  trailingIcon = "chevron-forward",
-  value,
-}: {
-  icon: IconName;
-  iconBackground: string;
-  iconColor: string;
-  label: string;
-  onPress: () => void;
-  trailingIcon?: IconName;
-  value?: string;
-}) {
-  const { settings } = useAccessibilityContext();
-  const minimumTouchTarget = getMinimumTouchTarget(settings);
-
-  return (
-    <Pressable
-      accessibilityHint={label}
-      accessibilityLabel={value ? `${label}, ${value}` : label}
-      accessibilityRole="button"
-      hitSlop={getAccessibleHitSlop(settings)}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        { minHeight: Math.max(64, minimumTouchTarget + spacing.lg) },
-        pressed ? styles.rowPressed : null,
-      ]}
-    >
-      <View style={styles.rowLabel}>
-        <IconBadge backgroundColor={iconBackground} color={iconColor} icon={icon} />
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[getAccessibleTextStyle(typography.gradeBands.middle.body, settings), styles.rowTitle]}
-        >
-          {label}
-        </Text>
-      </View>
-      <View style={styles.rowTrailing}>
-        {value ? (
-          <Text
-            numberOfLines={1}
-            selectable
-            style={[getAccessibleTextStyle(typography.gradeBands.middle.caption, settings), styles.rowValue]}
-          >
-            {value}
-          </Text>
-        ) : null}
-        <Ionicons color={settingsColors.outlineVariant} name={trailingIcon} size={22} />
-      </View>
-    </Pressable>
-  );
-}
-
-function ToggleRow({
-  icon,
-  iconBackground,
-  iconColor,
-  label,
-  onValueChange,
-  value,
-}: {
-  icon: IconName;
-  iconBackground: string;
-  iconColor: string;
-  label: string;
-  onValueChange: (value: boolean) => void;
-  value: boolean;
-}) {
-  const { settings } = useAccessibilityContext();
-  const minimumTouchTarget = getMinimumTouchTarget(settings);
-
-  return (
-    <View
-      accessibilityLabel={label}
-      accessible
-      style={[styles.row, { minHeight: Math.max(64, minimumTouchTarget + spacing.lg) }]}
-    >
-      <View style={styles.rowLabel}>
-        <IconBadge backgroundColor={iconBackground} color={iconColor} icon={icon} />
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[getAccessibleTextStyle(typography.gradeBands.middle.body, settings), styles.rowTitle]}
-        >
-          {label}
-        </Text>
-      </View>
-      <Switch
-        accessibilityLabel={label}
-        ios_backgroundColor={settingsColors.outlineVariant}
-        onValueChange={onValueChange}
-        thumbColor={settingsColors.surfaceLowest}
-        trackColor={{
-          false: settingsColors.outlineVariant,
-          true: settingsColors.primary,
-        }}
-        value={value}
-      />
-    </View>
-  );
-}
-
-function AppearanceControl({
-  mode,
-  onSelect,
-}: {
-  mode: AppearanceMode;
-  onSelect: (mode: AppearanceMode) => void;
-}) {
-  const { t } = useI18n();
-  const { settings } = useAccessibilityContext();
-
-  return (
-    <View style={styles.appearanceControl}>
-      {(["light", "dark"] as const).map((option) => {
-        const selected = mode === option;
-        const label =
-          option === "light"
-            ? t("profileSettings.settings.preferences.light")
-            : t("profileSettings.settings.preferences.dark");
-
-        return (
-          <Pressable
-            accessibilityLabel={label}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            hitSlop={getAccessibleHitSlop(settings)}
-            key={option}
-            onPress={() => onSelect(option)}
-            style={({ pressed }) => [
-              styles.appearanceOption,
-              selected ? styles.appearanceOptionSelected : null,
-              pressed ? styles.appearanceOptionPressed : null,
-            ]}
-          >
-            <Ionicons
-              color={selected ? settingsColors.onPrimary : settingsColors.onSurfaceVariant}
-              name={option === "light" ? "sunny-outline" : "moon-outline"}
-              size={16}
-            />
-            <Text
-              numberOfLines={1}
-              style={[
-                getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
-                selected ? styles.appearanceTextSelected : styles.appearanceText,
-              ]}
-            >
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-function AppearanceRow({
-  mode,
-  onSelect,
-}: {
-  mode: AppearanceMode;
-  onSelect: (mode: AppearanceMode) => void;
-}) {
-  const { t } = useI18n();
-  const { settings } = useAccessibilityContext();
-  const minimumTouchTarget = getMinimumTouchTarget(settings);
-
-  return (
-    <View style={[styles.row, { minHeight: Math.max(72, minimumTouchTarget + spacing.xl) }]}>
-      <View style={styles.rowLabel}>
-        <IconBadge
-          backgroundColor={settingsColors.surfaceContainerHighest}
-          color={settingsColors.onSurfaceVariant}
-          icon="color-palette-outline"
-        />
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[getAccessibleTextStyle(typography.gradeBands.middle.body, settings), styles.rowTitle]}
-        >
-          {t("profileSettings.settings.preferences.appearance")}
-        </Text>
-      </View>
-      <AppearanceControl mode={mode} onSelect={onSelect} />
-    </View>
-  );
-}
-
 export function AppSettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuthSession();
+  const { session, signOut } = useAuthSession();
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
+  const studentId = session?.user.id ?? "preview-student";
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
   const [emailSummariesEnabled, setEmailSummariesEnabled] = useState(false);
-  const [appearanceMode, setAppearanceMode] = useState<AppearanceMode>("light");
+
+  useEffect(() => {
+    let active = true;
+
+    void notificationPreferencesService
+      .getPreferences(studentId)
+      .then((preferences) => {
+        if (!active) {
+          return;
+        }
+
+        setPushNotificationsEnabled(preferences.enabled);
+        setEmailSummariesEnabled(preferences.weeklyReport.enabled);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [studentId]);
 
   const showUnavailableAlert = useCallback(() => {
     topAlert.show({
       descriptionKey: "profileSettings.settings.unavailableDescription",
       titleKey: "profileSettings.settings.unavailableTitle",
       type: "info",
+    });
+  }, [topAlert]);
+  const showSaveErrorAlert = useCallback(() => {
+    topAlert.show({
+      descriptionKey: "profileSettings.saveErrorDescription",
+      titleKey: "profileSettings.saveErrorTitle",
+      type: "error",
     });
   }, [topAlert]);
   const handleOpenRoute = useCallback(
@@ -408,6 +197,42 @@ export function AppSettingsScreen() {
       return () => handleOpenRoute(route);
     },
     [handleOpenRoute, showUnavailableAlert],
+  );
+
+  const handleTogglePush = useCallback(
+    (enabled: boolean) => {
+      setPushNotificationsEnabled(enabled);
+      void notificationPreferencesService
+        .updatePreferences(studentId, { enabled })
+        .then((nextPreferences) => {
+          void notificationDeliveryService
+            .syncNotificationDelivery({ preferences: nextPreferences, studentId })
+            .catch(() => undefined);
+        })
+        .catch(() => {
+          setPushNotificationsEnabled(!enabled);
+          showSaveErrorAlert();
+        });
+    },
+    [showSaveErrorAlert, studentId],
+  );
+
+  const handleToggleEmailSummaries = useCallback(
+    (enabled: boolean) => {
+      setEmailSummariesEnabled(enabled);
+      void notificationPreferencesService
+        .updatePreferences(studentId, { weeklyReport: { enabled } })
+        .then((nextPreferences) => {
+          void notificationDeliveryService
+            .syncNotificationDelivery({ preferences: nextPreferences, studentId })
+            .catch(() => undefined);
+        })
+        .catch(() => {
+          setEmailSummariesEnabled(!enabled);
+          showSaveErrorAlert();
+        });
+    },
+    [showSaveErrorAlert, studentId],
   );
 
   const handleLogOut = useCallback(() => {
@@ -462,41 +287,43 @@ export function AppSettingsScreen() {
           </Section>
 
           <Section title={t("profileSettings.settings.notifications.title")}>
-            <ToggleRow
+            <SettingsToggleRow
               icon="notifications-outline"
               iconBackground={settingsColors.primaryFixed}
               iconColor={settingsColors.primary}
               label={t("profileSettings.settings.notifications.push")}
-              onValueChange={setPushNotificationsEnabled}
+              onValueChange={handleTogglePush}
               value={pushNotificationsEnabled}
             />
             <Divider />
-            <ToggleRow
+            <SettingsToggleRow
               icon="mail-outline"
               iconBackground={settingsColors.tertiaryFixed}
               iconColor={settingsColors.tertiaryText}
               label={t("profileSettings.settings.notifications.emailSummaries")}
-              onValueChange={setEmailSummariesEnabled}
+              onValueChange={handleToggleEmailSummaries}
               value={emailSummariesEnabled}
             />
           </Section>
 
           <Section title={t("profileSettings.settings.preferences.title")}>
-            <AppearanceRow mode={appearanceMode} onSelect={setAppearanceMode} />
+            <SettingsRow
+              icon="language-outline"
+              iconBackground={settingsColors.secondaryFixed}
+              iconColor={settingsColors.onSecondaryContainer}
+              label={t("profileSettings.settings.preferences.appLanguage")}
+              onPress={() => handleOpenRoute(routes.studentLanguageSettings)}
+              value={t("profileSettings.settings.preferences.english")}
+            />
             <Divider />
-            {preferenceRows.map((row, index) => (
-              <View key={row.id}>
-                <SettingsRow
-                  icon={row.icon}
-                  iconBackground={row.iconBackground}
-                  iconColor={row.iconColor}
-                  label={t(row.labelKey)}
-                  onPress={getRowPressHandler(row)}
-                  value={row.valueKey ? t(row.valueKey) : undefined}
-                />
-                {index < preferenceRows.length - 1 ? <Divider /> : null}
-              </View>
-            ))}
+            <SettingsRow
+              icon="text-outline"
+              iconBackground={settingsColors.surfaceContainerHigh}
+              iconColor={settingsColors.outline}
+              label={t("profileSettings.settings.preferences.fontSize")}
+              onPress={() => handleOpenRoute(routes.studentAccessibilitySettings)}
+              value={t(textSizeValueKeys[settings.textSize])}
+            />
           </Section>
 
           <Section title={t("profileSettings.settings.support.title")}>
@@ -535,37 +362,6 @@ export function AppSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  appearanceControl: {
-    alignItems: "center",
-    backgroundColor: settingsColors.surfaceContainer,
-    borderColor: settingsColors.outlineVariant,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    flexDirection: "row",
-    padding: 4,
-  },
-  appearanceOption: {
-    alignItems: "center",
-    borderRadius: radius.full,
-    flexDirection: "row",
-    gap: 4,
-    minHeight: 32,
-    paddingHorizontal: 10,
-  },
-  appearanceOptionPressed: {
-    opacity: 0.76,
-  },
-  appearanceOptionSelected: {
-    backgroundColor: settingsColors.primary,
-  },
-  appearanceText: {
-    color: settingsColors.onSurfaceVariant,
-    fontWeight: "600",
-  },
-  appearanceTextSelected: {
-    color: settingsColors.onPrimary,
-    fontWeight: "700",
-  },
   content: {
     alignSelf: "center",
     gap: 32,
@@ -580,13 +376,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: settingsColors.surface,
     borderBottomColor: settingsColors.outlineVariant,
-  },
-  iconBadge: {
-    alignItems: "center",
-    borderRadius: radius.full,
-    height: 40,
-    justifyContent: "center",
-    width: 40,
   },
   logoutButton: {
     alignItems: "center",
@@ -617,38 +406,6 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: settingsColors.background,
     flex: 1,
-  },
-  row: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  rowLabel: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: 16,
-    minWidth: 0,
-  },
-  rowPressed: {
-    backgroundColor: settingsColors.surfaceContainerLow,
-  },
-  rowTitle: {
-    color: settingsColors.onSurface,
-    flex: 1,
-  },
-  rowTrailing: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    maxWidth: "46%",
-  },
-  rowValue: {
-    color: settingsColors.outline,
-    flexShrink: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,

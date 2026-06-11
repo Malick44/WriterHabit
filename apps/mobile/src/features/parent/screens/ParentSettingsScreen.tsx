@@ -1,7 +1,12 @@
+import { useCallback, useState } from "react";
 import { StyleSheet, Text } from "react-native";
+import { useRouter } from "expo-router";
 
+import { useAuthSession } from "@/core/auth/useAuthSession";
+import { routes } from "@/core/navigation/routeNames";
 import { colors, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
 import { CheckboxRow, ChoiceCard } from "@/shared/components/forms";
@@ -15,13 +20,35 @@ import {
 } from "@/shared/utils/accessibility";
 
 import { useParentSettingsData } from "../hooks/useParent";
+import type { ParentSettings } from "../types";
 
 export function ParentSettingsScreen() {
+  const router = useRouter();
   const { t } = useI18n();
+  const { signOut } = useAuthSession();
   const state = useParentSettingsData();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
+  const [hasChangedSettings, setHasChangedSettings] = useState(false);
+
+  const handleOpenPaywall = useCallback(() => {
+    router.push(routes.paywall);
+  }, [router]);
+
+  const handleSignOut = useCallback(() => {
+    void signOut().then(() => {
+      router.replace(routes.authWelcome);
+    });
+  }, [router, signOut]);
+
+  const handleUpdateSetting = <Key extends keyof ParentSettings>(key: Key, value: ParentSettings[Key]) => {
+    setHasChangedSettings(true);
+
+    if (state.status === "success") {
+      state.updateSetting(key, value);
+    }
+  };
 
   return (
     <Screen
@@ -79,7 +106,9 @@ export function ParentSettingsScreen() {
               gradeBand={state.gradeBand}
               title={t("parent.empty.settingsTitle")}
             />
-          ) : (
+          ) : null}
+
+          {state.viewModel.linkedStudents.length > 0 && (state.isSaving || hasChangedSettings) ? (
             <SuccessState
               accessibilityLabel={t("parent.settings.savedAccessibility")}
               description={
@@ -90,7 +119,7 @@ export function ParentSettingsScreen() {
               gradeBand={state.gradeBand}
               title={state.isSaving ? t("parent.settings.savingTitle") : t("parent.settings.savedTitle")}
             />
-          )}
+          ) : null}
 
           <PageSection
             gradeBand={state.gradeBand}
@@ -103,7 +132,7 @@ export function ParentSettingsScreen() {
                 description={t("parent.settings.aiCoachAccess.allowedDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.aiCoachAccess.allowed")}
-                onPress={() => state.updateSetting("aiCoachAccess", "hints_and_revision")}
+                onPress={() => handleUpdateSetting("aiCoachAccess", "hints_and_revision")}
                 selected={state.viewModel.settings.aiCoachAccess === "hints_and_revision"}
               />
               <ChoiceCard
@@ -111,7 +140,7 @@ export function ParentSettingsScreen() {
                 description={t("parent.settings.aiCoachAccess.restrictedDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.aiCoachAccess.restricted")}
-                onPress={() => state.updateSetting("aiCoachAccess", "restricted")}
+                onPress={() => handleUpdateSetting("aiCoachAccess", "restricted")}
                 selected={state.viewModel.settings.aiCoachAccess === "restricted"}
               />
             </Stack>
@@ -130,7 +159,7 @@ export function ParentSettingsScreen() {
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.weeklyEmailLabel")}
                 onPress={() =>
-                  state.updateSetting(
+                  handleUpdateSetting(
                     "weeklyReportEmailEnabled",
                     !state.viewModel.settings.weeklyReportEmailEnabled,
                   )
@@ -143,7 +172,7 @@ export function ParentSettingsScreen() {
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.assignmentAlertsLabel")}
                 onPress={() =>
-                  state.updateSetting(
+                  handleUpdateSetting(
                     "assignmentAlertsEnabled",
                     !state.viewModel.settings.assignmentAlertsEnabled,
                   )
@@ -156,7 +185,7 @@ export function ParentSettingsScreen() {
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.practiceReminderLabel")}
                 onPress={() =>
-                  state.updateSetting(
+                  handleUpdateSetting(
                     "practiceReminderEnabled",
                     !state.viewModel.settings.practiceReminderEnabled,
                   )
@@ -176,7 +205,7 @@ export function ParentSettingsScreen() {
                 description={t("parent.settings.digestWeeklyDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.digestWeeklyLabel")}
-                onPress={() => state.updateSetting("digestFrequency", "weekly")}
+                onPress={() => handleUpdateSetting("digestFrequency", "weekly")}
                 selected={state.viewModel.settings.digestFrequency === "weekly"}
               />
               <ChoiceCard
@@ -184,7 +213,7 @@ export function ParentSettingsScreen() {
                 description={t("parent.settings.digestTwiceWeeklyDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.digestTwiceWeeklyLabel")}
-                onPress={() => state.updateSetting("digestFrequency", "twice_weekly")}
+                onPress={() => handleUpdateSetting("digestFrequency", "twice_weekly")}
                 selected={state.viewModel.settings.digestFrequency === "twice_weekly"}
               />
             </Stack>
@@ -203,7 +232,7 @@ export function ParentSettingsScreen() {
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.teacherShareLabel")}
                 onPress={() =>
-                  state.updateSetting(
+                  handleUpdateSetting(
                     "shareWeeklySummaryWithTeacher",
                     !state.viewModel.settings.shareWeeklySummaryWithTeacher,
                   )
@@ -234,6 +263,39 @@ export function ParentSettingsScreen() {
           </PageSection>
         </Stack>
       ) : null}
+
+      <PageSection
+        gradeBand={state.gradeBand}
+        subtitle={t("parent.settings.accountSubtitle")}
+        title={t("parent.settings.accountTitle")}
+      >
+        <Stack gap="md">
+          <Card
+            accessibilityHint={t("parent.settings.upgradeHint")}
+            accessibilityLabel={t("parent.settings.upgradeAccessibility")}
+            gradeBand={state.gradeBand}
+            onPress={handleOpenPaywall}
+            subtitle={t("parent.settings.upgradeDescription")}
+            testID="parent-settings-upgrade"
+            title={t("parent.settings.upgradeTitle")}
+          >
+            <Text
+              selectable
+              style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.actionBackground }]}
+            >
+              {t("parent.settings.upgradeCta")}
+            </Text>
+          </Card>
+          <Button
+            accessibilityLabel={t("parent.settings.signOutAccessibility")}
+            fullWidth
+            label={t("parent.settings.signOut")}
+            onPress={handleSignOut}
+            testID="parent-settings-sign-out"
+            variant="danger"
+          />
+        </Stack>
+      </PageSection>
     </Screen>
   );
 }

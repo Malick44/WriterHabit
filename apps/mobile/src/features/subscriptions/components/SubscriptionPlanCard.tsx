@@ -34,7 +34,8 @@ export function SubscriptionPlanCard({
   return (
     <Card
       accessibilityHint={t("subscriptions.plans.selectHint")}
-      accessibilityLabel={t("subscriptions.plans.selectAccessibility", { title })}
+      accessibilityLabel={t("subscriptions.plans.selectAccessibility", { price: plan.priceLabel, title })}
+      accessibilityState={{ selected: isSelected }}
       gradeBand={gradeBand}
       onPress={() => onSelectPlan(plan.id)}
       style={{

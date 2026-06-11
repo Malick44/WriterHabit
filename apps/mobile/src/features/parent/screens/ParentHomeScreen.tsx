@@ -17,9 +17,15 @@ import {
   getParentStudentReportRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
+import { colors } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import {
+  getAccessibleColors,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import { ParentStudentSelector } from "../components";
 import { useParentDashboardData } from "../hooks/useParent";
@@ -38,29 +44,24 @@ const RING_SEGMENT_COUNT = 36;
 const RING_SEGMENTS = Array.from({ length: RING_SEGMENT_COUNT }, (_, index) => index);
 
 const parentColors = {
-  background: "#f8f9ff",
-  card: "rgba(255, 255, 255, 0.86)",
-  error: "#ba1a1a",
-  errorContainer: "#ffdad6",
-  onErrorContainer: "#93000a",
-  onPrimary: "#ffffff",
-  onPrimaryContainer: "#a5bdff",
-  onSecondaryContainer: "#00714d",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primaryContainer: "#0047ab",
-  primaryFixed: "#dae2ff",
-  secondary: "#006c49",
-  secondaryContainer: "#6cf8bb",
-  surface: "#f8f9ff",
-  surfaceContainer: "#e5eeff",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerLow: "#eff4ff",
-  surfaceDim: "#cbdbf5",
-  tertiaryFixed: "#ffddb8",
+  background: colors.dashboard.background,
+  card: colors.dashboard.cardTranslucent,
+  error: colors.dashboard.error,
+  errorContainer: colors.dashboard.errorContainer,
+  onErrorContainer: colors.dashboard.onErrorContainer,
+  onPrimary: colors.dashboard.onPrimary,
+  onPrimaryContainer: colors.dashboard.onPrimaryContainer,
+  onSecondaryContainer: colors.dashboard.onSecondaryContainer,
+  onSurface: colors.dashboard.onSurface,
+  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
+  outline: colors.dashboard.outline,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  primaryFixed: colors.dashboard.primaryFixed,
+  secondary: colors.dashboard.secondary,
+  secondaryContainer: colors.dashboard.secondaryContainer,
+  surface: colors.dashboard.surface,
+  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
 } as const;
 
 const parentSpacing = {
@@ -158,11 +159,7 @@ export function ParentHomeScreen() {
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
 
-  const handleOpenNotifications = useCallback(() => {
-    router.push(routes.parentSettings);
-  }, [router]);
-
-  const handleOpenHelp = useCallback(() => {
+  const handleOpenSettings = useCallback(() => {
     router.push(routes.parentSettings);
   }, [router]);
 
@@ -204,21 +201,15 @@ export function ParentHomeScreen() {
         leftAction={{
           accessibilityLabelKey: "parent.dashboard.header.profileAccessibility",
           fallbackText: t("parent.dashboard.header.profileInitials"),
-          onPress: handleOpenHelp,
+          onPress: handleOpenSettings,
           type: "avatar",
         }}
         rightActions={[
           {
             accessibilityLabelKey: "parent.dashboard.header.notificationsAccessibility",
             icon: "notifications-outline",
-            onPress: handleOpenNotifications,
+            onPress: handleOpenSettings,
             type: "icon",
-          },
-          {
-            accessibilityLabelKey: "parent.dashboard.header.helpAccessibility",
-            labelKey: "parent.dashboard.header.help",
-            onPress: handleOpenHelp,
-            type: "text",
           },
         ]}
         showSafeArea={false}
@@ -348,6 +339,8 @@ function ChildOverviewHero({
   viewModel: ParentDashboardViewModel;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const student = viewModel.selectedStudent;
 
   if (!student) {
@@ -359,15 +352,33 @@ function ChildOverviewHero({
       <View style={styles.heroBubblePrimary} />
       <View style={styles.heroBubbleSecondary} />
       <View style={styles.heroContent}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.heroEyebrow}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.heroEyebrow, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
           {t("parent.dashboard.hero.greeting")}
         </Text>
         <View style={[styles.childTitleRow, isTablet ? styles.childTitleRowTablet : null]}>
-          <Text maxFontSizeMultiplier={1.08} numberOfLines={2} style={styles.childName}>
+          <Text
+            numberOfLines={2}
+            style={[
+              getAccessibleTextStyle(styles.childName, settings),
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
             {student.displayName}
           </Text>
           <View style={styles.gradeChip}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.gradeChipText}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.gradeChipText, settings),
+                settings.highContrast ? { color: accessibleColors.mutedText } : null,
+              ]}
+            >
               {student.schoolLabel}
             </Text>
           </View>
@@ -407,20 +418,30 @@ function HeroStat({
   value: string;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View accessible accessibilityLabel={`${t(labelKey)}: ${value}`} style={styles.heroStat}>
       <Ionicons color={icon === "star" ? parentColors.secondary : parentColors.primary} name={icon} size={24} />
       <View style={styles.heroStatCopy}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.heroStatLabel}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.heroStatLabel, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
           {t(labelKey)}
         </Text>
         <Text
           adjustsFontSizeToFit
-          maxFontSizeMultiplier={1.05}
           minimumFontScale={0.72}
           numberOfLines={1}
-          style={styles.heroStatValue}
+          style={[
+            getAccessibleTextStyle(styles.heroStatValue, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
         >
           {value}
         </Text>
@@ -437,6 +458,7 @@ function CoachInsightCard({
   viewModel: ParentDashboardViewModel;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
 
   return (
     <View
@@ -448,11 +470,11 @@ function CoachInsightCard({
       <View style={styles.coachContent}>
         <View style={styles.coachTitleRow}>
           <Ionicons color={parentColors.secondaryContainer} name="sparkles" size={24} />
-          <Text maxFontSizeMultiplier={1.08} numberOfLines={2} style={styles.coachTitle}>
+          <Text numberOfLines={2} style={getAccessibleTextStyle(styles.coachTitle, settings)}>
             {t("parent.dashboard.coach.title")}
           </Text>
         </View>
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={5} style={styles.coachText}>
+        <Text numberOfLines={5} style={getAccessibleTextStyle(styles.coachText, settings)}>
           {viewModel.coachInsight}
         </Text>
       </View>
@@ -462,7 +484,7 @@ function CoachInsightCard({
         onPress={onOpenReport}
         style={({ pressed }) => [styles.coachButton, pressed ? styles.pressed : null]}
       >
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.coachButtonText}>
+        <Text numberOfLines={1} style={getAccessibleTextStyle(styles.coachButtonText, settings)}>
           {t("parent.dashboard.coach.openTips")}
         </Text>
         <Ionicons color={parentColors.onPrimary} name="arrow-forward" size={16} />
@@ -497,6 +519,8 @@ function DashboardBento({
 
 function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const progress = Math.round(viewModel.weeklyProgressValue * RING_SEGMENT_COUNT);
   const weekly = viewModel.weeklyProgress;
 
@@ -530,10 +554,28 @@ function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel 
             />
           ))}
           <View style={styles.weeklyRingCenter}>
-            <Text maxFontSizeMultiplier={1} numberOfLines={1} style={styles.weeklyMinutes}>
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1}
+              minimumFontScale={0.72}
+              numberOfLines={1}
+              style={[
+                styles.weeklyMinutes,
+                settings.highContrast ? { color: accessibleColors.text } : null,
+              ]}
+            >
               {weekly.minutesCompleted}
             </Text>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.weeklyGoal}>
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1}
+              minimumFontScale={0.72}
+              numberOfLines={1}
+              style={[
+                styles.weeklyGoal,
+                settings.highContrast ? { color: accessibleColors.mutedText } : null,
+              ]}
+            >
               {t("parent.dashboard.weekly.minutesGoal", { goal: weekly.minutesGoal })}
             </Text>
           </View>
@@ -541,10 +583,22 @@ function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel 
 
         <View style={styles.streakBlock}>
           <View style={styles.streakRow}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.streakLabel}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.streakLabel, settings),
+                settings.highContrast ? { color: accessibleColors.mutedText } : null,
+              ]}
+            >
               {t("parent.dashboard.weekly.streakLabel")}
             </Text>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.streakValue}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.streakValue, settings),
+                settings.highContrast ? { color: accessibleColors.text } : null,
+              ]}
+            >
               {t("parent.dashboard.weekly.streakValue", { count: weekly.streakDays })}
             </Text>
           </View>
@@ -559,6 +613,8 @@ function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel 
 
 function MilestonesCard({ milestones }: { milestones: ParentDashboardMilestone[] }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={[styles.glassCard, styles.bentoCard]}>
@@ -568,7 +624,12 @@ function MilestonesCard({ milestones }: { milestones: ParentDashboardMilestone[]
           <MilestoneRow key={milestone.id} milestone={milestone} />
         ))}
         {milestones.length === 0 ? (
-          <Text maxFontSizeMultiplier={1.08} style={styles.emptyInlineText}>
+          <Text
+            style={[
+              getAccessibleTextStyle(styles.emptyInlineText, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
             {t("parent.dashboard.milestones.empty")}
           </Text>
         ) : null}
@@ -579,7 +640,9 @@ function MilestonesCard({ milestones }: { milestones: ParentDashboardMilestone[]
 
 function MilestoneRow({ milestone }: { milestone: ParentDashboardMilestone }) {
   const { t } = useI18n();
-  const colors = getMilestoneColors(milestone.kind);
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
+  const milestoneColors = getMilestoneColors(milestone.kind);
 
   return (
     <View
@@ -590,19 +653,31 @@ function MilestoneRow({ milestone }: { milestone: ParentDashboardMilestone }) {
       style={[
         styles.milestoneRow,
         {
-          backgroundColor: colors.backgroundColor,
-          borderColor: colors.borderColor,
+          backgroundColor: milestoneColors.backgroundColor,
+          borderColor: milestoneColors.borderColor,
         },
       ]}
     >
-      <View style={[styles.milestoneIcon, { backgroundColor: colors.backgroundColor }]}>
-        <Ionicons color={colors.foregroundColor} name={getMilestoneIcon(milestone.kind)} size={22} />
+      <View style={styles.milestoneIcon}>
+        <Ionicons color={milestoneColors.foregroundColor} name={getMilestoneIcon(milestone.kind)} size={22} />
       </View>
       <View style={styles.milestoneCopy}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.milestoneTitle}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.milestoneTitle, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {getMilestoneTitle(t, milestone)}
         </Text>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={2} style={styles.milestoneDescription}>
+        <Text
+          numberOfLines={2}
+          style={[
+            getAccessibleTextStyle(styles.milestoneDescription, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
           {milestone.description}
         </Text>
       </View>
@@ -620,6 +695,8 @@ function UpcomingCard({
   onOpenUpcomingItem: (item: ParentDashboardUpcomingItem) => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={[styles.glassCard, styles.bentoCard]}>
@@ -635,7 +712,13 @@ function UpcomingCard({
         onPress={onOpenAssignments}
         style={({ pressed }) => [styles.textButton, pressed ? styles.pressed : null]}
       >
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.textButtonLabel}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.textButtonLabel, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {t("parent.dashboard.upcoming.openCalendar")}
         </Text>
         <Ionicons color={parentColors.primary} name="open-outline" size={14} />
@@ -652,6 +735,8 @@ function UpcomingRow({
   onPress: (item: ParentDashboardUpcomingItem) => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const isUrgent = item.status === "revision_in_progress";
 
   return (
@@ -662,20 +747,35 @@ function UpcomingRow({
       style={({ pressed }) => [styles.upcomingRow, pressed ? styles.upcomingRowPressed : null]}
     >
       <View style={styles.upcomingHeader}>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.upcomingTitle}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.upcomingTitle, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {item.title}
         </Text>
         <View style={[styles.upcomingBadge, isUrgent ? styles.upcomingBadgeUrgent : null]}>
           <Text
-            maxFontSizeMultiplier={1.05}
             numberOfLines={1}
-            style={[styles.upcomingBadgeText, isUrgent ? styles.upcomingBadgeTextUrgent : null]}
+            style={[
+              getAccessibleTextStyle(styles.upcomingBadgeText, settings),
+              isUrgent ? styles.upcomingBadgeTextUrgent : null,
+              settings.highContrast && !isUrgent ? { color: accessibleColors.mutedText } : null,
+            ]}
           >
             {t(assignmentStatusLabelKeys[item.status])}
           </Text>
         </View>
       </View>
-      <Text maxFontSizeMultiplier={1.05} numberOfLines={2} style={styles.upcomingContext}>
+      <Text
+        numberOfLines={2}
+        style={[
+          getAccessibleTextStyle(styles.upcomingContext, settings),
+          settings.highContrast ? { color: accessibleColors.mutedText } : null,
+        ]}
+      >
         {item.context}
       </Text>
       <View style={styles.upcomingProgressRow}>
@@ -690,7 +790,13 @@ function UpcomingRow({
             ]}
           />
         </View>
-        <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.upcomingPercent}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.upcomingPercent, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
           {t("parent.dashboard.upcoming.percent", { count: item.progressPercent })}
         </Text>
       </View>
@@ -706,10 +812,18 @@ function CardHeader({
   titleKey: TranslationKey;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={styles.cardHeader}>
-      <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.cardTitle}>
+      <Text
+        numberOfLines={1}
+        style={[
+          getAccessibleTextStyle(styles.cardTitle, settings),
+          settings.highContrast ? { color: accessibleColors.text } : null,
+        ]}
+      >
         {t(titleKey)}
       </Text>
       <Ionicons color={parentColors.outline} name={icon} size={24} />
@@ -727,6 +841,8 @@ function EncouragementBand({
   viewModel: ParentDashboardViewModel;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const studentName = viewModel.selectedStudent?.displayName ?? t("common.fallbackDisplayName");
 
   return (
@@ -735,7 +851,13 @@ function EncouragementBand({
         <View style={styles.mascotCircle}>
           <Ionicons color={parentColors.primary} name="happy-outline" size={78} />
           <View style={styles.mascotBadge}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.mascotBadgeText}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.mascotBadgeText, settings),
+                settings.highContrast ? { color: accessibleColors.text } : null,
+              ]}
+            >
               {t("parent.dashboard.encouragement.badge", { name: studentName })}
             </Text>
           </View>
@@ -743,10 +865,22 @@ function EncouragementBand({
       </View>
 
       <View style={styles.encouragementCopy}>
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={2} style={styles.encouragementTitle}>
+        <Text
+          numberOfLines={2}
+          style={[
+            getAccessibleTextStyle(styles.encouragementTitle, settings),
+            settings.highContrast ? { color: accessibleColors.text } : null,
+          ]}
+        >
           {t("parent.dashboard.encouragement.title", { name: studentName })}
         </Text>
-        <Text maxFontSizeMultiplier={1.08} numberOfLines={4} style={styles.encouragementText}>
+        <Text
+          numberOfLines={4}
+          style={[
+            getAccessibleTextStyle(styles.encouragementText, settings),
+            settings.highContrast ? { color: accessibleColors.mutedText } : null,
+          ]}
+        >
           {t("parent.dashboard.encouragement.description", {
             count: viewModel.confidenceGrowthPercent,
             summary: viewModel.encouragementSummary,
@@ -759,7 +893,7 @@ function EncouragementBand({
             onPress={onOpenAssignments}
             style={({ pressed }) => [styles.primaryPillButton, pressed ? styles.pressed : null]}
           >
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.primaryPillButtonText}>
+            <Text numberOfLines={1} style={getAccessibleTextStyle(styles.primaryPillButtonText, settings)}>
               {t("parent.dashboard.encouragement.review")}
             </Text>
           </Pressable>
@@ -769,7 +903,13 @@ function EncouragementBand({
             onPress={onOpenReport}
             style={({ pressed }) => [styles.secondaryPillButton, pressed ? styles.pressed : null]}
           >
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.secondaryPillButtonText}>
+            <Text
+              numberOfLines={1}
+              style={[
+                getAccessibleTextStyle(styles.secondaryPillButtonText, settings),
+                settings.highContrast ? { color: accessibleColors.text } : null,
+              ]}
+            >
               {t("parent.dashboard.encouragement.send")}
             </Text>
           </Pressable>
@@ -1023,10 +1163,10 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     color: parentColors.outline,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0,
-    lineHeight: 14,
+    lineHeight: 16,
     textTransform: "uppercase",
   },
   heroStats: {
@@ -1081,6 +1221,7 @@ const styles = StyleSheet.create({
   },
   milestoneIcon: {
     alignItems: "center",
+    backgroundColor: parentColors.surfaceContainerHigh,
     borderRadius: parentRadius.full,
     height: 40,
     justifyContent: "center",
@@ -1195,7 +1336,7 @@ const styles = StyleSheet.create({
     gap: parentSpacing.xs,
     justifyContent: "center",
     marginTop: parentSpacing.md,
-    minHeight: 36,
+    minHeight: 44,
   },
   textButtonLabel: {
     color: parentColors.primary,
@@ -1211,9 +1352,9 @@ const styles = StyleSheet.create({
   },
   upcomingBadgeText: {
     color: parentColors.onSurfaceVariant,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "800",
-    lineHeight: 14,
+    lineHeight: 16,
     textTransform: "uppercase",
   },
   upcomingBadgeTextUrgent: {

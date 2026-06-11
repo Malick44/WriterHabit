@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RouteGate } from "@/core/navigation/RouteGate";
-import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { getTabBarStyle, tabBarColors, tabBarStyles } from "@/shared/components/navigation";
 
 export default function ParentLayout() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
 
   return (
     <RouteGate
@@ -17,8 +19,8 @@ export default function ParentLayout() {
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: colors.action.primary.background,
-          tabBarInactiveTintColor: colors.text.muted,
+          tabBarActiveTintColor: tabBarColors.activeTint,
+          tabBarInactiveTintColor: tabBarColors.inactiveTint,
           tabBarIcon: ({ color, focused, size }) => {
             switch (route.name) {
               case "home":
@@ -35,7 +37,9 @@ export default function ParentLayout() {
                 return <Ionicons name="ellipse-outline" size={size} color={color} />;
             }
           },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: "700", lineHeight: 16, marginTop: 2 },
+          tabBarItemStyle: tabBarStyles.tabBarItem,
+          tabBarLabelStyle: tabBarStyles.tabBarLabel,
+          tabBarStyle: getTabBarStyle(insets.bottom),
         })}
       >
         <Tabs.Screen

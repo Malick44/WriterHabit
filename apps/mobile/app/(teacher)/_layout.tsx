@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RouteGate } from "@/core/navigation/RouteGate";
-import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { getTabBarStyle, tabBarColors, tabBarStyles } from "@/shared/components/navigation";
 
 export default function TeacherLayout() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
 
   return (
     <RouteGate
@@ -17,8 +19,8 @@ export default function TeacherLayout() {
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: colors.action.primary.background,
-          tabBarInactiveTintColor: colors.text.muted,
+          tabBarActiveTintColor: tabBarColors.activeTint,
+          tabBarInactiveTintColor: tabBarColors.inactiveTint,
           tabBarIcon: ({ color, focused, size }) => {
             switch (route.name) {
               case "dashboard":
@@ -31,11 +33,15 @@ export default function TeacherLayout() {
                 return (
                   <Ionicons name={focused ? "file-tray-full" : "file-tray-full-outline"} size={size} color={color} />
                 );
+              case "settings":
+                return <Ionicons name={focused ? "settings" : "settings-outline"} size={size} color={color} />;
               default:
                 return <Ionicons name="ellipse-outline" size={size} color={color} />;
             }
           },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: "700", lineHeight: 16, marginTop: 2 },
+          tabBarItemStyle: tabBarStyles.tabBarItem,
+          tabBarLabelStyle: tabBarStyles.tabBarLabel,
+          tabBarStyle: getTabBarStyle(insets.bottom),
         })}
       >
         <Tabs.Screen
@@ -59,9 +65,17 @@ export default function TeacherLayout() {
             tabBarAccessibilityLabel: t("navigation.tabs.teacher.submissionsAccessibility"),
           }}
         />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: t("navigation.tabs.teacher.settings"),
+            tabBarAccessibilityLabel: t("navigation.tabs.teacher.settingsAccessibility"),
+          }}
+        />
         <Tabs.Screen name="assignments/create" options={{ href: null }} />
         <Tabs.Screen name="classes/[classId]/progress" options={{ href: null }} />
         <Tabs.Screen name="submissions/[submissionId]" options={{ href: null }} />
+        <Tabs.Screen name="accessibility-settings" options={{ href: null }} />
       </Tabs>
     </RouteGate>
   );

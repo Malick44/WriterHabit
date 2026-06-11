@@ -4,10 +4,11 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RouteGate } from "@/core/navigation/RouteGate";
-import { colors, palette } from "@/design/tokens";
+import { colors } from "@/design/tokens";
 import { overrideStyle } from "@/devtools/theme-tuner";
 import { studentHomeTokenDefaults, useStudentHomeTokenOverrides } from "@/features/student-home/themeTuning";
 import { useI18n } from "@/i18n";
+import { getTabBarStyle, tabBarStyles } from "@/shared/components/navigation";
 
 export default function StudentLayout() {
   const { t } = useI18n();
@@ -52,14 +53,10 @@ export default function StudentLayout() {
                 return <Ionicons name="ellipse-outline" size={size} color={color} />;
             }
           },
-          tabBarItemStyle: styles.tabBarItem,
-          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarItemStyle: tabBarStyles.tabBarItem,
+          tabBarLabelStyle: tabBarStyles.tabBarLabel,
           tabBarStyle: [
-            styles.tabBar,
-            {
-              height: 74 + insets.bottom,
-              paddingBottom: Math.max(insets.bottom, 18),
-            },
+            ...getTabBarStyle(insets.bottom),
             overrideStyle<ViewStyle>({ backgroundColor: tuned["bottomNav.background"] }),
           ],
         })}
@@ -110,6 +107,7 @@ export default function StudentLayout() {
         <Tabs.Screen name="writing-goals" options={{ href: null }} />
         <Tabs.Screen name="notification-settings" options={{ href: null }} />
         <Tabs.Screen name="language-settings" options={{ href: null }} />
+        <Tabs.Screen name="accessibility-settings" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/complete" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/index" options={{ href: null }} />
         <Tabs.Screen name="review/[submissionId]/revision" options={{ href: null }} />
@@ -135,24 +133,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 18,
     width: 64,
-  },
-  tabBar: {
-    backgroundColor: colors.background.surface,
-    borderTopColor: palette.slate[100],
-    borderTopWidth: 1,
-    paddingTop: 9,
-    shadowColor: palette.slate[900],
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-  },
-  tabBarItem: {
-    paddingTop: 4,
-  },
-  tabBarLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    lineHeight: 16,
-    marginTop: 2,
   },
 });

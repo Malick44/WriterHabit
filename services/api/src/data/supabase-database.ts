@@ -2,19 +2,33 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiHttpError } from "../runtime/errors";
 import type {
+  ActivityDateRange,
   AssignmentRecord,
+  BadgeRecord,
+  ClassRecord,
+  ClassRosterStudentRecord,
   CreateSubmissionInput,
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
   ListStudentAssignmentsOptions,
+  ListSubmissionQueueOptions,
+  ParentLinkedStudentRecord,
   RubricCriterionRecord,
   SaveDraftInput,
+  StudentActivityDayRecord,
+  StudentAssignmentStatus,
   StudentAssignmentUpdate,
   StudentAssignmentWithAssignment,
+  StudentBadgeRecord,
   StudentProfileRecord,
+  StudentProgressTotalsRecord,
+  StudentSkillProgressRecord,
+  SubmissionQueueRecord,
   SubmissionRecord,
   SubmissionRevisionRecord,
+  TeacherProfileRecord,
+  WeeklyReviewRecord,
 } from "./types";
 
 export interface SupabaseDatabaseConfig {
@@ -176,6 +190,138 @@ function mapStudentProfileRow(row: Record<string, unknown>): StudentProfileRecor
   };
 }
 
+/** Normalizes a supabase-js embedded join, which may come back as an array. */
+function firstJoinRow(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    return (value[0] as Record<string, unknown> | undefined) ?? null;
+  }
+
+  return (value as Record<string, unknown> | null) ?? null;
+}
+
+function joinedDisplayName(studentProfileJoin: unknown): string {
+  const profileRow = firstJoinRow(studentProfileJoin);
+  const userRow = firstJoinRow(profileRow?.user);
+  return (userRow?.display_name as string | undefined) ?? "Student";
+}
+
+function mapTeacherProfileRow(row: Record<string, unknown>): TeacherProfileRecord {
+  return {
+    displayName: row.display_name as string,
+    id: row.id as string,
+    userId: row.user_id as string,
+  };
+}
+
+function mapClassRow(row: Record<string, unknown>): ClassRecord {
+  return {
+    gradeLevel: row.grade_level as number,
+    id: row.id as string,
+    name: row.name as string,
+    status: row.status as ClassRecord["status"],
+    teacherProfileId: row.teacher_profile_id as string,
+  };
+}
+
+function mapProgressTotalsRow(row: Record<string, unknown>): StudentProgressTotalsRecord {
+  return {
+    aiFeedbackApplied: row.ai_feedback_applied as number,
+    assignmentsCompleted: row.assignments_completed as number,
+    bestStreakDays: row.best_streak_days as number,
+    currentStreakDays: row.current_streak_days as number,
+    handwritingMinutes: row.handwriting_minutes as number,
+    minutesThisWeek: row.minutes_this_week as number,
+    practicedTodayOn: (row.practiced_today_on as string | null) ?? null,
+    revisionsCompleted: row.revisions_completed as number,
+    rubricImprovement: Number(row.rubric_improvement ?? 0),
+    streakStatus: row.streak_status as StudentProgressTotalsRecord["streakStatus"],
+    studentProfileId: row.student_profile_id as string,
+    weeklyMinutesGoal: row.weekly_minutes_goal as number,
+    wordsWritten: row.words_written as number,
+  };
+}
+
+function mapSkillProgressRow(row: Record<string, unknown>): StudentSkillProgressRecord {
+  return {
+    currentScore: Number(row.current_score ?? 0),
+    level: row.level as number,
+    previousScore: Number(row.previous_score ?? 0),
+    skill: row.skill as string,
+    studentProfileId: row.student_profile_id as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapActivityDayRow(row: Record<string, unknown>): StudentActivityDayRecord {
+  return {
+    activityDate: row.activity_date as string,
+    assignmentsCompleted: row.assignments_completed as number,
+    feedbackApplied: row.feedback_applied as number,
+    handwritingMinutes: row.handwriting_minutes as number,
+    minutesPracticed: row.minutes_practiced as number,
+    practicedSkills: (row.practiced_skills as string[] | null) ?? [],
+    revisionsCompleted: row.revisions_completed as number,
+    studentProfileId: row.student_profile_id as string,
+    wordsWritten: row.words_written as number,
+  };
+}
+
+function mapWeeklyReviewRow(row: Record<string, unknown>): WeeklyReviewRecord {
+  return {
+    celebrationFallback: row.celebration_fallback as string,
+    celebrationKey: row.celebration_key as string,
+    focusForNextWeekFallback: row.focus_for_next_week_fallback as string,
+    focusForNextWeekKey: row.focus_for_next_week_key as string,
+    id: row.id as string,
+    studentProfileId: row.student_profile_id as string,
+    weekEnd: row.week_end as string,
+    weekStart: row.week_start as string,
+  };
+}
+
+function mapBadgeRow(row: Record<string, unknown>): BadgeRecord {
+  return {
+    code: row.code as string,
+    descriptionFallback: row.description_fallback as string,
+    descriptionKey: row.description_key as string,
+    iconName: row.icon_name as string,
+    id: row.id as string,
+    nameFallback: row.name_fallback as string,
+    nameKey: row.name_key as string,
+  };
+}
+
+function mapStudentBadgeRow(row: Record<string, unknown>): StudentBadgeRecord {
+  return {
+    badgeId: row.badge_id as string,
+    progressPercent: Number(row.progress_percent ?? 0),
+    status: row.status as StudentBadgeRecord["status"],
+    studentProfileId: row.student_profile_id as string,
+    unlockedAt: (row.unlocked_at as string | null) ?? null,
+  };
+}
+
+function mapSubmissionQueueRow(row: Record<string, unknown>): SubmissionQueueRecord {
+  const studentAssignmentRow = firstJoinRow(row.student_assignment);
+  const assignmentRow = firstJoinRow(studentAssignmentRow?.assignment);
+  const canvasLinks = (row.submission_canvas_documents as unknown[] | null) ?? [];
+
+  return {
+    assignmentId: (studentAssignmentRow?.assignment_id as string | undefined) ?? "",
+    assignmentTitleFallback: (assignmentRow?.title_fallback as string | undefined) ?? "",
+    assignmentTitleKey: (assignmentRow?.title_key as string | undefined) ?? "",
+    classId: (studentAssignmentRow?.class_id as string | undefined) ?? "",
+    hasCanvas: canvasLinks.length > 0,
+    id: row.id as string,
+    status: row.status as SubmissionQueueRecord["status"],
+    studentAssignmentId: row.student_assignment_id as string,
+    studentDisplayName: joinedDisplayName(row.student_profile),
+    studentProfileId: row.student_profile_id as string,
+    submittedAt: row.submitted_at as string,
+    wordCount: row.word_count as number,
+  };
+}
+
 /**
  * Supabase service-role implementation of the writing-loop Database.
  *
@@ -188,6 +334,64 @@ export class SupabaseDatabase implements Database {
 
   constructor(client: SupabaseClient) {
     this.client = client;
+  }
+
+  async countClassActiveAssignments(classId: string): Promise<number> {
+    const { count, error } = await this.client
+      .from("assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("class_id", classId)
+      .eq("status", "published");
+
+    if (error) {
+      throw toDatabaseError(error, "assignments.countActiveForClass");
+    }
+
+    return count ?? 0;
+  }
+
+  async countClassStudentAssignments(
+    classId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number> {
+    let query = this.client
+      .from("student_assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("class_id", classId);
+
+    if (statuses && statuses.length > 0) {
+      query = query.in("status", [...statuses]);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      throw toDatabaseError(error, "student_assignments.countForClass");
+    }
+
+    return count ?? 0;
+  }
+
+  async countStudentAssignments(
+    studentProfileId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number> {
+    let query = this.client
+      .from("student_assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("student_profile_id", studentProfileId);
+
+    if (statuses && statuses.length > 0) {
+      query = query.in("status", [...statuses]);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      throw toDatabaseError(error, "student_assignments.countForStudent");
+    }
+
+    return count ?? 0;
   }
 
   async createSubmission(input: CreateSubmissionInput): Promise<SubmissionRecord> {
@@ -362,6 +566,20 @@ export class SupabaseDatabase implements Database {
     return data ? mapRevisionRow(data as Record<string, unknown>) : null;
   }
 
+  async getClassById(classId: string): Promise<ClassRecord | null> {
+    const { data, error } = await this.client
+      .from("classes")
+      .select("id, teacher_profile_id, name, grade_level, status")
+      .eq("id", classId)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "classes.getById");
+    }
+
+    return data ? mapClassRow(data as Record<string, unknown>) : null;
+  }
+
   async getDraftByStudentAssignmentId(studentAssignmentId: string): Promise<DraftRecord | null> {
     const { data, error } = await this.client
       .from("writing_drafts")
@@ -374,6 +592,24 @@ export class SupabaseDatabase implements Database {
     }
 
     return data ? mapDraftRow(data as Record<string, unknown>) : null;
+  }
+
+  async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
+    const { data, error } = await this.client
+      .from("weekly_reviews")
+      .select(
+        "id, student_profile_id, week_start, week_end, celebration_key, celebration_fallback, focus_for_next_week_key, focus_for_next_week_fallback",
+      )
+      .eq("student_profile_id", studentProfileId)
+      .order("week_start", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      throw toDatabaseError(error, "weekly_reviews.getLatest");
+    }
+
+    const row = (data as Record<string, unknown>[] | null)?.[0];
+    return row ? mapWeeklyReviewRow(row) : null;
   }
 
   async getMaxSubmissionRevisionNumber(studentAssignmentId: string): Promise<number> {
@@ -462,6 +698,34 @@ export class SupabaseDatabase implements Database {
     return (data as { typed_text: string } | null)?.typed_text ?? null;
   }
 
+  async getTeacherProfileById(id: string): Promise<TeacherProfileRecord | null> {
+    const { data, error } = await this.client
+      .from("teacher_profiles")
+      .select("id, user_id, display_name")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "teacher_profiles.getById");
+    }
+
+    return data ? mapTeacherProfileRow(data as Record<string, unknown>) : null;
+  }
+
+  async getTeacherProfileByUserId(userId: string): Promise<TeacherProfileRecord | null> {
+    const { data, error } = await this.client
+      .from("teacher_profiles")
+      .select("id, user_id, display_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "teacher_profiles.getByUserId");
+    }
+
+    return data ? mapTeacherProfileRow(data as Record<string, unknown>) : null;
+  }
+
   async hasActiveParentLink(parentUserId: string, studentProfileId: string): Promise<boolean> {
     const { data, error } = await this.client
       .from("parent_student_links")
@@ -483,6 +747,72 @@ export class SupabaseDatabase implements Database {
     return studentProfileIds.includes(studentProfileId);
   }
 
+  async listActiveBadges(limit: number): Promise<BadgeRecord[]> {
+    const { data, error } = await this.client
+      .from("badges")
+      .select("id, code, name_key, name_fallback, description_key, description_fallback, icon_name")
+      .eq("active", true)
+      .order("code", { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      throw toDatabaseError(error, "badges.listActive");
+    }
+
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapBadgeRow(row));
+  }
+
+  async listActivityDaysForStudents(
+    studentProfileIds: readonly string[],
+    range: ActivityDateRange,
+  ): Promise<StudentActivityDayRecord[]> {
+    if (studentProfileIds.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.client
+      .from("student_activity_days")
+      .select(
+        "student_profile_id, activity_date, practiced_skills, assignments_completed, minutes_practiced, words_written, revisions_completed, feedback_applied, handwriting_minutes",
+      )
+      .in("student_profile_id", [...studentProfileIds])
+      .gte("activity_date", range.fromDate)
+      .lte("activity_date", range.toDate)
+      .order("activity_date", { ascending: true });
+
+    if (error) {
+      throw toDatabaseError(error, "student_activity_days.listForStudents");
+    }
+
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapActivityDayRow(row));
+  }
+
+  async listClassStudents(classId: string, limit: number): Promise<ClassRosterStudentRecord[]> {
+    const { data, error } = await this.client
+      .from("class_students")
+      .select(
+        "student_profile_id, student_profile:student_profiles(id, grade_level, user:users(display_name))",
+      )
+      .eq("class_id", classId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      throw toDatabaseError(error, "class_students.listRoster");
+    }
+
+    return ((data as unknown as Record<string, unknown>[] | null) ?? []).map((row) => {
+      const profileRow = firstJoinRow(row.student_profile);
+
+      return {
+        displayName: joinedDisplayName(row.student_profile),
+        gradeLevel: (profileRow?.grade_level as number | undefined) ?? 0,
+        studentProfileId: row.student_profile_id as string,
+      };
+    });
+  }
+
   async listParentLinkedStudentProfileIds(parentUserId: string): Promise<string[]> {
     const { data, error } = await this.client
       .from("parent_student_links")
@@ -495,6 +825,57 @@ export class SupabaseDatabase implements Database {
     }
 
     return ((data as Array<{ student_profile_id: string }> | null) ?? []).map((row) => row.student_profile_id);
+  }
+
+  async listParentLinkedStudents(
+    parentUserId: string,
+    limit: number,
+  ): Promise<ParentLinkedStudentRecord[]> {
+    const { data, error } = await this.client
+      .from("parent_student_links")
+      .select(
+        "student_profile_id, relationship_label, student_profile:student_profiles(id, grade_level, user:users(display_name))",
+      )
+      .eq("parent_user_id", parentUserId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      throw toDatabaseError(error, "parent_student_links.listStudents");
+    }
+
+    return ((data as unknown as Record<string, unknown>[] | null) ?? []).map((row) => {
+      const profileRow = firstJoinRow(row.student_profile);
+
+      return {
+        displayName: joinedDisplayName(row.student_profile),
+        gradeLevel: (profileRow?.grade_level as number | undefined) ?? 0,
+        relationshipLabel: (row.relationship_label as string | undefined) ?? "family",
+        studentProfileId: row.student_profile_id as string,
+      };
+    });
+  }
+
+  async listProgressTotalsForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentProgressTotalsRecord[]> {
+    if (studentProfileIds.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.client
+      .from("student_progress_totals")
+      .select(
+        "student_profile_id, assignments_completed, minutes_this_week, weekly_minutes_goal, words_written, revisions_completed, rubric_improvement, ai_feedback_applied, handwriting_minutes, current_streak_days, best_streak_days, practiced_today_on, streak_status",
+      )
+      .in("student_profile_id", [...studentProfileIds]);
+
+    if (error) {
+      throw toDatabaseError(error, "student_progress_totals.listForStudents");
+    }
+
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapProgressTotalsRow(row));
   }
 
   async listRubricCriteria(rubricId: string): Promise<RubricCriterionRecord[]> {
@@ -521,6 +902,26 @@ export class SupabaseDatabase implements Database {
       skill: row.skill as string,
       sortOrder: row.sort_order as number,
     }));
+  }
+
+  async listSkillProgressForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentSkillProgressRecord[]> {
+    if (studentProfileIds.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.client
+      .from("student_skill_progress")
+      .select("student_profile_id, skill, current_score, previous_score, level, updated_at")
+      .in("student_profile_id", [...studentProfileIds])
+      .order("skill", { ascending: true });
+
+    if (error) {
+      throw toDatabaseError(error, "student_skill_progress.listForStudents");
+    }
+
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapSkillProgressRow(row));
   }
 
   async listStudentAssignments(
@@ -553,6 +954,61 @@ export class SupabaseDatabase implements Database {
       .filter((record) => !options.assignmentType || record.assignment.assignmentType === options.assignmentType);
   }
 
+  async listStudentBadges(studentProfileId: string): Promise<StudentBadgeRecord[]> {
+    const { data, error } = await this.client
+      .from("student_badges")
+      .select("student_profile_id, badge_id, status, progress_percent, unlocked_at")
+      .eq("student_profile_id", studentProfileId);
+
+    if (error) {
+      throw toDatabaseError(error, "student_badges.list");
+    }
+
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapStudentBadgeRow(row));
+  }
+
+  async listSubmissionQueueForClasses(
+    classIds: readonly string[],
+    options: ListSubmissionQueueOptions,
+  ): Promise<SubmissionQueueRecord[]> {
+    if (classIds.length === 0) {
+      return [];
+    }
+
+    let query = this.client
+      .from("submissions")
+      .select(
+        [
+          "id",
+          "student_profile_id",
+          "student_assignment_id",
+          "status",
+          "word_count",
+          "submitted_at",
+          "submission_canvas_documents(canvas_document_id)",
+          "student_assignment:student_assignments!inner(class_id, assignment_id, assignment:assignments(title_key, title_fallback))",
+          "student_profile:student_profiles(id, user:users(display_name))",
+        ].join(", "),
+      )
+      .in("student_assignment.class_id", [...classIds]);
+
+    if (options.statuses && options.statuses.length > 0) {
+      query = query.in("status", [...options.statuses]);
+    }
+
+    const { data, error } = await query
+      .order("submitted_at", { ascending: false })
+      .limit(options.limit);
+
+    if (error) {
+      throw toDatabaseError(error, "submissions.listQueueForClasses");
+    }
+
+    return ((data as unknown as Record<string, unknown>[] | null) ?? []).map((row) =>
+      mapSubmissionQueueRow(row),
+    );
+  }
+
   async listSubmissionRevisions(submissionId: string): Promise<SubmissionRevisionRecord[]> {
     const { data, error } = await this.client
       .from("submission_revisions")
@@ -567,27 +1023,33 @@ export class SupabaseDatabase implements Database {
     return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapRevisionRow(row));
   }
 
-  async listTeacherLinkedStudentProfileIds(teacherUserId: string): Promise<string[]> {
-    const teacherProfile = await this.client
-      .from("teacher_profiles")
-      .select("id")
-      .eq("user_id", teacherUserId)
-      .maybeSingle();
+  async listTeacherClasses(teacherProfileId: string, limit: number): Promise<ClassRecord[]> {
+    const { data, error } = await this.client
+      .from("classes")
+      .select("id, teacher_profile_id, name, grade_level, status")
+      .eq("teacher_profile_id", teacherProfileId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(limit);
 
-    if (teacherProfile.error) {
-      throw toDatabaseError(teacherProfile.error, "teacher_profiles.getByUserId");
+    if (error) {
+      throw toDatabaseError(error, "classes.listByTeacher");
     }
 
-    const teacherProfileId = (teacherProfile.data as { id: string } | null)?.id;
+    return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapClassRow(row));
+  }
 
-    if (!teacherProfileId) {
+  async listTeacherLinkedStudentProfileIds(teacherUserId: string): Promise<string[]> {
+    const teacherProfile = await this.getTeacherProfileByUserId(teacherUserId);
+
+    if (!teacherProfile) {
       return [];
     }
 
     const classes = await this.client
       .from("classes")
       .select("id")
-      .eq("teacher_profile_id", teacherProfileId)
+      .eq("teacher_profile_id", teacherProfile.id)
       .eq("status", "active");
 
     if (classes.error) {

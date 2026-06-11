@@ -1,10 +1,12 @@
 import type { FastifyRequest } from "fastify";
 
 import type {
+  ClassRecord,
   Database,
   StudentAssignmentWithAssignment,
   StudentProfileRecord,
   SubmissionRecord,
+  TeacherProfileRecord,
 } from "../data/types";
 import type { AuthPrincipal } from "./auth";
 import { createForbiddenError, createResourceNotFoundError } from "./errors";
@@ -213,6 +215,114 @@ export async function authorizeSubmissionRead(
     default:
       throw createForbiddenError({ details: { submissionId } });
   }
+}
+
+/**
+ * Parent dashboard routes are parent-owned: the caller must hold the trusted
+ * `parent` role and `parentId` must be their own auth user id
+ * (`parent_student_links.parent_user_id`). Everything else is a 403 without
+ * revealing whether the parent id exists.
+ */
+export function authorizeOwnedParentScope(principal: AuthPrincipal, parentId: string): void {
+  if (principal.role !== "parent" || parentId !== principal.id) {
+    throw createForbiddenError({ details: { parentId } });
+  }
+}
+
+/**
+ * Parents may read a linked student only through an active
+ * parent_student_links row; this is the parent-route variant of
+ * authorizeStudentScopeRead that never grants student or teacher access.
+ */
+export async function authorizeParentLinkedStudentRead(
+  database: Database,
+  principal: AuthPrincipal,
+  parentId: string,
+  studentId: string,
+): Promise<StudentProfileRecord> {
+  authorizeOwnedParentScope(principal, parentId);
+
+  const profile = await database.getStudentProfileById(studentId);
+
+  if (!profile || !(await database.hasActiveParentLink(principal.id, profile.id))) {
+    throw createForbiddenError({
+      code: "authorization.parent_link_required",
+      details: { studentId },
+    });
+  }
+
+  return profile;
+}
+
+/**
+ * Teacher dashboard routes are teacher-owned. `teacherId` is the
+ * `teacher_profiles.id`; as with students, a teacher calling with their own
+ * auth user id resolves to their own profile. Ownership is always re-checked
+ * against the verified JWT subject.
+ */
+export async function authorizeOwnedTeacherScope(
+  database: Database,
+  principal: AuthPrincipal,
+  teacherId: string,
+): Promise<TeacherProfileRecord> {
+  if (principal.role !== "teacher") {
+    throw createForbiddenError({ details: { teacherId } });
+  }
+
+  const byProfileId = await database.getTeacherProfileById(teacherId);
+
+  if (byProfileId) {
+    if (byProfileId.userId !== principal.id) {
+      throw createForbiddenError({
+        code: "authorization.teacher_class_scope_denied",
+        details: { teacherId },
+      });
+    }
+
+    return byProfileId;
+  }
+
+  if (teacherId === principal.id) {
+    const byUserId = await database.getTeacherProfileByUserId(principal.id);
+
+    if (byUserId) {
+      return byUserId;
+    }
+  }
+
+  throw createForbiddenError({
+    code: "authorization.teacher_class_scope_denied",
+    details: { teacherId },
+  });
+}
+
+export interface OwnedClassContext {
+  classRecord: ClassRecord;
+  teacherProfile: TeacherProfileRecord;
+}
+
+/**
+ * Class-scoped reads require the caller to be the owning teacher. Classes the
+ * teacher does not own respond with 404 instead of 403 so the endpoint does
+ * not leak which class ids exist.
+ */
+export async function authorizeOwnedClassRead(
+  database: Database,
+  principal: AuthPrincipal,
+  classId: string,
+): Promise<OwnedClassContext> {
+  if (principal.role !== "teacher") {
+    throw createForbiddenError({ details: { classId } });
+  }
+
+  const teacherProfile = await database.getTeacherProfileByUserId(principal.id);
+  const classRecord = await database.getClassById(classId);
+
+  if (!teacherProfile || !classRecord || classRecord.teacherProfileId !== teacherProfile.id) {
+    throw createResourceNotFoundError({ classId });
+  }
+
+  return { classRecord, teacherProfile };
 }
 
 /**

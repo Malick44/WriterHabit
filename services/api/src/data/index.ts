@@ -4,7 +4,13 @@ import type { Database } from "./types";
 
 export * from "./types";
 export { MemoryDatabase } from "./memory-database";
-export type { MemoryDatabaseSeed, MemoryParentLink, MemoryTeacherLink } from "./memory-database";
+export type {
+  MemoryClassStudent,
+  MemoryDatabaseSeed,
+  MemoryParentLink,
+  MemoryTeacherLink,
+  MemoryUser,
+} from "./memory-database";
 export { SupabaseDatabase, createSupabaseDatabase } from "./supabase-database";
 
 /**

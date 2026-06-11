@@ -8,10 +8,14 @@ import { createAuthenticateHook, createSupabaseJwtVerifier, type AuthVerifier } 
 import { loadConfig, type ApiConfig } from "./runtime/config";
 import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
 import { registerAssignmentRoutes } from "./routes/assignments";
+import { dashboardImplementedEndpoints } from "./routes/dashboards-shared";
 import { registerHealthRoutes } from "./routes/health";
+import { registerParentRoutes } from "./routes/parents";
 import { registerPlaceholderRoutes } from "./routes/placeholders";
 import { registerProfileRoutes } from "./routes/profile";
+import { registerProgressRoutes } from "./routes/progress";
 import { registerSubmissionRoutes } from "./routes/submissions";
+import { registerTeacherRoutes } from "./routes/teachers";
 import { writingLoopImplementedEndpoints } from "./routes/writing-shared";
 
 interface BuildServerOptions {
@@ -117,10 +121,20 @@ export async function buildServer(options: BuildServerOptions = {}) {
       if (database) {
         await registerAssignmentRoutes(v1, authenticate, database);
         await registerSubmissionRoutes(v1, authenticate, database);
+        await registerProgressRoutes(v1, authenticate, database);
+        await registerParentRoutes(v1, authenticate, database);
+        await registerTeacherRoutes(v1, authenticate, database);
       }
 
       await registerPlaceholderRoutes(v1, authenticate, {
-        ...(database ? { implementedEndpoints: writingLoopImplementedEndpoints } : {}),
+        ...(database
+          ? {
+              implementedEndpoints: new Set([
+                ...writingLoopImplementedEndpoints,
+                ...dashboardImplementedEndpoints,
+              ]),
+            }
+          : {}),
       });
     },
     { prefix: config.apiBasePath },

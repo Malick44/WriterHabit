@@ -159,6 +159,135 @@ export interface ReviewJobRecord {
   submissionId: string;
 }
 
+export interface TeacherProfileRecord {
+  displayName: string;
+  id: string;
+  userId: string;
+}
+
+export interface ClassRecord {
+  gradeLevel: number;
+  id: string;
+  name: string;
+  status: "active" | "archived";
+  teacherProfileId: string;
+}
+
+export interface ClassRosterStudentRecord {
+  displayName: string;
+  gradeLevel: number;
+  studentProfileId: string;
+}
+
+export interface ParentLinkedStudentRecord {
+  displayName: string;
+  gradeLevel: number;
+  relationshipLabel: string;
+  studentProfileId: string;
+}
+
+export type StreakStatus = "continued" | "at_risk" | "missed" | "not_started";
+
+export interface StudentProgressTotalsRecord {
+  aiFeedbackApplied: number;
+  assignmentsCompleted: number;
+  bestStreakDays: number;
+  currentStreakDays: number;
+  handwritingMinutes: number;
+  minutesThisWeek: number;
+  practicedTodayOn: string | null;
+  revisionsCompleted: number;
+  rubricImprovement: number;
+  streakStatus: StreakStatus;
+  studentProfileId: string;
+  weeklyMinutesGoal: number;
+  wordsWritten: number;
+}
+
+export interface StudentSkillProgressRecord {
+  currentScore: number;
+  level: number;
+  previousScore: number;
+  skill: string;
+  studentProfileId: string;
+  updatedAt: string;
+}
+
+export interface StudentActivityDayRecord {
+  activityDate: string;
+  assignmentsCompleted: number;
+  feedbackApplied: number;
+  handwritingMinutes: number;
+  minutesPracticed: number;
+  practicedSkills: string[];
+  revisionsCompleted: number;
+  studentProfileId: string;
+  wordsWritten: number;
+}
+
+export interface WeeklyReviewRecord {
+  celebrationFallback: string;
+  celebrationKey: string;
+  focusForNextWeekFallback: string;
+  focusForNextWeekKey: string;
+  id: string;
+  studentProfileId: string;
+  weekEnd: string;
+  weekStart: string;
+}
+
+export interface BadgeRecord {
+  code: string;
+  descriptionFallback: string;
+  descriptionKey: string;
+  iconName: string;
+  id: string;
+  nameFallback: string;
+  nameKey: string;
+}
+
+export type StudentBadgeStatus = "locked" | "in_progress" | "unlocked";
+
+export interface StudentBadgeRecord {
+  badgeId: string;
+  progressPercent: number;
+  status: StudentBadgeStatus;
+  studentProfileId: string;
+  unlockedAt: string | null;
+}
+
+/**
+ * Teacher review-queue row: a submission joined with the assignment title and
+ * the owning student's display name, strictly scoped to class-assigned work
+ * (`student_assignments.class_id`).
+ */
+export interface SubmissionQueueRecord {
+  assignmentId: string;
+  assignmentTitleFallback: string;
+  assignmentTitleKey: string;
+  classId: string;
+  hasCanvas: boolean;
+  id: string;
+  status: SubmissionStatus;
+  studentAssignmentId: string;
+  studentDisplayName: string;
+  studentProfileId: string;
+  submittedAt: string;
+  wordCount: number;
+}
+
+export interface ActivityDateRange {
+  /** Inclusive ISO date (YYYY-MM-DD). */
+  fromDate: string;
+  /** Inclusive ISO date (YYYY-MM-DD). */
+  toDate: string;
+}
+
+export interface ListSubmissionQueueOptions {
+  limit: number;
+  statuses?: readonly SubmissionStatus[];
+}
+
 export interface ListStudentAssignmentsOptions {
   assignmentType?: string;
   limit: number;
@@ -183,6 +312,16 @@ export interface StudentAssignmentUpdate {
  * the placeholder registrations.
  */
 export interface Database {
+  /** Counts published assignments created for the class. */
+  countClassActiveAssignments(classId: string): Promise<number>;
+  countClassStudentAssignments(
+    classId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number>;
+  countStudentAssignments(
+    studentProfileId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number>;
   /**
    * Creates the submission row, persists the full typed contents, links the
    * referenced canvas documents, queues the review job, and advances the
@@ -191,6 +330,10 @@ export interface Database {
   createSubmission(input: CreateSubmissionInput): Promise<SubmissionRecord>;
   createSubmissionRevision(input: CreateSubmissionRevisionInput): Promise<SubmissionRevisionRecord>;
   deleteDraft(studentAssignmentId: string): Promise<void>;
+  getClassById(classId: string): Promise<ClassRecord | null>;
+  getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null>;
+  getTeacherProfileById(id: string): Promise<TeacherProfileRecord | null>;
+  getTeacherProfileByUserId(userId: string): Promise<TeacherProfileRecord | null>;
   findStudentAssignmentForStudents(
     assignmentId: string,
     studentProfileIds: readonly string[],
@@ -212,13 +355,45 @@ export interface Database {
   getSubmissionContent(submissionId: string): Promise<string | null>;
   hasActiveParentLink(parentUserId: string, studentProfileId: string): Promise<boolean>;
   hasActiveTeacherLink(teacherUserId: string, studentProfileId: string): Promise<boolean>;
+  /** Active badge catalog, bounded for badge-grid responses. */
+  listActiveBadges(limit: number): Promise<BadgeRecord[]>;
+  /**
+   * Activity-day rows for the given students inside an inclusive date range.
+   * Callers pass bounded ranges (a week) so result sizes stay small.
+   */
+  listActivityDaysForStudents(
+    studentProfileIds: readonly string[],
+    range: ActivityDateRange,
+  ): Promise<StudentActivityDayRecord[]>;
+  /** Active class enrollments with student display names, bounded by limit. */
+  listClassStudents(classId: string, limit: number): Promise<ClassRosterStudentRecord[]>;
   listParentLinkedStudentProfileIds(parentUserId: string): Promise<string[]>;
+  /** Active parent links with student display names, bounded by limit. */
+  listParentLinkedStudents(parentUserId: string, limit: number): Promise<ParentLinkedStudentRecord[]>;
+  listProgressTotalsForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentProgressTotalsRecord[]>;
   listRubricCriteria(rubricId: string): Promise<RubricCriterionRecord[]>;
+  listSkillProgressForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentSkillProgressRecord[]>;
   listStudentAssignments(
     studentProfileId: string,
     options: ListStudentAssignmentsOptions,
   ): Promise<StudentAssignmentWithAssignment[]>;
+  listStudentBadges(studentProfileId: string): Promise<StudentBadgeRecord[]>;
+  /**
+   * Review queue across the given classes (newest submissions first), joined
+   * with assignment titles and student display names. Only class-assigned
+   * work appears; catalog/daily assignments have no class scope.
+   */
+  listSubmissionQueueForClasses(
+    classIds: readonly string[],
+    options: ListSubmissionQueueOptions,
+  ): Promise<SubmissionQueueRecord[]>;
   listSubmissionRevisions(submissionId: string): Promise<SubmissionRevisionRecord[]>;
+  /** Active (non-archived) classes owned by the teacher profile, bounded by limit. */
+  listTeacherClasses(teacherProfileId: string, limit: number): Promise<ClassRecord[]>;
   listTeacherLinkedStudentProfileIds(teacherUserId: string): Promise<string[]>;
   saveDraft(input: SaveDraftInput): Promise<DraftRecord>;
   updateStudentAssignment(id: string, update: StudentAssignmentUpdate): Promise<void>;

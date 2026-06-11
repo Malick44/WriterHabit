@@ -1,25 +1,40 @@
 import { randomUUID } from "node:crypto";
 
 import type {
+  ActivityDateRange,
   AssignmentRecord,
+  BadgeRecord,
+  ClassRecord,
+  ClassRosterStudentRecord,
   CreateSubmissionInput,
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
   ListStudentAssignmentsOptions,
+  ListSubmissionQueueOptions,
+  ParentLinkedStudentRecord,
   ReviewJobRecord,
   RubricCriterionRecord,
   SaveDraftInput,
+  StudentActivityDayRecord,
   StudentAssignmentRecord,
+  StudentAssignmentStatus,
   StudentAssignmentUpdate,
   StudentAssignmentWithAssignment,
+  StudentBadgeRecord,
   StudentProfileRecord,
+  StudentProgressTotalsRecord,
+  StudentSkillProgressRecord,
+  SubmissionQueueRecord,
   SubmissionRecord,
   SubmissionRevisionRecord,
+  TeacherProfileRecord,
+  WeeklyReviewRecord,
 } from "./types";
 
 export interface MemoryParentLink {
   parentUserId: string;
+  relationshipLabel?: string;
   status: "pending" | "active" | "revoked";
   studentProfileId: string;
 }
@@ -29,14 +44,36 @@ export interface MemoryTeacherLink {
   teacherUserId: string;
 }
 
+export interface MemoryClassStudent {
+  classId: string;
+  status: "active" | "removed";
+  studentProfileId: string;
+}
+
+export interface MemoryUser {
+  displayName: string;
+  id: string;
+}
+
 export interface MemoryDatabaseSeed {
+  activityDays?: StudentActivityDayRecord[];
   assignments?: AssignmentRecord[];
+  badges?: BadgeRecord[];
+  classStudents?: MemoryClassStudent[];
+  classes?: ClassRecord[];
   drafts?: DraftRecord[];
   parentLinks?: MemoryParentLink[];
+  progressTotals?: StudentProgressTotalsRecord[];
   rubricCriteria?: RubricCriterionRecord[];
+  skillProgress?: StudentSkillProgressRecord[];
   studentAssignments?: StudentAssignmentRecord[];
+  studentBadges?: StudentBadgeRecord[];
   studentProfiles?: StudentProfileRecord[];
+  submissions?: SubmissionRecord[];
   teacherLinks?: MemoryTeacherLink[];
+  teacherProfiles?: TeacherProfileRecord[];
+  users?: MemoryUser[];
+  weeklyReviews?: WeeklyReviewRecord[];
 }
 
 function nowIso(): string {
@@ -52,26 +89,65 @@ function nowIso(): string {
  * such as review job creation and student assignment transitions.
  */
 export class MemoryDatabase implements Database {
+  readonly activityDays: StudentActivityDayRecord[];
   readonly assignments: AssignmentRecord[];
+  readonly badges: BadgeRecord[];
+  readonly classStudents: MemoryClassStudent[];
+  readonly classes: ClassRecord[];
   readonly drafts: DraftRecord[];
   readonly parentLinks: MemoryParentLink[];
+  readonly progressTotals: StudentProgressTotalsRecord[];
   readonly reviewJobs: ReviewJobRecord[] = [];
   readonly rubricCriteria: RubricCriterionRecord[];
+  readonly skillProgress: StudentSkillProgressRecord[];
   readonly studentAssignments: StudentAssignmentRecord[];
+  readonly studentBadges: StudentBadgeRecord[];
   readonly studentProfiles: StudentProfileRecord[];
   readonly submissionContents = new Map<string, string>();
   readonly submissionRevisions: SubmissionRevisionRecord[] = [];
-  readonly submissions: SubmissionRecord[] = [];
+  readonly submissions: SubmissionRecord[];
   readonly teacherLinks: MemoryTeacherLink[];
+  readonly teacherProfiles: TeacherProfileRecord[];
+  readonly users: MemoryUser[];
+  readonly weeklyReviews: WeeklyReviewRecord[];
 
   constructor(seed: MemoryDatabaseSeed = {}) {
+    this.activityDays = [...(seed.activityDays ?? [])];
     this.assignments = [...(seed.assignments ?? [])];
+    this.badges = [...(seed.badges ?? [])];
+    this.classStudents = [...(seed.classStudents ?? [])];
+    this.classes = [...(seed.classes ?? [])];
     this.drafts = [...(seed.drafts ?? [])];
     this.parentLinks = [...(seed.parentLinks ?? [])];
+    this.progressTotals = [...(seed.progressTotals ?? [])];
     this.rubricCriteria = [...(seed.rubricCriteria ?? [])];
+    this.skillProgress = [...(seed.skillProgress ?? [])];
     this.studentAssignments = [...(seed.studentAssignments ?? [])];
+    this.studentBadges = [...(seed.studentBadges ?? [])];
     this.studentProfiles = [...(seed.studentProfiles ?? [])];
+    this.submissions = [...(seed.submissions ?? [])];
     this.teacherLinks = [...(seed.teacherLinks ?? [])];
+    this.teacherProfiles = [...(seed.teacherProfiles ?? [])];
+    this.users = [...(seed.users ?? [])];
+    this.weeklyReviews = [...(seed.weeklyReviews ?? [])];
+  }
+
+  private displayNameForStudentProfile(studentProfileId: string): string {
+    const profile = this.studentProfiles.find((record) => record.id === studentProfileId);
+    const user = profile ? this.users.find((record) => record.id === profile.userId) : undefined;
+    return user?.displayName ?? "Student";
+  }
+
+  private activeClassIdsOwnedByTeacherUser(teacherUserId: string): string[] {
+    const teacherProfile = this.teacherProfiles.find((record) => record.userId === teacherUserId);
+
+    if (!teacherProfile) {
+      return [];
+    }
+
+    return this.classes
+      .filter((record) => record.teacherProfileId === teacherProfile.id && record.status === "active")
+      .map((record) => record.id);
   }
 
   private withAssignment(record: StudentAssignmentRecord): StudentAssignmentWithAssignment {
@@ -82,6 +158,31 @@ export class MemoryDatabase implements Database {
     }
 
     return { ...record, assignment: { ...assignment } };
+  }
+
+  async countClassActiveAssignments(classId: string): Promise<number> {
+    return this.assignments.filter(
+      (record) => record.classId === classId && record.status === "published",
+    ).length;
+  }
+
+  async countClassStudentAssignments(
+    classId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number> {
+    return this.studentAssignments.filter(
+      (record) => record.classId === classId && (!statuses || statuses.includes(record.status)),
+    ).length;
+  }
+
+  async countStudentAssignments(
+    studentProfileId: string,
+    statuses?: readonly StudentAssignmentStatus[],
+  ): Promise<number> {
+    return this.studentAssignments.filter(
+      (record) =>
+        record.studentProfileId === studentProfileId && (!statuses || statuses.includes(record.status)),
+    ).length;
   }
 
   async createSubmission(input: CreateSubmissionInput): Promise<SubmissionRecord> {
@@ -184,9 +285,22 @@ export class MemoryDatabase implements Database {
     return revision ? { ...revision } : null;
   }
 
+  async getClassById(classId: string): Promise<ClassRecord | null> {
+    const record = this.classes.find((candidate) => candidate.id === classId);
+    return record ? { ...record } : null;
+  }
+
   async getDraftByStudentAssignmentId(studentAssignmentId: string): Promise<DraftRecord | null> {
     const draft = this.drafts.find((record) => record.studentAssignmentId === studentAssignmentId);
     return draft ? { ...draft, canvasDocumentIds: [...draft.canvasDocumentIds] } : null;
+  }
+
+  async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
+    const [latest] = this.weeklyReviews
+      .filter((record) => record.studentProfileId === studentProfileId)
+      .sort((a, b) => b.weekStart.localeCompare(a.weekStart));
+
+    return latest ? { ...latest } : null;
   }
 
   async getMaxSubmissionRevisionNumber(studentAssignmentId: string): Promise<number> {
@@ -219,6 +333,16 @@ export class MemoryDatabase implements Database {
     return this.submissionContents.get(submissionId) ?? null;
   }
 
+  async getTeacherProfileById(id: string): Promise<TeacherProfileRecord | null> {
+    const profile = this.teacherProfiles.find((record) => record.id === id);
+    return profile ? { ...profile } : null;
+  }
+
+  async getTeacherProfileByUserId(userId: string): Promise<TeacherProfileRecord | null> {
+    const profile = this.teacherProfiles.find((record) => record.userId === userId);
+    return profile ? { ...profile } : null;
+  }
+
   async hasActiveParentLink(parentUserId: string, studentProfileId: string): Promise<boolean> {
     return this.parentLinks.some(
       (link) =>
@@ -229,9 +353,48 @@ export class MemoryDatabase implements Database {
   }
 
   async hasActiveTeacherLink(teacherUserId: string, studentProfileId: string): Promise<boolean> {
-    return this.teacherLinks.some(
-      (link) => link.teacherUserId === teacherUserId && link.studentProfileId === studentProfileId,
-    );
+    const linked = await this.listTeacherLinkedStudentProfileIds(teacherUserId);
+    return linked.includes(studentProfileId);
+  }
+
+  async listActiveBadges(limit: number): Promise<BadgeRecord[]> {
+    return this.badges
+      .slice()
+      .sort((a, b) => a.code.localeCompare(b.code))
+      .slice(0, limit)
+      .map((record) => ({ ...record }));
+  }
+
+  async listActivityDaysForStudents(
+    studentProfileIds: readonly string[],
+    range: ActivityDateRange,
+  ): Promise<StudentActivityDayRecord[]> {
+    return this.activityDays
+      .filter(
+        (record) =>
+          studentProfileIds.includes(record.studentProfileId) &&
+          record.activityDate >= range.fromDate &&
+          record.activityDate <= range.toDate,
+      )
+      .sort((a, b) => a.activityDate.localeCompare(b.activityDate))
+      .map((record) => ({ ...record, practicedSkills: [...record.practicedSkills] }));
+  }
+
+  async listClassStudents(classId: string, limit: number): Promise<ClassRosterStudentRecord[]> {
+    return this.classStudents
+      .filter((record) => record.classId === classId && record.status === "active")
+      .slice(0, limit)
+      .map((record) => {
+        const profile = this.studentProfiles.find(
+          (candidate) => candidate.id === record.studentProfileId,
+        );
+
+        return {
+          displayName: this.displayNameForStudentProfile(record.studentProfileId),
+          gradeLevel: profile?.gradeLevel ?? 0,
+          studentProfileId: record.studentProfileId,
+        };
+      });
   }
 
   async listParentLinkedStudentProfileIds(parentUserId: string): Promise<string[]> {
@@ -240,11 +403,49 @@ export class MemoryDatabase implements Database {
       .map((link) => link.studentProfileId);
   }
 
+  async listParentLinkedStudents(
+    parentUserId: string,
+    limit: number,
+  ): Promise<ParentLinkedStudentRecord[]> {
+    return this.parentLinks
+      .filter((link) => link.parentUserId === parentUserId && link.status === "active")
+      .slice(0, limit)
+      .map((link) => {
+        const profile = this.studentProfiles.find(
+          (candidate) => candidate.id === link.studentProfileId,
+        );
+
+        return {
+          displayName: this.displayNameForStudentProfile(link.studentProfileId),
+          gradeLevel: profile?.gradeLevel ?? 0,
+          relationshipLabel: link.relationshipLabel ?? "family",
+          studentProfileId: link.studentProfileId,
+        };
+      });
+  }
+
+  async listProgressTotalsForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentProgressTotalsRecord[]> {
+    return this.progressTotals
+      .filter((record) => studentProfileIds.includes(record.studentProfileId))
+      .map((record) => ({ ...record }));
+  }
+
   async listRubricCriteria(rubricId: string): Promise<RubricCriterionRecord[]> {
     return this.rubricCriteria
       .filter((criterion) => criterion.rubricId === rubricId)
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((criterion) => ({ ...criterion }));
+  }
+
+  async listSkillProgressForStudents(
+    studentProfileIds: readonly string[],
+  ): Promise<StudentSkillProgressRecord[]> {
+    return this.skillProgress
+      .filter((record) => studentProfileIds.includes(record.studentProfileId))
+      .sort((a, b) => a.skill.localeCompare(b.skill))
+      .map((record) => ({ ...record }));
   }
 
   async listStudentAssignments(
@@ -262,6 +463,52 @@ export class MemoryDatabase implements Database {
       .slice(0, options.limit);
   }
 
+  async listStudentBadges(studentProfileId: string): Promise<StudentBadgeRecord[]> {
+    return this.studentBadges
+      .filter((record) => record.studentProfileId === studentProfileId)
+      .map((record) => ({ ...record }));
+  }
+
+  async listSubmissionQueueForClasses(
+    classIds: readonly string[],
+    options: ListSubmissionQueueOptions,
+  ): Promise<SubmissionQueueRecord[]> {
+    return this.submissions
+      .filter((submission) => !options.statuses || options.statuses.includes(submission.status))
+      .flatMap((submission) => {
+        const studentAssignment = this.studentAssignments.find(
+          (candidate) => candidate.id === submission.studentAssignmentId,
+        );
+
+        if (!studentAssignment?.classId || !classIds.includes(studentAssignment.classId)) {
+          return [];
+        }
+
+        const assignment = this.assignments.find(
+          (candidate) => candidate.id === studentAssignment.assignmentId,
+        );
+
+        const queueRecord: SubmissionQueueRecord = {
+          assignmentId: studentAssignment.assignmentId,
+          assignmentTitleFallback: assignment?.titleFallback ?? "",
+          assignmentTitleKey: assignment?.titleKey ?? "",
+          classId: studentAssignment.classId,
+          hasCanvas: submission.canvasDocumentIds.length > 0,
+          id: submission.id,
+          status: submission.status,
+          studentAssignmentId: submission.studentAssignmentId,
+          studentDisplayName: this.displayNameForStudentProfile(submission.studentProfileId),
+          studentProfileId: submission.studentProfileId,
+          submittedAt: submission.submittedAt,
+          wordCount: submission.wordCount,
+        };
+
+        return [queueRecord];
+      })
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
+      .slice(0, options.limit);
+  }
+
   async listSubmissionRevisions(submissionId: string): Promise<SubmissionRevisionRecord[]> {
     return this.submissionRevisions
       .filter((record) => record.submissionId === submissionId)
@@ -269,14 +516,26 @@ export class MemoryDatabase implements Database {
       .map((record) => ({ ...record }));
   }
 
+  async listTeacherClasses(teacherProfileId: string, limit: number): Promise<ClassRecord[]> {
+    return this.classes
+      .filter((record) => record.teacherProfileId === teacherProfileId && record.status === "active")
+      .slice(0, limit)
+      .map((record) => ({ ...record }));
+  }
+
   async listTeacherLinkedStudentProfileIds(teacherUserId: string): Promise<string[]> {
-    return [
-      ...new Set(
-        this.teacherLinks
-          .filter((link) => link.teacherUserId === teacherUserId)
-          .map((link) => link.studentProfileId),
-      ),
-    ];
+    // Mirrors the Supabase derivation (active classes -> active enrollments)
+    // and keeps supporting the simpler direct teacherLinks seed used by
+    // earlier fixtures.
+    const classIds = this.activeClassIdsOwnedByTeacherUser(teacherUserId);
+    const enrolled = this.classStudents
+      .filter((record) => classIds.includes(record.classId) && record.status === "active")
+      .map((record) => record.studentProfileId);
+    const direct = this.teacherLinks
+      .filter((link) => link.teacherUserId === teacherUserId)
+      .map((link) => link.studentProfileId);
+
+    return [...new Set([...enrolled, ...direct])];
   }
 
   async saveDraft(input: SaveDraftInput): Promise<DraftRecord> {

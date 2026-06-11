@@ -69,8 +69,9 @@ Current decision: do not release publicly yet.
 - [x] Shared controls support accessibility labels, hints, roles, and minimum touch targets.
 - [x] Grade-band adaptation exists for elementary, middle, and high-school experiences.
 - [x] Loading, empty, error, success, and offline states exist across major implemented flows.
-- [ ] Manual VoiceOver and TalkBack QA is complete.
-- [ ] Reduced-motion, high-contrast, larger text, and touch-target settings are device-tested.
+- [ ] Manual VoiceOver and TalkBack QA is complete (run `docs/DEVICE_QA_CHECKLIST.md`).
+- [ ] Reduced-motion, high-contrast, larger text, and touch-target settings are device-tested
+      (covered by `docs/DEVICE_QA_CHECKLIST.md` sections 2-6).
 - [ ] Copy is reviewed by product/education stakeholders for Grades 1-5, 6-8, and 9-12.
 
 ## Backend, Data, And Privacy

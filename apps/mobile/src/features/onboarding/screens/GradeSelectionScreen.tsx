@@ -2,38 +2,17 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import type { GradeLevel } from "@writewise/shared";
 
 import { routes } from "@/core/navigation/routeNames";
+import { typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
 
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
-import { onboardingErrorMessageKeys, onboardingValidationMessageKeys } from "../types";
+import { GRADE_GROUPS, onboardingErrorMessageKeys, onboardingValidationMessageKeys } from "../types";
 
 const NAVY = "#083E8E";
-
-const gradeGroups = [
-  {
-    grades: [3, 4, 5],
-    titleKey: "onboarding.gradeSelection.elementaryTitle",
-  },
-  {
-    grades: [6, 7, 8],
-    titleKey: "onboarding.gradeSelection.middleTitle",
-  },
-  {
-    grades: [9, 10, 11, 12],
-    titleKey: "onboarding.gradeSelection.highTitle",
-  },
-] as const satisfies readonly {
-  grades: readonly GradeLevel[];
-  titleKey:
-    | "onboarding.gradeSelection.elementaryTitle"
-    | "onboarding.gradeSelection.middleTitle"
-    | "onboarding.gradeSelection.highTitle";
-}[];
 
 export function GradeSelectionScreen() {
   const router = useRouter();
@@ -42,7 +21,7 @@ export function GradeSelectionScreen() {
   const [showValidationError, setShowValidationError] = useState(false);
 
   const gradeBand = onboarding.progress.gradeLevel
-    ? "middle" // Default fallback band
+    ? typography.getGradeBandForGrade(onboarding.progress.gradeLevel)
     : "middle";
 
   if (!onboarding.hydrated) {
@@ -87,7 +66,7 @@ export function GradeSelectionScreen() {
       titleStyle={styles.title}
     >
       <View style={styles.groups}>
-        {gradeGroups.map((group) => (
+        {GRADE_GROUPS.map((group) => (
           <View key={group.titleKey} style={styles.group}>
             <Text
               accessibilityRole="header"

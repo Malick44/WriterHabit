@@ -221,18 +221,23 @@ export function StrokeCanvasAdapter({
       lastSampleRef.current = { x, y };
       onExtendStroke(toNormalizedPoint(x, y));
     },
-    [onExtendStroke, toNormalizedPoint],
+    [onBeginStroke, onExtendStroke, toNormalizedPoint],
   );
 
   const handleDrawEnd = useCallback(() => {
     if (isStrokeActiveRef.current) {
+      onEndStroke();
+    } else if (dragStartRef.current) {
+      // A press that never travelled past the sample threshold is a tap:
+      // record it as a single-point stroke so it renders as a dot.
+      onBeginStroke(toNormalizedPoint(dragStartRef.current.x, dragStartRef.current.y));
       onEndStroke();
     }
 
     dragStartRef.current = null;
     isStrokeActiveRef.current = false;
     lastSampleRef.current = null;
-  }, [onEndStroke]);
+  }, [onBeginStroke, onEndStroke, toNormalizedPoint]);
 
   /* eslint-disable react-hooks/refs -- the gesture builder only registers
      these callbacks for touch events; they are never invoked during render */

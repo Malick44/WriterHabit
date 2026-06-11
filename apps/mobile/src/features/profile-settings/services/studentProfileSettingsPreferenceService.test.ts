@@ -15,7 +15,7 @@ describe("studentProfileSettingsPreferenceService", () => {
         dailyPracticeMinutes: 99,
         displayName: "Jordan",
         gradeLevel: 13,
-        language: "es",
+        language: "en",
         learningFocusNote: "stronger endings",
         writingGoals: ["write_paragraphs", "not_a_goal", "write_paragraphs"],
       },
@@ -25,10 +25,23 @@ describe("studentProfileSettingsPreferenceService", () => {
     expect(preferences).toEqual({
       ...defaults,
       displayName: "Jordan",
-      language: "es",
+      language: "en",
       learningFocusNote: "stronger endings",
       writingGoals: ["write_paragraphs"],
     });
+  });
+
+  it("coerces legacy unsupported locales to a supported language", () => {
+    const defaults = getDefaultStudentProfileSettingsPreferences();
+    const preferences = parseStudentProfileSettingsPreferences(
+      {
+        ...defaults,
+        language: "es",
+      },
+      defaults,
+    );
+
+    expect(preferences.language).toBe("en");
   });
 
   it("merges profile patches without dropping existing choices", () => {
@@ -37,7 +50,6 @@ describe("studentProfileSettingsPreferenceService", () => {
       defaults,
       {
         dailyPracticeMinutes: 20,
-        language: "fr",
       },
       defaults,
     );
@@ -45,7 +57,6 @@ describe("studentProfileSettingsPreferenceService", () => {
     expect(preferences).toEqual({
       ...defaults,
       dailyPracticeMinutes: 20,
-      language: "fr",
     });
   });
 });

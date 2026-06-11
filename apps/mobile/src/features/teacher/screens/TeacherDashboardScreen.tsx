@@ -137,9 +137,6 @@ export function TeacherDashboardScreen() {
   const isTablet = width >= TABLET_BREAKPOINT;
   const [isInsightVisible, setIsInsightVisible] = useState(true);
 
-  const handleOpenNotifications = useCallback(() => {}, []);
-  const handleOpenSettings = useCallback(() => {}, []);
-
   const handleCreateAssignment = useCallback(() => {
     router.push(routes.teacherCreateAssignment);
   }, [router]);
@@ -193,24 +190,6 @@ export function TeacherDashboardScreen() {
           type: "icon",
         }}
         rightActions={[
-          {
-            accessibilityLabelKey: "teacher.dashboard.header.notificationsAccessibility",
-            icon: "notifications-outline",
-            onPress: handleOpenNotifications,
-            type: "icon",
-          },
-          {
-            accessibilityLabelKey: "teacher.dashboard.header.settingsAccessibility",
-            icon: "settings-outline",
-            onPress: handleOpenSettings,
-            type: "icon",
-          },
-          {
-            accessibilityLabelKey: "teacher.dashboard.header.avatarAccessibility",
-            fallbackText: t("teacher.dashboard.header.avatarInitials"),
-            onPress: handleOpenSettings,
-            type: "avatar",
-          },
         ]}
         showSafeArea={false}
         style={[styles.header, isTablet ? styles.headerTablet : null]}

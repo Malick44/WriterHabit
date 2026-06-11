@@ -13,6 +13,9 @@ import {
 } from "../types";
 import { getCanvasDocumentSummary, normalizeCanvasDocument } from "./canvasDocumentService";
 
+/** Newest-first cap so canvas list fetches stay bounded. */
+const CANVAS_SUMMARY_PAGE_SIZE = 100;
+
 const recoverableCanvasStrokeSchema = canvasStrokeSchema.extend({
   points: z.array(canvasPointSchema),
 });
@@ -161,19 +164,19 @@ export const canvasPersistenceService = {
 
       const { data: dbDocs } = await supabase
         .from("canvas_documents")
-        .select("*, canvas_document_contents(strokes)")
+        .select("*, canvas_document_contents(stroke_count)")
         .eq("student_profile_id", profile.id)
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .limit(CANVAS_SUMMARY_PAGE_SIZE);
 
       if (!dbDocs) return [];
 
       return dbDocs.map((dbDoc: any) => {
-        const strokes = dbDoc.canvas_document_contents?.strokes || [];
         return canvasDocumentSummarySchema.parse({
           assignmentId: dbDoc.assignment_id || undefined,
           id: dbDoc.id,
           isAttached: !!dbDoc.assignment_id,
-          strokeCount: strokes.length,
+          strokeCount: dbDoc.canvas_document_contents?.stroke_count ?? 0,
           syncStatus: dbDoc.sync_status || "saved",
           template: dbDoc.template,
           title: dbDoc.title,

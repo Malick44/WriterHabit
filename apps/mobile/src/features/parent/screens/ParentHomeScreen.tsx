@@ -158,7 +158,9 @@ export function ParentHomeScreen() {
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
 
-  const handleOpenNotifications = useCallback(() => {}, []);
+  const handleOpenNotifications = useCallback(() => {
+    router.push(routes.parentSettings);
+  }, [router]);
 
   const handleOpenHelp = useCallback(() => {
     router.push(routes.parentSettings);

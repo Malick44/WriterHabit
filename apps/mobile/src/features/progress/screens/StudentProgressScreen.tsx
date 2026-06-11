@@ -209,7 +209,9 @@ export function StudentProgressScreen() {
     router.push(routes.studentSettings);
   }, [router]);
 
-  const handleOpenNotifications = useCallback(() => {}, []);
+  const handleOpenNotifications = useCallback(() => {
+    router.push(routes.studentNotificationSettings);
+  }, [router]);
 
   const handleOpenAssignments = useCallback(() => {
     router.push(routes.studentAssignmentsHistory);

@@ -58,7 +58,19 @@ function createMockSession(role: MockSessionRole, onboardingComplete: boolean): 
   return createDemoSession(getDefaultDemoUserForRole(role, onboardingComplete));
 }
 
+/**
+ * Mock/demo sessions are a development-only tool. Production builds fail
+ * closed: even if a mock env flag leaks into a release build, it is ignored.
+ */
+function isMockAuthAllowed(): boolean {
+  return typeof __DEV__ !== "undefined" && __DEV__;
+}
+
 function readDefaultScenario(): MockSessionScenario {
+  if (!isMockAuthAllowed()) {
+    return "signed_out";
+  }
+
   const scenario = process.env.EXPO_PUBLIC_WRITEWISE_MOCK_SESSION;
 
   switch (scenario) {
@@ -172,6 +184,11 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     }
   },
   signInWithDemoUser: async (demoUserId) => {
+    if (!isMockAuthAllowed()) {
+      set({ errorCode: "sign_in_failed", operationStatus: "idle", session: null, status: "ready" });
+      return { errorCode: "sign_in_failed", session: null };
+    }
+
     const session = createDemoSession(getDemoUserById(demoUserId));
     set({
       errorCode: null,
@@ -182,6 +199,11 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     return { session };
   },
   signInWithMockRole: async (role, options) => {
+    if (!isMockAuthAllowed()) {
+      set({ errorCode: "sign_in_failed", operationStatus: "idle", session: null, status: "ready" });
+      return { errorCode: "sign_in_failed", session: null };
+    }
+
     const session = createMockSession(role, options?.onboardingComplete ?? true);
     set({
       errorCode: null,

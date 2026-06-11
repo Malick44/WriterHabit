@@ -1,5 +1,6 @@
 import type { GradeLevel, WritingSkill } from "@writewise/shared";
 
+import { supabase } from "@/core/supabase/supabaseClient";
 import { assignmentsApi, type AssignmentRecord } from "@/features/assignments";
 import { createWritingDraft, draftPersistenceService } from "@/features/writing-workspace/services/draftPersistenceService";
 import { getWritingMetrics } from "@/features/writing-workspace/services/writingMetricsService";
@@ -88,10 +89,11 @@ function getCandidateAssignmentIds(submissionId: string): string[] {
 function findAssignment(submissionId: string, assignments: AssignmentRecord[]): AssignmentRecord | null {
   const candidateIds = getCandidateAssignmentIds(submissionId);
 
+  // Only exact submission or assignment-id matches are trusted. Falling back
+  // to "any feedback_ready assignment" can show another assignment's review.
   return (
     assignments.find((assignment) => assignment.currentSubmissionId === submissionId) ??
     assignments.find((assignment) => candidateIds.includes(assignment.id)) ??
-    assignments.find((assignment) => assignment.status === "feedback_ready") ??
     null
   );
 }
@@ -406,10 +408,59 @@ export const feedbackReviewApi = {
       throw new FeedbackReviewApiError("submit_failed", "Feedback review is not available");
     }
 
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
+    let revisionId = `revision-${input.submissionId}`;
+
+    if (session) {
+      // With a real session, completion is only reported once the backend
+      // accepted the revision row. Failures throw so the student keeps the
+      // revision text on screen and can retry.
+      const { data: profile, error: profileErr } = await supabase
+        .from("student_profiles")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (profileErr || !profile) {
+        throw new FeedbackReviewApiError("submit_failed", "Student profile not found for revision submit");
+      }
+
+      const { data: revision, error: revisionErr } = await supabase
+        .from("submission_revisions")
+        .upsert(
+          {
+            idempotency_key: `revision-${input.submissionId}`,
+            revised_excerpt: getExcerpt(input.revisedText, 4000),
+            student_profile_id: profile.id,
+            submission_id: input.submissionId,
+          },
+          { onConflict: "submission_id,idempotency_key" },
+        )
+        .select("id")
+        .single();
+
+      if (revisionErr || !revision) {
+        throw new FeedbackReviewApiError("submit_failed", "Revision was not accepted by the backend");
+      }
+
+      revisionId = revision.id;
+
+      const { error: statusErr } = await supabase
+        .from("student_assignments")
+        .update({ status: "completed" })
+        .eq("current_submission_id", input.submissionId)
+        .eq("student_profile_id", profile.id);
+
+      if (statusErr) {
+        throw new FeedbackReviewApiError("submit_failed", "Assignment completion was not recorded");
+      }
+    }
+
     return feedbackRevisionCompletionSchema.parse({
       completedAt: new Date().toISOString(),
       progressEarned: response.review.progressEarned,
-      revisionId: `revision-${input.submissionId}`,
+      revisionId,
       revisionTextExcerpt: getExcerpt(input.revisedText, 420),
       status: "completed",
       submissionId: input.submissionId,

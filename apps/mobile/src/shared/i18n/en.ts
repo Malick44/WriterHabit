@@ -600,7 +600,7 @@ export const en = {
     gradeSelection: {
       title: "What grade are you in?",
       description: "This helps us choose the right content for you.",
-      elementaryTitle: "Elementary (Grades K-5)",
+      elementaryTitle: "Elementary (Grades 1-5)",
       elementaryDescription: "Larger controls, simple wording, and friendly writing practice.",
       middleTitle: "Middle School (Grades 6-8)",
       middleDescription: "Paragraph support, revision practice, and structured goals.",
@@ -1693,6 +1693,12 @@ export const en = {
       title: "Grammar suggestions",
     },
     revision: {
+      autosave: {
+        failed: "Not saved",
+        idle: "Autosave on",
+        saved: "Saved",
+        saving: "Saving…",
+      },
       headerTitle: "Let's Make It Even Better!",
       headerSubtitle: "Review the feedback and make a revision.",
       originalDraftLabel: "Original Draft",
@@ -2914,20 +2920,12 @@ export const en = {
           description: "Use English for this profile.",
           label: "English",
         },
-        es: {
-          description: "Save Spanish as this profile's language preference.",
-          label: "Spanish",
-        },
-        fr: {
-          description: "Save French as this profile's language preference.",
-          label: "French",
-        },
       },
       save: "Save language",
       saveAccessibility: "Save language preference",
       savedDescription: "Language preference is saved on this device.",
       savedTitle: "Language saved",
-      subtitle: "Choose the language preference for this student profile.",
+      subtitle: "WriteWise is available in English today. More languages are on the way.",
       title: "Language",
     },
     settings: {

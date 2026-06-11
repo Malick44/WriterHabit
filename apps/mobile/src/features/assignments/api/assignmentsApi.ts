@@ -18,6 +18,9 @@ import {
   type DailyAssignmentTemplate,
 } from "../services/dailyAssignmentService";
 
+/** Newest-first cap so history fetches stay bounded for long-running students. */
+const ASSIGNMENT_HISTORY_PAGE_SIZE = 50;
+
 interface AssignmentRequestInput {
   gradeLevel?: GradeLevel;
   studentId: string;
@@ -380,7 +383,9 @@ export const assignmentsApi = {
       const { data: saList } = await supabase
         .from("student_assignments")
         .select("*, assignments(*, rubrics(*, rubric_criteria(*)))")
-        .eq("student_profile_id", profile.id);
+        .eq("student_profile_id", profile.id)
+        .order("updated_at", { ascending: false })
+        .limit(ASSIGNMENT_HISTORY_PAGE_SIZE);
 
       if (!saList || saList.length === 0) {
         return createHistoryResponse(input, scenario);
@@ -391,7 +396,7 @@ export const assignmentsApi = {
           // Fetch draft details if any
           const { data: draft } = await supabase
             .from("writing_drafts")
-            .select("*")
+            .select("canvas_document_ids, text_preview, revision_number, word_count")
             .eq("student_assignment_id", sa.id)
             .maybeSingle();
 
@@ -660,7 +665,7 @@ export const assignmentsApi = {
     if (subErr) throw subErr;
 
     // Create submission contents
-    await supabase
+    const { error: contentsErr } = await supabase
       .from("submission_contents")
       .insert({
         submission_id: submission.id,
@@ -668,8 +673,10 @@ export const assignmentsApi = {
         typed_text: text,
       });
 
+    if (contentsErr) throw contentsErr;
+
     // Create a review job
-    await supabase
+    const { error: reviewJobErr } = await supabase
       .from("review_jobs")
       .insert({
         submission_id: submission.id,
@@ -678,8 +685,10 @@ export const assignmentsApi = {
         idempotency_key: Math.random().toString(),
       });
 
+    if (reviewJobErr) throw reviewJobErr;
+
     // Generate immediate feedback to simulate completed AI review
-    const { data: feedback } = await supabase
+    const { data: feedback, error: feedbackErr } = await supabase
       .from("feedback")
       .insert({
         submission_id: submission.id,
@@ -696,8 +705,10 @@ export const assignmentsApi = {
       .select("*")
       .single();
 
+    if (feedbackErr) throw feedbackErr;
+
     if (feedback) {
-      await supabase
+      const { error: revisionTaskErr } = await supabase
         .from("revision_tasks")
         .insert({
           feedback_id: feedback.id,
@@ -708,6 +719,8 @@ export const assignmentsApi = {
           guiding_question_fallback: "Why does that detail support your claim?",
           original_excerpt: excerpt,
         });
+
+      if (revisionTaskErr) throw revisionTaskErr;
     }
 
     // Update assignment status to 'feedback_ready'

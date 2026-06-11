@@ -19,7 +19,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  getAccessibleColors,
   getAccessibleHitSlop,
+  getAccessibleTextStyle,
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
@@ -142,6 +144,8 @@ export function AuthScreenFrame({
 }: AuthScreenFrameProps) {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const isTablet = width >= 768;
   const showSupportBadge = width >= 1024 && supportBadgeLabel;
   const contentPadding = isTablet ? 40 : 32;
@@ -185,10 +189,23 @@ export function AuthScreenFrame({
 
           <View style={[styles.content, { padding: contentPadding }, contentStyle]}>
             <View style={styles.header}>
-              <Text accessibilityRole="header" style={styles.title}>
+              <Text
+                accessibilityRole="header"
+                style={[
+                  getAccessibleTextStyle(styles.title, settings),
+                  settings.highContrast ? { color: accessibleColors.text } : null,
+                ]}
+              >
                 {title}
               </Text>
-              <Text style={styles.subtitle}>{subtitle}</Text>
+              <Text
+                style={[
+                  getAccessibleTextStyle(styles.subtitle, settings),
+                  settings.highContrast ? { color: accessibleColors.mutedText } : null,
+                ]}
+              >
+                {subtitle}
+              </Text>
             </View>
 
             {children}
@@ -263,16 +280,18 @@ export function AuthSocialButton({ disabled, label, onPress, provider }: AuthSoc
       ]}
     >
       {icon}
-      <Text style={styles.socialButtonText}>{label}</Text>
+      <Text style={getAccessibleTextStyle(styles.socialButtonText, settings)}>{label}</Text>
     </Pressable>
   );
 }
 
 export function AuthSeparator({ label }: AuthSeparatorProps) {
+  const { settings } = useAccessibilityContext();
+
   return (
     <View style={styles.separator}>
       <View style={styles.separatorLine} />
-      <Text style={styles.separatorText}>{label}</Text>
+      <Text style={getAccessibleTextStyle(styles.separatorText, settings)}>{label}</Text>
       <View style={styles.separatorLine} />
     </View>
   );
@@ -295,7 +314,7 @@ export function AuthTextField({
 
   return (
     <View style={styles.fieldStack}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={getAccessibleTextStyle(styles.fieldLabel, settings)}>{label}</Text>
       <View
         style={[
           styles.inputShell,
@@ -320,12 +339,12 @@ export function AuthTextField({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={authScreenColors.outline}
-          style={styles.input}
+          style={[styles.input, getAccessibleTextStyle(styles.input, settings)]}
           value={value}
           {...inputProps}
         />
       </View>
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+      {error ? <Text style={getAccessibleTextStyle(styles.fieldError, settings)}>{error}</Text> : null}
     </View>
   );
 }
@@ -339,8 +358,13 @@ export function AuthSubmitButton({
   tone = "primary",
 }: AuthSubmitButtonProps) {
   const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const minimumTouchTarget = getMinimumTouchTarget(settings);
-  const backgroundColor = tone === "success" ? authScreenColors.secondary : authScreenColors.primary;
+  const backgroundColor = settings.highContrast
+    ? accessibleColors.actionBackground
+    : tone === "success"
+      ? authScreenColors.secondary
+      : authScreenColors.primary;
 
   return (
     <Pressable
@@ -359,7 +383,7 @@ export function AuthSubmitButton({
         pressed && !disabled ? styles.pressed : null,
       ]}
     >
-      <Text style={styles.submitButtonText}>{label}</Text>
+      <Text style={getAccessibleTextStyle(styles.submitButtonText, settings)}>{label}</Text>
       <Ionicons
         accessible={false}
         color="#FFFFFF"
@@ -376,7 +400,7 @@ export function AuthFooterLink({ prompt, linkLabel, onPress }: AuthFooterLinkPro
 
   return (
     <View style={styles.footer}>
-      <Text style={styles.footerText}>{prompt}</Text>
+      <Text style={getAccessibleTextStyle(styles.footerText, settings)}>{prompt}</Text>
       <Pressable
         accessibilityLabel={linkLabel}
         accessibilityRole="button"
@@ -384,7 +408,7 @@ export function AuthFooterLink({ prompt, linkLabel, onPress }: AuthFooterLinkPro
         onPress={onPress}
         style={({ pressed }) => [styles.footerLink, pressed ? styles.pressed : null]}
       >
-        <Text style={styles.footerLinkText}>{linkLabel}</Text>
+        <Text style={getAccessibleTextStyle(styles.footerLinkText, settings)}>{linkLabel}</Text>
       </Pressable>
     </View>
   );

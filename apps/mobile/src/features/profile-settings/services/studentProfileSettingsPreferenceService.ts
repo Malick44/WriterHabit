@@ -6,8 +6,12 @@ import { preferencesStorage } from "@/services/storage/preferencesStorage";
 
 const STUDENT_PROFILE_SETTINGS_KEY_PREFIX = "profile-settings.student-profile";
 
-export const profileLanguageOptions = ["en", "es", "fr"] as const;
+// Only locales with a real dictionary are selectable. Legacy stored values
+// from when es/fr were offered coerce back to a supported locale on parse.
+export const profileLanguageOptions = ["en"] as const;
 export type ProfileLanguage = (typeof profileLanguageOptions)[number];
+
+const legacyProfileLanguageOptions = ["en", "es", "fr"] as const;
 
 export const profileDailyPracticeOptions = [5, 10, 15, 20, 30] as const;
 export type ProfileDailyPracticeMinutes = (typeof profileDailyPracticeOptions)[number];
@@ -39,7 +43,7 @@ const studentProfileSettingsRowSchema = z.object({
   daily_goal_minutes: z.number(),
   display_name: z.string(),
   grade_level: z.number(),
-  language: z.enum(profileLanguageOptions),
+  language: z.enum(legacyProfileLanguageOptions).catch("en"),
   learning_focus_note: z.string().nullable().catch(""),
   writing_goals: z.array(z.unknown()).catch([]),
 });

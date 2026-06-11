@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AppState, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -45,8 +45,11 @@ export function RevisionScreen() {
   const state = useFeedbackReview(submissionId);
   const [revisedText, setRevisedText] = useState("");
   const [localError, setLocalError] = useState<FeedbackRevisionError | null>(null);
-  const [revisionSaveStatus, setRevisionSaveStatus] = useState<"idle" | "restoring" | "saved" | "failed">("idle");
+  const [revisionSaveStatus, setRevisionSaveStatus] = useState<
+    "idle" | "restoring" | "saving" | "saved" | "failed"
+  >("idle");
   const restoredRevisionKeyRef = useRef<string | null>(null);
+  const pendingDraftRef = useRef<{ revisedText: string; studentId: string; submissionId: string } | null>(null);
   const revisionStudentId = state.status === "success" ? state.studentId : null;
   const revisionError =
     state.status === "success" ? state.revisionError ?? localError : localError;
@@ -57,6 +60,7 @@ export function RevisionScreen() {
   const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
 
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [isOriginalDraftOpen, setIsOriginalDraftOpen] = useState(false);
 
   useEffect(() => {
     if (!revisionStudentId || !submissionId) {
@@ -107,15 +111,17 @@ export function RevisionScreen() {
       return;
     }
 
+    const draft = { revisedText, studentId: revisionStudentId, submissionId };
+    pendingDraftRef.current = draft;
+
     const timeout = setTimeout(() => {
       revisionPersistenceService
-        .saveRevisionDraft({
-          revisedText,
-          studentId: revisionStudentId,
-          submissionId,
-        })
+        .saveRevisionDraft(draft)
         .then(() => {
-          setRevisionSaveStatus("saved");
+          if (pendingDraftRef.current?.revisedText === draft.revisedText) {
+            pendingDraftRef.current = null;
+            setRevisionSaveStatus("saved");
+          }
         })
         .catch(() => {
           setRevisionSaveStatus("failed");
@@ -126,6 +132,32 @@ export function RevisionScreen() {
       clearTimeout(timeout);
     };
   }, [revisedText, revisionStudentId, submissionId]);
+
+  const flushRevisionDraft = useCallback(() => {
+    const pending = pendingDraftRef.current;
+
+    if (!pending) {
+      return;
+    }
+
+    pendingDraftRef.current = null;
+    revisionPersistenceService.saveRevisionDraft(pending).catch(() => {
+      // The draft stays on screen; the failed badge already warned the student.
+    });
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (status) => {
+      if (status === "background" || status === "inactive") {
+        flushRevisionDraft();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+      flushRevisionDraft();
+    };
+  }, [flushRevisionDraft]);
 
   const submitRevision = async () => {
     if (state.status !== "success" || !submissionId) {
@@ -149,6 +181,9 @@ export function RevisionScreen() {
     });
 
     if (completion) {
+      // Drop any queued autosave so the unmount flush cannot resurrect the
+      // draft that the successful submit just removed.
+      pendingDraftRef.current = null;
       await revisionPersistenceService.removeRevisionDraft({
         studentId: state.studentId,
         submissionId,
@@ -274,18 +309,38 @@ export function RevisionScreen() {
             </TouchableOpacity>
 
             <View style={styles.autosaveBadgeRow}>
-              <Ionicons name="cloud-done-outline" size={16} color={colors.text.muted} />
-              <Text style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
-                {t("common.saved")}
+              <Ionicons
+                name={
+                  revisionSaveStatus === "failed"
+                    ? "cloud-offline-outline"
+                    : revisionSaveStatus === "saving"
+                      ? "cloud-upload-outline"
+                      : revisionSaveStatus === "saved"
+                        ? "cloud-done-outline"
+                        : "cloud-outline"
+                }
+                size={16}
+                color={revisionSaveStatus === "failed" ? colors.feedback.error.text : colors.text.muted}
+              />
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.caption, settings),
+                  { color: revisionSaveStatus === "failed" ? colors.feedback.error.text : colors.text.muted },
+                ]}
+              >
+                {t(
+                  revisionSaveStatus === "failed"
+                    ? "feedbackReview.revision.autosave.failed"
+                    : revisionSaveStatus === "saving"
+                      ? "feedbackReview.revision.autosave.saving"
+                      : revisionSaveStatus === "saved"
+                        ? "feedbackReview.revision.autosave.saved"
+                        : "feedbackReview.revision.autosave.idle",
+                )}
               </Text>
             </View>
 
-            <TouchableOpacity
-              accessibilityLabel={t("common.settings")}
-              style={[styles.headerIconContainer, { backgroundColor: accessibleColors.surface }]}
-            >
-              <Ionicons name="ellipsis-vertical" size={24} color={primaryColor} />
-            </TouchableOpacity>
+            <View style={styles.headerIconContainer} />
           </View>
 
           {/* Heading intro */}
@@ -322,7 +377,11 @@ export function RevisionScreen() {
               >
                 {t("feedbackReview.revision.originalDraftLabel")}
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity
+                accessibilityLabel={t("feedbackReview.revision.viewFullScreenLabel")}
+                accessibilityRole="button"
+                onPress={() => setIsOriginalDraftOpen(true)}
+              >
                 <Text
                   style={[
                     getAccessibleTextStyle(type.bodySmall, settings),
@@ -405,9 +464,6 @@ export function RevisionScreen() {
               >
                 {t("feedbackReview.revision.editorTitle")}
               </Text>
-              <TouchableOpacity accessibilityLabel={t("feedbackReview.revision.fullscreenEditor")}>
-                <Ionicons name="scan-outline" size={20} color={colors.text.muted} />
-              </TouchableOpacity>
             </View>
 
             <TextInput
@@ -417,6 +473,10 @@ export function RevisionScreen() {
               onChangeText={(value) => {
                 setRevisedText(value);
                 setLocalError(null);
+
+                if (value.trim()) {
+                  setRevisionSaveStatus("saving");
+                }
               }}
               placeholder={t("feedbackReview.revision.inputPlaceholder")}
               placeholderTextColor={colors.text.muted}
@@ -456,6 +516,26 @@ export function RevisionScreen() {
               />
             ) : null}
           </View>
+
+          <AppModal
+            backdropOpacity={glassOpacity}
+            gradeBand={state.gradeBand}
+            mode="bottomSheet"
+            onClose={() => setIsOriginalDraftOpen(false)}
+            testID="revision-original-draft-modal"
+            titleKey="feedbackReview.revision.originalDraftLabel"
+            visible={isOriginalDraftOpen}
+          >
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(type.body, settings),
+                { color: accessibleColors.text, fontSize: type.body.fontSize * fontSizeScale },
+              ]}
+            >
+              {state.viewModel.review.revisionTask.originalExcerpt}
+            </Text>
+          </AppModal>
 
           <AppModal
             backdropOpacity={glassOpacity}

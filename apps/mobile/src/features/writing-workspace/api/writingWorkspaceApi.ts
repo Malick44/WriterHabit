@@ -121,10 +121,19 @@ export const writingWorkspaceApi = {
 
     await draftPersistenceService.saveDraft(input.draft);
 
+    // Submit through the assignments workflow so success is only reported
+    // with the submission id the backend acknowledged. Backend failures
+    // throw, which keeps the draft on screen instead of faking a review.
+    const submission = await assignmentsApi.submitAssignment({
+      assignmentId: input.assignmentId,
+      gradeLevel: input.gradeLevel,
+      studentId: input.studentId,
+    });
+
     return writingSubmissionResponseSchema.parse({
       assignmentId: input.assignmentId,
       submittedAt: new Date().toISOString(),
-      submissionId: `review-${input.assignmentId}`,
+      submissionId: submission.submissionId,
     });
   },
 };

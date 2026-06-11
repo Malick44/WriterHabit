@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ComponentProps, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getAssignmentSubmissionRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
-import { layout, radius, shadows, spacing, typography } from "@/design/tokens";
+import { layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
@@ -51,6 +51,8 @@ function getParamValue(value: string | string[] | undefined): string | undefined
   return Array.isArray(value) ? value[0] : value;
 }
 
+const DetailGradeBandContext = createContext<GradeBand>("middle");
+
 function DetailText({
   children,
   color = detailColors.onSurface,
@@ -63,9 +65,10 @@ function DetailText({
   style?: StyleProp<TextStyle>;
 }) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useContext(DetailGradeBandContext);
 
   return (
-    <Text selectable style={[getAccessibleTextStyle(typography.gradeBands.middle[role], settings), { color }, style]}>
+    <Text selectable style={[getAccessibleTextStyle(typography.gradeBands[gradeBand][role], settings), { color }, style]}>
       {children}
     </Text>
   );
@@ -410,14 +413,16 @@ export function AssignmentDetailScreen() {
     <View style={[styles.root, { paddingBottom: 0 }]}>
       <View style={[styles.phoneFrame, { maxWidth: contentWidth }]}>
         {assignment ? (
-          <AssignmentContent
-            assignment={assignment}
-            bookmarked={bookmarked}
-            hintVisible={hintVisible}
-            isOffline={state.viewModel.isOffline}
-            onBookmarkPress={handleBookmarkPress}
-            onRefresh={state.refetch}
-          />
+          <DetailGradeBandContext.Provider value={state.gradeBand}>
+            <AssignmentContent
+              assignment={assignment}
+              bookmarked={bookmarked}
+              hintVisible={hintVisible}
+              isOffline={state.viewModel.isOffline}
+              onBookmarkPress={handleBookmarkPress}
+              onRefresh={state.refetch}
+            />
+          </DetailGradeBandContext.Provider>
         ) : null}
       </View>
       <View

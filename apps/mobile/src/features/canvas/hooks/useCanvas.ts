@@ -165,6 +165,9 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
   const autosaveSchedulerRef = useRef<CanvasAutosaveScheduler | null>(null);
   const saveDocumentRef = useRef<(nextDocument?: CanvasDocument) => Promise<boolean>>(async () => false);
   const activeStrokeRef = useRef<{ strokeId: string | null; tool: CanvasTool } | null>(null);
+  // Saves are chained so a slow older save cannot resolve after a newer one
+  // and overwrite strokes drawn while it was in flight.
+  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const query = useQuery({
     enabled: Boolean(session && canvasId),
     queryFn: () => canvasApi.getCanvas({ canvasId: canvasId ?? "", gradeLevel, studentId }),
@@ -190,38 +193,57 @@ export function useCanvasWorkspace(canvasId?: string, assignmentId?: string): Ca
 
   const saveDocument = useCallback(
     async (nextDocument?: CanvasDocument): Promise<boolean> => {
-      const documentToSave = nextDocument ?? latestDocumentRef.current;
+      const run = async (): Promise<boolean> => {
+        // Snapshot when the queued save actually runs so it persists the
+        // newest strokes instead of the state captured at schedule time.
+        const documentToSave = nextDocument ?? latestDocumentRef.current;
 
-      if (!documentToSave) {
-        return false;
-      }
+        if (!documentToSave) {
+          return false;
+        }
 
-      const savingDocument: CanvasDocument = {
-        ...documentToSave,
-        syncStatus: "saving",
+        const savingDocument: CanvasDocument = {
+          ...documentToSave,
+          strokes: latestDocumentRef.current?.strokes ?? documentToSave.strokes,
+          syncStatus: "saving",
+        };
+
+        latestDocumentRef.current = savingDocument;
+        setDocument(savingDocument);
+
+        try {
+          const savedDocument = await canvasApi.saveCanvas({
+            document: savingDocument,
+            gradeLevel,
+            studentId,
+          });
+
+          // Only apply the result if nothing changed while the save was in
+          // flight; otherwise keep the newer document for the next save.
+          if (latestDocumentRef.current === savingDocument) {
+            latestDocumentRef.current = savedDocument;
+            setDocument(savedDocument);
+          }
+
+          return savedDocument.syncStatus !== "sync_failed";
+        } catch {
+          if (latestDocumentRef.current === savingDocument) {
+            const failedDocument: CanvasDocument = {
+              ...savingDocument,
+              syncStatus: "sync_failed",
+            };
+            latestDocumentRef.current = failedDocument;
+            setDocument(failedDocument);
+          }
+
+          return false;
+        }
       };
 
-      latestDocumentRef.current = savingDocument;
-      setDocument(savingDocument);
+      const queued = saveChainRef.current.then(run, run);
+      saveChainRef.current = queued.catch(() => undefined);
 
-      try {
-        const savedDocument = await canvasApi.saveCanvas({
-          document: savingDocument,
-          gradeLevel,
-          studentId,
-        });
-        latestDocumentRef.current = savedDocument;
-        setDocument(savedDocument);
-        return savedDocument.syncStatus !== "sync_failed";
-      } catch {
-        const failedDocument: CanvasDocument = {
-          ...savingDocument,
-          syncStatus: "sync_failed",
-        };
-        latestDocumentRef.current = failedDocument;
-        setDocument(failedDocument);
-        return false;
-      }
+      return queued;
     },
     [gradeLevel, studentId],
   );

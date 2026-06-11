@@ -86,6 +86,9 @@ export function useWritingWorkspace(assignmentId?: string): WritingWorkspaceData
   const lastSavedTextRef = useRef("");
   const latestDraftRef = useRef<WritingDraft | null>(null);
   const initializedWorkspaceKeyRef = useRef<string | null>(null);
+  // Saves are chained so slow storage cannot apply an older draft after a
+  // newer one; each queued save snapshots the latest text when it runs.
+  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const query = useQuery({
     enabled: Boolean(session && assignmentId),
     queryFn: () => writingWorkspaceApi.getWorkspace({ assignmentId: assignmentId ?? "", gradeLevel, studentId }),
@@ -122,45 +125,53 @@ export function useWritingWorkspace(assignmentId?: string): WritingWorkspaceData
 
   const saveDraft = useCallback(
     async (options?: { quiet?: boolean }): Promise<boolean> => {
-      const draft = latestDraftRef.current;
+      const run = async (): Promise<boolean> => {
+        const draft = latestDraftRef.current;
 
-      if (!draft) {
-        return false;
-      }
+        if (!draft) {
+          return false;
+        }
 
-      const nextDraft: WritingDraft = {
-        ...draft,
-        text: latestTextRef.current,
+        const nextDraft: WritingDraft = {
+          ...draft,
+          text: latestTextRef.current,
+        };
+
+        latestDraftRef.current = nextDraft;
+
+        if (!options?.quiet) {
+          setAutosaveStatus("saving");
+        }
+
+        try {
+          const savedDraft = await writingWorkspaceApi.saveDraft({
+            assignmentId: nextDraft.assignmentId,
+            draft: nextDraft,
+            gradeLevel,
+            studentId: nextDraft.studentId,
+          });
+          // Keep any text typed while the save was in flight.
+          latestDraftRef.current = { ...savedDraft, text: latestTextRef.current };
+          lastSavedTextRef.current = savedDraft.text;
+
+          if (!options?.quiet) {
+            setAutosaveStatus(latestTextRef.current === savedDraft.text ? "saved" : "unsaved");
+          }
+
+          return true;
+        } catch {
+          if (!options?.quiet) {
+            setAutosaveStatus("failed");
+          }
+
+          return false;
+        }
       };
 
-      latestDraftRef.current = nextDraft;
+      const queued = saveChainRef.current.then(run, run);
+      saveChainRef.current = queued.catch(() => undefined);
 
-      if (!options?.quiet) {
-        setAutosaveStatus("saving");
-      }
-
-      try {
-        const savedDraft = await writingWorkspaceApi.saveDraft({
-          assignmentId: nextDraft.assignmentId,
-          draft: nextDraft,
-          gradeLevel,
-          studentId: nextDraft.studentId,
-        });
-        latestDraftRef.current = savedDraft;
-        lastSavedTextRef.current = savedDraft.text;
-
-        if (!options?.quiet) {
-          setAutosaveStatus("saved");
-        }
-
-        return true;
-      } catch {
-        if (!options?.quiet) {
-          setAutosaveStatus("failed");
-        }
-
-        return false;
-      }
+      return queued;
     },
     [gradeLevel],
   );

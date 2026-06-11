@@ -8,7 +8,14 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  getAccessibleColors,
+  getAccessibleHitSlop,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+  type AccessibilitySettings,
+} from "@/shared/utils/accessibility";
 
 export type CardVariant = "default" | "accent" | "success" | "warning" | "danger";
 
@@ -55,20 +62,31 @@ function CardContent({
   subtitle,
   gradeBand,
   contentStyle,
-}: Pick<CardProps, "children" | "title" | "subtitle" | "gradeBand" | "contentStyle">) {
+  settings,
+}: Pick<CardProps, "children" | "title" | "subtitle" | "gradeBand" | "contentStyle"> & {
+  settings: AccessibilitySettings;
+}) {
   const type = typography.gradeBands[gradeBand ?? "middle"];
+  const accessibleColors = getAccessibleColors(settings);
 
   return (
     <View style={[{ gap: spacing.md }, contentStyle]}>
       {title || subtitle ? (
         <View style={{ gap: spacing.xs }}>
           {title ? (
-            <Text accessibilityRole="header" selectable style={[type.title, { color: colors.text.primary }]}>
+            <Text
+              accessibilityRole="header"
+              selectable
+              style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}
+            >
               {title}
             </Text>
           ) : null}
           {subtitle ? (
-            <Text selectable style={[type.bodySmall, { color: colors.text.secondary }]}>
+            <Text
+              selectable
+              style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}
+            >
               {subtitle}
             </Text>
           ) : null}
@@ -92,18 +110,20 @@ export function Card({
   contentStyle,
   testID,
 }: CardProps) {
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const variantStyle = cardVariants[variant];
   const baseStyle: ViewStyle = {
-    backgroundColor: variantStyle.backgroundColor,
-    borderColor: variantStyle.borderColor,
+    backgroundColor: settings.highContrast ? accessibleColors.surface : variantStyle.backgroundColor,
+    borderColor: settings.highContrast ? accessibleColors.border : variantStyle.borderColor,
     borderCurve: "continuous",
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: settings.highContrast ? 2 : 1,
     padding: spacing.lg,
     ...shadows.raised,
   };
   const content = (
-    <CardContent contentStyle={contentStyle} gradeBand={gradeBand} subtitle={subtitle} title={title}>
+    <CardContent contentStyle={contentStyle} gradeBand={gradeBand} settings={settings} subtitle={subtitle} title={title}>
       {children}
     </CardContent>
   );
@@ -114,7 +134,7 @@ export function Card({
         accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel ?? title}
         accessibilityRole="button"
-        hitSlop={layout.hitSlop}
+        hitSlop={getAccessibleHitSlop(settings)}
         onPress={onPress}
         testID={testID}
         style={({ pressed }) => [

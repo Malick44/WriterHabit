@@ -233,7 +233,9 @@ export function StudentHomeScreen() {
     router.push(routes.studentSettings);
   }, [router]);
 
-  const handleOpenNotifications = useCallback(() => {}, []);
+  const handleOpenNotifications = useCallback(() => {
+    router.push(routes.studentNotificationSettings);
+  }, [router]);
 
   return (
     <SafeAreaView edges={["top"]} style={[styles.safeArea, tunedScreenBackground]}>

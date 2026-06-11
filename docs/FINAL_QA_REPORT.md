@@ -2,6 +2,11 @@
 
 Status: Prompt 27 release QA completed on 2026-06-09.
 
+> **Superseded:** results below reflect the 2026-06-09 pass and are stale.
+> For current validation state (strict lint passing, Expo Doctor 21/21,
+> 43 Jest suites, updated scores) see `docs/APP_IMPLEMENTATION_AUDIT.md`,
+> "Remediation Update (2026-06-11)".
+
 ## Readiness Score
 
 Overall MVP readiness: 72/100 for internal demo or controlled QA.

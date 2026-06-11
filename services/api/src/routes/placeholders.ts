@@ -46,7 +46,7 @@ const featureEndpointGroups: readonly FeatureEndpointGroup[] = [
   { endpoints: notificationEndpoints, feature: "notifications" },
 ];
 
-const implementedEndpoints = new Set(["GET /api/v1/auth/session"]);
+const baseImplementedEndpoints: ReadonlySet<string> = new Set(["GET /api/v1/auth/session"]);
 const publicDisabledEndpoints = new Set([
   "POST /api/v1/auth/sign-in",
   "POST /api/v1/auth/sign-up",
@@ -70,7 +70,7 @@ function parseEndpoint(endpoint: string, feature: string): ParsedEndpoint {
   };
 }
 
-function collectEndpoints(): ParsedEndpoint[] {
+function collectEndpoints(implementedEndpoints: ReadonlySet<string>): ParsedEndpoint[] {
   const seen = new Set<string>();
   const endpoints: ParsedEndpoint[] = [];
 
@@ -95,11 +95,26 @@ function collectEndpoints(): ParsedEndpoint[] {
   return endpoints;
 }
 
+export interface RegisterPlaceholderRoutesOptions {
+  /**
+   * Endpoints implemented by real route registrations in this server build.
+   * They are excluded from the fail-closed placeholders; everything else
+   * keeps returning 501 feature.disabled.
+   */
+  implementedEndpoints?: ReadonlySet<string>;
+}
+
 export async function registerPlaceholderRoutes(
   app: FastifyInstance,
   authenticate: preHandlerHookHandler,
+  options: RegisterPlaceholderRoutesOptions = {},
 ): Promise<void> {
-  collectEndpoints().forEach((endpoint) => {
+  const implementedEndpoints = new Set([
+    ...baseImplementedEndpoints,
+    ...(options.implementedEndpoints ?? []),
+  ]);
+
+  collectEndpoints(implementedEndpoints).forEach((endpoint) => {
     app.route({
       handler: async (request) => {
         if (bodyMethods.has(endpoint.method)) {

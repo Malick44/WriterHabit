@@ -38,6 +38,48 @@ const errorCatalog = {
     retryable: false,
     statusCode: 401,
   },
+  "authorization.parent_link_required": {
+    fallbackMessage: "This student is not linked to your parent account.",
+    messageKey: "errors.authorization.parentLinkRequired",
+    retryable: false,
+    statusCode: 403,
+  },
+  "authorization.role_denied": {
+    fallbackMessage: "Your account cannot perform this action.",
+    messageKey: "errors.authorization.roleDenied",
+    retryable: false,
+    statusCode: 403,
+  },
+  "authorization.student_scope_denied": {
+    fallbackMessage: "You do not have access to this student profile.",
+    messageKey: "errors.authorization.studentScopeDenied",
+    retryable: false,
+    statusCode: 403,
+  },
+  "authorization.teacher_class_scope_denied": {
+    fallbackMessage: "This class or student is outside your teacher account.",
+    messageKey: "errors.authorization.teacherClassScopeDenied",
+    retryable: false,
+    statusCode: 403,
+  },
+  "conflict.duplicate_idempotency_key": {
+    fallbackMessage: "This request was already processed differently.",
+    messageKey: "errors.conflict.duplicateIdempotencyKey",
+    retryable: false,
+    statusCode: 409,
+  },
+  "conflict.status_transition_invalid": {
+    fallbackMessage: "This assignment is not ready for that step.",
+    messageKey: "errors.conflict.statusTransitionInvalid",
+    retryable: false,
+    statusCode: 409,
+  },
+  "conflict.version_mismatch": {
+    fallbackMessage: "A newer version exists. Reload before saving.",
+    messageKey: "errors.conflict.versionMismatch",
+    retryable: true,
+    statusCode: 409,
+  },
   "feature.disabled": {
     fallbackMessage: "This feature is not available yet.",
     messageKey: "errors.feature.disabled",
@@ -61,6 +103,12 @@ const errorCatalog = {
     messageKey: "errors.system.unexpected",
     retryable: true,
     statusCode: 500,
+  },
+  "validation.empty_submission": {
+    fallbackMessage: "Add your own writing before submitting.",
+    messageKey: "errors.validation.emptySubmission",
+    retryable: false,
+    statusCode: 422,
   },
   "validation.invalid_field": {
     fallbackMessage: "Check the highlighted fields and try again.",
@@ -121,6 +169,29 @@ export function createFeatureDisabledError(input: {
       feature: input.feature,
     },
     fallbackMessage: "This production API route is registered but disabled until persistence and authorization are implemented.",
+  });
+}
+
+export type ForbiddenErrorCode =
+  | "authorization.parent_link_required"
+  | "authorization.role_denied"
+  | "authorization.student_scope_denied"
+  | "authorization.teacher_class_scope_denied";
+
+export function createForbiddenError(input: {
+  code?: ForbiddenErrorCode;
+  details?: Record<string, unknown>;
+} = {}): ApiHttpError {
+  return new ApiHttpError({
+    code: input.code ?? "authorization.role_denied",
+    ...(input.details ? { details: input.details } : {}),
+  });
+}
+
+export function createResourceNotFoundError(details?: Record<string, unknown>): ApiHttpError {
+  return new ApiHttpError({
+    code: "resource.not_found",
+    ...(details ? { details } : {}),
   });
 }
 

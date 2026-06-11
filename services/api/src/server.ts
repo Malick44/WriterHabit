@@ -3,16 +3,21 @@ import Fastify, { type FastifyServerOptions } from "fastify";
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage } from "node:http";
 
+import { createDatabaseFromConfig, type Database } from "./data";
 import { createAuthenticateHook, createSupabaseJwtVerifier, type AuthVerifier } from "./runtime/auth";
 import { loadConfig, type ApiConfig } from "./runtime/config";
 import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
+import { registerAssignmentRoutes } from "./routes/assignments";
 import { registerHealthRoutes } from "./routes/health";
 import { registerPlaceholderRoutes } from "./routes/placeholders";
 import { registerProfileRoutes } from "./routes/profile";
+import { registerSubmissionRoutes } from "./routes/submissions";
+import { writingLoopImplementedEndpoints } from "./routes/writing-shared";
 
 interface BuildServerOptions {
   authVerifier?: AuthVerifier;
   config?: ApiConfig;
+  database?: Database;
   logger?: FastifyServerOptions["logger"];
 }
 
@@ -63,6 +68,9 @@ function createCorsOriginResolver(config: ApiConfig): FastifyCorsOptions["origin
 export async function buildServer(options: BuildServerOptions = {}) {
   const config = options.config ?? loadConfig();
   const authVerifier = options.authVerifier ?? createSupabaseJwtVerifier(config.auth);
+  // Without a configured database the writing-loop routes are not registered
+  // and stay behind the fail-closed 501 placeholders.
+  const database = options.database ?? createDatabaseFromConfig(config.database);
   const app = Fastify({
     genReqId: (request) => getIncomingRequestId(request) ?? createRequestId(),
     logger:
@@ -105,7 +113,15 @@ export async function buildServer(options: BuildServerOptions = {}) {
     async (v1) => {
       await registerHealthRoutes(v1, config);
       await registerProfileRoutes(v1, authenticate);
-      await registerPlaceholderRoutes(v1, authenticate);
+
+      if (database) {
+        await registerAssignmentRoutes(v1, authenticate, database);
+        await registerSubmissionRoutes(v1, authenticate, database);
+      }
+
+      await registerPlaceholderRoutes(v1, authenticate, {
+        ...(database ? { implementedEndpoints: writingLoopImplementedEndpoints } : {}),
+      });
     },
     { prefix: config.apiBasePath },
   );

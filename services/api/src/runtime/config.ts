@@ -14,6 +14,7 @@ const envSchema = z.object({
   SUPABASE_JWT_AUDIENCE: z.string().min(1).optional(),
   SUPABASE_JWT_ISSUER: z.string().min(1).optional(),
   SUPABASE_JWT_SECRET: z.string().min(16).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
   SUPABASE_URL: z.string().url().optional(),
 });
 
@@ -33,6 +34,12 @@ export interface ApiConfig {
   cors: {
     allowedOrigins: readonly string[];
     allowLocalhostInDevelopment: boolean;
+  };
+  database: {
+    mode: "supabase" | "unconfigured";
+    /** Service-role key. Backend-only; never log it (see logger redact list). */
+    serviceRoleKey?: string;
+    supabaseUrl?: string;
   };
   environment: RuntimeEnvironment;
   host: string;
@@ -104,6 +111,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     cors: {
       allowedOrigins: parseCorsOrigins(data.CORS_ORIGINS),
       allowLocalhostInDevelopment: data.NODE_ENV !== "production",
+    },
+    database: {
+      mode: data.SUPABASE_URL && data.SUPABASE_SERVICE_ROLE_KEY ? "supabase" : "unconfigured",
+      ...(data.SUPABASE_SERVICE_ROLE_KEY ? { serviceRoleKey: data.SUPABASE_SERVICE_ROLE_KEY } : {}),
+      ...(data.SUPABASE_URL ? { supabaseUrl: data.SUPABASE_URL } : {}),
     },
     environment: data.NODE_ENV,
     host: data.HOST,

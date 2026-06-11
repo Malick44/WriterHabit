@@ -43,10 +43,18 @@ loading full student content where possible. Parent and teacher dashboards shoul
 prefer summaries and bounded excerpts over full draft, full submission, canvas
 stroke, or recognized-text payloads.
 
-Current runtime role trust: `services/api/src/runtime/auth.ts` verifies Supabase
-JWTs, ignores client-writable `user_metadata.role`, and uses trusted
-`app_metadata.role` only when present. Missing or invalid trusted role claims
-default to `student` until production profile-table hydration is implemented.
+Current role trust: `services/api/src/runtime/auth.ts` verifies Supabase JWTs,
+ignores client-writable `user_metadata.role`, and uses trusted
+`app_metadata.role` only when present. `apps/mobile/src/core/auth/sessionService.ts`
+uses the same source for UX routing and ignores client-writable role and
+subscription metadata. Missing or invalid trusted role claims default to
+`student` until production profile-table hydration is implemented.
+`services/api/migrations/202606110001_server_owned_roles.sql` blocks public
+authenticated updates to `public.users.role` and neutralizes legacy auth
+metadata role sync hooks when present. The configured development Supabase
+role-escalation boundary is verified by
+`node scripts/verify-server-owned-roles.mjs --apply-local-migration`; parent and
+teacher access still requires server-backed relationship or class state.
 
 ## Data Minimization
 

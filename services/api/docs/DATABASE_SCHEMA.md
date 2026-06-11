@@ -1,13 +1,15 @@
 # WriterHabit Database Schema
 
 Status: Supabase/Postgres schema draft, applied to the configured development
-Supabase instance on 2026-06-09. The current mobile app still uses Supabase
-auth, feature-owned deterministic mock APIs, and local device storage. A
-Fastify API runtime shell now exists in `services/api/`, but these tables are
-not wired to production route handlers yet. The migration drafts live in:
+Supabase instance through `202606110001_server_owned_roles.sql` on 2026-06-11.
+The current mobile app still uses Supabase auth, feature-owned deterministic
+mock APIs, and local device storage. A Fastify API runtime shell now exists in
+`services/api/`, but these tables are not wired to production route handlers
+yet. The migration drafts live in:
 
 - `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`
 - `services/api/migrations/202606090002_privacy_rls_policies.sql`
+- `services/api/migrations/202606110001_server_owned_roles.sql`
 
 No production migration runner or deployment pipeline has been selected yet.
 
@@ -31,7 +33,7 @@ No production migration runner or deployment pipeline has been selected yet.
 
 | Table | Purpose | Important constraints and indexes |
 | --- | --- | --- |
-| `users` | Public app profile for a Supabase auth user. | `id` references `auth.users(id)`, unique `email`, role check for `student`, `parent`, `teacher`, `admin`, `users_role_idx`. |
+| `users` | Public app profile for a Supabase auth user. | `id` references `auth.users(id)`, unique `email`, role check for `student`, `parent`, `teacher`, `admin`, `users_role_idx`; `202606110001_server_owned_roles.sql` rejects public-client and auth-metadata role changes so role grants stay backend/admin-owned. |
 | `student_profiles` | Student grade, writing level, goals, daily goal, language, learning focus note, accessibility settings, onboarding completion. | Unique `user_id`, grade 1-12, daily goal in 5/10/15/20/30, generated `grade_band`, goal allow-list, language check, GIN index on `writing_goals`. |
 | `parent_profiles` | Parent display profile. | Unique `user_id`. |
 | `parent_settings` | Parent report and notification settings. | Primary key `parent_user_id`, constrained setting values. |
@@ -130,6 +132,23 @@ assembled:
 - `upsert_own_student_profile_settings`
 - `get_own_notification_preferences`
 - `upsert_own_notification_preferences`
+
+`services/api/migrations/202606110001_server_owned_roles.sql` re-creates the
+`public.users` self-update policy for safe profile-field edits and adds a
+`users_reject_client_role_change` trigger. The trigger runs as `SECURITY
+INVOKER` so public authenticated updates are checked as the caller, not as the
+function owner. The migration also keeps legacy `auth.users` sync hooks, when
+present, from copying client-writable `raw_user_meta_data.role` into
+`public.users.role`. Public authenticated users cannot change
+`public.users.role`; role grants require backend service-role/database admin
+execution after the corresponding teacher approval, parent link, or operational
+admin workflow.
+
+`scripts/verify-server-owned-roles.mjs` is the local development RLS verifier
+for this boundary. It applies the idempotent role-hardening migration when run
+with `--apply-local-migration`, then proves auth metadata cannot elevate role,
+authenticated direct role changes to parent/teacher/admin fail, safe profile
+field self-updates still work, and database admin role grants still work.
 
 ## Audit Logs
 

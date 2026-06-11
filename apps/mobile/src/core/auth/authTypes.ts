@@ -63,7 +63,6 @@ export type AuthSignUpInput = {
   email: string;
   password: string;
   displayName: string;
-  role: MockSessionRole;
 };
 
 export type AuthOnboardingCompletionInput = {

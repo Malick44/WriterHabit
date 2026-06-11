@@ -237,7 +237,7 @@ writing, provider payload secrets, or push tokens.
 | Student | `student_profiles.user_id = auth.uid()` | Own profile, assignments, drafts, submissions, canvas content, feedback, progress. |
 | Parent | Active `parent_student_links` row. | Linked student summaries, bounded submission excerpts, feedback summaries, reports, notification preferences. |
 | Teacher | Owns class containing active `class_students` row. | Class roster, assignment state, submission summaries, feedback summaries, class progress, comments. |
-| Admin | `users.role = 'admin'`. | Scoped operational access with audit logging. |
+| Admin | Server/admin-owned `users.role = 'admin'`. | Scoped operational access with audit logging. |
 
 API handlers should authorize before loading full content and should avoid
 returning sensitive rows to parent or teacher dashboards unless a detailed,

@@ -22,11 +22,29 @@ const subscriptionSchema = z.enum(["free", "trial", "active", "past_due"]);
 const userMetadataSchema = z.object({
   display_name: z.string().min(1).optional(),
   full_name: z.string().min(1).optional(),
-  role: roleSchema.catch("student"),
   onboarding_complete: z.boolean().catch(false),
   grade_level: z.coerce.number().int().min(1).max(12).optional(),
-  subscription_status: subscriptionSchema.catch("free"),
 });
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getTrustedAppMetadata(user: SupabaseUser): Record<string, unknown> {
+  return isRecord(user.app_metadata) ? user.app_metadata : {};
+}
+
+function getTrustedRole(user: SupabaseUser): NavigableUserRole {
+  const parsedRole = roleSchema.safeParse(getTrustedAppMetadata(user).role);
+
+  return parsedRole.success ? parsedRole.data : "student";
+}
+
+function getTrustedSubscriptionStatus(user: SupabaseUser): AuthSession["subscriptionStatus"] {
+  const parsedStatus = subscriptionSchema.safeParse(getTrustedAppMetadata(user).subscription_status);
+
+  return parsedStatus.success ? parsedStatus.data : "free";
+}
 
 function getAuthRedirectUrl(): string {
   return Linking.createURL("/");
@@ -64,7 +82,7 @@ export function mapSupabaseSession(session: SupabaseSession | null): AuthSession
     expiresAt: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : undefined,
     refreshToken: session.refresh_token,
     source: "supabase",
-    subscriptionStatus: metadata.subscription_status,
+    subscriptionStatus: getTrustedSubscriptionStatus(user),
     token: session.access_token,
     onboardingComplete: metadata.onboarding_complete,
     user: {
@@ -72,7 +90,7 @@ export function mapSupabaseSession(session: SupabaseSession | null): AuthSession
       email: user.email ?? "",
       gradeLevel: metadata.grade_level as GradeLevel | undefined,
       id: user.id,
-      role: metadata.role as NavigableUserRole,
+      role: getTrustedRole(user),
     },
   };
 }
@@ -169,8 +187,6 @@ export const sessionService = {
         data: {
           display_name: input.displayName.trim(),
           onboarding_complete: false,
-          role: input.role,
-          subscription_status: "free",
         },
       },
     });
@@ -202,10 +218,6 @@ export const sessionService = {
 
     if (input?.gradeLevel) {
       metadata.grade_level = input.gradeLevel;
-    }
-
-    if (input?.role) {
-      metadata.role = input.role;
     }
 
     if (input?.writingGoals) {

@@ -29,7 +29,6 @@ describe("auth form schemas", () => {
       displayName: "Student Writer",
       email: "student@example.test",
       password: "student-password",
-      role: "student",
     });
 
     expect(result.success).toBe(false);
@@ -42,14 +41,12 @@ describe("auth form schemas", () => {
       displayName: " Student Writer ",
       email: " student@example.test ",
       password: "student-password",
-      role: "student",
     });
 
     expect(toSignUpInput(values)).toEqual({
       displayName: "Student Writer",
       email: "student@example.test",
       password: "student-password",
-      role: "student",
     });
   });
 });

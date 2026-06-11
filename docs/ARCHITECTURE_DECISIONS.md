@@ -201,6 +201,8 @@ Consequences:
 - Authenticated users with incomplete onboarding route to `/(onboarding)/role-selection`.
 - Completed student, parent, and teacher sessions route to their role homes.
 - Paywall routing is guarded but role-neutral after auth and onboarding.
+- Route gates are UX routing only. Parent, teacher, admin, entitlement, and
+  student data access must be enforced by backend/RLS resource authorization.
 
 ## ADR-012: Accessibility Preferences Are Persistent And Shared
 
@@ -242,6 +244,10 @@ Consequences:
 - Mobile code may use only `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the compatibility fallback `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 - Service-role keys and admin credentials must not appear in app code, docs, screenshots, `.codex` files, committed files, or CI logs.
 - Route files remain thin; auth UI and validation live under `apps/mobile/src/features/auth/`.
+- Public sign-up submits account fields only. Mobile session mapping ignores
+  client-writable role and subscription metadata, reads trusted
+  `app_metadata.role`/`app_metadata.subscription_status`, and defaults missing
+  or invalid values to `student`/`free`.
 - Demo sessions remain available through `EXPO_PUBLIC_WriterHabit_MOCK_SESSION` and the development-only demo-user panel on auth and signed-in screens, but use `source: "mock"` and skip Supabase auth subscriptions.
 - `apps/mobile/src/shared/state/session.ts` is only a compatibility wrapper over `apps/mobile/src/core/auth/useAuthSession.ts`.
 

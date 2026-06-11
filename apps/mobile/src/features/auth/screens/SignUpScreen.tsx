@@ -1,19 +1,14 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { ZodError, ZodIssue } from "zod";
 
-import type { MockSessionRole } from "@/core/auth/authTypes";
 import { routes } from "@/core/navigation/routeNames";
-import { palette } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { StatusState } from "@/shared/components/feedback";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import {
-  getAccessibleHitSlop,
   getAccessibleTextStyle,
-  getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
@@ -24,13 +19,11 @@ import {
   AuthSocialButton,
   AuthSubmitButton,
   AuthTextField,
-  authScreenColors,
   authScreenStyles,
   type AuthSocialProvider,
 } from "../components";
 import { useAuth } from "../hooks/useAuth";
 import {
-  AUTH_ROLE_OPTIONS,
   authErrorMessageKeys,
   signUpFormSchema,
   toSignUpInput,
@@ -39,21 +32,6 @@ import {
 
 type SignUpFieldKey = keyof SignUpFormValues;
 type FieldErrors = Partial<Record<SignUpFieldKey, string>>;
-
-const roleCopyKeys: Record<MockSessionRole, { label: TranslationKey; description: TranslationKey }> = {
-  parent: {
-    description: "auth.roles.parent.description",
-    label: "auth.roles.parent.label",
-  },
-  student: {
-    description: "auth.roles.student.description",
-    label: "auth.roles.student.label",
-  },
-  teacher: {
-    description: "auth.roles.teacher.description",
-    label: "auth.roles.teacher.label",
-  },
-};
 
 function getValidationMessageKey(issue: ZodIssue): TranslationKey {
   return issue.message.startsWith("auth.") ? (issue.message as TranslationKey) : "auth.errors.validation";
@@ -74,61 +52,6 @@ function getFieldErrors(error: ZodError<SignUpFormValues>, t: (key: TranslationK
   }, {});
 }
 
-function RoleOption({
-  accessibilityLabel,
-  description,
-  disabled,
-  label,
-  onPress,
-  selected,
-}: {
-  accessibilityLabel: string;
-  description: string;
-  disabled: boolean;
-  label: string;
-  onPress: () => void;
-  selected: boolean;
-}) {
-  const { settings } = useAccessibilityContext();
-  const minimumTouchTarget = getMinimumTouchTarget(settings);
-
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      accessibilityState={{ disabled, selected }}
-      disabled={disabled}
-      hitSlop={getAccessibleHitSlop(settings)}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.roleOption,
-        {
-          borderColor: selected ? authScreenColors.primary : authScreenColors.border,
-          minHeight: Math.max(48, minimumTouchTarget),
-        },
-        selected ? styles.roleOptionSelected : null,
-        pressed && !disabled ? styles.pressed : null,
-      ]}
-    >
-      <View style={[styles.roleCheck, selected ? styles.roleCheckSelected : null]}>
-        {selected ? (
-          <Ionicons
-            accessible={false}
-            color={palette.white}
-            importantForAccessibility="no"
-            name="checkmark"
-            size={15}
-          />
-        ) : null}
-      </View>
-      <View style={styles.roleCopy}>
-        <Text style={getAccessibleTextStyle(styles.roleLabel, settings)}>{label}</Text>
-        <Text style={getAccessibleTextStyle(styles.roleDescription, settings)}>{description}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
 export function SignUpScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -139,7 +62,6 @@ export function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<MockSessionRole>("student");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [requiresEmailConfirmation, setRequiresEmailConfirmation] = useState(false);
 
@@ -166,7 +88,6 @@ export function SignUpScreen() {
       displayName,
       email,
       password,
-      role,
     } satisfies SignUpFormValues);
 
     if (!result.success) {
@@ -316,37 +237,6 @@ export function SignUpScreen() {
               value={confirmPassword}
             />
 
-            <View style={styles.roleSection}>
-              <Text style={getAccessibleTextStyle(styles.roleSectionLabel, settings)}>
-                {t("auth.fields.roleLabel")}
-              </Text>
-              <View style={authScreenStyles.roleList}>
-                {AUTH_ROLE_OPTIONS.map((roleOption) => (
-                  <RoleOption
-                    accessibilityLabel={t(roleCopyKeys[roleOption].label)}
-                    description={t(roleCopyKeys[roleOption].description)}
-                    disabled={isBusy}
-                    key={roleOption}
-                    label={t(roleCopyKeys[roleOption].label)}
-                    onPress={() => {
-                      setRole(roleOption);
-                      clearFieldError("role");
-                    }}
-                    selected={roleOption === role}
-                  />
-                ))}
-              </View>
-              {fieldErrors.role ? (
-                <Text
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                  style={getAccessibleTextStyle(styles.roleError, settings)}
-                >
-                  {fieldErrors.role}
-                </Text>
-              ) : null}
-            </View>
-
             <View style={authScreenStyles.submitStack}>
               <AuthSubmitButton
                 disabled={isBusy}
@@ -364,68 +254,3 @@ export function SignUpScreen() {
     </AuthScreenFrame>
   );
 }
-
-const styles = StyleSheet.create({
-  pressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.98 }],
-  },
-  roleCheck: {
-    alignItems: "center",
-    borderColor: authScreenColors.border,
-    borderRadius: 999,
-    borderWidth: 2,
-    height: 24,
-    justifyContent: "center",
-    width: 24,
-  },
-  roleCheckSelected: {
-    backgroundColor: authScreenColors.primary,
-    borderColor: authScreenColors.primary,
-  },
-  roleCopy: {
-    flex: 1,
-    gap: 3,
-  },
-  roleDescription: {
-    color: authScreenColors.muted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  roleError: {
-    color: authScreenColors.danger,
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-    marginLeft: 4,
-  },
-  roleLabel: {
-    color: authScreenColors.text,
-    fontSize: 15,
-    fontWeight: "700",
-    lineHeight: 20,
-  },
-  roleOption: {
-    alignItems: "center",
-    backgroundColor: authScreenColors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  roleOptionSelected: {
-    backgroundColor: authScreenColors.inputBackground,
-  },
-  roleSection: {
-    gap: 8,
-  },
-  roleSectionLabel: {
-    color: authScreenColors.muted,
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
-    marginLeft: 4,
-  },
-});

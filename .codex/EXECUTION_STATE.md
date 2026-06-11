@@ -45,6 +45,19 @@ Last updated: 2026-06-11
   authenticated session/profile smoke endpoints, fail-closed feature route
   shells, package scripts, trusted-role derivation from server-owned
   `app_metadata.role`, and Vitest integration tests.
+- WW-REL task 02 round 2 server-derived role hardening is implemented locally:
+  mobile session mapping ignores client-writable role/entitlement metadata,
+  sign-up/onboarding no longer write role metadata, production onboarding only
+  follows server-trusted parent/teacher roles, draft migration
+  `202606110001_server_owned_roles.sql` blocks public `public.users.role`
+  updates with an invoker-rights trigger, and legacy auth metadata role sync
+  hooks are neutralized when present. The migration was applied to the
+  configured development Supabase instance and
+  `node scripts/verify-server-owned-roles.mjs --apply-local-migration` passed
+  for auth-metadata escalation, authenticated student-to-parent/teacher/admin
+  role changes, safe profile self-updates, and the database admin grant path.
+  Production migration application and broader resource RLS role-boundary tests
+  remain owner/backend follow-up work.
 - Every task should start by reading `AGENTS.md`, `docs/00_CONTEXT_BRIEF.md`, `prompts/01_master_agent_rules.md`, and `.codex/EXECUTION_STATE.md`.
 
 ## Completed Work

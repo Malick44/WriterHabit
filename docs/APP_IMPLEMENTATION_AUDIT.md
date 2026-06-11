@@ -113,10 +113,20 @@ Remaining fix:
 
 ### P0-2: Authorization Hydration Is Incomplete
 
+Status: partially resolved on 2026-06-11 for mobile role trust and role
+mutation. Production profile-table hydration and resource authorization remain
+open.
+
 Evidence:
 
-- `apps/mobile/src/core/auth/sessionService.ts` maps `role`, onboarding status, and subscription status from client-visible Supabase metadata.
-- Onboarding/sign-up can set or update role metadata from the mobile client.
+- `apps/mobile/src/core/auth/sessionService.ts` now maps UX role and
+  subscription status only from trusted `app_metadata` and defaults to
+  `student`/`free`; client-writable `user_metadata.role` and
+  `user_metadata.subscription_status` are ignored.
+- Mobile sign-up and onboarding completion no longer write role or entitlement
+  metadata. Production onboarding exposes parent/teacher role completion only
+  when that trusted role is already present on the session; full role switching
+  remains dev/demo-only.
 - `apps/mobile/src/core/auth/roleGuards.ts` and route gates use that role for UI access.
 - The Fastify runtime shell no longer trusts `user_metadata.role`, but production
   feature authorization still needs server-owned profile and relationship
@@ -129,7 +139,6 @@ Fix:
 
 - Hydrate roles and entitlements from server-owned profile tables, trusted app
   metadata, or custom claims before implementing resource handlers.
-- Remove mobile role mutation.
 - Make teacher access invite/admin-approved.
 - Treat route gates as convenience only and enforce all access on the server/RLS layer.
 
@@ -150,21 +159,38 @@ Fix:
 
 ### P0-4: RLS Has A Likely Admin Escalation Path
 
+Status: direct role-escalation hardening is applied and verified in the
+configured development Supabase instance on 2026-06-11; production migration
+application and broader resource RLS tests remain open.
+
 Evidence:
 
 - `services/api/migrations/202606090001_initial_WriterHabit_schema.sql` allows `users.role = 'admin'`.
 - `services/api/migrations/202606090002_privacy_rls_policies.sql` uses `public.users.role` for `is_WriterHabit_admin()`.
 - `services/api/migrations/202606100001_profile_settings_notification_sync.sql` creates a self-update policy on `public.users` without an obvious column restriction.
+- `services/api/migrations/202606110001_server_owned_roles.sql` re-creates the
+  self-update policy and adds `users_reject_client_role_change` as a
+  `SECURITY INVOKER` trigger, which rejects role changes unless the update runs
+  as database admin or Supabase `service_role`.
+- The same migration keeps legacy `auth.users` sync hooks, when present, from
+  copying client-writable `raw_user_meta_data.role` into `public.users.role`.
+- `node scripts/verify-server-owned-roles.mjs --apply-local-migration` passes
+  against the configured development Supabase for auth-metadata role
+  escalation, authenticated student-to-parent/teacher/admin updates, safe
+  profile self-updates, and the database admin grant path.
 
-Impact: a user may be able to update their own `users.role` and become admin, depending on grants and runtime execution.
+Impact: the draft migration closes the known direct client role-update path in
+the configured development Supabase instance, but production cannot rely on it
+until migrations are applied through a controlled runner and broader RLS tests
+prove resource boundaries for student, parent, teacher, admin, and service
+flows.
 
 Fix:
 
-- Drop broad self-update policy.
-- Use scoped RPCs or column-level grants only for safe profile fields.
-- Make role changes service/admin-only.
-- Add trigger protection against non-service role changes.
-- Add negative RLS tests for student-to-admin escalation.
+- Apply the role-hardening migration in the production migration path.
+- Prefer scoped RPCs or column-level grants only for safe profile fields.
+- Add broader RLS tests for student, parent, teacher, admin, and service
+  resource boundaries.
 
 ### P0-5: Mobile Writes Bypass Server Workflow Authorization
 
@@ -474,8 +500,8 @@ Deployment impact:
 ### Phase 1: Close Immediate P0 Safety/Integrity Risks
 
 1. Disable mock auth in production.
-2. Remove mobile role mutation and derive roles server-side.
-3. Fix the `users` self-update RLS escalation path.
+2. Apply and verify server-owned role migrations in the production database path.
+3. Complete role/profile hydration and resource-level authorization.
 4. Deploy the backend runtime and replace fail-closed route shells with
    production feature handlers.
 5. Add stale-write protection to writing and canvas autosave.
@@ -542,8 +568,8 @@ Deployment impact:
 Start with the security/data-truth cluster:
 
 1. Disable production mock auth.
-2. Remove client role mutation.
-3. Fix `users` self-update RLS escalation.
+2. Apply the server-owned role migration and add RLS escalation tests.
+3. Complete role/profile hydration and resource-level authorization.
 4. Wire deployed endpoints into the authenticated `apiClient` and replace remaining deterministic mocks where production data is required.
 5. Add autosave stale-write protection.
 

@@ -50,6 +50,25 @@ const nextRouteByRole = {
   teacher: routes.teacherDashboard,
 } as const satisfies Record<OnboardingRole, typeof routes[keyof typeof routes]>;
 
+function getAvailableRoles(sessionRole?: string): readonly OnboardingRole[] {
+  if (__DEV__) {
+    return ONBOARDING_ROLE_OPTIONS;
+  }
+
+  if (sessionRole === "parent" || sessionRole === "teacher") {
+    return [sessionRole];
+  }
+
+  return ["student"];
+}
+
+function getSelectedRole(
+  storedRole: OnboardingRole | undefined,
+  availableRoles: readonly OnboardingRole[],
+): OnboardingRole {
+  return storedRole && availableRoles.includes(storedRole) ? storedRole : availableRoles[0] ?? "student";
+}
+
 export function RoleSelectionScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -67,7 +86,8 @@ export function RoleSelectionScreen() {
   }
 
   const errorMessage = onboarding.errorCode ? t(onboardingErrorMessageKeys[onboarding.errorCode]) : null;
-  const selectedRole = onboarding.progress.role ?? "student";
+  const availableRoles = getAvailableRoles(onboarding.session?.user.role);
+  const selectedRole = getSelectedRole(onboarding.progress.role, availableRoles);
 
   const handleContinue = async () => {
     await onboarding.setRole(selectedRole);
@@ -101,7 +121,7 @@ export function RoleSelectionScreen() {
       titleStyle={styles.title}
     >
       <View accessibilityRole="radiogroup" style={styles.roles}>
-        {ONBOARDING_ROLE_OPTIONS.map((role) => {
+        {availableRoles.map((role) => {
           const isSelected = selectedRole === role;
 
           return (

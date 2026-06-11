@@ -38,6 +38,13 @@ export function useOnboarding() {
     authOperationStatus: auth.operationStatus,
     signOut: auth.signOut,
     completeRoleOnlyOnboarding: async (role: OnboardingRole) => {
+      if (!__DEV__ && role !== "student" && role !== session?.user.role) {
+        onboarding.setErrorCode("completion_failed");
+        return {
+          ok: false as const,
+        };
+      }
+
       await onboarding.setRole(role);
 
       const result = await auth.completeOnboarding({ role });

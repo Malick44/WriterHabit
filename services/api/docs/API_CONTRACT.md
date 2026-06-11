@@ -169,8 +169,10 @@ provider proxying is intentionally implemented.
 Backend principal roles must come from server-owned data. The current runtime
 shell trusts `app_metadata.role` in the verified Supabase JWT and ignores
 client-writable `user_metadata.role`; missing or invalid trusted roles default
-to `student`. Future feature handlers may replace this smoke-role source with
-server-owned profile-table hydration after verifying `sub`.
+to `student`. The mobile session mapper mirrors this for UX routing and ignores
+client-writable role and subscription metadata. Future feature handlers may
+replace this smoke-role source with server-owned profile-table hydration after
+verifying `sub`.
 
 ```txt
 POST /auth/sign-up
@@ -202,7 +204,6 @@ interface SignUpRequest {
   email: string;
   password: string;
   displayName: string;
-  role: Exclude<UserRole, "admin">;
 }
 
 interface SignInRequest {
@@ -217,8 +218,7 @@ Sign-up example:
 {
   "email": "student@example.com",
   "password": "minimum-8-characters",
-  "displayName": "Avery",
-  "role": "student"
+  "displayName": "Avery"
 }
 ```
 

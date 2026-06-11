@@ -44,7 +44,7 @@ interface StudentProfile {
 }
 ```
 
-Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `role`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`. Student edit, goals, and language settings now sync through Supabase RPCs in `services/api/migrations/202606100001_profile_settings_notification_sync.sql`; broader onboarding records and production API hydration remain future backend work.
+Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`; it does not write role or entitlement metadata. Mobile UX role and subscription state are mapped from trusted server-owned `app_metadata` only, with missing or invalid values defaulting to `student` and `free`. Student edit, goals, and language settings now sync through Supabase RPCs in `services/api/migrations/202606100001_profile_settings_notification_sync.sql`; broader onboarding records, parent links, teacher approvals, and production API hydration remain future backend work.
 
 Notification preferences are validated settings owned by
 `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`.

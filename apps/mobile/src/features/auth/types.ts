@@ -5,11 +5,8 @@ import type {
   AuthLoginLinkInput,
   AuthSignInInput,
   AuthSignUpInput,
-  MockSessionRole,
 } from "@/core/auth/authTypes";
 import type { TranslationKey } from "@/i18n";
-
-export const AUTH_ROLE_OPTIONS = ["student", "parent", "teacher"] as const satisfies readonly MockSessionRole[];
 
 const emailSchema = z
   .string()
@@ -30,7 +27,6 @@ export const signUpInputSchema = z.object({
   displayName: z.string().trim().min(1, { message: "auth.errors.displayNameRequired" }),
   email: emailSchema,
   password: z.string().min(8, { message: "auth.errors.passwordTooShort" }),
-  role: z.enum(AUTH_ROLE_OPTIONS),
 }) satisfies z.ZodType<AuthSignUpInput>;
 
 export const signUpFormSchema = signUpInputSchema
@@ -59,6 +55,5 @@ export function toSignUpInput(values: SignUpFormValues): AuthSignUpInput {
     displayName: values.displayName,
     email: values.email,
     password: values.password,
-    role: values.role,
   };
 }

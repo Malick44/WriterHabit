@@ -2,15 +2,14 @@ import { useState } from "react";
 import type { KeyboardTypeOptions } from "react-native";
 import type { z, ZodIssue } from "zod";
 
-import type { AuthErrorCode, AuthSignInInput, AuthSignUpInput, MockSessionRole } from "@/core/auth/authTypes";
+import type { AuthErrorCode, AuthSignInInput, AuthSignUpInput } from "@/core/auth/authTypes";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { StatusState } from "@/shared/components/feedback";
-import { ChoiceCard, FormField, TextField } from "@/shared/components/forms";
+import { TextField } from "@/shared/components/forms";
 import { Stack } from "@/shared/components/layout/Stack";
 
 import {
-  AUTH_ROLE_OPTIONS,
   authErrorMessageKeys,
   signInInputSchema,
   signUpFormSchema,
@@ -35,21 +34,6 @@ type AuthFormProps =
       errorCode?: AuthErrorCode | null;
       onSubmit: (input: AuthSignUpInput) => Promise<void> | void;
     };
-
-const roleCopyKeys: Record<MockSessionRole, { label: TranslationKey; description: TranslationKey }> = {
-  parent: {
-    description: "auth.roles.parent.description",
-    label: "auth.roles.parent.label",
-  },
-  student: {
-    description: "auth.roles.student.description",
-    label: "auth.roles.student.label",
-  },
-  teacher: {
-    description: "auth.roles.teacher.description",
-    label: "auth.roles.teacher.label",
-  },
-};
 
 function getIssueMessageKey(issue: ZodIssue): TranslationKey {
   if (issue.message.startsWith("auth.")) {
@@ -88,7 +72,6 @@ export function AuthForm(props: AuthFormProps) {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<MockSessionRole>("student");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const clearFieldError = (field: AuthFieldKey) => {
@@ -114,7 +97,6 @@ export function AuthForm(props: AuthFormProps) {
       displayName,
       email,
       password,
-      role,
     } satisfies SignUpFormValues);
 
     if (!result.success) {
@@ -194,50 +176,24 @@ export function AuthForm(props: AuthFormProps) {
       />
 
       {props.mode === "signUp" ? (
-        <>
-          <TextField
-            accessibilityLabel={t("auth.fields.confirmPasswordAccessibility")}
-            autoCapitalize="none"
-            autoComplete="new-password"
-            editable={!props.loading}
-            error={fieldErrors.confirmPassword}
-            label={t("auth.fields.confirmPasswordLabel")}
-            onChangeText={(value) => {
-              setConfirmPassword(value);
-              clearFieldError("confirmPassword");
-            }}
-            placeholder={t("auth.fields.confirmPasswordPlaceholder")}
-            required
-            returnKeyType="done"
-            secureTextEntry
-            textContentType="newPassword"
-            value={confirmPassword}
-          />
-
-          <FormField
-            error={fieldErrors.role}
-            hint={t("auth.fields.roleHint")}
-            label={t("auth.fields.roleLabel")}
-            required
-          >
-            <Stack gap="sm">
-              {AUTH_ROLE_OPTIONS.map((roleOption) => (
-                <ChoiceCard
-                  accessibilityHint={t("auth.fields.roleAccessibility")}
-                  disabled={props.loading}
-                  key={roleOption}
-                  label={t(roleCopyKeys[roleOption].label)}
-                  description={t(roleCopyKeys[roleOption].description)}
-                  onPress={() => {
-                    setRole(roleOption);
-                    clearFieldError("role");
-                  }}
-                  selected={roleOption === role}
-                />
-              ))}
-            </Stack>
-          </FormField>
-        </>
+        <TextField
+          accessibilityLabel={t("auth.fields.confirmPasswordAccessibility")}
+          autoCapitalize="none"
+          autoComplete="new-password"
+          editable={!props.loading}
+          error={fieldErrors.confirmPassword}
+          label={t("auth.fields.confirmPasswordLabel")}
+          onChangeText={(value) => {
+            setConfirmPassword(value);
+            clearFieldError("confirmPassword");
+          }}
+          placeholder={t("auth.fields.confirmPasswordPlaceholder")}
+          required
+          returnKeyType="done"
+          secureTextEntry
+          textContentType="newPassword"
+          value={confirmPassword}
+        />
       ) : null}
 
       <Button

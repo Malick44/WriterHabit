@@ -16,6 +16,11 @@ Current runtime guard:
   The current runtime shell reads `app_metadata.role` from the verified token,
   ignores client-writable `user_metadata.role`, and defaults missing or invalid
   trusted roles to `student`.
+- The mobile session mapper follows the same boundary for UX routing:
+  `apps/mobile/src/core/auth/sessionService.ts` ignores client-writable
+  `user_metadata.role` and `user_metadata.subscription_status`, reads trusted
+  `app_metadata.role` and `app_metadata.subscription_status` only, and defaults
+  to least privilege.
 - Registered but incomplete feature routes authenticate first, then return
   `501 feature.disabled`.
 - If JWT verification is not configured with `SUPABASE_JWT_SECRET`,
@@ -37,6 +42,8 @@ implementations.
 
 ## Global Rules
 
+- Expo Router route gates are a UX convenience only. They must never be treated
+  as authorization for parent, teacher, admin, entitlement, or student data.
 - Authorize every request after authentication and before loading full student
   content where possible.
 - Treat `404 resource.not_found` and `403 authorization.*` carefully so endpoints
@@ -53,6 +60,21 @@ implementations.
   object paths server-side, and audit URL creation without logging the URL.
 - Rate limits must apply to AI, auth abuse thresholds, signed URL creation,
   provider webhooks, notification device registration, and admin access.
+- Public mobile sign-up and onboarding must not write `role`, `admin`,
+  `teacher`, `parent`, or entitlement fields into client-writable auth metadata.
+- `public.users.role` is server-owned. Draft migration
+  `202606110001_server_owned_roles.sql` restores the self-update policy and adds
+  an invoker-rights trigger that rejects role changes unless the update runs as
+  a database admin or Supabase `service_role`. The same migration keeps legacy
+  `auth.users` sync hooks, when present, from copying client-writable
+  `raw_user_meta_data.role` into `public.users.role`.
+- `node scripts/verify-server-owned-roles.mjs --apply-local-migration` verifies
+  the configured development Supabase rejects authenticated
+  student-to-parent/teacher/admin role changes, rejects auth metadata role
+  escalation, and still permits the approved database admin grant path.
+- Teacher access requires an invite/admin/server approval flow that creates the
+  trusted role/profile/class ownership state. Parent access requires an active
+  server-backed `parent_student_links` row.
 
 ## Resource Access Matrix
 
@@ -73,8 +95,9 @@ implementations.
 
 ### Auth
 
-- `POST /auth/sign-up` can create student, parent, or teacher accounts. Admin
-  creation is out of band.
+- Public `POST /auth/sign-up` creates least-privileged student accounts by
+  default. Parent and teacher role grants are separate server/admin workflows;
+  admin creation is out of band.
 - `GET /auth/session` returns the authenticated user's derived role and public
   profile metadata only.
 - Auth endpoints must not expose provider admin details or service-role keys.

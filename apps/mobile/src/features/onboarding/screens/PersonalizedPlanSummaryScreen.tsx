@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   quoteBox: {
     backgroundColor: colors.onboarding.surface,
-    borderColor: "#E0E5EF",
+    borderColor: colors.onboarding.quoteBorder,
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 22,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     minHeight: 142,
     paddingHorizontal: 30,
     paddingVertical: 24,
-    shadowColor: "#111827",
+    shadowColor: colors.onboarding.cardShadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
     shadowRadius: 18,

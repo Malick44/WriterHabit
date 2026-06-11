@@ -258,6 +258,9 @@ export const colors = {
     previewBorder: "#AFC8FF",
     iconBubbleSoft: "#E8F1FF",
     label: "#3A3F4D",
+    avatarBorder: "#C5D3E3",
+    quoteBorder: "#E0E5EF",
+    cardShadow: "#111827",
   },
   overlay: {
     scrim: "rgba(15, 23, 42, 0.42)",

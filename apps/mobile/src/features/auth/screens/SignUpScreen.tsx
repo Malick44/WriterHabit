@@ -6,6 +6,7 @@ import type { ZodError, ZodIssue } from "zod";
 
 import type { MockSessionRole } from "@/core/auth/authTypes";
 import { routes } from "@/core/navigation/routeNames";
+import { palette } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { StatusState } from "@/shared/components/feedback";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
@@ -113,7 +114,7 @@ function RoleOption({
         {selected ? (
           <Ionicons
             accessible={false}
-            color="#FFFFFF"
+            color={palette.white}
             importantForAccessibility="no"
             name="checkmark"
             size={15}

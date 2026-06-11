@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
     backgroundColor: colors.onboarding.iconBubble,
-    borderColor: "#C5D3E3",
+    borderColor: colors.onboarding.avatarBorder,
     borderRadius: 44,
     borderWidth: 2,
     height: 88,

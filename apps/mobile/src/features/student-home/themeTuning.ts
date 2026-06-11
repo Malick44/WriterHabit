@@ -1,4 +1,4 @@
-import { colors } from "@/design/tokens";
+import { colors, palette } from "@/design/tokens";
 import {
   useTunableTokenOverrides,
   type TunableComponentConfig,
@@ -80,9 +80,9 @@ export type StudentHomeTokenPath = keyof StudentHomeTokenValues;
 export type StudentHomeTokenOverrides = Partial<StudentHomeTokenValues>;
 
 export const studentHomeTokenDefaults: StudentHomeTokenValues = {
-  "bottomNav.activeTint": "#6D28D9",
-  "bottomNav.background": "#FFFFFF",
-  "bottomNav.inactiveTint": "#94A3B8",
+  "bottomNav.activeTint": colors.dashboard.primary,
+  "bottomNav.background": palette.white,
+  "bottomNav.inactiveTint": palette.slate[400],
   "colors.accentCyan": homeColors.surfaceContainerHigh,
   "colors.achievementGold": homeColors.tertiaryFixedDim,
   "colors.buttonPrimary": homeColors.primary,

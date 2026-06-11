@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { KeyboardAvoidingView, Platform, Text, View, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 import { getAccessibleTextStyle, getAccessibleColors, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { CanvasAttachmentPreview } from "../components/CanvasAttachmentPreview";
@@ -33,7 +32,8 @@ export function WritingWorkspaceScreen() {
   const closePanel = useWritingWorkspaceUiStore((store) => store.closePanel);
   const [isSavingNow, setIsSavingNow] = useState(false);
   const { settings } = useAccessibilityContext();
-  const { primaryColor, tertiaryColor, fontSizeScale } = useGlacierThemeStore();
+  const primaryColor = colors.action.primary.background;
+  const accentColor = colors.gradeBand[state.gradeBand].accent;
 
   const saveNow = async () => {
     if (state.status !== "success") {
@@ -75,66 +75,77 @@ export function WritingWorkspaceScreen() {
   }, [rubricMetrics, rubricTotal]);
 
   const stickyFooter = successState && successState.viewModel.assignment ? (
-    <View
-      style={[
-        styles.footer,
-        {
-          backgroundColor: accessibleColors.surface,
-          borderTopColor: accessibleColors.border,
-        },
-      ]}
-    >
-      <TouchableOpacity
-        accessibilityLabel={t("writingWorkspace.saveDraft")}
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <View
         style={[
-          styles.footerButton,
-          styles.footerButtonSecondary,
-          { borderColor: primaryColor },
+          styles.footer,
+          {
+            backgroundColor: accessibleColors.surface,
+            borderTopColor: accessibleColors.border,
+          },
         ]}
-        onPress={() => {
-          void saveNow();
-        }}
-        disabled={isSavingNow}
       >
-        <Text
+        <TouchableOpacity
+          accessibilityLabel={t("writingWorkspace.saveDraft")}
+          accessibilityRole="button"
+          accessibilityState={{ busy: isSavingNow, disabled: isSavingNow }}
           style={[
-            getAccessibleTextStyle(type.bodyStrong, settings),
-            { color: primaryColor, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+            styles.footerButton,
+            styles.footerButtonSecondary,
+            { borderColor: primaryColor },
+            isSavingNow && styles.footerButtonDisabled,
           ]}
+          onPress={() => {
+            void saveNow();
+          }}
+          disabled={isSavingNow}
         >
-          {isSavingNow ? t("common.loading") : t("writingWorkspace.saveDraft")}
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={[
+              getAccessibleTextStyle(type.bodyStrong, settings),
+              { color: primaryColor },
+            ]}
+          >
+            {isSavingNow ? t("common.loading") : t("writingWorkspace.saveDraft")}
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        accessibilityLabel={t("writingWorkspace.submit.confirmCta")}
-        style={[
-          styles.footerButton,
-          styles.footerButtonPrimary,
-          { backgroundColor: primaryColor },
-          (!successState.viewModel.canSubmit || successState.submitStatus === "loading") && styles.footerButtonDisabled,
-        ]}
-        onPress={() => {
-          void submitDraft();
-        }}
-        disabled={!successState.viewModel.canSubmit || successState.submitStatus === "loading"}
-      >
-        <Text
+        <TouchableOpacity
+          accessibilityLabel={t("writingWorkspace.submit.confirmCta")}
+          accessibilityRole="button"
+          accessibilityState={{
+            busy: successState.submitStatus === "loading",
+            disabled: !successState.viewModel.canSubmit || successState.submitStatus === "loading",
+          }}
           style={[
-            getAccessibleTextStyle(type.bodyStrong, settings),
-            { color: colors.text.inverse, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+            styles.footerButton,
+            styles.footerButtonPrimary,
+            { backgroundColor: primaryColor },
+            (!successState.viewModel.canSubmit || successState.submitStatus === "loading") && styles.footerButtonDisabled,
           ]}
+          onPress={() => {
+            void submitDraft();
+          }}
+          disabled={!successState.viewModel.canSubmit || successState.submitStatus === "loading"}
         >
-          {successState.submitStatus === "loading" ? t("common.loading") : t("writingWorkspace.submit.confirmCta")}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <Text
+            style={[
+              getAccessibleTextStyle(type.bodyStrong, settings),
+              { color: colors.text.inverse },
+            ]}
+          >
+            {successState.submitStatus === "loading" ? t("common.loading") : t("writingWorkspace.submit.confirmCta")}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   ) : null;
 
   return (
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
+      keyboardAvoiding
       testID="writing-workspace-screen"
       footer={stickyFooter}
     >
@@ -178,6 +189,7 @@ export function WritingWorkspaceScreen() {
           <View style={styles.header}>
             <TouchableOpacity
               accessibilityLabel={t("common.back")}
+              accessibilityRole="button"
               onPress={() => router.back()}
               style={[styles.headerIconContainer, { backgroundColor: accessibleColors.surface }]}
             >
@@ -189,7 +201,7 @@ export function WritingWorkspaceScreen() {
               style={[
                 getAccessibleTextStyle(type.heading, settings),
                 styles.headerTitle,
-                { color: accessibleColors.text, fontSize: type.heading.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {t("writingWorkspace.headerTitle")}
@@ -239,16 +251,16 @@ export function WritingWorkspaceScreen() {
               style={[
                 getAccessibleTextStyle(type.caption, settings),
                 styles.promptLabel,
-                { color: tertiaryColor },
+                { color: accentColor },
               ]}
             >
-              {t("writingWorkspace.prompt.title").toUpperCase()}
+              {t("writingWorkspace.prompt.title")}
             </Text>
             <Text
               style={[
                 getAccessibleTextStyle(type.bodyStrong, settings),
                 styles.promptText,
-                { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {successState.viewModel.assignment.prompt}
@@ -273,7 +285,6 @@ export function WritingWorkspaceScreen() {
                   borderColor: accessibleColors.border,
                   color: accessibleColors.text,
                   minHeight: Math.max(300, successState.viewModel.gradeAdaptation.editorMinHeight),
-                  fontSize: type.body.fontSize * fontSizeScale,
                 },
               ]}
               testID="writing-workspace-draft-input"
@@ -294,6 +305,7 @@ export function WritingWorkspaceScreen() {
 
               <TouchableOpacity
                 accessibilityLabel={t("writingWorkspace.aiCoachButton")}
+                accessibilityRole="button"
                 style={[styles.coachButton, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}
                 onPress={() => openPanel("coach")}
               >
@@ -301,7 +313,7 @@ export function WritingWorkspaceScreen() {
                 <Text
                   style={[
                     getAccessibleTextStyle(type.bodyStrong, settings),
-                    { color: primaryColor, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                    { color: primaryColor },
                   ]}
                 >
                   {t("writingWorkspace.aiCoachButton")}
@@ -324,7 +336,7 @@ export function WritingWorkspaceScreen() {
               <Text
                 style={[
                   getAccessibleTextStyle(type.bodyStrong, settings),
-                  { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                  { color: accessibleColors.text },
                 ]}
               >
                 {t("writingWorkspace.rubric.title")}
@@ -332,14 +344,19 @@ export function WritingWorkspaceScreen() {
               <Text
                 style={[
                   getAccessibleTextStyle(type.bodySmall, settings),
-                  { color: accessibleColors.mutedText, fontSize: type.bodySmall.fontSize * fontSizeScale },
+                  { color: accessibleColors.mutedText },
                 ]}
               >
-                {completedRubricCount} / {rubricTotal}
+                {t("writingWorkspace.rubric.progress", { completed: completedRubricCount, total: rubricTotal })}
               </Text>
             </View>
 
-            <View style={styles.progressBar}>
+            <View
+              accessibilityLabel={t("writingWorkspace.rubric.progress", { completed: completedRubricCount, total: rubricTotal })}
+              accessibilityRole="progressbar"
+              accessibilityValue={{ max: rubricTotal, min: 0, now: completedRubricCount }}
+              style={styles.progressBar}
+            >
               {Array.from({ length: rubricTotal }).map((_, idx) => (
                 <View
                   key={idx}
@@ -407,9 +424,9 @@ const styles = StyleSheet.create({
   headerIconContainer: {
     alignItems: "center",
     borderRadius: radius.full,
-    height: 40,
     justifyContent: "center",
-    width: 40,
+    minHeight: layout.touchTarget,
+    minWidth: layout.touchTarget,
   },
   headerTitle: {
     flex: 1,
@@ -425,6 +442,7 @@ const styles = StyleSheet.create({
   promptLabel: {
     fontWeight: "600",
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
   promptText: {
     fontWeight: "500",

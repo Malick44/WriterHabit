@@ -1,6 +1,6 @@
 export const en = {
   common: {
-    appName: "WriteWise AI",
+    appName: "WriterHabit AI",
     loading: "Loading",
     retry: "Try again",
     save: "Save",
@@ -21,7 +21,7 @@ export const en = {
     emptyTitle: "Nothing here yet",
     successTitle: "All set",
     fallbackDisplayName: "Writer",
-    fallbackUserName: "WriteWise user",
+    fallbackUserName: "WriterHabit user",
   },
   modal: {
     close: "Close",
@@ -197,7 +197,7 @@ export const en = {
   },
   notifications: {
     channel: {
-      name: "WriteWise reminders",
+      name: "WriterHabit reminders",
     },
     dailyAssignment: {
       accessibility: "Daily writing reminder for {{title}}.",
@@ -234,10 +234,10 @@ export const en = {
   navigation: {
     loading: {
       title: "Checking your session",
-      description: "Finding the right WriteWise space for this account.",
+      description: "Finding the right WriterHabit space for this account.",
     },
     welcome: {
-      title: "Welcome to WriteWise AI",
+      title: "Welcome to WriterHabit AI",
       subtitle: "Sign in, create an account, or use a demo role for local routing checks.",
       mockTitle: "Demo session",
       mockDescription: "These controls only switch local development session state.",
@@ -246,7 +246,7 @@ export const en = {
       parentCta: "Continue as parent",
       teacherCta: "Continue as teacher",
       safetyNote:
-        "WriteWise coaches students through writing practice and revision; it does not complete assignments for them.",
+        "WriterHabit coaches students through writing practice and revision; it does not complete assignments for them.",
     },
     onboarding: {
       title: "Finish setup",
@@ -301,19 +301,19 @@ export const en = {
   },
   auth: {
     launch: {
-      title: "Launching WriteWise",
+      title: "Launching WriterHabit",
       description: "Checking your saved session.",
     },
     welcome: {
-      title: "WriteWise AI",
+      title: "WriterHabit AI",
       description: "A writing coach for planning, drafting, and revising with student thinking first.",
       heroTitle: "Your personal writing coach for school",
       heroSubtitle: "Improve your writing with AI feedback, daily practice, and skills that build confidence.",
       getStartedCta: "Get Started",
       alreadyHaveAccountCta: "I already have an account",
-      illustrationAccessibility: "WriteWise student and AI coach illustration",
-      logoLabel: "WriteWise AI",
-      logoIconAccessibility: "WriteWise logo",
+      illustrationAccessibility: "WriterHabit student and AI coach illustration",
+      logoLabel: "WriterHabit AI",
+      logoIconAccessibility: "WriterHabit logo",
       positioningTitle: "Coaching, not completion",
       positioningDescription:
         "Students get hints, questions, and revision tasks while parents and teachers see progress without replacing the student's work.",
@@ -326,7 +326,7 @@ export const en = {
       demoParentCta: "Demo parent workspace",
       demoTeacherCta: "Demo teacher workspace",
       safetyNote:
-        "WriteWise coaches students through writing practice and revision; it does not complete assignments for them.",
+        "WriterHabit coaches students through writing practice and revision; it does not complete assignments for them.",
     },
     demoUsers: {
       title: "Demo users",
@@ -502,7 +502,7 @@ export const en = {
       helper: "We'll email you a secure link to log in instantly.",
       heroImageAccessibility: "Student and robot coach",
       linkSentCta: "Link Sent!",
-      linkSentHelper: "Check your inbox for a secure WriteWise login link.",
+      linkSentHelper: "Check your inbox for a secure WriterHabit login link.",
       noAccountPrompt: "Don't have an account?",
       socialUnavailableTitle: "Social sign-in is not ready yet",
       subtitle: "Your personal writing coach is ready to help.",
@@ -525,7 +525,7 @@ export const en = {
       helper: "Create your account, then finish setup with coaching goals and grade-level preferences.",
       heroImageAccessibility: "Student and robot coach",
       socialUnavailableTitle: "Social sign-up is not ready yet",
-      subtitle: "Create your writing workspace and choose how WriteWise should support you.",
+      subtitle: "Create your writing workspace and choose how WriterHabit should support you.",
       submitCta: "Create account",
       switchCta: "Sign In",
       title: "Create account",
@@ -655,7 +655,7 @@ export const en = {
     },
     confidence: {
       title: "How does writing feel right now?",
-      description: "Choose the answer that feels closest. This only helps WriteWise coach at the right pace.",
+      description: "Choose the answer that feels closest. This only helps WriterHabit coach at the right pace.",
       confidenceAccessibilityHint: "Select this writing confidence level",
       options: {
         building: {
@@ -751,7 +751,7 @@ export const en = {
       readyDescription: "The first version is ready. Future assignments can tune it as progress data arrives.",
       readyTitle: "Plan ready",
       safetyNote:
-        "WriteWise will coach with hints, questions, and revision tasks. It will not write assignments for the student.",
+        "WriterHabit will coach with hints, questions, and revision tasks. It will not write assignments for the student.",
       startCta: "Start My First Assignment",
     },
     errors: {
@@ -762,7 +762,7 @@ export const en = {
       gradeRequired: "Choose a grade.",
       planFailed: "We could not create the plan. Try again.",
       readFailed: "Saved setup choices could not be loaded. You can continue from here.",
-      roleRequired: "Choose how you are using WriteWise.",
+      roleRequired: "Choose how you are using WriterHabit.",
       title: "Setup needs attention",
       validationFailed: "Review the required choices before continuing.",
       writeFailed: "This choice was not saved on the device. Try again.",
@@ -786,7 +786,7 @@ export const en = {
     },
     stats: {
       dayStreak: "day streak",
-      points: "WriteWise points",
+      points: "WriterHabit points",
       level: "Level {{level}}",
       levelName: "Word Explorer",
     },
@@ -1116,7 +1116,7 @@ export const en = {
       startErrorTitle: "Could not start assignment",
       startErrorDescription: "Try again. Your existing draft is still available.",
       startErrorAccessibility: "Assignment start error",
-      safetyNote: "WriteWise can coach with hints and revision questions, but the assignment stays your work.",
+      safetyNote: "WriterHabit can coach with hints and revision questions, but the assignment stays your work.",
     },
     submit: {
       screenTitle: "Submit assignment",
@@ -1282,6 +1282,7 @@ export const en = {
     rubric: {
       accessibility: "Writing workspace rubric checklist",
       note: "Use this checklist to revise your own draft before submitting.",
+      progress: "{{completed}} of {{total}}",
       title: "Revision checklist",
     },
     submit: {
@@ -1588,7 +1589,7 @@ export const en = {
     },
     safetyBlocked: {
       title: "Use coaching help",
-      description: "WriteWise can give hints, questions, explanations, and revision tasks, but it cannot replace your thinking.",
+      description: "WriterHabit can give hints, questions, explanations, and revision tasks, but it cannot replace your thinking.",
       action: "Choose a safe move",
       accessibility: "AI coach safety policy blocked this request",
     },
@@ -1744,7 +1745,7 @@ export const en = {
       submitAccessibility: "Submit revision task",
       submitCta: "Submit revision",
       submitHint: "Complete this feedback cycle with your own revised passage.",
-      subtitle: "Make one focused change. WriteWise does not rewrite it for you.",
+      subtitle: "Make one focused change. WriterHabit does not rewrite it for you.",
       taskAccessibility: "Revision task instructions",
       taskSubtitle: "Complete one clear task before celebrating progress.",
       taskTitle: "Task",
@@ -1871,7 +1872,7 @@ export const en = {
         badges: "Badges",
         badgesSubtitle: "Milestones for steady writing habits.",
         metrics: "This week",
-        metricsSubtitle: "Practice signals WriteWise tracks for growth.",
+        metricsSubtitle: "Practice signals WriterHabit tracks for growth.",
         skills: "Skill tracking",
         skillsSubtitle: "Open a skill to see details and a next step.",
         streak: "Writing streak",
@@ -2570,10 +2571,10 @@ export const en = {
         settingsAccessibility: "Open teacher settings",
       },
       insight: {
-        accessibility: "WriteWise AI teacher insight",
+        accessibility: "WriterHabit AI teacher insight",
         description: "Class grammar accuracy is up 12% today. Review which lesson helped most.",
-        dismissAccessibility: "Dismiss WriteWise AI insight",
-        title: "WriteWise AI Insight",
+        dismissAccessibility: "Dismiss WriterHabit AI insight",
+        title: "WriterHabit AI Insight",
       },
       performance: {
         accessibility: "Class average score is {{score}} percent",
@@ -2819,7 +2820,7 @@ export const en = {
       fields: {
         displayName: {
           error: "Add a display name.",
-          hint: "This is how your name appears in WriteWise.",
+          hint: "This is how your name appears in WriterHabit.",
           label: "Display name",
           placeholder: "Student name",
         },
@@ -2907,14 +2908,14 @@ export const en = {
       validationTitle: "Choose a goal",
     },
     notifications: {
-      deliveryNoticeDescription: "When notifications are allowed, WriteWise schedules reminders on this device and syncs preferences to the account.",
+      deliveryNoticeDescription: "When notifications are allowed, WriterHabit schedules reminders on this device and syncs preferences to the account.",
       deliveryNoticeTitle: "Reminder delivery is on this device",
       headerBackAccessibility: "Go back from notifications",
       save: "Save notifications",
       saveAccessibility: "Save notification preferences",
       savedDescription: "Notification preferences are saved and scheduled when device permissions allow.",
       savedTitle: "Notifications saved",
-      subtitle: "Choose which WriteWise reminders should be prepared for this student profile.",
+      subtitle: "Choose which WriterHabit reminders should be prepared for this student profile.",
       title: "Notifications",
       toggles: {
         all: "All notifications",
@@ -2936,7 +2937,7 @@ export const en = {
       saveAccessibility: "Save language preference",
       savedDescription: "Language preference is saved on this device.",
       savedTitle: "Language saved",
-      subtitle: "WriteWise is available in English today. More languages are on the way.",
+      subtitle: "WriterHabit is available in English today. More languages are on the way.",
       title: "Language",
     },
     settings: {
@@ -2950,7 +2951,7 @@ export const en = {
       headerBackAccessibility: "Go back from settings",
       headerSearchAccessibility: "Search settings",
       logout: "Log Out",
-      logoutAccessibility: "Log out of WriteWise",
+      logoutAccessibility: "Log out of WriterHabit",
       notifications: {
         emailSummaries: "Email Summaries",
         push: "Push Notifications",
@@ -2975,7 +2976,7 @@ export const en = {
       title: "Settings",
       unavailableDescription: "This setting is prepared in the interface and will open when the production account service is connected.",
       unavailableTitle: "Setting not connected yet",
-      version: "WriteWise AI v0.1.0 · Made with academic excellence",
+      version: "WriterHabit AI v0.1.0 · Made with academic excellence",
     },
     profile: {
       account: {
@@ -3007,7 +3008,7 @@ export const en = {
       headerBackAccessibility: "Go back from profile",
       headerSettingsAccessibility: "Open profile settings",
       logout: "Log Out",
-      logoutAccessibility: "Log out of WriteWise",
+      logoutAccessibility: "Log out of WriterHabit",
       preferences: {
         appLanguage: "App Language",
         darkMode: "Dark Mode",
@@ -3036,7 +3037,7 @@ export const en = {
         wordsAccessibility: "{{value}} words written",
       },
       support: {
-        about: "About WriteWise",
+        about: "About WriterHabit",
         helpCenter: "Help Center",
       },
       supportTitle: "Help & Support",
@@ -3044,17 +3045,17 @@ export const en = {
     },
   },
   subscriptions: {
-    paywallTitle: "WriteWise Plus",
+    paywallTitle: "WriterHabit Plus",
     upgradeTitle: "Upgrade",
     restorePurchases: "Restore purchases",
     managePlan: "Manage plan",
-    managePlanAccessibility: "Manage WriteWise Plus plan",
+    managePlanAccessibility: "Manage WriterHabit Plus plan",
     managePlanHint: "Plan management opens after store subscriptions are connected.",
     paywall: {
       activeSubtitle: "Your account has Plus access.",
-      activeTitle: "WriteWise Plus is active",
+      activeTitle: "WriterHabit Plus is active",
       subtitle: "Practice support that keeps students doing the thinking.",
-      title: "WriteWise Plus",
+      title: "WriterHabit Plus",
     },
     loading: {
       accessibility: "Loading subscription details",
@@ -3077,10 +3078,10 @@ export const en = {
       title: "Showing saved plan details",
     },
     active: {
-      accessibility: "WriteWise Plus active",
+      accessibility: "WriterHabit Plus active",
       description: "Plus learning supports are available on this account.",
       descriptionWithRenewal: "Plus learning supports are available. {{renewal}}.",
-      planAccessibility: "Current WriteWise Plus plan",
+      planAccessibility: "Current WriterHabit Plus plan",
       title: "Plus access is ready",
     },
     pastDue: {
@@ -3089,14 +3090,14 @@ export const en = {
       title: "Plan needs attention",
     },
     trust: {
-      accessibility: "WriteWise Plus trust summary",
+      accessibility: "WriterHabit Plus trust summary",
       disclosure: "No charge happens in this build. Store checkout will confirm price, renewal, cancellation, and account owner approval before release.",
       privacy: "Privacy",
-      privacyAccessibility: "Open WriteWise privacy policy",
+      privacyAccessibility: "Open WriterHabit privacy policy",
       privacyHint: "Opens the privacy policy in the browser.",
       summary: "Plus adds progress history, reports, and review depth. It does not write assignments for students.",
       terms: "Terms",
-      termsAccessibility: "Open WriteWise terms",
+      termsAccessibility: "Open WriterHabit terms",
       termsHint: "Opens the terms in the browser.",
       title: "Built for learning and family trust",
     },
@@ -3135,7 +3136,7 @@ export const en = {
     },
     plans: {
       selectAccessibility: "Select {{title}}",
-      selectHint: "Chooses this WriteWise Plus plan option.",
+      selectHint: "Chooses this WriterHabit Plus plan option.",
       subtitle: "Prices are placeholders until App Store or Play Store products are connected.",
       title: "Choose a plan",
       monthly: {
@@ -3151,18 +3152,18 @@ export const en = {
       },
     },
     checkout: {
-      accessibility: "Preview WriteWise Plus",
+      accessibility: "Preview WriterHabit Plus",
       cta: "Preview Plus",
-      errorAccessibility: "WriteWise Plus preview error",
+      errorAccessibility: "WriterHabit Plus preview error",
       errorDescription: "The preview could not start. Try again.",
       errorTitle: "Preview did not start",
       hint: "Starts a local Plus preview without charging this account.",
-      successAccessibility: "WriteWise Plus preview started",
+      successAccessibility: "WriterHabit Plus preview started",
       successDescription: "Plus access is active in this local build. Store checkout remains future work.",
       successTitle: "Plus preview started",
     },
     restore: {
-      accessibility: "Restore WriteWise Plus purchases",
+      accessibility: "Restore WriterHabit Plus purchases",
       errorAccessibility: "Restore purchases error",
       errorDescription: "We could not check for purchases. Try again later.",
       errorTitle: "Restore did not finish",
@@ -3188,12 +3189,12 @@ export const en = {
     },
     upgrade: {
       accessibility: "Upgrade prompt",
-      continueFreeAccessibility: "Continue with free WriteWise tools",
+      continueFreeAccessibility: "Continue with free WriterHabit tools",
       continueFreeCta: "Keep using free tools",
       continueFreeHint: "Returns to the available free writing flow.",
-      openPaywallAccessibility: "Open WriteWise Plus plans",
+      openPaywallAccessibility: "Open WriterHabit Plus plans",
       openPaywallCta: "View Plus plans",
-      openPaywallHint: "Opens the WriteWise Plus paywall.",
+      openPaywallHint: "Opens the WriterHabit Plus paywall.",
       paymentIssueDescription: "The account owner can review the plan. Free writing practice remains available.",
       paymentIssueTitle: "Plan needs attention",
       subtitle: "Plus can unlock deeper review and reporting while free practice stays available.",
@@ -3225,20 +3226,20 @@ export const en = {
   accessibility: {
     screen: {
       title: "Accessibility",
-      subtitle: "Make WriteWise easier to read, hear, and navigate.",
+      subtitle: "Make WriterHabit easier to read, hear, and navigate.",
       loadingTitle: "Loading accessibility settings",
       loadingDescription: "Checking saved preferences on this device.",
       errorTitle: "Settings were not saved",
       errorDescription: "Your latest change could not be saved locally. Try again.",
       savedTitle: "Preferences saved",
-      savedDescription: "These settings apply across shared WriteWise screens.",
+      savedDescription: "These settings apply across shared WriterHabit screens.",
       resetCta: "Reset accessibility settings",
     },
     textSize: {
       label: "Text size",
-      description: "Choose how large shared WriteWise text appears.",
+      description: "Choose how large shared WriterHabit text appears.",
       defaultLabel: "Default",
-      defaultDescription: "Use the standard WriteWise text scale.",
+      defaultDescription: "Use the standard WriterHabit text scale.",
       largeLabel: "Large",
       largeDescription: "Increase text and controls for easier reading.",
       extraLargeLabel: "Extra large",

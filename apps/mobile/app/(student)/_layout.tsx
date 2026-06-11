@@ -1,15 +1,17 @@
 import { StyleSheet, View, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RouteGate } from "@/core/navigation/RouteGate";
-import { colors } from "@/design/tokens";
+import { colors, palette } from "@/design/tokens";
 import { overrideStyle } from "@/devtools/theme-tuner";
 import { studentHomeTokenDefaults, useStudentHomeTokenOverrides } from "@/features/student-home/themeTuning";
 import { useI18n } from "@/i18n";
 
 export default function StudentLayout() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   const tuned = useStudentHomeTokenOverrides();
 
   return (
@@ -39,7 +41,7 @@ export default function StudentLayout() {
               case "progress/index":
                 return (
                   <Ionicons
-                    name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
+                    name={focused ? "bar-chart" : "bar-chart-outline"}
                     size={size + 1}
                     color={color}
                   />
@@ -54,6 +56,10 @@ export default function StudentLayout() {
           tabBarLabelStyle: styles.tabBarLabel,
           tabBarStyle: [
             styles.tabBar,
+            {
+              height: 74 + insets.bottom,
+              paddingBottom: Math.max(insets.bottom, 18),
+            },
             overrideStyle<ViewStyle>({ backgroundColor: tuned["bottomNav.background"] }),
           ],
         })}
@@ -119,12 +125,12 @@ export default function StudentLayout() {
 const styles = StyleSheet.create({
   createTabButton: {
     alignItems: "center",
-    backgroundColor: "#6D28D9",
+    backgroundColor: colors.dashboard.primary,
     borderRadius: 32,
     height: 64,
     justifyContent: "center",
     marginBottom: 25,
-    shadowColor: "#6D28D9",
+    shadowColor: colors.dashboard.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 18,
@@ -132,12 +138,10 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     backgroundColor: colors.background.surface,
-    borderTopColor: "#EEF0F4",
+    borderTopColor: palette.slate[100],
     borderTopWidth: 1,
-    height: 92,
-    paddingBottom: 18,
     paddingTop: 9,
-    shadowColor: "#0F172A",
+    shadowColor: palette.slate[900],
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.08,
     shadowRadius: 20,

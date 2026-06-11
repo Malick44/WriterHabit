@@ -26,9 +26,16 @@ import {
   useRegisterTunableComponents,
   useRegisterTunableScreen,
 } from "@/devtools/theme-tuner";
+import { palette } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import {
+  getAccessibleColors,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+  type AccessibilitySettings,
+} from "@/shared/utils/accessibility";
 
 import { useStudentHomeData } from "../hooks/useStudentHomeData";
 import {
@@ -139,6 +146,26 @@ function tunedTextStyle(color?: string, fontSize?: number, lineHeight?: number):
     lineHeight:
       lineHeight ?? (fontSize === undefined ? undefined : Math.round(fontSize * 1.4)),
   });
+}
+
+/**
+ * High-contrast color overrides for directly colored dashboard text. Resolves
+ * to null entries when high contrast is off so the navy palette is untouched.
+ */
+function getHighContrastTextStyles(settings: AccessibilitySettings): {
+  body: TextStyle | null;
+  muted: TextStyle | null;
+} {
+  if (!settings.highContrast) {
+    return { body: null, muted: null };
+  }
+
+  const accessibleColors = getAccessibleColors(settings);
+
+  return {
+    body: { color: accessibleColors.text },
+    muted: { color: accessibleColors.mutedText },
+  };
 }
 
 export function StudentHomeScreen() {
@@ -403,14 +430,19 @@ function DashboardSection({
   titleKey: TranslationKey;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
 
   return (
     <View style={styles.section}>
       <Text
-        maxFontSizeMultiplier={1.1}
         numberOfLines={1}
-        style={[styles.sectionTitle, tunedTextStyle(tuned["colors.textSecondary"])]}
+        style={[
+          getAccessibleTextStyle(styles.sectionTitle, settings),
+          tunedTextStyle(tuned["colors.textSecondary"]),
+          highContrastText.muted,
+        ]}
       >
         {t(titleKey)}
       </Text>
@@ -429,14 +461,19 @@ function SectionHeaderWithAction({
   titleKey: TranslationKey;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
 
   return (
     <View style={styles.sectionHeaderRow}>
       <Text
-        maxFontSizeMultiplier={1.1}
         numberOfLines={1}
-        style={[styles.sectionTitle, tunedTextStyle(tuned["colors.textSecondary"])]}
+        style={[
+          getAccessibleTextStyle(styles.sectionTitle, settings),
+          tunedTextStyle(tuned["colors.textSecondary"]),
+          highContrastText.muted,
+        ]}
       >
         {t(titleKey)}
       </Text>
@@ -448,9 +485,12 @@ function SectionHeaderWithAction({
         style={({ pressed }) => [styles.seeAllButton, pressed ? styles.pressed : null]}
       >
         <Text
-          maxFontSizeMultiplier={1.05}
           numberOfLines={1}
-          style={[styles.seeAllText, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+          style={[
+            getAccessibleTextStyle(styles.seeAllText, settings),
+            tunedTextStyle(tuned["colors.buttonPrimary"]),
+            highContrastText.body,
+          ]}
         >
           {t("common.viewAll")}
         </Text>
@@ -469,7 +509,9 @@ function TodayAssignmentCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
   const primarySkill = assignment.skillFocus[0];
   const statusLabel = getAssignmentStatusLabel(t, assignment);
   const skillLabel = primarySkill ? getSkillLabel(t, primarySkill) : t("common.unavailable");
@@ -492,19 +534,22 @@ function TodayAssignmentCard({
       <View style={styles.assignmentTitleRow}>
         <View style={styles.assignmentTitleCopy}>
           <Text
-            maxFontSizeMultiplier={1.12}
             numberOfLines={3}
             style={[
-              styles.assignmentTitle,
+              getAccessibleTextStyle(styles.assignmentTitle, settings),
               tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
+              highContrastText.body,
             ]}
           >
             {assignment.title}
           </Text>
           <Text
-            maxFontSizeMultiplier={1.05}
             numberOfLines={1}
-            style={[styles.assignmentSkill, tunedTextStyle(tuned["colors.textSecondary"])]}
+            style={[
+              getAccessibleTextStyle(styles.assignmentSkill, settings),
+              tunedTextStyle(tuned["colors.textSecondary"]),
+              highContrastText.muted,
+            ]}
           >
             {skillLabel}
           </Text>
@@ -520,9 +565,12 @@ function TodayAssignmentCard({
             color={tuned["colors.textSecondary"] ?? homeColors.onSurfaceVariant}
           />
           <Text
-            maxFontSizeMultiplier={1.05}
             numberOfLines={1}
-            style={[styles.metaText, tunedTextStyle(tuned["colors.textSecondary"])]}
+            style={[
+              getAccessibleTextStyle(styles.metaText, settings),
+              tunedTextStyle(tuned["colors.textSecondary"]),
+              highContrastText.muted,
+            ]}
           >
             {t("common.minutes", { count: assignment.estimatedMinutes })}
           </Text>
@@ -533,7 +581,10 @@ function TodayAssignmentCard({
             size={16}
             color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant}
           />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.metaTextMuted}>
+          <Text
+            numberOfLines={1}
+            style={[getAccessibleTextStyle(styles.metaTextMuted, settings), highContrastText.muted]}
+          >
             {statusLabel}
           </Text>
         </View>
@@ -580,7 +631,9 @@ function WeeklyProgressSummary({
 }
 
 function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
 
   return (
     <View
@@ -594,22 +647,25 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
       <View style={styles.statCopy}>
         <Text
           adjustsFontSizeToFit
-          maxFontSizeMultiplier={1.05}
           minimumFontScale={0.75}
           numberOfLines={1}
           style={[
-            styles.statValue,
+            getAccessibleTextStyle(styles.statValue, settings),
             tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
+            highContrastText.body,
           ]}
         >
           {stat.value}
         </Text>
         <Text
           adjustsFontSizeToFit
-          maxFontSizeMultiplier={1.05}
           minimumFontScale={0.72}
           numberOfLines={1}
-          style={[styles.statLabel, tunedTextStyle(tuned["colors.textSecondary"])]}
+          style={[
+            getAccessibleTextStyle(styles.statLabel, settings),
+            tunedTextStyle(tuned["colors.textSecondary"]),
+            highContrastText.muted,
+          ]}
         >
           {stat.label}
         </Text>
@@ -628,7 +684,9 @@ function SkillProgressCard({
   skills: StudentHomeSkillProgress[];
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
   const ringColors = [
     tuned["colors.progressGreen"] ?? skillProgressColors[0],
     tuned["colors.progressGreen"] ?? skillProgressColors[1],
@@ -657,7 +715,7 @@ function SkillProgressCard({
             />
           ))
         ) : (
-          <Text maxFontSizeMultiplier={1.1} style={styles.emptyInlineText}>
+          <Text style={[getAccessibleTextStyle(styles.emptyInlineText, settings), highContrastText.muted]}>
             {t("studentHome.skills.previewSubtitle")}
           </Text>
         )}
@@ -676,7 +734,9 @@ function SkillProgressRing({
   score: number;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
   const activeSegments = Math.round((Math.min(100, Math.max(0, score)) / 100) * RING_SEGMENT_COUNT);
 
   return (
@@ -705,10 +765,14 @@ function SkillProgressRing({
             overrideStyle<ViewStyle>({ backgroundColor: tuned["colors.cardBackground"] }),
           ]}
         >
+          {/* The ring center is a fixed 38px circle, so text scaling must stay
+              capped here and shrink to fit instead of overflowing the ring. */}
           <Text
+            adjustsFontSizeToFit
             maxFontSizeMultiplier={1}
+            minimumFontScale={0.6}
             numberOfLines={1}
-            style={[styles.ringText, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+            style={[styles.ringText, tunedTextStyle(tuned["colors.buttonPrimary"]), highContrastText.body]}
           >
             {t("studentHome.skills.percent", { count: score })}
           </Text>
@@ -716,10 +780,13 @@ function SkillProgressRing({
       </View>
       <Text
         adjustsFontSizeToFit
-        maxFontSizeMultiplier={1.05}
         minimumFontScale={0.72}
         numberOfLines={1}
-        style={[styles.skillRingLabel, tunedTextStyle(tuned["colors.textSecondary"])]}
+        style={[
+          getAccessibleTextStyle(styles.skillRingLabel, settings),
+          tunedTextStyle(tuned["colors.textSecondary"]),
+          highContrastText.muted,
+        ]}
       >
         {label}
       </Text>
@@ -737,7 +804,9 @@ function ContinueDraftCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
   const primaryColor = tuned["colors.buttonPrimary"] ?? homeColors.primary;
 
   return (
@@ -760,16 +829,22 @@ function ContinueDraftCard({
       </View>
       <View style={styles.draftCopy}>
         <Text
-          maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          style={[styles.draftTitle, tunedTextStyle(tuned["colors.buttonPrimary"])]}
+          style={[
+            getAccessibleTextStyle(styles.draftTitle, settings),
+            tunedTextStyle(tuned["colors.buttonPrimary"]),
+            highContrastText.body,
+          ]}
         >
           {draft.title}
         </Text>
         <Text
-          maxFontSizeMultiplier={1.05}
           numberOfLines={1}
-          style={[styles.draftMeta, tunedTextStyle(tuned["colors.textSecondary"])]}
+          style={[
+            getAccessibleTextStyle(styles.draftMeta, settings),
+            tunedTextStyle(tuned["colors.textSecondary"]),
+            highContrastText.muted,
+          ]}
         >
           {draft.lastEditedLabel}
         </Text>
@@ -813,7 +888,9 @@ function RecentFeedbackCard({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
   const feedbackCopy = feedback?.strength ?? t("studentHome.feedback.emptyDescription");
 
   return (
@@ -834,11 +911,11 @@ function RecentFeedbackCard({
       <View style={styles.feedbackCopy}>
         <Ionicons name="checkmark-circle" size={21} color={tuned["colors.progressGreen"] ?? homeColors.secondary} />
         <Text
-          maxFontSizeMultiplier={1.08}
           numberOfLines={2}
           style={[
-            styles.feedbackText,
+            getAccessibleTextStyle(styles.feedbackText, settings),
             tunedTextStyle(tuned["colors.textPrimary"], tuned["typography.bodySize"], tuned["typography.bodyLineHeight"]),
+            highContrastText.body,
           ]}
         >
           {feedbackCopy}
@@ -846,7 +923,10 @@ function RecentFeedbackCard({
       </View>
       {feedback ? (
         <View style={styles.rewardChip}>
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.rewardText}>
+          <Text
+            numberOfLines={1}
+            style={[getAccessibleTextStyle(styles.rewardText, settings), highContrastText.body]}
+          >
             {t("studentHome.feedback.points", { count: FEEDBACK_REWARD_POINTS })}
           </Text>
         </View>
@@ -857,7 +937,7 @@ function RecentFeedbackCard({
 
 const cardShadow = {
   elevation: 2,
-  shadowColor: "#000000",
+  shadowColor: palette.black,
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.05,
   shadowRadius: 12,

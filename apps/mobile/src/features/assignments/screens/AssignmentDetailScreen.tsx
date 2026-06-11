@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getAssignmentSubmissionRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
-import { layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
@@ -31,16 +32,16 @@ import type { AssignmentRecord } from "../types";
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
 const detailColors = {
-  background: "#f8f9ff",
-  onPrimary: "#ffffff",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  secondary: "#006c49",
-  surface: "#f8f9ff",
-  surfaceContainer: "#e5eeff",
-  surfaceLowest: "#ffffff",
+  background: colors.dashboard.background,
+  onPrimary: colors.dashboard.onPrimary,
+  onSurface: colors.dashboard.onSurface,
+  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  secondary: colors.dashboard.secondary,
+  surface: colors.dashboard.surface,
+  surfaceContainer: colors.dashboard.surfaceContainer,
+  surfaceLowest: colors.dashboard.surfaceLowest,
 } as const;
 
 const detailShadow = {
@@ -184,17 +185,13 @@ function RubricList({ assignment }: { assignment: AssignmentRecord }) {
 
 function AssignmentContent({
   assignment,
-  bookmarked,
   hintVisible,
   isOffline,
-  onBookmarkPress,
   onRefresh,
 }: {
   assignment: AssignmentRecord;
-  bookmarked: boolean;
   hintVisible: boolean;
   isOffline: boolean;
-  onBookmarkPress: () => void;
   onRefresh: () => void;
 }) {
   const { t } = useI18n();
@@ -208,16 +205,6 @@ function AssignmentContent({
           accessibilityLabelKey: "common.back",
           type: "back",
         }}
-        rightActions={[
-          {
-            accessibilityLabelKey: bookmarked
-              ? "assignments.detail.bookmarkedAccessibility"
-              : "assignments.detail.bookmarkAccessibility",
-            icon: bookmarked ? "bookmark" : "bookmark-outline",
-            onPress: onBookmarkPress,
-            type: "icon",
-          },
-        ]}
         style={styles.header}
         titleKey="assignments.detail.headerTitle"
         variant="centered"
@@ -316,13 +303,8 @@ export function AssignmentDetailScreen() {
   const params = useLocalSearchParams<{ assignmentId?: string | string[] }>();
   const assignmentId = useMemo(() => getParamValue(params.assignmentId), [params.assignmentId]);
   const state = useAssignmentDetailData(assignmentId);
-  const [bookmarked, setBookmarked] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
   const contentWidth = Math.min(width, 480);
-
-  const handleBookmarkPress = useCallback(() => {
-    setBookmarked((current) => !current);
-  }, []);
 
   const handleHintPress = useCallback(() => {
     setHintVisible((current) => !current);
@@ -416,10 +398,8 @@ export function AssignmentDetailScreen() {
           <DetailGradeBandContext.Provider value={state.gradeBand}>
             <AssignmentContent
               assignment={assignment}
-              bookmarked={bookmarked}
               hintVisible={hintVisible}
               isOffline={state.viewModel.isOffline}
-              onBookmarkPress={handleBookmarkPress}
               onRefresh={state.refetch}
             />
           </DetailGradeBandContext.Provider>
@@ -436,17 +416,21 @@ export function AssignmentDetailScreen() {
         ]}
       >
         <View style={styles.bottomBarSurface}>
-          <Button
+          {/* Shared Button does not forward accessibilityState, so the hint
+              toggle uses Pressable to expose its expanded/collapsed state. */}
+          <Pressable
             accessibilityHint={t("assignments.detail.hintButtonHint")}
             accessibilityLabel={t("assignments.detail.hintButtonAccessibility")}
-            label={t("assignments.detail.hintCta")}
-            leftAccessory={<Ionicons color={detailColors.onSurface} name="bulb-outline" size={20} />}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: hintVisible }}
             onPress={handleHintPress}
-            size="md"
-            style={styles.hintButton}
-            textStyle={styles.hintButtonText}
-            variant="secondary"
-          />
+            style={({ pressed }) => [styles.hintButton, pressed ? styles.hintButtonPressed : null]}
+          >
+            <Ionicons color={detailColors.onSurface} name="bulb-outline" size={20} />
+            <DetailText role="button" style={styles.hintButtonText}>
+              {t("assignments.detail.hintCta")}
+            </DetailText>
+          </Pressable>
           <Button
             accessibilityHint={
               state.viewModel.canSubmit ? t("assignments.submit.hint") : t("assignments.detail.startWritingHint")
@@ -533,16 +517,23 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   hintButton: {
+    alignItems: "center",
     backgroundColor: "transparent",
     borderColor: detailColors.outlineVariant,
     borderRadius: radius.full,
     borderWidth: 2,
+    flexDirection: "row",
     flexShrink: 0,
+    gap: spacing.sm,
     height: 52,
+    justifyContent: "center",
     minWidth: 104,
+    paddingHorizontal: spacing.lg,
+  },
+  hintButtonPressed: {
+    opacity: 0.7,
   },
   hintButtonText: {
-    color: detailColors.onSurface,
     fontWeight: "800",
   },
   hintCard: {
@@ -631,9 +622,7 @@ const styles = StyleSheet.create({
     paddingBottom: 144,
   },
   sectionTitle: {
-    fontSize: 18,
     fontWeight: "800",
-    lineHeight: 24,
   },
   skillCopy: {
     flex: 1,

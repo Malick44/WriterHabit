@@ -4,13 +4,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getStudentReviewCompletionRoute } from "@/core/navigation/deepLinks";
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
 import { Modal as AppModal } from "@/shared/components/modals";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
-import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+import {
+  getAccessibleColors,
+  getAccessibleHitSlop,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import { RevisionComparisonCard } from "../components";
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
@@ -56,7 +60,6 @@ export function RevisionScreen() {
   const revisionErrorKey = getRevisionErrorKey(revisionError);
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
-  const { fontSizeScale, primaryColor, tertiaryColor, glassOpacity } = useGlacierThemeStore();
   const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
 
   const [isCompareOpen, setIsCompareOpen] = useState(false);
@@ -204,17 +207,18 @@ export function RevisionScreen() {
     >
       <TouchableOpacity
         accessibilityLabel={t("feedbackReview.revision.compareCta")}
+        accessibilityRole="button"
         style={[
           styles.footerButton,
           styles.footerButtonSecondary,
-          { borderColor: primaryColor },
+          { borderColor: colors.action.primary.background },
         ]}
         onPress={() => setIsCompareOpen(true)}
       >
         <Text
           style={[
             getAccessibleTextStyle(type.bodyStrong, settings),
-            { color: primaryColor, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+            { color: colors.action.primary.background },
           ]}
         >
           {t("feedbackReview.revision.compareCta")}
@@ -223,10 +227,11 @@ export function RevisionScreen() {
 
       <TouchableOpacity
         accessibilityLabel={t("feedbackReview.revision.submitCta")}
+        accessibilityRole="button"
         style={[
           styles.footerButton,
           styles.footerButtonPrimary,
-          { backgroundColor: primaryColor },
+          { backgroundColor: colors.action.primary.background },
           state.revisionStatus === "loading" && styles.footerButtonDisabled,
         ]}
         onPress={() => {
@@ -237,7 +242,7 @@ export function RevisionScreen() {
         <Text
           style={[
             getAccessibleTextStyle(type.bodyStrong, settings),
-            { color: colors.text.inverse, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+            { color: colors.text.inverse },
           ]}
         >
           {state.revisionStatus === "loading" ? t("common.loading") : t("feedbackReview.revision.submitCta")}
@@ -302,10 +307,12 @@ export function RevisionScreen() {
           <View style={styles.header}>
             <TouchableOpacity
               accessibilityLabel={t("common.back")}
+              accessibilityRole="button"
+              hitSlop={getAccessibleHitSlop(settings)}
               onPress={() => router.back()}
               style={[styles.headerIconContainer, { backgroundColor: accessibleColors.surface }]}
             >
-              <Ionicons name="arrow-back" size={24} color={primaryColor} />
+              <Ionicons name="arrow-back" size={24} color={colors.action.primary.background} />
             </TouchableOpacity>
 
             <View style={styles.autosaveBadgeRow}>
@@ -350,7 +357,7 @@ export function RevisionScreen() {
               style={[
                 getAccessibleTextStyle(type.heading, settings),
                 styles.introTitle,
-                { color: accessibleColors.text, fontSize: type.heading.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {t("feedbackReview.revision.headerTitle")}
@@ -359,7 +366,7 @@ export function RevisionScreen() {
               style={[
                 getAccessibleTextStyle(type.body, settings),
                 styles.introSubtitle,
-                { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+                { color: accessibleColors.mutedText },
               ]}
             >
               {t("feedbackReview.revision.headerSubtitle")}
@@ -372,7 +379,7 @@ export function RevisionScreen() {
               <Text
                 style={[
                   getAccessibleTextStyle(type.bodyStrong, settings),
-                  { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                  { color: accessibleColors.text },
                 ]}
               >
                 {t("feedbackReview.revision.originalDraftLabel")}
@@ -381,11 +388,12 @@ export function RevisionScreen() {
                 accessibilityLabel={t("feedbackReview.revision.viewFullScreenLabel")}
                 accessibilityRole="button"
                 onPress={() => setIsOriginalDraftOpen(true)}
+                style={styles.sectionHeaderLink}
               >
                 <Text
                   style={[
                     getAccessibleTextStyle(type.bodySmall, settings),
-                    { color: primaryColor, fontSize: type.bodySmall.fontSize * fontSizeScale },
+                    { color: colors.action.primary.background },
                   ]}
                 >
                   {t("feedbackReview.revision.viewFullScreenLabel")}
@@ -398,7 +406,7 @@ export function RevisionScreen() {
                 selectable
                 style={[
                   getAccessibleTextStyle(type.body, settings),
-                  { color: accessibleColors.text, fontSize: type.body.fontSize * fontSizeScale, lineHeight: 22 },
+                  { color: accessibleColors.text },
                 ]}
               >
                 {state.viewModel.review.revisionTask.originalExcerpt}
@@ -415,17 +423,17 @@ export function RevisionScreen() {
               <Text
                 style={[
                   getAccessibleTextStyle(type.caption, settings),
-                  { color: colors.feedback.warning.text, fontWeight: "600", letterSpacing: 1 },
+                  { color: colors.feedback.warning.text, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase" },
                 ]}
               >
-                {t("feedbackReview.revisionTitle").toUpperCase()}
+                {t("feedbackReview.revisionTitle")}
               </Text>
             </View>
 
             <Text
               style={[
                 getAccessibleTextStyle(type.bodyStrong, settings),
-                { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale, marginTop: spacing.xs },
+                { color: accessibleColors.text, marginTop: spacing.xs },
               ]}
             >
               {state.viewModel.review.revisionTask.instruction}
@@ -436,15 +444,15 @@ export function RevisionScreen() {
                 <Text
                   style={[
                     getAccessibleTextStyle(type.caption, settings),
-                    { color: tertiaryColor, fontWeight: "600" },
+                    { color: colors.coach.accentStrong, fontWeight: "600", textTransform: "uppercase" },
                   ]}
                 >
-                  {t("feedbackReview.revision.questionTitle").toUpperCase()}
+                  {t("feedbackReview.revision.questionTitle")}
                 </Text>
                 <Text
                   style={[
                     getAccessibleTextStyle(type.bodySmall, settings),
-                    { color: accessibleColors.text, fontSize: type.bodySmall.fontSize * fontSizeScale, marginTop: spacing.xs },
+                    { color: accessibleColors.text, marginTop: spacing.xs },
                   ]}
                 >
                   {state.viewModel.review.revisionTask.guidingQuestion}
@@ -459,7 +467,7 @@ export function RevisionScreen() {
               <Text
                 style={[
                   getAccessibleTextStyle(type.bodyStrong, settings),
-                  { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                  { color: accessibleColors.text },
                 ]}
               >
                 {t("feedbackReview.revision.editorTitle")}
@@ -489,7 +497,6 @@ export function RevisionScreen() {
                   borderColor: accessibleColors.border,
                   color: accessibleColors.text,
                   minHeight: Math.max(180, state.viewModel.gradeAdaptation.revisionInputMinHeight),
-                  fontSize: type.body.fontSize * fontSizeScale,
                 },
               ]}
               textAlignVertical="top"
@@ -518,7 +525,6 @@ export function RevisionScreen() {
           </View>
 
           <AppModal
-            backdropOpacity={glassOpacity}
             gradeBand={state.gradeBand}
             mode="bottomSheet"
             onClose={() => setIsOriginalDraftOpen(false)}
@@ -530,7 +536,7 @@ export function RevisionScreen() {
               selectable
               style={[
                 getAccessibleTextStyle(type.body, settings),
-                { color: accessibleColors.text, fontSize: type.body.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {state.viewModel.review.revisionTask.originalExcerpt}
@@ -538,7 +544,6 @@ export function RevisionScreen() {
           </AppModal>
 
           <AppModal
-            backdropOpacity={glassOpacity}
             gradeBand={state.gradeBand}
             mode="bottomSheet"
             onClose={() => setIsCompareOpen(false)}
@@ -569,9 +574,9 @@ const styles = StyleSheet.create({
   headerIconContainer: {
     alignItems: "center",
     borderRadius: radius.full,
-    height: 40,
     justifyContent: "center",
-    width: 40,
+    minHeight: layout.touchTarget,
+    minWidth: layout.touchTarget,
   },
   autosaveBadgeRow: {
     alignItems: "center",
@@ -600,6 +605,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: spacing.sm,
   },
+  sectionHeaderLink: {
+    justifyContent: "center",
+    minHeight: layout.touchTarget,
+  },
   draftCard: {
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -617,7 +626,7 @@ const styles = StyleSheet.create({
   },
   starIconContainer: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.background.surface,
     borderRadius: radius.full,
     height: 28,
     justifyContent: "center",

@@ -13,9 +13,15 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routeNames";
-import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
+import { colors, layout, radius, shadows, spacing } from "@/design/tokens";
+import { useI18n, type Locale, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import {
+  buildAccessibilityLabel,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import { useProgressDashboard } from "../hooks/useProgress";
 import type {
@@ -36,42 +42,8 @@ type HistoryRow = {
   title: string;
 };
 
-const progressColors = {
-  background: "#f8f9ff",
-  card: "#ffffff",
-  errorContainer: "#ffdad6",
-  onSecondaryContainer: "#00714d",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primarySoft: "rgba(0, 50, 125, 0.18)",
-  secondaryContainer: "#6cf8bb",
-  surface: "#f8f9ff",
-  surfaceContainer: "#e5eeff",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerLow: "#eff4ff",
-  surfaceContainerLowest: "#ffffff",
-  surfaceVariant: "#d3e4fe",
-  tertiaryFixed: "#ffddb8",
-} as const;
-
-const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  section: 32,
-} as const;
-
-const radius = {
-  sm: 4,
-  lg: 8,
-  xl: 12,
-  full: 999,
-} as const;
+/** Inactive bars need more than the token 0.18 navy tint to stay visible. */
+const inactiveBarColor = "rgba(0, 50, 125, 0.4)";
 
 const TABLET_BREAKPOINT = 768;
 const RING_SEGMENT_COUNT = 32;
@@ -112,12 +84,12 @@ function getBarHeight(words: number, maxWords: number): DimensionValue {
   return `${Math.max(12, Math.round((words / maxWords) * 100))}%` as DimensionValue;
 }
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+function formatNumber(locale: Locale, value: number): string {
+  return new Intl.NumberFormat(locale).format(value);
 }
 
-function formatActivityDate(date: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+function formatActivityDate(locale: Locale, date: string): string {
+  return new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
@@ -149,6 +121,18 @@ function getTrendLabel(t: TFunction, percent: number): string {
   return t("progress.dashboard.volume.trendFlat");
 }
 
+function getTrendIcon(percent: number): IconName {
+  if (percent > 0) {
+    return "trending-up";
+  }
+
+  if (percent < 0) {
+    return "trending-down";
+  }
+
+  return "remove";
+}
+
 function getScoreLevelKey(score: number): TranslationKey {
   if (score >= 85) {
     return "progress.dashboard.history.levelStrong";
@@ -173,7 +157,7 @@ function getAverageScore(skills: ProgressSkillViewModel[]): number {
   return Math.round(skills.reduce((total, skill) => total + skill.currentScore, 0) / skills.length);
 }
 
-function buildHistoryRows(t: TFunction, viewModel: ProgressDashboardViewModel): HistoryRow[] {
+function buildHistoryRows(t: TFunction, locale: Locale, viewModel: ProgressDashboardViewModel): HistoryRow[] {
   const fallbackScore = getAverageScore(viewModel.visibleSkills);
 
   return viewModel.dailyActivity
@@ -189,7 +173,7 @@ function buildHistoryRows(t: TFunction, viewModel: ProgressDashboardViewModel): 
       const skillLabel = primarySkill ? t(primarySkill.labelKey) : t("progress.dashboard.history.practiceFallback");
 
       return {
-        dateLabel: formatActivityDate(activity.date),
+        dateLabel: formatActivityDate(locale, activity.date),
         id: activity.date,
         levelKey: getScoreLevelKey(score),
         score,
@@ -200,7 +184,7 @@ function buildHistoryRows(t: TFunction, viewModel: ProgressDashboardViewModel): 
 
 export function StudentProgressScreen() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { width } = useWindowDimensions();
   const state = useProgressDashboard();
   const isTablet = width >= TABLET_BREAKPOINT;
@@ -326,7 +310,7 @@ export function StudentProgressScreen() {
               <AssignmentHistorySection
                 isTablet={isTablet}
                 onOpenAssignments={handleOpenAssignments}
-                rows={buildHistoryRows(t, state.viewModel)}
+                rows={buildHistoryRows(t, locale, state.viewModel)}
               />
             </>
           ) : null}
@@ -338,9 +322,10 @@ export function StudentProgressScreen() {
 
 function SectionTitle({ titleKey }: { titleKey: TranslationKey }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
 
   return (
-    <Text accessibilityRole="header" maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.sectionTitle}>
+    <Text accessibilityRole="header" numberOfLines={1} style={getAccessibleTextStyle(styles.sectionTitle, settings)}>
       {t(titleKey)}
     </Text>
   );
@@ -353,10 +338,12 @@ function WeeklyWritingVolumeSection({
   isTablet: boolean;
   viewModel: ProgressDashboardViewModel;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const activity = viewModel.dailyActivity.slice(-7);
   const maxWords = Math.max(1, ...activity.map((day) => day.words));
   const trendPercent = getWritingTrendPercent(viewModel.dailyActivity);
+  const trendPositive = trendPercent > 0;
   const activeDay = activity.reduce<ProgressDailyActivity | null>(
     (highest, day) => (highest === null || day.words > highest.words ? day : highest),
     null,
@@ -366,12 +353,12 @@ function WeeklyWritingVolumeSection({
     <View style={styles.section}>
       <View style={styles.volumeHeader}>
         <View style={styles.volumeCopy}>
-          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.volumeEyebrow}>
+          <Text numberOfLines={1} style={getAccessibleTextStyle(styles.volumeEyebrow, settings)}>
             {t("progress.dashboard.volume.title")}
           </Text>
-          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} style={styles.volumeTotal}>
+          <Text numberOfLines={1} style={getAccessibleTextStyle(styles.volumeTotal, settings)}>
             {t("progress.dashboard.volume.totalWords", {
-              count: formatNumber(viewModel.totals.wordsWritten),
+              count: formatNumber(locale, viewModel.totals.wordsWritten),
             })}
           </Text>
         </View>
@@ -380,10 +367,20 @@ function WeeklyWritingVolumeSection({
           accessibilityLabel={t("progress.dashboard.volume.trendAccessibility", {
             value: getTrendLabel(t, trendPercent),
           })}
-          style={styles.trendPill}
+          style={[styles.trendPill, trendPositive ? null : styles.trendPillNeutral]}
         >
-          <Ionicons name="trending-up" size={16} color={progressColors.onSecondaryContainer} />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.trendText}>
+          <Ionicons
+            name={getTrendIcon(trendPercent)}
+            size={16}
+            color={trendPositive ? colors.dashboard.onSecondaryContainer : colors.dashboard.onSurfaceVariant}
+          />
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.trendText, settings),
+              trendPositive ? null : styles.trendTextNeutral,
+            ]}
+          >
             {getTrendLabel(t, trendPercent)}
           </Text>
         </View>
@@ -404,20 +401,30 @@ function WeeklyWritingVolumeSection({
           const isActive = activeDay?.date === day.date;
 
           return (
-            <View key={day.date} style={styles.barColumn}>
+            <View
+              accessible
+              accessibilityLabel={t("progress.dashboard.volume.barAccessibility", {
+                count: day.words,
+                day: t(getDayLabelKey(day.date)),
+              })}
+              key={day.date}
+              style={styles.barColumn}
+            >
               <View
                 style={[
                   styles.chartBar,
                   {
-                    backgroundColor: isActive ? progressColors.primary : progressColors.primarySoft,
+                    backgroundColor: isActive ? colors.dashboard.primary : inactiveBarColor,
                     height: getBarHeight(day.words, maxWords),
                   },
                 ]}
               />
               <Text
-                maxFontSizeMultiplier={1.05}
                 numberOfLines={1}
-                style={[styles.barLabel, isActive ? styles.barLabelActive : null]}
+                style={[
+                  getAccessibleTextStyle(styles.barLabel, settings),
+                  isActive ? styles.barLabelActive : null,
+                ]}
               >
                 {t(getDayLabelKey(day.date))}
               </Text>
@@ -468,9 +475,10 @@ function SkillRingCard({
   skill: ProgressSkillViewModel;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const label = t(skill.labelKey);
   const activeSegments = Math.round(skill.progressValue * RING_SEGMENT_COUNT);
-  const accentColor = index === 2 ? progressColors.secondaryContainer : progressColors.primary;
+  const accentColor = index === 2 ? colors.dashboard.secondaryContainer : colors.dashboard.primary;
 
   return (
     <Pressable
@@ -495,19 +503,29 @@ function SkillRingCard({
             style={[
               styles.ringSegment,
               {
-                backgroundColor: segment < activeSegments ? accentColor : progressColors.surfaceContainer,
+                backgroundColor: segment < activeSegments ? accentColor : colors.dashboard.surfaceContainer,
                 transform: [{ rotate: `${segment * (360 / RING_SEGMENT_COUNT)}deg` }, { translateY: -34 }],
               },
             ]}
           />
         ))}
         <View style={styles.ringCenter}>
-          <Text maxFontSizeMultiplier={1} numberOfLines={1} style={styles.ringValue}>
+          <Text
+            adjustsFontSizeToFit
+            maxFontSizeMultiplier={1}
+            numberOfLines={1}
+            style={getAccessibleTextStyle(styles.ringValue, settings)}
+          >
             {t("progress.dashboard.skills.percent", { count: skill.currentScore })}
           </Text>
         </View>
       </View>
-      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.05} minimumFontScale={0.72} numberOfLines={1} style={styles.skillLabel}>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.72}
+        numberOfLines={1}
+        style={getAccessibleTextStyle(styles.skillLabel, settings)}
+      >
         {label}
       </Text>
     </Pressable>
@@ -548,6 +566,7 @@ function RecentAchievementsSection({
 
 function AchievementTile({ badge, index }: { badge: ProgressBadgeViewModel; index: number }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const isLocked = !badge.unlocked;
   const iconName = isLocked ? "lock-closed" : badgeIconMap[badge.id];
   const bubbleStyle = [
@@ -561,17 +580,25 @@ function AchievementTile({ badge, index }: { badge: ProgressBadgeViewModel; inde
   return (
     <View
       accessible
-      accessibilityLabel={t(badge.titleKey)}
+      accessibilityLabel={buildAccessibilityLabel([
+        t(badge.titleKey),
+        t(isLocked ? "progress.badges.status.locked" : "progress.badges.status.unlocked"),
+      ])}
       style={[styles.card, styles.achievementTile, isLocked ? styles.achievementTileLocked : null]}
     >
       <View style={bubbleStyle}>
         <Ionicons
           name={iconName}
           size={31}
-          color={isLocked ? progressColors.onSurfaceVariant : progressColors.primary}
+          color={isLocked ? colors.dashboard.onSurfaceVariant : colors.dashboard.primary}
         />
       </View>
-      <Text adjustsFontSizeToFit maxFontSizeMultiplier={1.05} minimumFontScale={0.72} numberOfLines={2} style={styles.achievementText}>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.72}
+        numberOfLines={2}
+        style={getAccessibleTextStyle(styles.achievementText, settings)}
+      >
         {t(badge.titleKey)}
       </Text>
     </View>
@@ -588,6 +615,7 @@ function AssignmentHistorySection({
   rows: HistoryRow[];
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
 
   return (
     <View style={[styles.section, styles.historySection]}>
@@ -603,16 +631,28 @@ function AssignmentHistorySection({
       <View style={[styles.card, styles.historyCard]}>
         {isTablet ? (
           <View style={styles.historyHeaderRow}>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={[styles.historyHeaderText, styles.historyNameCell]}>
+            <Text
+              numberOfLines={1}
+              style={[getAccessibleTextStyle(styles.historyHeaderText, settings), styles.historyNameCell]}
+            >
               {t("progress.dashboard.history.assignmentHeader")}
             </Text>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={[styles.historyHeaderText, styles.historyDateCell]}>
+            <Text
+              numberOfLines={1}
+              style={[getAccessibleTextStyle(styles.historyHeaderText, settings), styles.historyDateCell]}
+            >
               {t("progress.dashboard.history.dateHeader")}
             </Text>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={[styles.historyHeaderText, styles.historyScoreCell]}>
+            <Text
+              numberOfLines={1}
+              style={[getAccessibleTextStyle(styles.historyHeaderText, settings), styles.historyScoreCell]}
+            >
               {t("progress.dashboard.history.scoreHeader")}
             </Text>
-            <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={[styles.historyHeaderText, styles.historyLevelCell]}>
+            <Text
+              numberOfLines={1}
+              style={[getAccessibleTextStyle(styles.historyHeaderText, settings), styles.historyLevelCell]}
+            >
               {t("progress.dashboard.history.signalHeader")}
             </Text>
           </View>
@@ -622,37 +662,33 @@ function AssignmentHistorySection({
           rows.map((row) => (
             <View key={row.id} style={[styles.historyRow, isTablet ? styles.historyRowTablet : null]}>
               <Text
-                maxFontSizeMultiplier={1.05}
                 numberOfLines={2}
-                style={[styles.historyName, isTablet ? styles.historyNameCell : null]}
+                style={[getAccessibleTextStyle(styles.historyName, settings), isTablet ? styles.historyNameCell : null]}
               >
                 {row.title}
               </Text>
               <Text
-                maxFontSizeMultiplier={1.05}
                 numberOfLines={1}
-                style={[styles.historyDate, isTablet ? styles.historyDateCell : null]}
+                style={[getAccessibleTextStyle(styles.historyDate, settings), isTablet ? styles.historyDateCell : null]}
               >
                 {row.dateLabel}
               </Text>
               <Text
-                maxFontSizeMultiplier={1.05}
                 numberOfLines={1}
-                style={[styles.historyScore, isTablet ? styles.historyScoreCell : null]}
+                style={[getAccessibleTextStyle(styles.historyScore, settings), isTablet ? styles.historyScoreCell : null]}
               >
                 {t("progress.dashboard.skills.percent", { count: row.score })}
               </Text>
               <Text
-                maxFontSizeMultiplier={1.05}
                 numberOfLines={1}
-                style={[styles.historyLevel, isTablet ? styles.historyLevelCell : null]}
+                style={[getAccessibleTextStyle(styles.historyLevel, settings), isTablet ? styles.historyLevelCell : null]}
               >
                 {t(row.levelKey)}
               </Text>
             </View>
           ))
         ) : (
-          <Text maxFontSizeMultiplier={1.1} style={styles.historyEmptyText}>
+          <Text style={getAccessibleTextStyle(styles.historyEmptyText, settings)}>
             {t("progress.dashboard.history.empty")}
           </Text>
         )}
@@ -671,6 +707,7 @@ function HeaderLink({
   onPress: () => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
 
   return (
     <Pressable
@@ -680,20 +717,12 @@ function HeaderLink({
       onPress={onPress}
       style={({ pressed }) => [styles.headerLink, pressed ? styles.pressed : null]}
     >
-      <Text maxFontSizeMultiplier={1.05} numberOfLines={1} style={styles.headerLinkText}>
+      <Text numberOfLines={1} style={getAccessibleTextStyle(styles.headerLinkText, settings)}>
         {t(labelKey)}
       </Text>
     </Pressable>
   );
 }
-
-const cardShadow = {
-  elevation: 2,
-  shadowColor: "#000000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.05,
-  shadowRadius: 12,
-} as const;
 
 const styles = StyleSheet.create({
   achievementIconBubble: {
@@ -708,13 +737,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#b1c5ff",
   },
   achievementIconBubbleGold: {
-    backgroundColor: progressColors.tertiaryFixed,
+    backgroundColor: colors.dashboard.tertiaryFixed,
   },
   achievementIconBubbleGreen: {
-    backgroundColor: progressColors.secondaryContainer,
+    backgroundColor: colors.dashboard.secondaryContainer,
   },
   achievementIconBubbleLocked: {
-    backgroundColor: progressColors.surfaceContainer,
+    backgroundColor: colors.dashboard.surfaceContainer,
   },
   achievementScrollerContent: {
     gap: spacing.lg,
@@ -725,7 +754,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   achievementText: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 16,
@@ -733,7 +762,7 @@ const styles = StyleSheet.create({
   },
   achievementTile: {
     alignItems: "center",
-    backgroundColor: progressColors.surfaceContainerLow,
+    backgroundColor: colors.dashboard.surfaceContainerLow,
     justifyContent: "center",
     minHeight: 138,
     padding: spacing.lg,
@@ -752,20 +781,20 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   barLabel: {
-    color: progressColors.onSurfaceVariant,
+    color: colors.dashboard.onSurfaceVariant,
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 16,
   },
   barLabelActive: {
-    color: progressColors.primary,
+    color: colors.dashboard.primary,
     fontWeight: "800",
   },
   card: {
-    ...cardShadow,
-    backgroundColor: progressColors.surfaceContainerLowest,
-    borderColor: progressColors.outlineVariant,
-    borderRadius: radius.xl,
+    ...shadows.card,
+    backgroundColor: colors.dashboard.surfaceContainerLowest,
+    borderColor: colors.dashboard.outlineVariant,
+    borderRadius: radius.lg,
     borderWidth: 1,
   },
   cardPressed: {
@@ -773,8 +802,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.995 }],
   },
   chartBar: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
     width: "100%",
   },
   chartCard: {
@@ -797,7 +826,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignSelf: "center",
-    gap: spacing.section,
+    gap: spacing.xxl,
     maxWidth: 430,
     width: "100%",
   },
@@ -810,9 +839,9 @@ const styles = StyleSheet.create({
     height: 1,
   },
   header: {
-    backgroundColor: progressColors.surface,
-    borderBottomColor: progressColors.outlineVariant,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.dashboard.surface,
+    borderBottomColor: colors.dashboard.outlineVariant,
+    paddingHorizontal: layout.screenPadding.phone,
   },
   headerContentTablet: {
     alignSelf: "center",
@@ -826,7 +855,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   headerLinkText: {
-    color: progressColors.primary,
+    color: colors.dashboard.primary,
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
@@ -835,7 +864,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   historyDate: {
-    color: progressColors.onSurfaceVariant,
+    color: colors.dashboard.onSurfaceVariant,
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 16,
@@ -845,26 +874,26 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   historyEmptyText: {
-    color: progressColors.onSurfaceVariant,
+    color: colors.dashboard.onSurfaceVariant,
     fontSize: 14,
     lineHeight: 20,
     padding: spacing.lg,
   },
   historyHeaderRow: {
-    backgroundColor: progressColors.surfaceContainerLow,
-    borderBottomColor: progressColors.outlineVariant,
+    backgroundColor: colors.dashboard.surfaceContainerLow,
+    borderBottomColor: colors.dashboard.outlineVariant,
     borderBottomWidth: 1,
     flexDirection: "row",
     padding: spacing.lg,
   },
   historyHeaderText: {
-    color: progressColors.onSurfaceVariant,
+    color: colors.dashboard.onSurfaceVariant,
     fontSize: 12,
     fontWeight: "700",
     lineHeight: 16,
   },
   historyLevel: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     fontSize: 13,
     fontWeight: "600",
     lineHeight: 18,
@@ -874,7 +903,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   historyName: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
@@ -883,7 +912,7 @@ const styles = StyleSheet.create({
     flex: 1.45,
   },
   historyRow: {
-    borderBottomColor: progressColors.outlineVariant,
+    borderBottomColor: colors.dashboard.outlineVariant,
     borderBottomWidth: 1,
     gap: spacing.xs,
     padding: spacing.lg,
@@ -894,7 +923,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   historyScore: {
-    color: progressColors.primary,
+    color: colors.dashboard.primary,
     fontSize: 18,
     fontVariant: ["tabular-nums"],
     fontWeight: "700",
@@ -912,7 +941,7 @@ const styles = StyleSheet.create({
   },
   ringCenter: {
     alignItems: "center",
-    backgroundColor: progressColors.card,
+    backgroundColor: colors.dashboard.card,
     borderRadius: radius.full,
     height: 54,
     justifyContent: "center",
@@ -927,23 +956,23 @@ const styles = StyleSheet.create({
     width: 6,
   },
   ringValue: {
-    color: progressColors.primary,
+    color: colors.dashboard.primary,
     fontSize: 18,
     fontVariant: ["tabular-nums"],
     fontWeight: "700",
     lineHeight: 24,
   },
   safeArea: {
-    backgroundColor: progressColors.background,
+    backgroundColor: colors.dashboard.background,
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 132,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: layout.screenPadding.phone,
     paddingTop: spacing.lg,
   },
   scrollContentTablet: {
-    paddingHorizontal: 32,
+    paddingHorizontal: layout.screenPadding.tablet,
   },
   section: {
     gap: spacing.lg,
@@ -954,7 +983,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionTitle: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     flex: 1,
     fontSize: 20,
     fontWeight: "600",
@@ -981,7 +1010,7 @@ const styles = StyleSheet.create({
     flexWrap: "nowrap",
   },
   skillLabel: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
@@ -996,7 +1025,7 @@ const styles = StyleSheet.create({
   trendPill: {
     alignItems: "center",
     alignSelf: "flex-end",
-    backgroundColor: progressColors.secondaryContainer,
+    backgroundColor: colors.dashboard.secondaryContainer,
     borderRadius: radius.full,
     flexDirection: "row",
     gap: spacing.xs,
@@ -1004,18 +1033,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
+  trendPillNeutral: {
+    backgroundColor: colors.dashboard.surfaceContainer,
+  },
   trendText: {
-    color: progressColors.onSecondaryContainer,
+    color: colors.dashboard.onSecondaryContainer,
     fontSize: 12,
     fontWeight: "700",
     lineHeight: 16,
+  },
+  trendTextNeutral: {
+    color: colors.dashboard.onSurfaceVariant,
   },
   volumeCopy: {
     flex: 1,
     minWidth: 0,
   },
   volumeEyebrow: {
-    color: progressColors.onSurfaceVariant,
+    color: colors.dashboard.onSurfaceVariant,
     fontSize: 14,
     fontWeight: "500",
     lineHeight: 20,
@@ -1027,7 +1062,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   volumeTotal: {
-    color: progressColors.onSurface,
+    color: colors.dashboard.onSurface,
     fontSize: 24,
     fontVariant: ["tabular-nums"],
     fontWeight: "700",

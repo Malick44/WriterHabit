@@ -4,12 +4,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getStudentReviewSummaryRoute } from "@/core/navigation/deepLinks";
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, OfflineBanner } from "@/shared/components/feedback";
 import { Screen } from "@/shared/components/layout";
-import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
+import {
+  getAccessibleColors,
+  getAccessibleHitSlop,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
 
@@ -25,8 +29,9 @@ export function AiReviewLoadingScreen() {
   const state = useFeedbackReview(submissionId);
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
-  const { fontSizeScale, primaryColor } = useGlacierThemeStore();
   const type = typography.gradeBands[state.gradeBand];
+  const textColor = settings.highContrast ? accessibleColors.text : "#ffffff";
+  const mutedTextColor = settings.highContrast ? accessibleColors.mutedText : "#a5bdff";
 
   // Animation values: lazy state keeps the instances stable across renders
   // without reading a ref during render.
@@ -34,7 +39,13 @@ export function AiReviewLoadingScreen() {
   const [rotateAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
-    Animated.loop(
+    if (settings.reducedMotion) {
+      pulseAnim.setValue(1);
+      rotateAnim.setValue(0);
+      return;
+    }
+
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.06,
@@ -47,16 +58,23 @@ export function AiReviewLoadingScreen() {
           useNativeDriver: true,
         }),
       ])
-    ).start();
-
-    Animated.loop(
+    );
+    const rotateLoop = Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
         duration: 8000,
         useNativeDriver: true,
       })
-    ).start();
-  }, [pulseAnim, rotateAnim]);
+    );
+
+    pulseLoop.start();
+    rotateLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      rotateLoop.stop();
+    };
+  }, [pulseAnim, rotateAnim, settings.reducedMotion]);
 
   const rotation = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -103,10 +121,12 @@ export function AiReviewLoadingScreen() {
           {/* Circular back button */}
           <TouchableOpacity
             accessibilityLabel={t("common.back")}
+            accessibilityRole="button"
+            hitSlop={getAccessibleHitSlop(settings)}
             onPress={() => router.back()}
             style={[styles.backButton, { backgroundColor: settings.highContrast ? accessibleColors.surface : "rgba(42, 61, 86, 0.5)" }]}
           >
-            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+            <Ionicons name="arrow-back" size={24} color={textColor} />
           </TouchableOpacity>
 
           {/* Heading */}
@@ -116,7 +136,7 @@ export function AiReviewLoadingScreen() {
               style={[
                 getAccessibleTextStyle(type.heading, settings),
                 styles.title,
-                { color: "#ffffff", fontSize: type.heading.fontSize * fontSizeScale },
+                { color: textColor },
               ]}
             >
               {t("feedbackReview.reviewingTitle")}
@@ -125,7 +145,7 @@ export function AiReviewLoadingScreen() {
               style={[
                 getAccessibleTextStyle(type.body, settings),
                 styles.subtitle,
-                { color: "#a5bdff", fontSize: type.body.fontSize * fontSizeScale },
+                { color: mutedTextColor },
               ]}
             >
               {t("feedbackReview.reviewingSubtitle")}
@@ -163,9 +183,9 @@ export function AiReviewLoadingScreen() {
             />
             <View style={[styles.avatarCircle, { borderColor: "#ffffff", backgroundColor: "#1a2c42" }]}>
               <Image
+                accessible={false}
                 source={require("../../../../assets/generated/empty-states/ai-coach-avatar.png")}
                 style={styles.avatarImage}
-                alt="A friendly, modern 3D robot face"
               />
             </View>
           </View>
@@ -177,7 +197,7 @@ export function AiReviewLoadingScreen() {
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
                 <Ionicons name="checkmark" size={14} color="#0b1c30" />
               </View>
-              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText]}>
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.understandingPrompt")}
               </Text>
             </View>
@@ -187,7 +207,7 @@ export function AiReviewLoadingScreen() {
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
                 <Ionicons name="checkmark" size={14} color="#0b1c30" />
               </View>
-              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText]}>
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.checkingMainIdea")}
               </Text>
             </View>
@@ -197,7 +217,7 @@ export function AiReviewLoadingScreen() {
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
                 <Ionicons name="checkmark" size={14} color="#0b1c30" />
               </View>
-              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText]}>
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.lookingForDetails")}
               </Text>
             </View>
@@ -210,14 +230,15 @@ export function AiReviewLoadingScreen() {
                 </View>
               ) : (
                 <View style={[styles.checkCircle, styles.checkCircleActive]}>
-                  <ActivityIndicator size="small" color="#a5bdff" />
+                  <ActivityIndicator size="small" color={mutedTextColor} />
                 </View>
               )}
               <Text
                 style={[
                   getAccessibleTextStyle(type.bodyStrong, settings),
                   styles.checkText,
-                  state.status !== "success" && { color: "#a5bdff", fontWeight: "bold" },
+                  { color: textColor },
+                  state.status !== "success" && { color: mutedTextColor, fontWeight: "bold" },
                 ]}
               >
                 {t("feedbackReview.loadingSteps.reviewingGrammar")}
@@ -237,6 +258,7 @@ export function AiReviewLoadingScreen() {
                 style={[
                   getAccessibleTextStyle(type.bodyStrong, settings),
                   styles.checkText,
+                  { color: textColor },
                   state.status !== "success" && { opacity: 0.5 },
                 ]}
               >
@@ -249,7 +271,8 @@ export function AiReviewLoadingScreen() {
           {state.status === "success" ? (
             <TouchableOpacity
               accessibilityLabel={t("feedbackReview.loadingContinueCta")}
-              style={[styles.continueButton, { backgroundColor: primaryColor }]}
+              accessibilityRole="button"
+              style={[styles.continueButton, { backgroundColor: colors.action.primary.background }]}
               onPress={() => {
                 router.replace(getStudentReviewSummaryRoute(state.viewModel.review.submissionId));
               }}
@@ -273,15 +296,22 @@ export function AiReviewLoadingScreen() {
           ) : null}
 
           {/* Tip Card at the bottom */}
-          <View style={[styles.tipCard, { backgroundColor: "#1a2c42", borderColor: "rgba(42, 61, 86, 0.8)" }]}>
+          <View
+            style={[
+              styles.tipCard,
+              settings.highContrast
+                ? { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }
+                : { backgroundColor: "#1a2c42", borderColor: "rgba(42, 61, 86, 0.8)" },
+            ]}
+          >
             <View style={styles.tipIconContainer}>
               <Ionicons name="bulb-outline" size={20} color="#ffae3c" />
             </View>
             <View style={styles.tipTextContainer}>
-              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.tipLabel, { color: "#a5bdff" }]}>
-                {t("feedbackReview.loadingTipTitle").toUpperCase()}
+              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.tipLabel, { color: mutedTextColor }]}>
+                {t("feedbackReview.loadingTipTitle")}
               </Text>
-              <Text style={[getAccessibleTextStyle(type.body, settings), styles.tipBody, { color: "#ffffff" }]}>
+              <Text style={[getAccessibleTextStyle(type.body, settings), styles.tipBody, { color: textColor }]}>
                 {t("feedbackReview.loadingTipBody")}
               </Text>
             </View>
@@ -307,9 +337,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
     borderRadius: radius.full,
-    height: 40,
     justifyContent: "center",
-    width: 40,
+    minHeight: layout.touchTarget,
+    minWidth: layout.touchTarget,
   },
   headerTextContainer: {
     alignItems: "center",
@@ -402,7 +432,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(42, 61, 86, 0.8)",
   },
   checkText: {
-    color: "#ffffff",
     opacity: 0.9,
   },
   continueButton: {
@@ -436,9 +465,9 @@ const styles = StyleSheet.create({
   tipLabel: {
     fontWeight: "600",
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
   tipBody: {
-    lineHeight: 20,
     marginTop: spacing.xs,
   },
 });

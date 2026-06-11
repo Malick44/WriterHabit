@@ -77,7 +77,13 @@ export function BadgeCard({ badge, gradeBand }: BadgeCardProps) {
           <Text selectable style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}>
             {title}
           </Text>
-          <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.success }]}>
+          <Text
+            selectable
+            style={[
+              getAccessibleTextStyle(type.caption, settings),
+              { color: badge.status === "locked" ? accessibleColors.mutedText : colors.text.success },
+            ]}
+          >
             {status}
           </Text>
           <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>

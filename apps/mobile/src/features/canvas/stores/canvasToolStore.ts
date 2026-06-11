@@ -17,5 +17,5 @@ export const useCanvasToolStore = create<CanvasToolState>((set) => ({
   setColor: (color) => set({ color }),
   setTool: (selectedTool) => set({ selectedTool }),
   setWidth: (width) => set({ width }),
-  width: 4,
+  width: 5,
 }));

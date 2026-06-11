@@ -23,7 +23,14 @@ interface CanvasToolbarProps {
 }
 
 const toolOptions: CanvasTool[] = ["pen", "highlighter", "eraser"];
-const colorOptions = ["#0F172A", "#2563EB", "#0F766E", "#B45309", "#B91C1C"];
+const colorOptions = ["#0F172A", "#2563EB", "#0F766E", "#B45309", "#B91C1C"] as const;
+const colorNameKeys = {
+  "#0F172A": "canvas.toolbar.colors.ink",
+  "#2563EB": "canvas.toolbar.colors.blue",
+  "#0F766E": "canvas.toolbar.colors.teal",
+  "#B45309": "canvas.toolbar.colors.amber",
+  "#B91C1C": "canvas.toolbar.colors.red",
+} as const;
 const widthOptions = [3, 5, 8, 12];
 
 function getToolKey(tool: CanvasTool) {
@@ -84,14 +91,17 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
           disabled={!canUndo}
           hitSlop={hitSlop}
           onPress={onUndo}
-          style={{
-            alignItems: "center",
-            borderRadius: radius.full,
-            height: target,
-            justifyContent: "center",
-            opacity: canUndo ? 1 : 0.35,
-            width: target,
-          }}
+          style={({ pressed }) => [
+            {
+              alignItems: "center",
+              backgroundColor: pressed ? colors.background.subtle : "transparent",
+              borderRadius: radius.full,
+              height: target,
+              justifyContent: "center",
+              opacity: canUndo ? 1 : 0.35,
+              width: target,
+            },
+          ]}
         >
           <Ionicons color={colors.text.secondary} name="arrow-undo-outline" size={22} />
         </Pressable>
@@ -102,14 +112,17 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
           disabled={!canRedo}
           hitSlop={hitSlop}
           onPress={onRedo}
-          style={{
-            alignItems: "center",
-            borderRadius: radius.full,
-            height: target,
-            justifyContent: "center",
-            opacity: canRedo ? 1 : 0.35,
-            width: target,
-          }}
+          style={({ pressed }) => [
+            {
+              alignItems: "center",
+              backgroundColor: pressed ? colors.background.subtle : "transparent",
+              borderRadius: radius.full,
+              height: target,
+              justifyContent: "center",
+              opacity: canRedo ? 1 : 0.35,
+              width: target,
+            },
+          ]}
         >
           <Ionicons color={colors.text.secondary} name="arrow-redo-outline" size={22} />
         </Pressable>
@@ -126,14 +139,20 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
               hitSlop={hitSlop}
               key={tool}
               onPress={() => setTool(tool)}
-              style={{
-                alignItems: "center",
-                backgroundColor: selected ? colors.action.primary.background : "transparent",
-                borderRadius: radius.full,
-                height: target,
-                justifyContent: "center",
-                width: target,
-              }}
+              style={({ pressed }) => [
+                {
+                  alignItems: "center",
+                  backgroundColor: selected
+                    ? colors.action.primary.background
+                    : pressed
+                      ? colors.background.subtle
+                      : "transparent",
+                  borderRadius: radius.full,
+                  height: target,
+                  justifyContent: "center",
+                  width: target,
+                },
+              ]}
             >
               <Ionicons
                 color={selected ? colors.action.primary.foreground : colors.text.secondary}
@@ -150,21 +169,24 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
           const selected = selectedColor === color;
           return (
             <Pressable
-              accessibilityLabel={t("canvas.toolbar.colorAccessibility", { color })}
+              accessibilityLabel={t("canvas.toolbar.colorAccessibility", { color: t(colorNameKeys[color]) })}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               hitSlop={hitSlop}
               key={color}
               onPress={() => setColor(color)}
-              style={{
-                alignItems: "center",
-                borderColor: selected ? accessibleColors.focus : "transparent",
-                borderRadius: radius.full,
-                borderWidth: 2,
-                height: swatch + 8,
-                justifyContent: "center",
-                width: swatch + 8,
-              }}
+              style={({ pressed }) => [
+                {
+                  alignItems: "center",
+                  backgroundColor: pressed ? colors.background.subtle : "transparent",
+                  borderColor: selected ? accessibleColors.focus : "transparent",
+                  borderRadius: radius.full,
+                  borderWidth: 2,
+                  height: swatch + 8,
+                  justifyContent: "center",
+                  width: swatch + 8,
+                },
+              ]}
             >
               <View style={{ backgroundColor: color, borderRadius: radius.full, height: swatch, width: swatch }} />
             </Pressable>
@@ -183,16 +205,18 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
               hitSlop={hitSlop}
               key={width}
               onPress={() => setWidth(width)}
-              style={{
-                alignItems: "center",
-                backgroundColor: selected ? colors.background.subtle : "transparent",
-                borderColor: selected ? accessibleColors.focus : colors.border.default,
-                borderRadius: radius.full,
-                borderWidth: 1,
-                height: target,
-                justifyContent: "center",
-                width: target,
-              }}
+              style={({ pressed }) => [
+                {
+                  alignItems: "center",
+                  backgroundColor: selected || pressed ? colors.background.subtle : "transparent",
+                  borderColor: selected ? accessibleColors.focus : colors.border.default,
+                  borderRadius: radius.full,
+                  borderWidth: 1,
+                  height: target,
+                  justifyContent: "center",
+                  width: target,
+                },
+              ]}
             >
               <View
                 style={{

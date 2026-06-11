@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,6 +39,21 @@ export function HandwritingCanvasScreen() {
   const type = typography.gradeBands[state.gradeBand];
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [attachStatus, setAttachStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  useEffect(() => {
+    if (saveStatus !== "success") {
+      return;
+    }
+
+    // Auto-clear the success banner so it does not permanently shrink the canvas.
+    const timeout = setTimeout(() => {
+      setSaveStatus("idle");
+    }, 2500);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [saveStatus]);
 
   const saveNow = async () => {
     if (state.status !== "success") {

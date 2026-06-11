@@ -7,7 +7,6 @@ import { colors, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Screen } from "@/shared/components/layout";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useAuthStore } from "@/core/auth/authStore";
 
@@ -16,6 +15,13 @@ import { useFeedbackReview } from "../hooks/useFeedbackReview";
 function getParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+// Static reward defaults until the backend rewards API supplies real values.
+const completionRewards = {
+  grammarDelta: 10,
+  points: 25,
+  streakDays: 1,
+} as const;
 
 export function CompletionCelebrationScreen() {
   const router = useRouter();
@@ -27,7 +33,6 @@ export function CompletionCelebrationScreen() {
   const studentName = session?.user?.displayName || t("common.fallbackDisplayName");
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
-  const { fontSizeScale, primaryColor, tertiaryColor } = useGlacierThemeStore();
   const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
 
   return (
@@ -82,12 +87,12 @@ export function CompletionCelebrationScreen() {
       {state.status === "success" ? (
         <View style={styles.container}>
           {/* Confetti Dots Decoration */}
-          <View style={[styles.confetti, { backgroundColor: tertiaryColor, left: 30, top: 40, width: 8, height: 8 }]} />
-          <View style={[styles.confetti, { backgroundColor: primaryColor, left: 140, top: 10, width: 6, height: 6 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.coach.accent, left: 30, top: 40, width: 8, height: 8 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.action.primary.background, left: 140, top: 10, width: 6, height: 6 }]} />
           <View style={[styles.confetti, { backgroundColor: colors.feedback.success.text, right: 60, top: 50, width: 10, height: 10 }]} />
-          <View style={[styles.confetti, { backgroundColor: tertiaryColor, right: 20, top: 120, width: 6, height: 6 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.coach.accent, right: 20, top: 120, width: 6, height: 6 }]} />
           <View style={[styles.confetti, { backgroundColor: colors.feedback.success.text, left: 40, bottom: 250, width: 8, height: 8 }]} />
-          <View style={[styles.confetti, { backgroundColor: primaryColor, right: 80, bottom: 200, width: 10, height: 10 }]} />
+          <View style={[styles.confetti, { backgroundColor: colors.action.primary.background, right: 80, bottom: 200, width: 10, height: 10 }]} />
 
           {/* Header Text */}
           <View style={styles.header}>
@@ -96,17 +101,17 @@ export function CompletionCelebrationScreen() {
               style={[
                 getAccessibleTextStyle(type.heading, settings),
                 styles.title,
-                { color: accessibleColors.text, fontSize: type.heading.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {t("feedbackReview.completion.headerTitlePersonalized", { name: studentName })}{" "}
-              <Ionicons name="gift-outline" size={24} color={tertiaryColor} />
+              <Ionicons name="gift-outline" size={24} color={colors.coach.accent} />
             </Text>
             <Text
               style={[
                 getAccessibleTextStyle(type.body, settings),
                 styles.subtitle,
-                { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+                { color: accessibleColors.mutedText },
               ]}
             >
               {t("feedbackReview.completion.headerSubtitle")}
@@ -116,9 +121,9 @@ export function CompletionCelebrationScreen() {
           {/* Central Trophy */}
           <View style={styles.trophyWrapper}>
             <Image
+              accessible={false}
               source={require("../../../../assets/generated/badges/completion-trophy.png")}
               style={styles.trophyImage}
-              alt="Gold Trophy Celebration"
             />
           </View>
 
@@ -136,7 +141,7 @@ export function CompletionCelebrationScreen() {
             <Text
               style={[
                 getAccessibleTextStyle(type.bodyStrong, settings),
-                { color: colors.feedback.success.text, fontSize: type.bodyStrong.fontSize * fontSizeScale, fontWeight: "bold" },
+                { color: colors.feedback.success.text, fontWeight: "bold" },
               ]}
             >
               {t("feedbackReview.completion.statusBadgeLabel")}
@@ -152,21 +157,21 @@ export function CompletionCelebrationScreen() {
                 { color: accessibleColors.mutedText },
               ]}
             >
-              {t("feedbackReview.completion.youEarnedLabel").toUpperCase()}
+              {t("feedbackReview.completion.youEarnedLabel")}
             </Text>
 
             <View style={styles.grid}>
               {/* Card 1: Points */}
               <View style={[styles.rewardCard, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}>
-                <Ionicons name="star" size={28} color={tertiaryColor} style={styles.rewardIcon} />
+                <Ionicons name="star" size={28} color={colors.coach.accent} style={styles.rewardIcon} />
                 <Text
                   style={[
                     getAccessibleTextStyle(type.heading, settings),
                     styles.rewardValue,
-                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                    { color: colors.action.primary.background },
                   ]}
                 >
-                  +25
+                  {t("feedbackReview.completion.points", { count: completionRewards.points })}
                 </Text>
                 <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
                   {t("feedbackReview.completion.pointsLabel")}
@@ -180,10 +185,10 @@ export function CompletionCelebrationScreen() {
                   style={[
                     getAccessibleTextStyle(type.heading, settings),
                     styles.rewardValue,
-                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                    { color: colors.action.primary.background },
                   ]}
                 >
-                  +1 Day
+                  {t("feedbackReview.completion.streakDays", { count: completionRewards.streakDays })}
                 </Text>
                 <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
                   {t("feedbackReview.completion.streakLabel")}
@@ -197,10 +202,10 @@ export function CompletionCelebrationScreen() {
                   style={[
                     getAccessibleTextStyle(type.heading, settings),
                     styles.rewardValue,
-                    { color: primaryColor, fontSize: type.heading.fontSize * fontSizeScale },
+                    { color: colors.action.primary.background },
                   ]}
                 >
-                  +10%
+                  {t("feedbackReview.completion.grammarDelta", { count: completionRewards.grammarDelta })}
                 </Text>
                 <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
                   {t("feedbackReview.completion.grammarLabel")}
@@ -214,7 +219,7 @@ export function CompletionCelebrationScreen() {
             <Text
               style={[
                 getAccessibleTextStyle(type.bodyStrong, settings),
-                { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+                { color: accessibleColors.text },
               ]}
             >
               {t("feedbackReview.completion.keepItUp")}
@@ -223,7 +228,7 @@ export function CompletionCelebrationScreen() {
               style={[
                 getAccessibleTextStyle(type.body, settings),
                 styles.encouragementText,
-                { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+                { color: accessibleColors.mutedText },
               ]}
             >
               {t("feedbackReview.completion.strongWritingHabits")}
@@ -234,7 +239,8 @@ export function CompletionCelebrationScreen() {
           <View style={styles.actions}>
             <TouchableOpacity
               accessibilityLabel={t("feedbackReview.completion.progressCta")}
-              style={[styles.actionButton, styles.actionButtonPrimary, { backgroundColor: primaryColor }]}
+              accessibilityRole="button"
+              style={[styles.actionButton, styles.actionButtonPrimary, { backgroundColor: colors.action.primary.background }]}
               onPress={() => router.push("/(student)/progress")}
             >
               <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: colors.text.inverse }]}>
@@ -244,10 +250,11 @@ export function CompletionCelebrationScreen() {
 
             <TouchableOpacity
               accessibilityLabel={t("feedbackReview.completion.homeCta")}
+              accessibilityRole="button"
               style={[styles.actionButton, styles.actionButtonSecondary]}
               onPress={() => router.replace("/(student)/home")}
             >
-              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: primaryColor }]}>
+              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: colors.action.primary.background }]}>
                 {t("feedbackReview.completion.homeCta")}
               </Text>
             </TouchableOpacity>
@@ -315,6 +322,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.md,
     textAlign: "center",
+    textTransform: "uppercase",
   },
   grid: {
     flexDirection: "row",

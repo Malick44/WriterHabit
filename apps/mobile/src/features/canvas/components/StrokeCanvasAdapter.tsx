@@ -47,7 +47,7 @@ function TemplateGuides({ template }: { template: CanvasTemplate }) {
             <View
               key={index}
               style={{
-                borderBottomColor: index % 4 === 2 ? colors.border.strong : "#E5EEFF",
+                borderBottomColor: index % 4 === 2 ? colors.border.strong : colors.dashboard.surfaceContainer,
                 borderBottomWidth: 1,
                 height: template === "handwriting_practice" ? 34 : 32,
               }}
@@ -256,7 +256,6 @@ export function StrokeCanvasAdapter({
 
   return (
     <View
-      accessibilityLabel={t("canvas.surface.accessibility")}
       testID="canvas-surface"
       style={[
         {
@@ -276,7 +275,6 @@ export function StrokeCanvasAdapter({
         <View
           accessibilityHint={t("canvas.surface.hint")}
           accessibilityLabel={t("canvas.surface.accessibility")}
-          accessibilityRole="image"
           accessible
           onLayout={(event) => {
             handleSurfaceLayout({

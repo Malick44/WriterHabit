@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,6 +9,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { colors, layout, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
@@ -18,6 +19,10 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
+import { usePressScale } from "@/shared/utils/usePressScale";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -68,10 +73,10 @@ function getVariantStyle(variant: ButtonVariant, disabled: boolean) {
   if (disabled) {
     return {
       backgroundColor:
-        "disabledBackground" in token ? token.disabledBackground : colors.background.surface,
+        "disabledBackground" in token ? token.disabledBackground : token.background,
       borderColor: "border" in token ? token.border : "transparent",
       foregroundColor: token.disabledForeground,
-      pressedColor: "disabledBackground" in token ? token.disabledBackground : colors.background.surface,
+      pressedColor: "disabledBackground" in token ? token.disabledBackground : token.background,
     };
   }
 
@@ -93,7 +98,7 @@ export function Button({
   variant = "primary",
   size = "md",
   fullWidth = false,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   leftAccessory,
   rightAccessory,
   style,
@@ -101,7 +106,10 @@ export function Button({
   testID,
 }: ButtonProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
+  const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
+  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(!isDisabled);
   const variantStyle = getVariantStyle(variant, isDisabled);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
@@ -125,7 +133,7 @@ export function Button({
   );
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
@@ -133,8 +141,16 @@ export function Button({
       disabled={isDisabled}
       hitSlop={getAccessibleHitSlop(settings)}
       onPress={onPress}
+      onPressIn={() => {
+        setPressed(true);
+        handlePressIn();
+      }}
+      onPressOut={() => {
+        setPressed(false);
+        handlePressOut();
+      }}
       testID={testID}
-      style={({ pressed }) => [
+      style={[
         {
           alignItems: "center",
           backgroundColor: pressed && !isDisabled ? pressedColor : backgroundColor,
@@ -148,6 +164,7 @@ export function Button({
         },
         buttonSizeStyles[size],
         fullWidth ? { alignSelf: "stretch" } : null,
+        pressScaleStyle,
         style,
       ]}
     >
@@ -168,6 +185,6 @@ export function Button({
         {label}
       </Text>
       {rightAccessory ? <View>{rightAccessory}</View> : null}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

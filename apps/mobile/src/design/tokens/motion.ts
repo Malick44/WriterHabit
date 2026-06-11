@@ -7,11 +7,15 @@ export const duration = {
   xl: 520,
 } as const;
 
+/**
+ * Cubic-bezier control points, consumable by Reanimated as
+ * `Easing.bezier(...easing.standard)`.
+ */
 export const easing = {
-  standard: "cubic-bezier(0.2, 0, 0, 1)",
-  emphasized: "cubic-bezier(0.2, 0, 0, 1)",
-  decelerate: "cubic-bezier(0, 0, 0, 1)",
-  accelerate: "cubic-bezier(0.3, 0, 1, 1)",
+  standard: [0.2, 0, 0, 1],
+  emphasized: [0.3, 0, 0, 1],
+  decelerate: [0, 0, 0, 1],
+  accelerate: [0.3, 0, 1, 1],
 } as const;
 
 export const spring = {

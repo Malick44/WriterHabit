@@ -7,6 +7,7 @@ import {
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import { RetryButton } from "./RetryButton";
 
@@ -41,11 +42,12 @@ export function StatusState({
   actionLoading = false,
   onActionPress,
   accessibilityLabel,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   style,
   testID,
 }: StatusStateProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const toneTokens = toneMap[tone];

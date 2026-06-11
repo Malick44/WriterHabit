@@ -1,9 +1,10 @@
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { Text, View } from "react-native";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-import { typography, type GradeBand } from "@/design/tokens";
+import { motion, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+import { getAccessibleTextStyle, getMotionDuration, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { APP_HEADER_TEST_IDS } from "./appHeader.constants";
 import { styles } from "./appHeader.styles";
@@ -33,6 +34,18 @@ export const AppHeaderProgress = memo(function AppHeaderProgress({
   const accessibilityLabel = config.accessibilityLabelKey
     ? t(config.accessibilityLabelKey, config.accessibilityLabelParams)
     : label;
+  const fillPercent = useSharedValue(percent);
+
+  useEffect(() => {
+    fillPercent.value = withTiming(percent, {
+      duration: getMotionDuration(settings, motion.duration.md),
+      easing: Easing.bezier(...motion.easing.standard),
+    });
+  }, [fillPercent, percent, settings]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${fillPercent.value}%`,
+  }));
 
   return (
     <View
@@ -66,13 +79,11 @@ export const AppHeaderProgress = memo(function AppHeaderProgress({
       ) : null}
 
       <View style={[styles.progressTrack, { backgroundColor: headerColors.progressBackground }]}>
-        <View
+        <Animated.View
           style={[
             styles.progressFill,
-            {
-              backgroundColor: headerColors.progressFill,
-              width: `${percent}%`,
-            },
+            { backgroundColor: headerColors.progressFill },
+            fillStyle,
           ]}
         />
       </View>

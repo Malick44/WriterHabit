@@ -13,6 +13,7 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import { FormField } from "./FormField";
 
@@ -34,7 +35,7 @@ export function TextField({
   required,
   accessibilityLabel,
   accessibilityHint,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   containerStyle,
   inputStyle,
   placeholderTextColor = colors.text.muted,
@@ -42,6 +43,7 @@ export function TextField({
   ...inputProps
 }: TextFieldProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const hasError = Boolean(error);

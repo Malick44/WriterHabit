@@ -1,12 +1,14 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Pressable,
   Text,
   View,
+  type AccessibilityState,
   type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
@@ -16,6 +18,10 @@ import {
   useAccessibilityContext,
   type AccessibilitySettings,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
+import { usePressScale } from "@/shared/utils/usePressScale";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type CardVariant = "default" | "accent" | "success" | "warning" | "danger";
 
@@ -28,31 +34,40 @@ export interface CardProps {
   onPress?: (event: GestureResponderEvent) => void;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  accessibilityState?: AccessibilityState;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
-const cardVariants: Record<CardVariant, { backgroundColor: string; borderColor: string }> = {
+const cardVariants: Record<
+  CardVariant,
+  { backgroundColor: string; borderColor: string; pressedColor: string }
+> = {
   default: {
     backgroundColor: colors.background.surface,
     borderColor: colors.border.default,
+    pressedColor: colors.background.subtle,
   },
   accent: {
     backgroundColor: colors.feedback.info.background,
     borderColor: colors.feedback.info.border,
+    pressedColor: colors.feedback.info.pressed,
   },
   success: {
     backgroundColor: colors.feedback.success.background,
     borderColor: colors.feedback.success.border,
+    pressedColor: colors.feedback.success.pressed,
   },
   warning: {
     backgroundColor: colors.feedback.warning.background,
     borderColor: colors.feedback.warning.border,
+    pressedColor: colors.feedback.warning.pressed,
   },
   danger: {
     backgroundColor: colors.feedback.error.background,
     borderColor: colors.feedback.error.border,
+    pressedColor: colors.feedback.error.pressed,
   },
 };
 
@@ -102,17 +117,22 @@ export function Card({
   title,
   subtitle,
   variant = "default",
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   onPress,
   accessibilityLabel,
   accessibilityHint,
+  accessibilityState,
   style,
   contentStyle,
   testID,
 }: CardProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const accessibleColors = getAccessibleColors(settings);
+  const [pressed, setPressed] = useState(false);
+  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(Boolean(onPress));
   const variantStyle = cardVariants[variant];
+  const pressedColor = settings.highContrast ? accessibleColors.surface : variantStyle.pressedColor;
   const baseStyle: ViewStyle = {
     backgroundColor: settings.highContrast ? accessibleColors.surface : variantStyle.backgroundColor,
     borderColor: settings.highContrast ? accessibleColors.border : variantStyle.borderColor,
@@ -130,26 +150,36 @@ export function Card({
 
   if (onPress) {
     return (
-      <Pressable
+      <AnimatedPressable
         accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel ?? title}
         accessibilityRole="button"
+        accessibilityState={accessibilityState}
         hitSlop={getAccessibleHitSlop(settings)}
         onPress={onPress}
+        onPressIn={() => {
+          setPressed(true);
+          handlePressIn();
+        }}
+        onPressOut={() => {
+          setPressed(false);
+          handlePressOut();
+        }}
         testID={testID}
-        style={({ pressed }) => [
+        style={[
           baseStyle,
-          pressed ? { backgroundColor: colors.background.subtle } : null,
+          pressed ? { backgroundColor: pressedColor } : null,
+          pressScaleStyle,
           style,
         ]}
       >
         {content}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
   return (
-    <View testID={testID} style={[baseStyle, style]}>
+    <View accessibilityState={accessibilityState} testID={testID} style={[baseStyle, style]}>
       {content}
     </View>
   );

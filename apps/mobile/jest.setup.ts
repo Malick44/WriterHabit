@@ -41,6 +41,7 @@ jest.mock('react-native-reanimated', () => {
 
   return {
     Easing: {
+      bezier: () => (value: number) => value,
       cubic: (value: number) => value,
       in: (easing: unknown) => easing,
       out: (easing: unknown) => easing,

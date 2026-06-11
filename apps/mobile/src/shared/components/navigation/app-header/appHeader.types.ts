@@ -116,6 +116,7 @@ export interface AppHeaderResolvedColors {
   actionDisabledBorder: string;
   actionDisabledForeground: string;
   actionForeground: string;
+  actionPressed: string;
   background: string;
   border: string;
   mutedText: string;

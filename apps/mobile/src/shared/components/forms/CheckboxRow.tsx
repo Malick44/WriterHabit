@@ -8,6 +8,7 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 export interface CheckboxRowProps {
   label: string;
@@ -30,14 +31,16 @@ export function CheckboxRow({
   disabled = false,
   accessibilityLabel,
   accessibilityHint,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   style,
   testID,
 }: CheckboxRowProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const accent = settings.highContrast ? accessibleColors.actionBackground : colors.gradeBand[gradeBand].accentStrong;
+  const pressedColor = settings.highContrast ? accessibleColors.surface : colors.gradeBand[gradeBand].background;
 
   return (
     <Pressable
@@ -61,7 +64,7 @@ export function CheckboxRow({
           opacity: disabled ? 0.6 : 1,
           paddingVertical: spacing.sm,
         },
-        pressed && !disabled ? { backgroundColor: colors.background.subtle } : null,
+        pressed && !disabled ? { backgroundColor: pressedColor } : null,
         style,
       ]}
     >

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
-import { ThemeTuningPanel as GlacierThemeTuningPanel } from "@/shared/components/layout";
+import { ThemeTuningPanel as GlacierThemeTuningPanel } from "./GlacierThemeTuningPanel";
 import { Modal } from "@/shared/components/modals";
 import { useGlacierThemeStore } from "@/shared/theme";
 

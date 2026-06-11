@@ -1,3 +1,4 @@
+import { colors } from "@/design/tokens";
 import {
   useTunableTokenOverrides,
   type TunableComponentConfig,
@@ -6,31 +7,32 @@ import {
 } from "@/devtools/theme-tuner";
 
 /**
- * Base palette for the student home dashboard. These are the production
- * values; the dev theme tuner layers temporary overrides on top of them
- * without mutating this module.
+ * Base palette for the student home dashboard, aliased from the canonical
+ * `colors.dashboard` token group. These are the production values; the dev
+ * theme tuner layers temporary overrides on top of them without mutating
+ * this module.
  */
 export const homeColors = {
-  background: "#f8f9ff",
-  card: "#ffffff",
-  error: "#ba1a1a",
-  errorContainer: "#ffdad6",
-  inverseText: "#ffffff",
-  onSurface: "#0b1c30",
-  onSurfaceVariant: "#434653",
-  outline: "#737784",
-  outlineVariant: "#c3c6d5",
-  primary: "#00327d",
-  primaryContainer: "#dae2ff",
-  secondary: "#006c49",
-  secondaryContainerSoft: "rgba(108, 248, 187, 0.3)",
-  secondaryFixedDim: "#4edea3",
-  surface: "#f8f9ff",
-  surfaceContainer: "#e5eeff",
-  surfaceContainerHigh: "#dce9ff",
-  surfaceContainerLow: "#eff4ff",
-  surfaceVariant: "#d3e4fe",
-  tertiaryFixedDim: "#ffb95f",
+  background: colors.dashboard.background,
+  card: colors.dashboard.card,
+  error: colors.dashboard.error,
+  errorContainer: colors.dashboard.errorContainer,
+  inverseText: colors.dashboard.inverseText,
+  onSurface: colors.dashboard.onSurface,
+  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
+  outline: colors.dashboard.outline,
+  outlineVariant: colors.dashboard.outlineVariant,
+  primary: colors.dashboard.primary,
+  primaryContainer: colors.dashboard.primaryFixed,
+  secondary: colors.dashboard.secondary,
+  secondaryContainerSoft: colors.dashboard.secondaryContainerSoft,
+  secondaryFixedDim: colors.dashboard.secondaryFixedDim,
+  surface: colors.dashboard.surface,
+  surfaceContainer: colors.dashboard.surfaceContainer,
+  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
+  surfaceContainerLow: colors.dashboard.surfaceContainerLow,
+  surfaceVariant: colors.dashboard.surfaceVariant,
+  tertiaryFixedDim: colors.dashboard.tertiaryFixedDim,
 } as const;
 
 export const homeRadius = {

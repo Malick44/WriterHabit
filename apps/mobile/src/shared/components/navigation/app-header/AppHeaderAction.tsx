@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { colors, layout, radius, typography, type GradeBand } from "@/design/tokens";
+import { layout, radius, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Pill } from "@/shared/components/pills";
 import {
@@ -94,7 +94,7 @@ export const AppHeaderAction = memo(function AppHeaderAction({
         style={({ pressed }) => [
           {
             alignItems: "center",
-            backgroundColor: pressed && !action.disabled ? colors.action.ghost.pressed : avatarBackground,
+            backgroundColor: pressed && !action.disabled ? headerColors.actionPressed : avatarBackground,
             borderColor: actionBorder,
             borderRadius: radius.full,
             borderWidth: APP_HEADER_BORDER_WIDTH,
@@ -142,7 +142,7 @@ export const AppHeaderAction = memo(function AppHeaderAction({
           background: actionBackground,
           border: actionBorder,
           foreground: actionForeground,
-          pressedBackground: colors.action.ghost.pressed,
+          pressedBackground: headerColors.actionPressed,
         }}
         disabled={action.disabled}
         gradeBand={gradeBand}
@@ -171,7 +171,7 @@ export const AppHeaderAction = memo(function AppHeaderAction({
       style={({ pressed }) => [
         {
           alignItems: "center",
-          backgroundColor: pressed && !action.disabled ? colors.action.ghost.pressed : actionBackground,
+          backgroundColor: pressed && !action.disabled ? headerColors.actionPressed : actionBackground,
           borderColor: actionBorder,
           borderRadius: radius.full,
           borderWidth: APP_HEADER_BORDER_WIDTH,

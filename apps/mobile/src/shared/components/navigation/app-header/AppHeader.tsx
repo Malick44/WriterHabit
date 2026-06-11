@@ -3,6 +3,7 @@ import { I18nManager, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAccessibilityContext } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import { AppHeaderAction } from "./AppHeaderAction";
 import { AppHeaderProgress } from "./AppHeaderProgress";
@@ -23,7 +24,7 @@ export const AppHeader = memo(function AppHeader({
   variant = "default",
   colorScheme = "light",
   colorOverrides,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   showSafeArea = true,
   sticky = false,
   leftAction,
@@ -36,6 +37,7 @@ export const AppHeader = memo(function AppHeader({
 }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const variantStyle = getAppHeaderVariantStyle(variant);
   const centered = variant === "centered";
   const headerColors = useMemo(() => {

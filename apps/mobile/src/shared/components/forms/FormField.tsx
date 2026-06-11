@@ -7,6 +7,7 @@ import {
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 export interface FormFieldProps {
   label: string;
@@ -25,11 +26,12 @@ export function FormField({
   hint,
   error,
   required = false,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   style,
   testID,
 }: FormFieldProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const helperText = error ?? hint;

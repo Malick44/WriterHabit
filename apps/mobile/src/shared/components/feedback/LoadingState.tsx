@@ -6,6 +6,7 @@ import {
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 export interface LoadingStateProps {
   label: string;
@@ -21,12 +22,13 @@ export function LoadingState({
   label,
   description,
   accessibilityLabel,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   skeletonRowCount = 3,
   style,
   testID,
 }: LoadingStateProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const skeletonWidths: ViewStyle["width"][] =

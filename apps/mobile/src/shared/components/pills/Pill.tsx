@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import {
   Pressable,
   Text,
@@ -9,6 +9,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated from "react-native-reanimated";
 
 import { colors, layout, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
@@ -18,6 +19,10 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
+import { usePressScale } from "@/shared/utils/usePressScale";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type PillIconName = ComponentProps<typeof Ionicons>["name"];
 export type PillSize = "sm" | "md";
@@ -139,7 +144,7 @@ export function Pill({
   accessibilityLabel,
   colorOverrides,
   disabled = false,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   label,
   leadingIcons,
   onPress,
@@ -152,10 +157,13 @@ export function Pill({
   trailingIcons,
 }: PillProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const accessibleColors = getAccessibleColors(settings);
   const toneColors = getToneColors(tone, settings.highContrast);
   const sizeStyle = pillSizeStyles[size];
   const isInteractive = Boolean(onPress);
+  const [pressed, setPressed] = useState(false);
+  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(isInteractive && !disabled);
   const foreground = disabled
     ? colors.action.secondary.disabledForeground
     : colorOverrides?.foreground ?? (settings.highContrast ? accessibleColors.text : toneColors.foreground);
@@ -222,7 +230,7 @@ export function Pill({
   }
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
@@ -230,17 +238,26 @@ export function Pill({
       disabled={disabled}
       hitSlop={getAccessibleHitSlop(settings)}
       onPress={onPress}
-      style={({ pressed }) => [
+      onPressIn={() => {
+        setPressed(true);
+        handlePressIn();
+      }}
+      onPressOut={() => {
+        setPressed(false);
+        handlePressOut();
+      }}
+      style={[
         containerStyle,
         pressed && !disabled
           ? {
               backgroundColor: pressedBackground,
             }
           : null,
+        pressScaleStyle,
       ]}
       testID={testID}
     >
       {content}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

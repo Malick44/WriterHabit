@@ -6,6 +6,7 @@ import {
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import { RetryButton } from "./RetryButton";
 
@@ -26,13 +27,14 @@ export function OfflineBanner({
   description,
   actionLabel,
   accessibilityLabel,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   isRetrying = false,
   onRetry,
   style,
   testID,
 }: OfflineBannerProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const toneTokens = colors.feedback.warning;

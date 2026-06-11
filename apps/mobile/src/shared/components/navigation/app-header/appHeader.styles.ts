@@ -18,6 +18,7 @@ export function getAppHeaderColors(
       actionDisabledBorder: palette.black,
       actionDisabledForeground: palette.black,
       actionForeground: palette.black,
+      actionPressed: palette.slate[200],
       background: variant === "transparent" ? colors.action.ghost.background : palette.white,
       border: palette.black,
       mutedText: palette.black,
@@ -35,6 +36,7 @@ export function getAppHeaderColors(
       actionDisabledBorder: palette.slate[700],
       actionDisabledForeground: palette.slate[500],
       actionForeground: colors.text.inverse,
+      actionPressed: palette.slate[800],
       background: variant === "transparent" ? colors.action.ghost.background : colors.background.inverse,
       border: palette.slate[800],
       mutedText: palette.slate[300],
@@ -51,6 +53,7 @@ export function getAppHeaderColors(
     actionDisabledBorder: colors.border.default,
     actionDisabledForeground: colors.action.secondary.disabledForeground,
     actionForeground: colors.text.primary,
+    actionPressed: colors.action.ghost.pressed,
     background:
       variant === "transparent"
         ? colors.action.ghost.background

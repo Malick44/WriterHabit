@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Pressable, Text, View, type GestureResponderEvent, type StyleProp, type ViewStyle } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { colors, layout, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
@@ -8,6 +10,10 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
+import { usePressScale } from "@/shared/utils/usePressScale";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface ChoiceCardProps {
   label: string;
@@ -30,17 +36,21 @@ export function ChoiceCard({
   disabled = false,
   accessibilityLabel,
   accessibilityHint,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   style,
   testID,
 }: ChoiceCardProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const accent = settings.highContrast ? accessibleColors.actionBackground : colors.gradeBand[gradeBand].accentStrong;
+  const pressedColor = settings.highContrast ? accessibleColors.surface : colors.gradeBand[gradeBand].background;
+  const [pressed, setPressed] = useState(false);
+  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(!disabled);
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
@@ -48,8 +58,16 @@ export function ChoiceCard({
       disabled={disabled}
       hitSlop={getAccessibleHitSlop(settings)}
       onPress={onPress}
+      onPressIn={() => {
+        setPressed(true);
+        handlePressIn();
+      }}
+      onPressOut={() => {
+        setPressed(false);
+        handlePressOut();
+      }}
       testID={testID}
-      style={({ pressed }) => [
+      style={[
         {
           alignItems: "center",
           backgroundColor: selected && !settings.highContrast ? colors.gradeBand[gradeBand].background : accessibleColors.surface,
@@ -65,7 +83,8 @@ export function ChoiceCard({
           opacity: disabled ? 0.6 : 1,
           padding: spacing.lg,
         },
-        pressed && !disabled ? { backgroundColor: colors.background.subtle } : null,
+        pressed && !disabled ? { backgroundColor: pressedColor } : null,
+        pressScaleStyle,
         style,
       ]}
     >
@@ -104,6 +123,6 @@ export function ChoiceCard({
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }

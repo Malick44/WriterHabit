@@ -44,6 +44,7 @@ import {
   getMotionDuration,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import type { ModalAction, ModalCloseReason, ModalMode, ModalProps } from "./types";
 
@@ -155,7 +156,7 @@ export const Modal = memo(function Modal({
   enableSwipeToDismiss = true,
   showCloseButton = true,
   avoidKeyboard = true,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   headerActions,
   footer,
   actions,
@@ -174,6 +175,7 @@ export const Modal = memo(function Modal({
   const { height, width } = useWindowDimensions();
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
   const accessibleColors = getAccessibleColors(settings);
   const modalColors = useMemo(
     () =>

@@ -1,5 +1,7 @@
 import { type PropsWithChildren, type ReactNode } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   useWindowDimensions,
@@ -15,6 +17,7 @@ import {
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 interface ScreenProps extends PropsWithChildren {
   title?: string;
@@ -22,6 +25,7 @@ interface ScreenProps extends PropsWithChildren {
   footer?: ReactNode;
   gradeBand?: GradeBand;
   scroll?: boolean;
+  keyboardAvoiding?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
   testID?: string;
@@ -31,14 +35,16 @@ export function Screen({
   title,
   subtitle,
   footer,
-  gradeBand = "middle",
+  gradeBand: gradeBandProp,
   scroll = true,
+  keyboardAvoiding = false,
   contentStyle,
   backgroundColor,
   testID,
   children,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const gradeBand = useGradeBand(gradeBandProp);
   const { settings } = useAccessibilityContext();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -105,18 +111,32 @@ export function Screen({
     );
   }
 
+  const scrollContent = (
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps={keyboardAvoiding ? "handled" : undefined}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom, spacing.xl),
+        paddingHorizontal: horizontalPadding,
+        paddingTop: Math.max(insets.top, spacing.lg),
+      }}
+    >
+      {content}
+    </ScrollView>
+  );
+
   return (
     <View testID={testID} style={{ backgroundColor: resolvedBackgroundColor, flex: 1 }}>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingBottom: Math.max(insets.bottom, spacing.xl),
-          paddingHorizontal: horizontalPadding,
-          paddingTop: Math.max(insets.top, spacing.lg),
-        }}
-      >
-        {content}
-      </ScrollView>
+      {keyboardAvoiding ? (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          {scrollContent}
+        </KeyboardAvoidingView>
+      ) : (
+        scrollContent
+      )}
       {footer}
     </View>
   );

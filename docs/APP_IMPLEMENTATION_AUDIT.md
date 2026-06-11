@@ -7,14 +7,14 @@ Goal: plan and audit the entire implementation so the app can reach UI `9.5/10` 
 
 ## Executive Verdict
 
-Current public-production verdict: **No-go** for real student/payment data (backend runtime, payments, and parent/teacher data remain mocked). UI quality target reached at code level.
+Current public-production verdict: **No-go** for real student/payment data (backend feature persistence, payments, and parent/teacher data remain mocked). UI quality target reached at code level.
 
 Current score estimate (re-scored after the 2026-06-11 remediation pass and API client hardening):
 
 | Dimension | Current Score | Target | Reason |
 | --- | ---: | ---: | --- |
 | UI quality | 9.5/10 | 9.5/10 | Every code-level blocker from the original audit is closed: Grades 1-12 onboarding, accessibility settings consumed by shared UI and auth chrome, honest language settings, canvas tap dots, no dead actions, parent/teacher tab icon polish, grade-band adaptation in assignment detail, truthful autosave/submit states, virtualized long lists, and deep-link/app config alignment. The residual half point is reserved for confirmation on real devices (VoiceOver/TalkBack, large text, screenshot matrix), which cannot be exercised from this environment. |
-| Production functionality | 5.6/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, the mobile API client now fails closed without a production base URL and sends bearer auth/request IDs/timeouts/typed errors/Zod validation for current backend call sites/one-shot expired-token refresh, Expo Doctor/strict lint/exports all pass, and the EAS/OTA/CI release surface now exists. Still missing for 10/10: deployed backend runtime, server-derived roles, verified RLS hardening, payments, AI provider, object storage, audit/retention workers, owner-linked EAS project credentials, and E2E automation. |
+| Production functionality | 5.7/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, the mobile API client now fails closed without a production base URL and sends bearer auth/request IDs/timeouts/typed errors/Zod validation for current backend call sites/one-shot expired-token refresh, the local Fastify runtime shell verifies Supabase JWTs and ignores client-writable role metadata, Expo Doctor/strict lint/exports all pass, and the EAS/OTA/CI release surface now exists. Still missing for 10/10: deployed API infrastructure, production feature handlers, profile-table role and entitlement hydration, verified RLS hardening, payments, AI provider, object storage, audit/retention workers, owner-linked EAS project credentials, and E2E automation. |
 | Internal demo readiness | 8.5/10 | n/a | Deterministic mocks, local-first storage, passing Jest (44 suites / 187 tests), strict lint, Expo Doctor 21/21, and both platform exports make controlled demos reliable. |
 
 The app remains a pre-production scaffold for data/payment purposes and must not process real student/classroom/payment data until the remaining P0 items below are closed.
@@ -26,7 +26,7 @@ The original remediation pass was validated with `tsc --noEmit`, `eslint . --max
 | Finding | Status | What changed |
 | --- | --- | --- |
 | P0-3 mock auth in production | **Closed** | `authStore` ignores `EXPO_PUBLIC_WriterHabit_MOCK_SESSION` and rejects demo/mock sign-in unless `__DEV__`; three new tests cover production rejection and hydration fall-through. |
-| P0-5 unchecked workflow writes (client portion) | **Improved** | `submitAssignment` now checks and throws on every Supabase write error (submission contents, review job, feedback, revision task). Server-side state machines still require the backend runtime (open). |
+| P0-5 unchecked workflow writes (client portion) | **Improved** | `submitAssignment` now checks and throws on every Supabase write error (submission contents, review job, feedback, revision task). Server-side state machines still require production feature handlers (open). |
 | P0-6 submission/revision truth | **Closed (client)** | `writingWorkspaceApi.submitDraft` now submits through `assignmentsApi.submitAssignment` and only routes to review with the backend-acknowledged submission id; `feedbackReviewApi.submitRevision` persists to `submission_revisions` (idempotent upsert) and fails loudly instead of faking completion; revision drafts are deleted only after acceptance. |
 | P0-7 autosave stale writes | **Closed** | Writing and canvas saves are serialized through a promise chain; results from superseded saves can no longer overwrite newer work; status only reports "saved" when the latest text is durable. New deferred-promise race test in `useWritingWorkspace.test.tsx`. |
 | P1-1 Expo Doctor | **Closed** | All nine SDK 56 packages updated via `expo install --fix`; `expo-doctor` passes 21/21. |
@@ -39,7 +39,7 @@ The original remediation pass was validated with `tsc --noEmit`, `eslint . --max
 | P1-11 unsupported locales | **Closed** | Only `en` is selectable; legacy stored `es`/`fr` coerce safely; settings copy sets honest expectations. |
 | P1-12 service copy localization | **Closed (documented)** | `docs/CONTENT_LOCALIZATION_STRATEGY.md` defines client-localized chrome vs server-authored content (key + fallback columns) and the gate for enabling new locales. |
 | P1-13 list fetch/render pressure | **Closed** | Assignment history and canvas home use `FlatList`; history queries order newest-first with `.limit(50)` and fetch only needed draft columns; canvas summaries read a new generated `stroke_count` column (migration `202606100002`, applied to dev Supabase) instead of full stroke payloads. |
-| P1-8 apiClient hardening | **Closed (mobile client)** | `apps/mobile/src/core/api/apiClient.ts` now requires `EXPO_PUBLIC_API_BASE_URL` outside dev, validates production HTTPS/non-localhost configuration, injects Supabase bearer auth through `apps/mobile/src/core/api/apiTokenProvider.ts`, refreshes once on retryable `401 auth.expired_token` through `apps/mobile/src/core/api/apiAuthRecovery.ts`, sends `x-request-id`, supports timeouts, 204/empty responses, query params, structured `ApiError`, GET-only default retries, and Zod response validation for current backend-bound canvas/notification calls. Backend runtime, endpoint implementation, and server-side authorization remain open under P0/P1 backend findings. |
+| P1-8 apiClient hardening | **Closed (mobile client)** | `apps/mobile/src/core/api/apiClient.ts` now requires `EXPO_PUBLIC_API_BASE_URL` outside dev, validates production HTTPS/non-localhost configuration, injects Supabase bearer auth through `apps/mobile/src/core/api/apiTokenProvider.ts`, refreshes once on retryable `401 auth.expired_token` through `apps/mobile/src/core/api/apiAuthRecovery.ts`, sends `x-request-id`, supports timeouts, 204/empty responses, query params, structured `ApiError`, GET-only default retries, and Zod response validation for current backend-bound canvas/notification calls. Backend feature endpoint implementation and resource-level authorization remain open under P0/P1 backend findings. |
 | P2 canvas tap dots | **Closed** | Taps below the drag threshold now record single-point strokes that render as dots. |
 | P2 dead actions | **Closed** | Student home/progress notification icons open notification settings; parent home notification icon opens parent settings; teacher dashboard's dead notification/settings/avatar chrome removed; revision screen's dead ellipsis/fullscreen icons removed and "View Full Screen" opens a real modal. |
 | P2 parent/teacher tab polish | **Closed** | Both tab bars now have focused/unfocused icons, tint colors, and label styling consistent with student tabs. |
@@ -47,7 +47,7 @@ The original remediation pass was validated with `tsc --noEmit`, `eslint . --max
 | P2 minimal app config | **Closed** | `app.json` now has name/slug/version, orientation, build number, version code, tablet support, and user interface style. |
 | P2 assignment detail grade band | **Closed** | `DetailText` resolves typography from the screen's grade band via context instead of hardcoding the middle band. |
 
-Remaining open findings (tracked in the roadmap): P0-1 backend runtime, P0-2 server-derived roles, P0-4 RLS escalation review, P0-8 payments, P0-9 parent/teacher data, P0-10 audit/retention, owner-linked EAS project credentials, P1-4 E2E automation, P1-9 provider integrations, P1-14 notification status separation, P1-15 teacher moderation, P1-16 seed data.
+Remaining open findings (tracked in the roadmap): P0-2 full server-side role/profile hydration, P0-4 RLS escalation review, P0-8 payments, P0-9 parent/teacher data, P0-10 audit/retention, owner-linked EAS project credentials, P1-4 E2E automation, P1-9 provider integrations, P1-14 notification status separation, P1-15 teacher moderation, P1-16 seed data.
 
 ## Audit Plan Used
 
@@ -95,36 +95,40 @@ Local hygiene: `apps/mobile/.expo/`, `apps/mobile/ios/`, `apps/mobile/android/`,
 
 ## P0 Findings
 
-### P0-1: No Production Backend Runtime
+### P0-1: Production Backend Runtime Shell
 
-Evidence:
+Status: resolved for the runtime shell on 2026-06-11.
 
-- `services/api/README.md` says there is no running API server, package manifest, production migration runner, or deployment configuration.
-- `services/api/src/features/*` contains framework-neutral controllers/services, not deployed endpoints.
+- `services/api/` now has a Fastify TypeScript package manifest, local dev/build/test scripts, health endpoint, request IDs, CORS, request logging, Supabase JWT verification, standard API error middleware, authenticated session/profile smoke endpoints, fail-closed feature route shells, and integration tests.
+- The runtime principal role ignores client-writable `user_metadata.role`, trusts
+  `app_metadata.role` only when present, and defaults to `student`.
+- `services/api/src/features/*` still contains framework-neutral controllers/services for incomplete production workflows.
 - `apps/mobile/src/core/api/apiClient.ts` reads `EXPO_PUBLIC_API_BASE_URL`, falls back to `http://localhost:3000/api/v1` only in `__DEV__`, and rejects missing, invalid, insecure, or localhost production API base URLs.
 
-Impact: real users cannot safely persist, sync, authorize, audit, or recover student, parent, teacher, assignment, feedback, canvas, progress, subscription, or notification data.
+Remaining impact: real users still cannot safely persist, sync, resource-authorize, audit, or recover student, parent, teacher, assignment, feedback, canvas, progress, subscription, or notification data until feature handlers, resource authorization, migrations, and provider integrations are implemented.
 
-Fix:
+Remaining fix:
 
-- Choose backend runtime.
-- Add package manifest, local dev server, health checks, deploy config, CI, and migration runner.
-- Implement auth middleware, request validation, repositories, transactions, audit hooks, and integration tests.
+- Add production migration runner, deploy config, backend CI gates, repositories, transactions, resource-level authorization, audit hooks, route-specific schemas, and feature integration tests.
 
-### P0-2: Authorization And Role Trust Are Unsafe
+### P0-2: Authorization Hydration Is Incomplete
 
 Evidence:
 
 - `apps/mobile/src/core/auth/sessionService.ts` maps `role`, onboarding status, and subscription status from client-visible Supabase metadata.
 - Onboarding/sign-up can set or update role metadata from the mobile client.
 - `apps/mobile/src/core/auth/roleGuards.ts` and route gates use that role for UI access.
+- The Fastify runtime shell no longer trusts `user_metadata.role`, but production
+  feature authorization still needs server-owned profile and relationship
+  hydration before parent, teacher, admin, and entitlement workflows are enabled.
 - `services/api/docs/AUTHORIZATION_RULES.md` says backend endpoints must not trust client-supplied role/IDs.
 
 Impact: route gates are UX only. They cannot protect parent, teacher, admin, entitlement, or student data in production.
 
 Fix:
 
-- Derive role and entitlements from server-owned profile tables, app metadata, or custom claims.
+- Hydrate roles and entitlements from server-owned profile tables, trusted app
+  metadata, or custom claims before implementing resource handlers.
 - Remove mobile role mutation.
 - Make teacher access invite/admin-approved.
 - Treat route gates as convenience only and enforce all access on the server/RLS layer.
@@ -246,7 +250,7 @@ Fix:
 
 Evidence:
 
-- `docs/DATA_RETENTION_POLICY.md` states no backend runtime or deletion worker exists.
+- `docs/DATA_RETENTION_POLICY.md` states no production deletion worker or server-side retention workflow exists.
 - `services/api/src/features/audit/audit.service.ts` defaults to no persistence sink.
 
 Impact: child-safety, privacy, FERPA/COPPA-style operational requirements, deletion, export, and audit review cannot be honored in production.
@@ -472,14 +476,15 @@ Deployment impact:
 1. Disable mock auth in production.
 2. Remove mobile role mutation and derive roles server-side.
 3. Fix the `users` self-update RLS escalation path.
-4. Implement and deploy the backend runtime that the hardened mobile `apiClient` can call.
+4. Deploy the backend runtime and replace fail-closed route shells with
+   production feature handlers.
 5. Add stale-write protection to writing and canvas autosave.
 6. Block review/completion UI until durable backend acceptance exists.
 
 ### Phase 2: Build Production Backend And Data Truth
 
-1. Select runtime and create `services/api` package/deploy path.
-2. Implement auth middleware, feature endpoints, repositories, and server transactions.
+1. Finalize the `services/api` deploy path for the existing Fastify runtime.
+2. Implement feature endpoints, repositories, resource authorization, and server transactions.
 3. Add migration runner, seed data, and RLS test harness.
 4. Move assignment/review/progress/canvas workflows behind backend state machines.
 5. Implement audit, retention, export, and deletion workflows.

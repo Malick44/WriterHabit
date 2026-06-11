@@ -1,18 +1,38 @@
 # WriterHabit API Authorization Rules
 
-Status: planned backend authorization model. Database RLS and migration details
-now live in `services/api/docs/DATABASE_SCHEMA.md`,
-`services/api/docs/DATA_RELATIONSHIPS.md`, and `services/api/migrations/`; this
-document defines service-level rules for API handlers.
+Status: service-level authorization model. The API runtime now verifies
+Supabase bearer JWTs before protected route shells run, but resource-level
+student, parent, teacher, admin, and provider authorization is not implemented
+for production workflows yet. Database RLS and migration details live in
+`services/api/docs/DATABASE_SCHEMA.md`, `services/api/docs/DATA_RELATIONSHIPS.md`,
+and `services/api/migrations/`.
+
+Current runtime guard:
+
+- Missing protected-route bearer tokens return `401 auth.missing_token`.
+- Invalid protected-route bearer tokens return `401 auth.invalid_token`.
+- Expired protected-route bearer tokens return `401 auth.expired_token`.
+- Backend principal role is derived from trusted server-owned role data only.
+  The current runtime shell reads `app_metadata.role` from the verified token,
+  ignores client-writable `user_metadata.role`, and defaults missing or invalid
+  trusted roles to `student`.
+- Registered but incomplete feature routes authenticate first, then return
+  `501 feature.disabled`.
+- If JWT verification is not configured with `SUPABASE_JWT_SECRET`,
+  `SUPABASE_URL`, or `SUPABASE_JWKS_URL`, protected routes fail closed with
+  `503 system.unavailable`.
+
+The endpoint-specific rules below remain the production target for future route
+implementations.
 
 ## Principals
 
 | Principal | Source | Notes |
 | --- | --- | --- |
-| Student | Auth token user with role `student` | Can access their own profile, assignments, drafts, submissions, canvas documents, feedback, and progress. |
-| Parent | Auth token user with role `parent` | Can access linked students through active parent-student links. |
-| Teacher | Auth token user with role `teacher` | Can access classes they own and students enrolled in those classes. |
-| Admin | Auth token user with role `admin` | Operational access only; actions must be audited. |
+| Student | Verified user with trusted server-owned role `student`; current runtime uses `app_metadata.role` or defaults to `student`. | Can access their own profile, assignments, drafts, submissions, canvas documents, feedback, and progress. |
+| Parent | Verified user with trusted server-owned role `parent`. | Can access linked students through active parent-student links. |
+| Teacher | Verified user with trusted server-owned role `teacher`. | Can access classes they own and students enrolled in those classes. |
+| Admin | Verified user with trusted server-owned role `admin`. | Operational access only; actions must be audited. |
 | Provider webhook | Verified signature | Limited to subscription or provider event endpoints. |
 
 ## Global Rules

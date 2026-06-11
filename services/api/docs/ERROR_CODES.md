@@ -1,6 +1,8 @@
 # WriterHabit API Error Codes
 
-Status: planned backend error catalog.
+Status: backend error catalog. The Fastify runtime in `services/api/` now emits
+this standard envelope for health-adjacent errors, auth failures, validation
+failures, missing routes, and disabled route shells.
 
 All API errors use the standard response shape from
 `services/api/docs/API_CONTRACT.md`.
@@ -30,6 +32,7 @@ interface ApiErrorResponse {
 | 410 | `resource.gone` | The resource is intentionally unavailable. |
 | 422 | `ai_safety.*` or `validation.*` | The request is well formed but not acceptable. |
 | 429 | `rate_limit.*` | The user or organization exceeded a limit. |
+| 501 | `feature.disabled` | A route is registered but intentionally disabled until the workflow is production-ready. |
 | 500 | `system.*` | Unexpected server failure. |
 | 502 | `provider.*` | Upstream provider failed. |
 | 503 | `system.unavailable` | Service is temporarily unavailable. |
@@ -114,6 +117,7 @@ interface ApiErrorResponse {
 
 | Code | HTTP | Retryable | User-facing fallback |
 | --- | --- | --- | --- |
+| `feature.disabled` | 501 | false | This feature is not available yet. |
 | `rate_limit.ai_daily_limit` | 429 | false | You have reached today's coaching limit. |
 | `rate_limit.too_many_requests` | 429 | true | Slow down and try again soon. |
 | `system.unavailable` | 503 | true | WriterHabit is temporarily unavailable. |

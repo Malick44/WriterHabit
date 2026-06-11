@@ -1,8 +1,8 @@
 # WriterHabit Data Relationships
 
 Status: planned relationship map for the database drafts in
-`services/api/migrations/`. The current mobile app has not been wired to these
-tables yet.
+`services/api/migrations/`. The Fastify API runtime shell exists, but neither
+the runtime nor the current mobile app has been wired to these tables yet.
 
 ## Identity Graph
 

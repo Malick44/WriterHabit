@@ -8,6 +8,18 @@ export type NotificationType =
 
 export type NotificationDeliveryStatus = "failed" | "sent" | "skipped";
 
+export const notificationEndpoints = [
+  "GET /api/v1/students/:studentId/notification-preferences",
+  "PUT /api/v1/students/:studentId/notification-preferences",
+  "POST /api/v1/students/:studentId/notifications/register-device",
+  "POST /api/v1/students/:studentId/notifications/unregister-device",
+  "GET /api/v1/students/:studentId/notifications/prepared",
+  "POST /api/v1/notifications/send-due",
+  "POST /api/v1/notifications/weekly-reports",
+] as const;
+
+export type NotificationEndpoint = (typeof notificationEndpoints)[number];
+
 export interface NotificationDeviceRegistrationRequest {
   expoPushToken: string;
   idempotencyKey?: string;

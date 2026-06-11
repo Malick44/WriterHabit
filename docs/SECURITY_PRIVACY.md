@@ -2,9 +2,10 @@
 
 Status: Prompt 25 security/privacy requirements and current implementation map.
 WriterHabit currently has an Expo mobile app, Supabase public-client auth,
-framework-neutral backend contracts, draft migrations, and deterministic local
-feature mocks. A production backend runtime and migration runner do not exist
-yet.
+framework-neutral backend contracts, draft migrations, deterministic local
+feature mocks, and a local Fastify backend runtime shell in `services/api/`.
+Production deployment, a migration runner, resource-level authorization, and
+critical feature persistence do not exist yet.
 
 ## Canonical Code Paths
 
@@ -41,6 +42,11 @@ The planned backend must authorize requests after authentication and before
 loading full student content where possible. Parent and teacher dashboards should
 prefer summaries and bounded excerpts over full draft, full submission, canvas
 stroke, or recognized-text payloads.
+
+Current runtime role trust: `services/api/src/runtime/auth.ts` verifies Supabase
+JWTs, ignores client-writable `user_metadata.role`, and uses trusted
+`app_metadata.role` only when present. Missing or invalid trusted role claims
+default to `student` until production profile-table hydration is implemented.
 
 ## Data Minimization
 
@@ -112,8 +118,8 @@ Future signed URL requirements:
 ## Rate Limit Requirements
 
 Current state: backend AI usage limits are scaffolded in
-`services/api/src/features/ai/usage/ai-usage-limit.service.ts`; no running API
-server enforces them yet.
+`services/api/src/features/ai/usage/ai-usage-limit.service.ts`; the Fastify
+runtime shell does not enforce rate limits yet.
 
 Future rate limits must cover:
 

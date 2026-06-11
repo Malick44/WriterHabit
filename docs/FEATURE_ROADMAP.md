@@ -199,7 +199,7 @@ Work:
 
 Risks:
 
-- AI coach currently uses deterministic local mock responses on mobile; backend AI service scaffolding exists in `services/api/src/features/ai/` but is not wired to a running API server.
+- AI coach currently uses deterministic local mock responses on mobile; backend AI service scaffolding exists in `services/api/src/features/ai/` but is not wired to production route handlers or an external model provider.
 - AI feedback review currently uses deterministic local mock responses and local progress earned payloads; backend AI review service scaffolding exists, but feedback persistence and progress sync remain future work.
 - AI feedback must not rewrite student assignments.
 
@@ -240,7 +240,7 @@ Work:
 Risks:
 
 - `expo-notifications` requires native build and store review planning.
-- Remote push delivery still needs deployed backend runtime, APNs/FCM credentials, worker scheduling, and production observability.
+- Remote push delivery still needs deployed route handlers/workers, APNs/FCM credentials, worker scheduling, and production observability.
 - Parent/teacher report delivery is still not production-connected.
 
 ## Phase 9: Parent Experience

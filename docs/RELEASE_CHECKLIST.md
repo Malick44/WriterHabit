@@ -80,8 +80,9 @@ Current decision: do not release publicly yet.
 - [x] Framework-neutral AI, canvas, audit, and feature-boundary scaffolds exist.
 - [x] Mobile app uses public Expo Supabase env vars only.
 - [x] Mobile API client requires `EXPO_PUBLIC_API_BASE_URL` outside development and sends Supabase bearer auth, request IDs, timeouts, structured errors, one-shot expired-token refresh, and Zod response validation for current backend-bound call sites.
-- [ ] Production API framework, package manifest, deployment path, and runtime checks exist.
+- [x] Production API framework, package manifest, local build path, JWT-authenticated runtime shell, trusted-role derivation from server-owned metadata, standard error middleware, request IDs, and runtime integration tests exist under `services/api/`.
 - [ ] Migrations run in a controlled environment and RLS policies are verified with role tests.
+- [ ] Critical feature route handlers are wired to persistence, resource-level authorization, audit logging, and provider boundaries instead of returning `501 feature.disabled`.
 - [ ] Signed URL endpoints are implemented for canvas/object storage.
 - [ ] Data export, deletion, retention, and audit workflows are operational.
 - [ ] Secrets scanning is part of CI and release review.
@@ -108,6 +109,9 @@ Run from the project root unless noted:
 ./script/build_and_run.sh --typecheck
 ./script/build_and_run.sh --test
 ./script/build_and_run.sh --doctor
+cd services/api && npm run typecheck
+cd services/api && npm test
+cd services/api && npm run build
 cd apps/mobile && npx expo install --check
 cd apps/mobile && npm run lint -- --max-warnings=0
 cd apps/mobile && npx expo export --platform ios --output-dir /tmp/WriterHabit-expo-export-ios

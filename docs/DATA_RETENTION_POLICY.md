@@ -2,8 +2,9 @@
 
 Status: Prompt 25 retention and deletion requirements. The current mobile app
 uses local device storage for drafts, canvas documents, preferences, and
-deterministic feature mocks. The planned backend schema and API contracts exist,
-but no production backend runtime or deletion worker exists yet.
+deterministic feature mocks. The planned backend schema, API contracts, and
+Fastify runtime shell exist, but no production deletion worker or server-side
+retention workflow exists yet.
 
 ## Current Storage Map
 
@@ -30,7 +31,8 @@ but no production backend runtime or deletion worker exists yet.
 
 ## Planned Backend Retention Requirements
 
-These requirements apply when a backend runtime and deletion worker are selected.
+These requirements apply when production route handlers, persistence, and the
+deletion worker are implemented.
 
 | Data Category | Retention Requirement |
 | --- | --- |

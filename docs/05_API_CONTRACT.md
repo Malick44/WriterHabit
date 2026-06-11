@@ -33,10 +33,14 @@ Mobile API base URL:
 
 ## Current Implementation Reality
 
-The mobile app has a production-safe fetch boundary for planned backend calls,
-but there is still no running WriterHabit backend runtime. Most product areas
-currently use a mix of public Supabase auth, feature-owned deterministic mock
-APIs, direct Supabase persistence, and local device persistence:
+The mobile app has a production-safe fetch boundary for backend calls, and
+`services/api/` now has a local Fastify runtime shell with health, Supabase JWT
+auth, request IDs, standard error envelopes, authenticated session/profile smoke
+endpoints, and fail-closed route shells. There is still no deployed production
+API infrastructure, migration runner, resource-level authorization, or
+production persistence for critical workflows. Most product areas currently use
+a mix of public Supabase auth, feature-owned deterministic mock APIs, direct
+Supabase persistence, and local device persistence:
 
 | Area | Current path |
 | --- | --- |
@@ -54,12 +58,13 @@ APIs, direct Supabase persistence, and local device persistence:
 | Teacher | `apps/mobile/src/features/teacher/api/teacherApi.ts` |
 | Subscriptions | `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` |
 
-The backend scaffold is framework-neutral and lives in
-`services/api/src/features/`. It contains endpoint boundary stubs, typed canvas
-metadata/upload/export placeholders in `services/api/src/features/canvas/`, plus
-framework-neutral AI coaching/review services in
-`services/api/src/features/ai/`. Draft Supabase/Postgres migrations now live in
-`services/api/migrations/`.
+The Fastify runtime lives in `services/api/src/runtime/`,
+`services/api/src/routes/`, and `services/api/src/index.ts`. Backend feature
+contracts remain framework-neutral under `services/api/src/features/`; they
+contain endpoint boundary stubs, typed canvas metadata/upload/export
+placeholders in `services/api/src/features/canvas/`, plus framework-neutral AI
+coaching/review services in `services/api/src/features/ai/`. Draft
+Supabase/Postgres migrations now live in `services/api/migrations/`.
 
 ## Planned Endpoint Groups
 

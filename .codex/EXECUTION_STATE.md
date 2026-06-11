@@ -1,6 +1,6 @@
 # Execution State
 
-Last updated: 2026-06-09
+Last updated: 2026-06-11
 
 ## Current Status
 
@@ -29,7 +29,8 @@ Last updated: 2026-06-09
 - Prompt 25 security, privacy, and academic integrity is complete.
 - Prompt 26 performance, offline support, autosave reliability, retry, and error-state polish is complete.
 - Prompt 27 final QA and release checklist is complete.
-- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with production backend/runtime, authorization, payment entitlement sync, mobile E2E automation, and lint tooling.
+- WW-REL-001 production backend runtime shell is implemented in `services/api/`.
+- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with database migration/RLS verification, resource-level API authorization, payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -39,6 +40,11 @@ Last updated: 2026-06-09
 - Supabase local admin CLI is configured for development-only use.
 - Configured development Supabase has the 38-table app schema and RLS policy
   draft applied from `services/api/migrations/`.
+- `services/api/` now has a Fastify TypeScript runtime with health, request IDs,
+  CORS, request logging, Supabase JWT verification, standard API errors,
+  authenticated session/profile smoke endpoints, fail-closed feature route
+  shells, package scripts, trusted-role derivation from server-owned
+  `app_metadata.role`, and Vitest integration tests.
 - Every task should start by reading `AGENTS.md`, `docs/00_CONTEXT_BRIEF.md`, `prompts/01_master_agent_rules.md`, and `.codex/EXECUTION_STATE.md`.
 
 ## Completed Work

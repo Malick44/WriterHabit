@@ -2,14 +2,14 @@
 
 Status: Supabase/Postgres schema draft, applied to the configured development
 Supabase instance on 2026-06-09. The current mobile app still uses Supabase
-auth, feature-owned deterministic mock APIs, and local device storage. The
-migration drafts live in:
+auth, feature-owned deterministic mock APIs, and local device storage. A
+Fastify API runtime shell now exists in `services/api/`, but these tables are
+not wired to production route handlers yet. The migration drafts live in:
 
 - `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`
 - `services/api/migrations/202606090002_privacy_rls_policies.sql`
 
-No backend runtime, deployment pipeline, or production migration runner has been
-selected yet.
+No production migration runner or deployment pipeline has been selected yet.
 
 ## Schema Rules
 
@@ -169,7 +169,7 @@ relationship columns to keep access checks bounded.
 These migrations are applied to the configured development Supabase instance and
 remain drafts for the future backend. Before production use:
 
-1. Select the backend runtime and migration runner.
+1. Add a production migration runner for the Fastify API deployment path.
 2. Decide whether public app clients will query these tables directly or only
    through backend API handlers.
 3. Re-run the migrations against a disposable Supabase branch or local Supabase

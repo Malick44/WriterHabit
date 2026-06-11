@@ -1,0 +1,114 @@
+import cors, { type FastifyCorsOptions } from "@fastify/cors";
+import Fastify, { type FastifyServerOptions } from "fastify";
+import { randomUUID } from "node:crypto";
+import type { IncomingMessage } from "node:http";
+
+import { createAuthenticateHook, createSupabaseJwtVerifier, type AuthVerifier } from "./runtime/auth";
+import { loadConfig, type ApiConfig } from "./runtime/config";
+import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
+import { registerHealthRoutes } from "./routes/health";
+import { registerPlaceholderRoutes } from "./routes/placeholders";
+import { registerProfileRoutes } from "./routes/profile";
+
+interface BuildServerOptions {
+  authVerifier?: AuthVerifier;
+  config?: ApiConfig;
+  logger?: FastifyServerOptions["logger"];
+}
+
+const requestIdPattern = /^[A-Za-z0-9_.:-]{1,128}$/;
+
+function createRequestId(): string {
+  return `req_${randomUUID().replace(/-/g, "")}`;
+}
+
+function getIncomingRequestId(request: IncomingMessage): string | undefined {
+  const value = request.headers["x-request-id"];
+  const requestId = Array.isArray(value) ? value[0] : value;
+
+  if (!requestId || !requestIdPattern.test(requestId)) {
+    return undefined;
+  }
+
+  return requestId;
+}
+
+function isLocalhostOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    return url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname.endsWith(".localhost");
+  } catch {
+    return false;
+  }
+}
+
+function createCorsOriginResolver(config: ApiConfig): FastifyCorsOptions["origin"] {
+  const allowedOrigins = new Set(config.cors.allowedOrigins);
+
+  return (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.has(origin) || (config.cors.allowLocalhostInDevelopment && isLocalhostOrigin(origin))) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  };
+}
+
+export async function buildServer(options: BuildServerOptions = {}) {
+  const config = options.config ?? loadConfig();
+  const authVerifier = options.authVerifier ?? createSupabaseJwtVerifier(config.auth);
+  const app = Fastify({
+    genReqId: (request) => getIncomingRequestId(request) ?? createRequestId(),
+    logger:
+      options.logger ??
+      {
+        level: config.logLevel,
+        redact: {
+          paths: [
+            "req.headers.authorization",
+            "request.headers.authorization",
+            "headers.authorization",
+            "*.token",
+            "*.accessToken",
+            "*.refreshToken",
+            "*.password",
+            "*.serviceRoleKey",
+          ],
+          remove: true,
+        },
+      },
+    requestIdHeader: "x-request-id",
+  });
+  const authenticate = createAuthenticateHook(authVerifier);
+
+  app.addHook("onRequest", async (request, reply) => {
+    reply.header("x-request-id", request.id);
+  });
+  app.setErrorHandler(createErrorHandler());
+  app.setNotFoundHandler(createNotFoundHandler());
+
+  await app.register(cors, {
+    allowedHeaders: ["authorization", "content-type", "x-request-id"],
+    credentials: false,
+    exposedHeaders: ["x-request-id"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin: createCorsOriginResolver(config),
+  });
+
+  await app.register(
+    async (v1) => {
+      await registerHealthRoutes(v1, config);
+      await registerProfileRoutes(v1, authenticate);
+      await registerPlaceholderRoutes(v1, authenticate);
+    },
+    { prefix: config.apiBasePath },
+  );
+
+  return app;
+}

@@ -1,9 +1,19 @@
 # WriterHabit Backend API Contract
 
-Status: planned contract for the future backend service. The current mobile app
-uses Supabase client auth, Supabase RPCs for student profile settings and
-notification preferences, plus feature-owned deterministic mock APIs and local
-storage where noted in the repository docs.
+Status: canonical backend contract with a production runtime shell now present in
+`services/api/`. The current mobile app still uses Supabase client auth,
+Supabase RPCs for student profile settings and notification preferences,
+feature-owned deterministic mock APIs, and local storage where noted in the
+repository docs.
+
+Runtime implementation status:
+
+- `GET /api/v1/health` is implemented and public.
+- `GET /api/v1/auth/session` and `GET /api/v1/me/profile` are implemented as
+  authenticated Supabase JWT smoke endpoints.
+- Remaining feature routes are registered and fail closed with
+  `501 feature.disabled` until persistence, resource authorization, and provider
+  integrations are implemented.
 
 Base path:
 
@@ -148,8 +158,19 @@ Example:
 
 The mobile app currently uses the public Supabase client in
 `apps/mobile/src/core/supabase/supabaseClient.ts` and auth/session mapping in
-`apps/mobile/src/core/auth/sessionService.ts`. These endpoints are the planned
-backend contract if auth is proxied or session metadata is hydrated by the API.
+`apps/mobile/src/core/auth/sessionService.ts`.
+
+The API runtime verifies Supabase bearer JWTs for protected endpoints.
+`GET /auth/session` is implemented as a smoke endpoint that returns public
+token-derived profile metadata and does not echo the bearer token. Sign-up,
+sign-in, and sign-out proxy endpoints are registered but disabled until auth
+provider proxying is intentionally implemented.
+
+Backend principal roles must come from server-owned data. The current runtime
+shell trusts `app_metadata.role` in the verified Supabase JWT and ignores
+client-writable `user_metadata.role`; missing or invalid trusted roles default
+to `student`. Future feature handlers may replace this smoke-role source with
+server-owned profile-table hydration after verifying `sub`.
 
 ```txt
 POST /auth/sign-up
@@ -168,10 +189,13 @@ interface AuthUser {
   onboardingCompleted: boolean;
 }
 
-interface AuthSessionResponse {
+interface AuthSessionSmokeResponse {
   user: AuthUser;
-  accessToken: string;
-  expiresAt: string;
+  session: {
+    provider: "supabase";
+    expiresAt: string | null;
+  };
+  requestId: string;
 }
 
 interface SignUpRequest {
@@ -513,8 +537,9 @@ The mobile canvas stores compact stroke documents locally and saves locally
 before any backend attempt. `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
 now scaffolds backend sync with deterministic signed upload and export
 placeholders by default. It only calls these planned API routes when
-`EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`; this repository still
-does not contain a running backend server.
+`EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`; the API runtime now
+registers these routes, but they return `501 feature.disabled` until signed
+object storage, metadata persistence, and authorization checks are implemented.
 
 Backend canvas storage splits editable payloads from metadata:
 
@@ -1102,8 +1127,9 @@ schedules local reminders with `expo-notifications`, and attempts to register an
 Expo push token with the backend account API when a native build supplies one.
 `services/api/src/features/notifications/` contains the framework-neutral
 backend delivery service for token registration and Expo push sends. A deployed
-API runtime, push credentials, and scheduler/worker are still required for
-production remote push delivery.
+push worker, credential configuration, scheduler, persistence adapter, and
+endpoint implementation are still required for production remote push delivery;
+the runtime route shells currently fail closed with `501 feature.disabled`.
 
 ```txt
 GET  /students/:studentId/notification-preferences

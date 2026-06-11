@@ -107,8 +107,8 @@ services/api/src/features/ai/
   contracts.ts
 ```
 
-These backend services are not a running API server yet. They provide the future
-handler boundary: bounded request normalization, grade-aware prompt building,
+These backend services are not wired to production route handlers yet. They
+provide the future handler boundary: bounded request normalization, grade-aware prompt building,
 academic-integrity checks, deterministic input/output moderation placeholders,
 usage limits and token-budget estimates, structured feedback parsing, and a mock
 provider.

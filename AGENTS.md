@@ -44,7 +44,8 @@ After that, read the task-specific implementation prompt, screen prompt, project
 - Prompt 25 security, privacy, and academic integrity is complete.
 - Prompt 26 performance, offline support, autosave reliability, retry, and error-state polish is complete.
 - Prompt 27 final QA and release checklist is complete.
-- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with production backend/runtime, authorization, payment entitlement sync, mobile E2E automation, and lint tooling.
+- WW-REL-001 production backend runtime shell is implemented in `services/api/`.
+- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with database migration/RLS verification, resource-level API authorization, payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.
@@ -77,7 +78,7 @@ WriterHabit/
 
 Important current facts:
 
-- `services/api/` now has framework-neutral contract docs in `services/api/docs/`, database schema and relationship docs in `services/api/docs/`, migration drafts in `services/api/migrations/`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; no backend runtime framework, package manifest, production migration runner, or running API server exists yet.
+- `services/api/` now has a Fastify TypeScript runtime shell, package manifest, local build/test scripts, `/api/v1/health`, Supabase JWT verification, request IDs, standard API error middleware, authenticated session/profile smoke endpoints, fail-closed feature route shells, framework-neutral contract docs in `services/api/docs/`, migration drafts in `services/api/migrations/`, feature boundary stubs in `services/api/src/features/`, and AI backend service scaffolding in `services/api/src/features/ai/`; no production migration runner, deployed API, or production feature persistence exists yet.
 - `packages/shared/src/index.ts` and `packages/shared/src/types.ts` exist and are imported through the mobile alias `@WriterHabit/shared`.
 - No native `apps/mobile/ios/` or `apps/mobile/android/` folders should be kept unless the workflow intentionally changes from Expo CNG/prebuild.
 

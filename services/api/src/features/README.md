@@ -1,10 +1,12 @@
 # Backend Feature Boundaries
 
-This folder is the framework-neutral scaffold for the planned WriterHabit backend.
-It intentionally does not choose NestJS, Spring Boot, or another runtime yet.
+This folder keeps WriterHabit backend feature contracts and framework-neutral
+services. The production API runtime shell now lives outside this folder in
+`services/api/src/runtime/`, `services/api/src/routes/`, and
+`services/api/src/index.ts`.
 
 Each feature folder owns its controllers/services/contracts once a backend
-framework is selected:
+workflow is implemented:
 
 | Feature | Boundary |
 | --- | --- |
@@ -28,3 +30,13 @@ Canonical planned contracts:
 - `services/api/docs/API_CONTRACT.md`
 - `services/api/docs/ERROR_CODES.md`
 - `services/api/docs/AUTHORIZATION_RULES.md`
+
+Current runtime behavior:
+
+- `GET /api/v1/health` is public.
+- `GET /api/v1/auth/session` and `GET /api/v1/me/profile` require a verified
+  Supabase bearer JWT and return token-derived public profile metadata.
+- Registered but incomplete feature routes authenticate first and then return
+  `501 feature.disabled`.
+- Public auth proxy and payment webhook routes are registered but disabled; they
+  do not parse or trust provider payloads yet.

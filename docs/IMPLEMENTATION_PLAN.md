@@ -101,8 +101,8 @@ Do not edit these areas unless the task explicitly requires it:
 ## Risk Areas
 
 1. Testing now has a documented strategy, feature-owned service tests, root unit acceptance tests, root integration scaffolds, and documented E2E scenarios. A mobile E2E runner has not been selected yet.
-2. Backend runtime remains undefined. `services/api/docs/` now defines the planned API shape, errors, authorization rules, database schema, and data relationships, and `services/api/migrations/` contains draft Supabase/Postgres migrations. No framework, production migration runner, or running API server has been selected.
-3. Data validation is not enforced yet. Zod is installed but should be applied at API, local storage, and AI service boundaries.
+2. Backend runtime shell exists in `services/api/` with Fastify, JWT auth, standard errors, health, and fail-closed route shells. Production migration runner, deployed API infrastructure, resource-level handlers, and persistence remain open.
+3. Data validation is enforced for the new API shell and several local/AI boundaries, but production feature handlers still need route-specific Zod schemas as they are implemented.
 4. Accessibility and localization foundations exist, but placeholder feature screens still need screen-specific labels, roles, and i18n keys as they are implemented.
 5. Token architecture is established at `apps/mobile/src/design/tokens/`; future screens still need to migrate away from ad hoc local styles as they are implemented.
 6. Query provider usage is consolidated through `apps/mobile/src/shared/query/QueryProvider.tsx`.

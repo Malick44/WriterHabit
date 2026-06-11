@@ -623,23 +623,25 @@ Consequences:
   boundaries.
 - The mock provider returns localization-ready coaching and feedback packets
   with one strength, one improvement, and one next revision task.
-- No model-provider credentials, service-role keys, running API server,
+- No model-provider credentials, service-role keys, AI route handler,
   persistence adapter, or production queue exists yet.
 
-## ADR-008: Backend API Remains Framework-Neutral for Now
+## ADR-008: Backend API Runtime Shell
 
 Status: accepted
 
 `services/api/docs/` now defines the planned backend API contract, error
 catalog, and authorization rules. `services/api/src/features/` contains
 framework-neutral feature boundary stubs plus AI coaching/review service
-scaffolding in `services/api/src/features/ai/`. The backend still does not
-choose NestJS, Spring Boot, or another runtime framework.
+scaffolding in `services/api/src/features/ai/`. The backend runtime shell is
+Fastify with request IDs, CORS, request logging, Supabase JWT authentication,
+standard error middleware, health, authenticated session/profile smoke
+endpoints, and fail-closed feature route shells.
 
-Decision needed before implementation:
+Remaining decisions before production feature implementation:
 
-- Choose backend framework and database migration tooling before implementing
-  runtime handlers, persistence, and deployment.
+- Choose database migration tooling, deployment infrastructure, persistence
+  adapters, background worker strategy, and route-specific authorization tests.
 
 Backend responsibilities currently documented:
 

@@ -1437,6 +1437,7 @@ export const en = {
       undo: "Undo",
       redo: "Redo",
       save: "Save",
+      saveDraft: "Save draft",
       attach: "Attach",
       attachHint: "Attach this canvas to the assignment.",
       attachDisabledHint: "Open this canvas from an assignment to attach it.",

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
@@ -23,6 +23,7 @@ interface StrokeCanvasAdapterProps {
   onBeginStroke: (point: CanvasPoint) => void;
   onEndStroke: () => void;
   onExtendStroke: (point: CanvasPoint) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 function TemplateGuides({ template }: { template: CanvasTemplate }) {
@@ -32,14 +33,23 @@ function TemplateGuides({ template }: { template: CanvasTemplate }) {
     case "lined_paper":
     case "handwriting_practice":
       return (
-        <View style={{ gap: spacing.lg, paddingTop: spacing.xl }}>
-          {Array.from({ length: template === "handwriting_practice" ? 7 : 9 }).map((_, index) => (
+        <View
+          pointerEvents="none"
+          style={{
+            bottom: spacing.lg,
+            left: spacing.xl,
+            position: "absolute",
+            right: spacing.xl,
+            top: spacing.xl,
+          }}
+        >
+          {Array.from({ length: template === "handwriting_practice" ? 11 : 14 }).map((_, index) => (
             <View
               key={index}
               style={{
-                borderBottomColor: index % 2 === 0 ? colors.border.strong : colors.border.default,
+                borderBottomColor: index % 4 === 2 ? colors.border.strong : "#E5EEFF",
                 borderBottomWidth: 1,
-                height: template === "handwriting_practice" ? 28 : 22,
+                height: template === "handwriting_practice" ? 34 : 32,
               }}
             />
           ))}
@@ -152,6 +162,7 @@ export function StrokeCanvasAdapter({
   onBeginStroke,
   onEndStroke,
   onExtendStroke,
+  style,
 }: StrokeCanvasAdapterProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
@@ -159,6 +170,8 @@ export function StrokeCanvasAdapter({
   const type = typography.gradeBands[gradeBand];
   const [layout, setLayout] = useState({ height: gradeAdaptation.surfaceMinHeight, width: 0 });
   const layoutRef = useRef(layout);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isStrokeActiveRef = useRef(false);
   const lastSampleRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleSurfaceLayout = useCallback((nextLayout: { height: number; width: number }) => {
@@ -177,15 +190,29 @@ export function StrokeCanvasAdapter({
 
   const handleDrawBegin = useCallback(
     (x: number, y: number) => {
+      dragStartRef.current = { x, y };
+      isStrokeActiveRef.current = false;
       lastSampleRef.current = { x, y };
-      onBeginStroke(toNormalizedPoint(x, y));
     },
-    [onBeginStroke, toNormalizedPoint],
+    [],
   );
 
   const handleDrawUpdate = useCallback(
     (x: number, y: number) => {
+      const dragStart = dragStartRef.current ?? { x, y };
       const lastSample = lastSampleRef.current;
+
+      if (!isStrokeActiveRef.current) {
+        if (Math.hypot(x - dragStart.x, y - dragStart.y) < MIN_SAMPLE_DISTANCE_PX) {
+          return;
+        }
+
+        isStrokeActiveRef.current = true;
+        lastSampleRef.current = { x, y };
+        onBeginStroke(toNormalizedPoint(dragStart.x, dragStart.y));
+        onExtendStroke(toNormalizedPoint(x, y));
+        return;
+      }
 
       if (lastSample && Math.hypot(x - lastSample.x, y - lastSample.y) < MIN_SAMPLE_DISTANCE_PX) {
         return;
@@ -198,8 +225,13 @@ export function StrokeCanvasAdapter({
   );
 
   const handleDrawEnd = useCallback(() => {
+    if (isStrokeActiveRef.current) {
+      onEndStroke();
+    }
+
+    dragStartRef.current = null;
+    isStrokeActiveRef.current = false;
     lastSampleRef.current = null;
-    onEndStroke();
   }, [onEndStroke]);
 
   /* eslint-disable react-hooks/refs -- the gesture builder only registers
@@ -221,16 +253,19 @@ export function StrokeCanvasAdapter({
     <View
       accessibilityLabel={t("canvas.surface.accessibility")}
       testID="canvas-surface"
-      style={{
-        backgroundColor: colors.background.surface,
-        borderColor: accessibleColors.border,
-        borderCurve: "continuous",
-        borderRadius: radius.xl,
-        borderWidth: 1,
-        minHeight: gradeAdaptation.surfaceMinHeight,
-        overflow: "hidden",
-        ...shadows.card,
-      }}
+      style={[
+        {
+          backgroundColor: colors.background.surface,
+          borderColor: accessibleColors.border,
+          borderCurve: "continuous",
+          borderRadius: radius.xl,
+          borderWidth: 1,
+          minHeight: gradeAdaptation.surfaceMinHeight,
+          overflow: "hidden",
+          ...shadows.card,
+        },
+        style,
+      ]}
     >
       <GestureDetector gesture={drawGesture}>
         <View
@@ -245,33 +280,40 @@ export function StrokeCanvasAdapter({
             });
           }}
           style={{
+            flex: 1,
             minHeight: gradeAdaptation.surfaceMinHeight,
             padding: spacing.lg,
+            position: "relative",
           }}
         >
-        <TemplateGuides template={document.template} />
+          <TemplateGuides template={document.template} />
 
-        {document.strokes.length === 0 ? (
-          <View
-            pointerEvents="none"
-            style={{
-              alignItems: "center",
-              bottom: spacing.huge,
-              justifyContent: "center",
-              left: spacing.lg,
-              position: "absolute",
-              right: spacing.lg,
-              top: spacing.lg,
-            }}
-          >
-            <Text
-              selectable
-              style={[getAccessibleTextStyle(type.bodySmall, settings), { color: colors.text.muted, textAlign: "center" }]}
+          {document.strokes.length === 0 &&
+          document.template !== "lined_paper" &&
+          document.template !== "handwriting_practice" ? (
+            <View
+              pointerEvents="none"
+              style={{
+                alignItems: "center",
+                bottom: spacing.huge,
+                justifyContent: "center",
+                left: spacing.lg,
+                position: "absolute",
+                right: spacing.lg,
+                top: spacing.lg,
+              }}
             >
-              {t("canvas.surface.emptyHint")}
-            </Text>
-          </View>
-        ) : null}
+              <Text
+                selectable
+                style={[
+                  getAccessibleTextStyle(type.bodySmall, settings),
+                  { color: colors.text.muted, textAlign: "center" },
+                ]}
+              >
+                {t("canvas.surface.emptyHint")}
+              </Text>
+            </View>
+          ) : null}
 
           {layout.width > 0
             ? document.strokes.map((stroke) => (

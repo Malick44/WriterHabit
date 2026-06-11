@@ -2,6 +2,7 @@ import { type PropsWithChildren } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthSessionProvider } from "@/core/auth/AuthSessionProvider";
+import { shouldHideDevTools } from "@/core/config/devtoolsConfig";
 import { NotificationResponseHandler } from "@/core/notifications/NotificationResponseHandler";
 import { DevPanelFloatingLauncher } from "@/features/auth/components";
 import { AccessibilitySettingsProvider } from "@/features/profile-settings/accessibility";
@@ -21,7 +22,7 @@ export function AppProviders({ children }: PropsWithChildren) {
                 <QueryProvider>
                   <NotificationResponseHandler />
                   {children}
-                  <DevPanelFloatingLauncher />
+                  {__DEV__ && !shouldHideDevTools ? <DevPanelFloatingLauncher /> : null}
                 </QueryProvider>
               </AuthSessionProvider>
             </TopAlertProvider>

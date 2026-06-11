@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { AppProviders } from "@/core/providers/AppProviders";
+import { shouldHideDevTools } from "@/core/config/devtoolsConfig";
 import { ThemeTuningPanel } from "@/devtools/theme-tuner";
 
 export default function RootLayout() {
@@ -14,7 +15,7 @@ export default function RootLayout() {
         <Stack.Screen name="(teacher)" />
         <Stack.Screen name="paywall" />
       </Stack>
-      {__DEV__ && <ThemeTuningPanel />}
+      {__DEV__ && !shouldHideDevTools ? <ThemeTuningPanel /> : null}
     </AppProviders>
   );
 }

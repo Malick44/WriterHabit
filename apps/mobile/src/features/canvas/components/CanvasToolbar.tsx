@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, View } from "react-native";
 
-import { colors, layout, radius, shadows, spacing, type GradeBand } from "@/design/tokens";
+import { colors, layout, radius, spacing, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -38,7 +38,7 @@ function getToolKey(tool: CanvasTool) {
 }
 
 function Divider() {
-  return <View style={{ alignSelf: "stretch", backgroundColor: colors.border.default, marginVertical: spacing.xs, width: 1 }} />;
+  return <View style={{ alignSelf: "center", backgroundColor: colors.border.default, height: 24, width: 1 }} />;
 }
 
 export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: CanvasToolbarProps) {
@@ -60,18 +60,62 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
       accessibilityLabel={t("canvas.toolbar.accessibility")}
       style={{
         backgroundColor: colors.background.surface,
-        borderColor: colors.border.default,
-        borderCurve: "continuous",
-        borderRadius: radius.full,
-        borderWidth: 1,
-        ...shadows.floating,
+        borderBottomColor: colors.border.default,
+        borderBottomWidth: 1,
+        borderTopColor: colors.border.default,
+        borderTopWidth: 1,
       }}
     >
       <ScrollView
         horizontal
-        contentContainerStyle={{ alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: spacing.sm,
+          minWidth: "100%",
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.sm,
+        }}
         showsHorizontalScrollIndicator={false}
       >
+        <Pressable
+          accessibilityLabel={t("canvas.toolbar.undo")}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canUndo }}
+          disabled={!canUndo}
+          hitSlop={hitSlop}
+          onPress={onUndo}
+          style={{
+            alignItems: "center",
+            borderRadius: radius.full,
+            height: target,
+            justifyContent: "center",
+            opacity: canUndo ? 1 : 0.35,
+            width: target,
+          }}
+        >
+          <Ionicons color={colors.text.secondary} name="arrow-undo-outline" size={22} />
+        </Pressable>
+        <Pressable
+          accessibilityLabel={t("canvas.toolbar.redo")}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canRedo }}
+          disabled={!canRedo}
+          hitSlop={hitSlop}
+          onPress={onRedo}
+          style={{
+            alignItems: "center",
+            borderRadius: radius.full,
+            height: target,
+            justifyContent: "center",
+            opacity: canRedo ? 1 : 0.35,
+            width: target,
+          }}
+        >
+          <Ionicons color={colors.text.secondary} name="arrow-redo-outline" size={22} />
+        </Pressable>
+
+        <Divider />
+
         {toolOptions.map((tool) => {
           const selected = selectedTool === tool;
           return (
@@ -84,7 +128,7 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
               onPress={() => setTool(tool)}
               style={{
                 alignItems: "center",
-                backgroundColor: selected ? colors.action.primary.background : colors.background.subtle,
+                backgroundColor: selected ? colors.action.primary.background : "transparent",
                 borderRadius: radius.full,
                 height: target,
                 justifyContent: "center",
@@ -161,43 +205,6 @@ export function CanvasToolbar({ canRedo, canUndo, gradeBand, onRedo, onUndo }: C
             </Pressable>
           );
         })}
-
-        <Divider />
-
-        <Pressable
-          accessibilityLabel={t("canvas.toolbar.undo")}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canUndo }}
-          disabled={!canUndo}
-          hitSlop={hitSlop}
-          onPress={onUndo}
-          style={{
-            alignItems: "center",
-            height: target,
-            justifyContent: "center",
-            opacity: canUndo ? 1 : 0.35,
-            width: target,
-          }}
-        >
-          <Ionicons color={colors.text.secondary} name="arrow-undo-outline" size={20} />
-        </Pressable>
-        <Pressable
-          accessibilityLabel={t("canvas.toolbar.redo")}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canRedo }}
-          disabled={!canRedo}
-          hitSlop={hitSlop}
-          onPress={onRedo}
-          style={{
-            alignItems: "center",
-            height: target,
-            justifyContent: "center",
-            opacity: canRedo ? 1 : 0.35,
-            width: target,
-          }}
-        >
-          <Ionicons color={colors.text.secondary} name="arrow-redo-outline" size={20} />
-        </Pressable>
       </ScrollView>
     </View>
   );

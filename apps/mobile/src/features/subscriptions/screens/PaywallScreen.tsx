@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { colors, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
@@ -7,6 +7,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,
@@ -28,23 +29,27 @@ export function PaywallScreen() {
   const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>("WriterHabit_plus_yearly");
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const title =
-    state.status === "success" && state.viewModel.isPremium
-      ? t("subscriptions.paywall.activeTitle")
-      : t("subscriptions.paywall.title");
-  const subtitle =
-    state.status === "success" && state.viewModel.isPremium
-      ? t("subscriptions.paywall.activeSubtitle")
-      : t("subscriptions.paywall.subtitle");
+  const isPremium = state.status === "success" && state.viewModel.isPremium;
 
   return (
     <Screen
       backgroundColor={colors.gradeBand[state.gradeBand].background}
       gradeBand={state.gradeBand}
-      subtitle={subtitle}
       testID="paywall-screen"
-      title={title}
     >
+      <AppHeader
+        gradeBand={state.gradeBand}
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
+        showSafeArea={false}
+        style={styles.header}
+        subtitleKey={isPremium ? "subscriptions.paywall.activeSubtitle" : "subscriptions.paywall.subtitle"}
+        titleKey={isPremium ? "subscriptions.paywall.activeTitle" : "subscriptions.paywall.title"}
+        variant="transparent"
+      />
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("subscriptions.loading.accessibility")}
@@ -137,15 +142,6 @@ export function PaywallScreen() {
                 gradeBand={state.gradeBand}
               />
 
-              <Button
-                accessibilityHint={t("subscriptions.managePlanHint")}
-                accessibilityLabel={t("subscriptions.managePlanAccessibility")}
-                disabled
-                gradeBand={state.gradeBand}
-                label={t("subscriptions.managePlan")}
-                size={state.gradeBand === "elementary" ? "lg" : "md"}
-                variant="secondary"
-              />
               <Button
                 accessibilityHint={t("subscriptions.restore.hint")}
                 accessibilityLabel={t("subscriptions.restore.accessibility")}
@@ -290,3 +286,12 @@ export function PaywallScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+});

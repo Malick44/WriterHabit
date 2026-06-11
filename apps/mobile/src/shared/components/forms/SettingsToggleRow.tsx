@@ -1,17 +1,20 @@
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 import { SettingsRowIconBadge, type SettingsRowIconName } from "./SettingsRow";
 
 export interface SettingsToggleRowProps {
+  description?: string;
   disabled?: boolean;
+  gradeBand?: GradeBand;
   icon?: SettingsRowIconName;
   iconBackground?: string;
   iconColor?: string;
@@ -29,7 +32,9 @@ export interface SettingsToggleRowProps {
  * the switch. Copy is provided by the caller from `@/shared/i18n`.
  */
 export function SettingsToggleRow({
+  description,
   disabled = false,
+  gradeBand: gradeBandProp,
   icon,
   iconBackground = colors.dashboard.surfaceContainerLow,
   iconColor = colors.dashboard.primary,
@@ -40,6 +45,8 @@ export function SettingsToggleRow({
   variant = "plain",
 }: SettingsToggleRowProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
+  const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const minimumTouchTarget = getMinimumTouchTarget(settings);
   const handleToggle = () => {
@@ -50,6 +57,7 @@ export function SettingsToggleRow({
 
   return (
     <Pressable
+      accessibilityHint={description}
       accessibilityLabel={label}
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
@@ -65,17 +73,31 @@ export function SettingsToggleRow({
     >
       <View style={styles.rowLabel}>
         {icon ? <SettingsRowIconBadge backgroundColor={iconBackground} color={iconColor} icon={icon} /> : null}
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[
-            getAccessibleTextStyle(typography.gradeBands.middle.body, settings),
-            styles.rowTitle,
-            settings.highContrast ? { color: accessibleColors.text } : null,
-          ]}
-        >
-          {label}
-        </Text>
+        <View style={styles.rowCopy}>
+          <Text
+            numberOfLines={2}
+            selectable
+            style={[
+              getAccessibleTextStyle(type.body, settings),
+              styles.rowTitle,
+              settings.highContrast ? { color: accessibleColors.text } : null,
+            ]}
+          >
+            {label}
+          </Text>
+          {description ? (
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(type.bodySmall, settings),
+                styles.rowDescription,
+                settings.highContrast ? { color: accessibleColors.mutedText } : null,
+              ]}
+            >
+              {description}
+            </Text>
+          ) : null}
+        </View>
       </View>
       <View
         accessibilityElementsHidden
@@ -117,6 +139,14 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     minWidth: 0,
   },
+  rowCopy: {
+    flex: 1,
+    gap: spacing.xs,
+    minWidth: 0,
+  },
+  rowDescription: {
+    color: colors.dashboard.onSurfaceVariant,
+  },
   rowOutlined: {
     backgroundColor: colors.dashboard.surfaceLowest,
     borderColor: colors.dashboard.outlineVariant,
@@ -125,6 +155,5 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     color: colors.dashboard.onSurface,
-    flex: 1,
   },
 });

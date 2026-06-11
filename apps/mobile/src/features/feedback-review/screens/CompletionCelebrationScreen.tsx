@@ -96,17 +96,22 @@ export function CompletionCelebrationScreen() {
 
           {/* Header Text */}
           <View style={styles.header}>
-            <Text
-              accessibilityRole="header"
-              style={[
-                getAccessibleTextStyle(type.heading, settings),
-                styles.title,
-                { color: accessibleColors.text },
-              ]}
-            >
-              {t("feedbackReview.completion.headerTitlePersonalized", { name: studentName })}{" "}
-              <Ionicons name="gift-outline" size={24} color={colors.coach.accent} />
-            </Text>
+            <View style={styles.titleRow}>
+              <Text
+                accessibilityRole="header"
+                style={[
+                  getAccessibleTextStyle(type.heading, settings),
+                  styles.title,
+                  { color: accessibleColors.text },
+                ]}
+              >
+                {t("feedbackReview.completion.headerTitlePersonalized", { name: studentName })}
+              </Text>
+              {/* Decorative glyph: kept out of the header text so screen readers skip it. */}
+              <View accessibilityElementsHidden importantForAccessibility="no">
+                <Ionicons name="gift-outline" size={24} color={colors.coach.accent} />
+              </View>
+            </View>
             <Text
               style={[
                 getAccessibleTextStyle(type.body, settings),
@@ -286,6 +291,13 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: "bold",
     textAlign: "center",
+  },
+  titleRow: {
+    alignItems: "center",
+    columnGap: spacing.xs,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
   subtitle: {
     marginTop: spacing.xs,

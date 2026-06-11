@@ -487,7 +487,7 @@ export function RevisionScreen() {
                 }
               }}
               placeholder={t("feedbackReview.revision.inputPlaceholder")}
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor={accessibleColors.mutedText}
               scrollEnabled
               style={[
                 getAccessibleTextStyle(type.body, settings),
@@ -516,7 +516,7 @@ export function RevisionScreen() {
             {revisionSaveStatus === "failed" ? (
               <StatusState
                 accessibilityLabel={t("feedbackReview.revision.recoveryAccessibility")}
-                description={t(revisionErrorKey || "feedbackReview.revision.recoveryDescription")}
+                description={t("feedbackReview.revision.recoveryDescription")}
                 gradeBand={state.gradeBand}
                 title={t("feedbackReview.revision.recoveryTitle")}
                 tone="error"

@@ -55,6 +55,21 @@ export function HandwritingCanvasScreen() {
     };
   }, [saveStatus]);
 
+  useEffect(() => {
+    if (attachStatus !== "success") {
+      return;
+    }
+
+    // Auto-clear the attach success banner so it does not permanently shrink the canvas.
+    const timeout = setTimeout(() => {
+      setAttachStatus("idle");
+    }, 2500);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [attachStatus]);
+
   const saveNow = async () => {
     if (state.status !== "success") {
       return;
@@ -162,6 +177,11 @@ export function HandwritingCanvasScreen() {
               description={t("canvas.workspace.recoveryDescription")}
               gradeBand={state.gradeBand}
               onActionPress={() => {
+                if (attachStatus === "error") {
+                  void attachNow();
+                  return;
+                }
+
                 void saveNow();
               }}
               title={t("canvas.workspace.recoveryTitle")}

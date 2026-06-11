@@ -42,9 +42,6 @@ type HistoryRow = {
   title: string;
 };
 
-/** Inactive bars need more than the token 0.18 navy tint to stay visible. */
-const inactiveBarColor = "rgba(0, 50, 125, 0.4)";
-
 const TABLET_BREAKPOINT = 768;
 const RING_SEGMENT_COUNT = 32;
 const RING_SEGMENTS = Array.from({ length: RING_SEGMENT_COUNT }, (_, index) => index);
@@ -414,7 +411,7 @@ function WeeklyWritingVolumeSection({
                 style={[
                   styles.chartBar,
                   {
-                    backgroundColor: isActive ? colors.dashboard.primary : inactiveBarColor,
+                    backgroundColor: isActive ? colors.dashboard.primary : colors.dashboard.primaryMuted,
                     height: getBarHeight(day.words, maxWords),
                   },
                 ]}
@@ -734,7 +731,7 @@ const styles = StyleSheet.create({
     width: 64,
   },
   achievementIconBubbleBlue: {
-    backgroundColor: "#b1c5ff",
+    backgroundColor: colors.dashboard.primaryFixedBorder,
   },
   achievementIconBubbleGold: {
     backgroundColor: colors.dashboard.tertiaryFixed,
@@ -834,7 +831,7 @@ const styles = StyleSheet.create({
     maxWidth: 1180,
   },
   gridLine: {
-    borderBottomColor: "rgba(195, 198, 213, 0.45)",
+    borderBottomColor: colors.dashboard.outlineFaint,
     borderBottomWidth: 1,
     height: 1,
   },

@@ -56,7 +56,10 @@ export function WritingConfidenceScreen() {
         router.back();
       }}
       primaryLabel={t("common.continue")}
+      progressActiveIndex={2}
+      progressStepsCount={5}
       secondaryLabel={t("common.back")}
+      showProgressDots
       step="confidence"
       subtitle={t("onboarding.confidence.description")}
       title={t("onboarding.confidence.title")}

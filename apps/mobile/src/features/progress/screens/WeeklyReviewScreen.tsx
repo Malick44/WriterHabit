@@ -18,14 +18,19 @@ import {
 
 import { ProgressMetricCard, SkillProgressCard } from "../components";
 import { useProgressWeeklyReview } from "../hooks/useProgress";
+import { getWeekRangeLabelParams } from "../services/progressViewModel";
 
 export function WeeklyReviewScreen() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const state = useProgressWeeklyReview();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
+  const weekLabel =
+    state.status === "success" || state.status === "empty"
+      ? t("progress.weeklyReview.weekRangeLabel", getWeekRangeLabelParams(locale, state.weeklyReview))
+      : "";
 
   return (
     <Screen
@@ -94,14 +99,14 @@ export function WeeklyReviewScreen() {
           <Card
             accessibilityLabel={buildAccessibilityLabel([
               t("progress.weeklyReview.summaryAccessibility"),
-              state.weeklyReview.weekLabel,
+              weekLabel,
             ])}
             gradeBand={state.gradeBand}
             variant="accent"
           >
             <Stack gap="xs">
               <Text selectable style={[getAccessibleTextStyle(type.label, settings), { color: accessibleColors.mutedText }]}>
-                {state.weeklyReview.weekLabel}
+                {weekLabel}
               </Text>
               <Text selectable style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}>
                 {t("progress.weeklyReview.summaryTitle")}
@@ -134,12 +139,15 @@ export function WeeklyReviewScreen() {
             <Stack gap="md">
               {state.weeklyReview.highlights.map((highlight) => (
                 <Card
-                  accessibilityLabel={buildAccessibilityLabel([t("progress.weeklyReview.highlightAccessibility"), highlight])}
+                  accessibilityLabel={buildAccessibilityLabel([
+                    t("progress.weeklyReview.highlightAccessibility"),
+                    t(highlight.key, highlight.params),
+                  ])}
                   gradeBand={state.gradeBand}
-                  key={highlight}
+                  key={highlight.key}
                 >
                   <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-                    {highlight}
+                    {t(highlight.key, highlight.params)}
                   </Text>
                 </Card>
               ))}

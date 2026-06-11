@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import type { WritingGoal } from "@WriterHabit/shared";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors, getGradeBandForGrade } from "@/design/tokens";
+import { colors, getGradeBandForGrade, palette } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -20,8 +20,8 @@ import {
 } from "../types";
 
 const NAVY = colors.onboarding.navy;
-const GREEN = "#087A58";
-const SCREEN_BACKGROUND = "#F8FAFF";
+const GREEN = colors.onboarding.success;
+const SCREEN_BACKGROUND = colors.onboarding.screenBackground;
 
 const visibleWritingGoals = [
   "improve_grammar",
@@ -38,7 +38,7 @@ const goalIconByGoal = {
 } as const satisfies Record<(typeof visibleWritingGoals)[number], keyof typeof Ionicons.glyphMap>;
 
 const goalIconColorByGoal = {
-  creative_writing: "#F59E0B",
+  creative_writing: palette.amber[500],
   improve_grammar: NAVY,
   improve_handwriting: NAVY,
   write_paragraphs: NAVY,
@@ -142,7 +142,7 @@ export function WritingGoalsScreen() {
               </View>
 
               <View style={[styles.checkOuter, selected ? styles.checkOuterSelected : null]}>
-                {selected ? <Ionicons name="checkmark" size={25} color="#FFFFFF" /> : null}
+                {selected ? <Ionicons name="checkmark" size={25} color={palette.white} /> : null}
               </View>
             </Pressable>
           );
@@ -155,7 +155,7 @@ export function WritingGoalsScreen() {
 const styles = StyleSheet.create({
   checkOuter: {
     alignItems: "center",
-    borderColor: "#C7CBD7",
+    borderColor: colors.onboarding.checkBorder,
     borderRadius: 23,
     borderWidth: 3,
     height: 46,
@@ -165,12 +165,12 @@ const styles = StyleSheet.create({
   },
   checkOuterSelected: {
     backgroundColor: GREEN,
-    borderColor: "#A9BBC5",
+    borderColor: colors.onboarding.checkBorderSelected,
   },
   goalCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#C5CBD8",
+    backgroundColor: colors.onboarding.surface,
+    borderColor: colors.onboarding.cardBorder,
     borderRadius: 18,
     borderWidth: 1.5,
     flexDirection: "row",
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     opacity: 0.78,
   },
   goalCardSelected: {
-    backgroundColor: "#EEF4FF",
+    backgroundColor: colors.onboarding.selectedBackground,
     borderColor: NAVY,
     borderWidth: 2,
   },
@@ -195,20 +195,20 @@ const styles = StyleSheet.create({
     marginLeft: 30,
   },
   goalDescription: {
-    color: "#343949",
+    color: colors.onboarding.subtitle,
     fontSize: 24,
     lineHeight: 33,
   },
   goalIcon: {
     alignItems: "center",
-    backgroundColor: "#D8E8FF",
+    backgroundColor: colors.onboarding.iconBubble,
     borderRadius: 44,
     height: 88,
     justifyContent: "center",
     width: 88,
   },
   goalTitle: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 33,
     fontWeight: "800",
     lineHeight: 42,

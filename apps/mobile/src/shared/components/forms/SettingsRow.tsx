@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleHitSlop,
@@ -10,11 +10,13 @@ import {
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
+import { useGradeBand } from "@/shared/utils/gradeBand";
 
 export type SettingsRowIconName = ComponentProps<typeof Ionicons>["name"];
 
 export interface SettingsRowProps {
   accessibilityHint?: string;
+  gradeBand?: GradeBand;
   icon?: SettingsRowIconName;
   iconBackground?: string;
   iconColor?: string;
@@ -48,6 +50,7 @@ export function SettingsRowIconBadge({
  */
 export function SettingsRow({
   accessibilityHint,
+  gradeBand: gradeBandProp,
   icon,
   iconBackground = colors.dashboard.surfaceContainerHigh,
   iconColor = colors.dashboard.outline,
@@ -58,6 +61,8 @@ export function SettingsRow({
   value,
 }: SettingsRowProps) {
   const { settings } = useAccessibilityContext();
+  const gradeBand = useGradeBand(gradeBandProp);
+  const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const minimumTouchTarget = getMinimumTouchTarget(settings);
 
@@ -81,7 +86,7 @@ export function SettingsRow({
           numberOfLines={2}
           selectable
           style={[
-            getAccessibleTextStyle(typography.gradeBands.middle.body, settings),
+            getAccessibleTextStyle(type.body, settings),
             styles.rowTitle,
             settings.highContrast ? { color: accessibleColors.text } : null,
           ]}
@@ -95,7 +100,7 @@ export function SettingsRow({
             numberOfLines={1}
             selectable
             style={[
-              getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
+              getAccessibleTextStyle(type.caption, settings),
               styles.rowValue,
               settings.highContrast ? { color: accessibleColors.mutedText } : null,
             ]}

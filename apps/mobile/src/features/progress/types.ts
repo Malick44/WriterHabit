@@ -108,14 +108,22 @@ export const progressTotalsSchema = z.object({
 });
 export type ProgressTotals = z.infer<typeof progressTotalsSchema>;
 
+export const progressWeeklyHighlightSchema = z.object({
+  key: z.string().min(1),
+  params: z.record(z.string(), z.union([z.number(), z.string()])).optional(),
+});
+export type ProgressWeeklyHighlight = z.infer<typeof progressWeeklyHighlightSchema> & {
+  key: TranslationKey;
+};
+
 export const progressWeeklyReviewSchema = z.object({
-  highlights: z.array(z.string().min(1)).max(4),
+  highlights: z.array(progressWeeklyHighlightSchema).max(4),
   nextFocusSkill: writingSkillSchema.nullable(),
   weekEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  weekLabel: z.string().min(1),
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 export type ProgressWeeklyReview = z.infer<typeof progressWeeklyReviewSchema> & {
+  highlights: ProgressWeeklyHighlight[];
   nextFocusSkill: WritingSkill | null;
 };
 
@@ -204,11 +212,12 @@ export interface ProgressSkillViewModel {
 }
 
 export interface ProgressWeeklyReviewViewModel {
-  highlights: string[];
+  highlights: ProgressWeeklyHighlight[];
   isEmpty: boolean;
   metrics: ProgressMetricViewModel[];
   nextFocusSkill: ProgressSkillViewModel | null;
-  weekLabel: string;
+  weekEnd: string;
+  weekStart: string;
 }
 
 export interface ProgressDashboardViewModel {

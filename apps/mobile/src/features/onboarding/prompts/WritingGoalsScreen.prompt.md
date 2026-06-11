@@ -1,40 +1,49 @@
 # Writing Goals Screen Design Prompt
 
 ## Target User
-Student (Grades 1-12)
+Student (Grades 1–12)
 
 ## Goal
-Design a futuristic and highly polished Writing Goals screen (select up to 3 goals) with gamified limit states. The AI agent must generate at least 5 design variants.
+Design a friendly, motivating Writing Goals screen (step 3 of 6) with multi-select goal cards and a clear selection counter with a gentle limit state. The AI agent must generate 3 distinct design versions.
 
 ## Prompt
 
-You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 3 of 6: Writing Goals). The design must feel high-fidelity, interactive, and visually stunning.
+You are a senior product designer and mobile UI specialist.
+Design a polished, realistic mobile screen for **WriterHabit AI** (onboarding step 3 of 6: Writing Goals). Follow the Daylight Glass system in `DESIGN.md`: light surfaces (`#F6FAFF` background, white cards), primary indigo `#2563EB`, teal `#14B8A6` for progress, reward yellow `#F59E0B`, soft salmon `#DC2626` for errors only. Subtle glassmorphism touches, 16–24px radii, modern high-readability typography. iPhone-style patterns with safe areas.
 
-### Futuristic Design & Aesthetic Directives:
-- **Rich Aesthetics**: Avoid simple checkmarks. Use glowing interactive tiles, glassmorphism cards, and fluid transition animations.
-- **Dynamic Feedback**: As the user selects goals, the progress/count indicator should visually update with ambient glows. When the maximum limit of 3 goals is reached, non-selected tiles should elegantly fade out or lock with a sleek, translucent security layer.
-- **Tailored Palettes**: High-end color-coding per goal category (e.g. Creative is warm neon gold, Essay is calm cyber blue, Grammar is tech teal).
+### Tone & Integrity Directives
+- Educational, trustworthy, premium, friendly — goals are about the student's own growth, never shortcuts.
+- When the selection limit is reached, remaining options quiet down gracefully (reduced opacity, soft "3 of 3 selected" note) — no locks, alarms, or punitive styling.
 
-### Screen Purpose & Requirements:
-- **Progressive Flow**: Progress indicator representing Step 3/6.
-- **Copy**:
-  - Title: "Map Your Objectives"
-  - Subtitle: "Choose up to 3 dimensions of writing you wish to enhance."
-- **Goal Count Counter**: A futuristic counter display showing active selection count (e.g. `2 / 3 Goals Locked`).
-- **Interactive Controls**: Multi-selectable goal cards. Active selections lock in with glowing energy-borders or color fills.
-- **CTA Actions**:
-  - Primary CTA: "Confirm Alignment" (Continue).
-  - Secondary CTA: "Rewind" (Back).
+### Screen Purpose & Requirements
+- **Progress:** Step indicator for Step 3 of 6.
+- **Copy (real product strings — use these):**
+  - Title: "What are your writing goals?"
+  - Subtitle: "Choose all that you'd like to focus on."
+  - Counter: "2 of 3 goals selected"
+- **Goal options (multi-select cards/chips — real labels + descriptions):**
+  - "Practice creative writing" — "Write stories and express your ideas"
+  - "Improve grammar" — "Use correct grammar and punctuation"
+  - "Write paragraphs" — "Organize ideas and write better paragraphs"
+  - "Essays" — "Practice thesis, evidence, organization, and revision."
+  - "Stronger sentences" — "Make sentences clearer, smoother, and more specific."
+  - "School assignments" — "Plan and revise your own assigned writing."
+  - "Spelling" — "Build confidence with commonly missed words."
+  - "Improve handwriting" — "Write more clearly and neatly"
+  - "Test prep" — "Practice focused responses with clear structure."
+  - Selected state: `#DBEAFE` tint + `#2563EB` border + check affordance; per-category icon accents stay within the token palette (indigo/teal/yellow tints).
+- **CTAs:** Primary "Continue", secondary "Back".
+- **Validation example:** "Choose at least one writing goal." in calm salmon treatment.
 
 ---
 
-### Task: Generate At Least 5 Design Variants
-You must generate at least 5 distinct futuristic, premium design concepts for this screen:
-1. **Holographic Energy Cards**: Translucent glass tiles that glow with distinct pastel colors when activated, and showcase a subtle static/grid effect when locked out.
-2. **Liquid Fusion Cards**: Smooth organic shape overlays that merge and expand inside cards upon selection, utilizing soft fluid blobs.
-3. **Cyber-Bento Skill Grid**: A sleek grid of various sizes with high-tech outlines, status icons, and neon status lights.
-4. **Spatial Elevation Sheets**: Dark metallic sheets that sink into the screen when selected, shifting shadows from outer glow to inner shadow.
-5. **Glow-Node Web**: An interactive constellation web where selecting nodes connects them with animated neon laser-lines.
+### Task: Generate 3 Distinct Design Versions
+Produce 3 complete versions, labeled **Version A**, **Version B**, **Version C** — meaningfully different in layout and selection mechanics, not just color:
 
-For each variant, provide layout styles, color tokens, and transition specifications.
+1. **Version A — Goal Card List:** full-width cards with icon, label, and description; checkmark trailing; counter pinned under the header.
+2. **Version B — Chip Cloud:** compact selectable chips in a wrapping cloud grouped by theme (Create / Structure / Polish), descriptions surfacing on the selected chips; densest and fastest.
+3. **Version C — Two-Column Tiles:** square icon-forward tiles in a 2-column grid, friendly and tappable for younger students, counter as a teal progress pill ("2 of 3").
+
+For each version, provide layout description, key styling values, selected/limit-reached states, and accessibility notes (multi-select semantics, labels, touch targets).
+
+**Constant across versions:** exact color tokens, real product copy above, the 3-goal limit with graceful limit state, step indicator, validation state, iPhone patterns.

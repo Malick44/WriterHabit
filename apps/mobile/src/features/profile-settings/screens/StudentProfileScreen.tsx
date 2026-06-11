@@ -1,14 +1,11 @@
-import { useCallback, useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, type ComponentProps, type ReactNode } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
   type StyleProp,
-  type TextStyle,
   type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,30 +15,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { colors, layout, radius, shadows, spacing, typography } from "@/design/tokens";
+import { useProgressDashboard } from "@/features/progress/hooks/useProgress";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
+import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import { PageSection } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
 import {
-  buildAccessibilityLabel,
   getAccessibleTextStyle,
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
-type GrowthMetric = {
-  fillColor: string;
-  labelKey: TranslationKey;
-  progress: number;
-  value?: string;
-  valueKey?: TranslationKey;
-  valueParams?: Record<string, string | number>;
-};
-
-const avatarImageUri =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuC6oDyvp4o2Z_ZD1dWq1_OEZzz-ukxizaeW8WqBns1USXqSkaQeJHGGqJLTVK4Xb_n4qrx71aq_895XxqhC4WhZzxdNpA7kZhP5Cjr8V3OoDc2VeoJNmide0Ty3XMg1ktEBr-C52uZAb5THoQrRwCoalVtsU81Nx8ZEu10GRbpBZHZzo8lBj838ZnK3i0rCN5qQLBSS-zoWI84EFCtmdrrRUSd6i-zDK04GcuqIc6w5Gl8C3_MeIGE_hexVFWFPfIddbCSztsX6Mxg";
 
 const profileColors = {
   background: colors.dashboard.background,
@@ -65,16 +52,6 @@ const profileColors = {
   surfaceContainerLow: colors.dashboard.surfaceContainerLow,
   surfaceLowest: colors.dashboard.surfaceLowest,
 } as const;
-
-const weeklyActivity = [
-  { height: 40, labelKey: "profileSettings.profile.days.mon" },
-  { height: 65, labelKey: "profileSettings.profile.days.tue" },
-  { height: 30, labelKey: "profileSettings.profile.days.wed" },
-  { height: 85, labelKey: "profileSettings.profile.days.thu" },
-  { height: 50, labelKey: "profileSettings.profile.days.fri" },
-  { height: 95, labelKey: "profileSettings.profile.days.sat" },
-  { height: 70, labelKey: "profileSettings.profile.days.sun" },
-] as const satisfies readonly { height: number; labelKey: TranslationKey }[];
 
 const achievements = [
   {
@@ -136,42 +113,6 @@ const supportRows = [
     labelKey: "profileSettings.profile.support.about",
   },
 ] as const satisfies readonly { icon: IconName; labelKey: TranslationKey }[];
-
-const growthMetrics: readonly GrowthMetric[] = [
-  {
-    fillColor: profileColors.primary,
-    labelKey: "profileSettings.profile.progress.assignmentsCompleted",
-    progress: 72,
-    value: "18/25",
-  },
-  {
-    fillColor: profileColors.secondary,
-    labelKey: "profileSettings.profile.progress.vocabularySkill",
-    progress: 80,
-    valueKey: "profileSettings.profile.progress.vocabularyLevel",
-    valueParams: { level: 8 },
-  },
-];
-
-function ProfileText({
-  children,
-  color = profileColors.onSurface,
-  role = "body",
-  style,
-}: {
-  children: string;
-  color?: string;
-  role?: keyof typeof typography.gradeBands.middle;
-  style?: StyleProp<TextStyle>;
-}) {
-  const { settings } = useAccessibilityContext();
-
-  return (
-    <Text selectable style={[getAccessibleTextStyle(typography.gradeBands.middle[role], settings), { color }, style]}>
-      {children}
-    </Text>
-  );
-}
 
 function SectionCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
@@ -337,48 +278,26 @@ function ProfileListRow({
   );
 }
 
-function WeeklyActivityChart() {
-  const { t } = useI18n();
-
-  return (
-    <View>
-      <View style={styles.barChart}>
-        {weeklyActivity.map((day) => (
-          <View key={day.labelKey} style={styles.barColumn}>
-            <View
-              accessibilityLabel={t("profileSettings.profile.progress.dayActivityAccessibility", {
-                day: t(day.labelKey),
-                percent: day.height,
-              })}
-              accessible
-              style={[styles.bar, { height: `${day.height}%` }]}
-            />
-          </View>
-        ))}
-      </View>
-      <View style={styles.dayLabels}>
-        {weeklyActivity.map((day) => (
-          <Text key={day.labelKey} selectable style={styles.dayLabel}>
-            {t(day.labelKey)}
-          </Text>
-        ))}
-      </View>
-    </View>
-  );
-}
-
 export function StudentProfileScreen() {
   const { session, signOut } = useAuthSession();
   const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { settings } = useAccessibilityContext();
-  const [avatarFailed, setAvatarFailed] = useState(false);
-  const [darkModeRequested, setDarkModeRequested] = useState(false);
+  const topAlert = useTopAlert();
+  const progressState = useProgressDashboard();
+  const progressViewModel =
+    progressState.status === "success" || progressState.status === "empty" ? progressState.viewModel : null;
   const profileName = session?.user.displayName ?? t("profileSettings.profile.defaultName");
   const profileGrade = session?.user.gradeLevel ?? 5;
   const profileInitial = profileName.trim().slice(0, 1).toUpperCase() || "A";
-  const noopPress = useCallback(() => undefined, []);
+  const showUnavailableAlert = useCallback(() => {
+    topAlert.show({
+      descriptionKey: "profileSettings.settings.unavailableDescription",
+      titleKey: "profileSettings.settings.unavailableTitle",
+      type: "info",
+    });
+  }, [topAlert]);
   const handleOpenSettings = useCallback(() => {
     router.push(routes.studentSettings);
   }, [router]);
@@ -394,35 +313,45 @@ export function StudentProfileScreen() {
     });
   }, [router, signOut]);
 
-  const stats = [
-    {
-      accessibilityLabel: t("profileSettings.profile.stats.assignmentsAccessibility", { value: 18 }),
-      color: profileColors.primary,
-      icon: "document-text-outline",
-      label: t("profileSettings.profile.stats.assignments"),
-      value: "18",
-    },
-    {
-      accessibilityLabel: t("profileSettings.profile.stats.wordsAccessibility", { value: "4,250" }),
-      color: profileColors.primary,
-      icon: "create-outline",
-      label: t("profileSettings.profile.stats.words"),
-      value: "4,250",
-    },
-    {
-      accessibilityLabel: t("profileSettings.profile.stats.streakAccessibility", { value: 7 }),
-      color: profileColors.secondary,
-      icon: "flame",
-      label: t("profileSettings.profile.stats.streak"),
-      value: t("profileSettings.profile.stats.streakValue", { count: 7 }),
-    },
-  ] as const satisfies readonly {
-    accessibilityLabel: string;
-    color: string;
-    icon: IconName;
-    label: string;
-    value: string;
-  }[];
+  const stats = progressViewModel
+    ? ([
+      {
+        accessibilityLabel: t("profileSettings.profile.stats.assignmentsAccessibility", {
+          value: progressViewModel.totals.assignmentsCompleted,
+        }),
+        color: profileColors.primary,
+        icon: "document-text-outline",
+        label: t("profileSettings.profile.stats.assignments"),
+        value: String(progressViewModel.totals.assignmentsCompleted),
+      },
+      {
+        accessibilityLabel: t("profileSettings.profile.stats.wordsAccessibility", {
+          value: progressViewModel.totals.wordsWritten,
+        }),
+        color: profileColors.primary,
+        icon: "create-outline",
+        label: t("profileSettings.profile.stats.words"),
+        value: progressViewModel.totals.wordsWritten.toLocaleString("en-US"),
+      },
+      {
+        accessibilityLabel: t("profileSettings.profile.stats.streakAccessibility", {
+          value: progressViewModel.streak.currentDays,
+        }),
+        color: profileColors.secondary,
+        icon: "flame",
+        label: t("profileSettings.profile.stats.streak"),
+        value: t("profileSettings.profile.stats.streakValue", {
+          count: progressViewModel.streak.currentDays,
+        }),
+      },
+    ] as const satisfies readonly {
+      accessibilityLabel: string;
+      color: string;
+      icon: IconName;
+      label: string;
+      value: string;
+    }[])
+    : null;
 
   return (
     <View style={styles.root}>
@@ -472,14 +401,6 @@ export function StudentProfileScreen() {
                     {profileInitial}
                   </Text>
                 </View>
-                {!avatarFailed ? (
-                  <Image
-                    accessibilityIgnoresInvertColors
-                    onError={() => setAvatarFailed(true)}
-                    source={{ uri: avatarImageUri }}
-                    style={styles.avatarImage}
-                  />
-                ) : null}
               </View>
               <View
                 accessibilityLabel={t("profileSettings.profile.verifiedAccessibility")}
@@ -516,21 +437,23 @@ export function StudentProfileScreen() {
             </View>
           </View>
 
-          <SectionCard>
-            <View style={styles.statsGrid}>
-              {stats.map((stat, index) => (
-                <ProfileStat
-                  accessibilityLabel={stat.accessibilityLabel}
-                  color={stat.color}
-                  divider={index === 1}
-                  icon={stat.icon}
-                  key={stat.label}
-                  label={stat.label}
-                  value={stat.value}
-                />
-              ))}
-            </View>
-          </SectionCard>
+          {stats ? (
+            <SectionCard>
+              <View style={styles.statsGrid}>
+                {stats.map((stat, index) => (
+                  <ProfileStat
+                    accessibilityLabel={stat.accessibilityLabel}
+                    color={stat.color}
+                    divider={index === 1}
+                    icon={stat.icon}
+                    key={stat.label}
+                    label={stat.label}
+                    value={stat.value}
+                  />
+                ))}
+              </View>
+            </SectionCard>
+          ) : null}
 
           <PageSection style={styles.section} title={t("profileSettings.profile.achievementsTitle")}>
             <View style={styles.achievementsGrid}>
@@ -559,70 +482,8 @@ export function StudentProfileScreen() {
             </View>
           </PageSection>
 
-          <PageSection style={styles.section} title={t("profileSettings.profile.progressTitle")}>
-            <View style={styles.progressStack}>
-              <SectionCard>
-                <View style={styles.cardHeader}>
-                  <ProfileText role="label">{t("profileSettings.profile.progress.weeklyActivity")}</ProfileText>
-                  <ProfileText color={profileColors.primary} role="caption">
-                    {t("profileSettings.profile.progress.lastSevenDays")}
-                  </ProfileText>
-                </View>
-                <WeeklyActivityChart />
-              </SectionCard>
-
-              <SectionCard>
-                <ProfileText role="label">{t("profileSettings.profile.progress.overallGrowth")}</ProfileText>
-                <View style={styles.growthStack}>
-                  {growthMetrics.map((metric) => {
-                    const value = metric.value ?? (metric.valueKey ? t(metric.valueKey, metric.valueParams) : "");
-
-                    return (
-                      <View
-                        accessibilityLabel={buildAccessibilityLabel([t(metric.labelKey), value])}
-                        accessible
-                        key={metric.labelKey}
-                        style={styles.growthMetric}
-                      >
-                        <View style={styles.growthMetricHeader}>
-                          <ProfileText role="caption">{t(metric.labelKey)}</ProfileText>
-                          <ProfileText role="caption">{value}</ProfileText>
-                        </View>
-                        <View style={styles.progressTrack}>
-                          <View
-                            style={[
-                              styles.progressFill,
-                              { backgroundColor: metric.fillColor, width: `${metric.progress}%` },
-                            ]}
-                          />
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </SectionCard>
-            </View>
-          </PageSection>
-
           <PageSection style={styles.section} title={t("profileSettings.profile.preferencesTitle")}>
             <View style={styles.listStack}>
-              <ProfileListRow
-                icon="moon-outline"
-                label={t("profileSettings.profile.preferences.darkMode")}
-                rightAccessory={
-                  <Switch
-                    accessibilityLabel={t("profileSettings.profile.preferences.darkModeAccessibility")}
-                    ios_backgroundColor={profileColors.outlineVariant}
-                    onValueChange={setDarkModeRequested}
-                    thumbColor={profileColors.surfaceLowest}
-                    trackColor={{
-                      false: profileColors.outlineVariant,
-                      true: profileColors.primary,
-                    }}
-                    value={darkModeRequested}
-                  />
-                }
-              />
               <ProfileListRow
                 icon="language-outline"
                 label={t("profileSettings.profile.preferences.appLanguage")}
@@ -653,7 +514,7 @@ export function StudentProfileScreen() {
                   icon={row.icon}
                   key={row.labelKey}
                   label={t(row.labelKey)}
-                  onPress={noopPress}
+                  onPress={showUnavailableAlert}
                 />
               ))}
             </View>
@@ -717,39 +578,11 @@ const styles = StyleSheet.create({
     width: 96,
     ...shadows.card,
   },
-  avatarImage: {
-    height: "100%",
-    width: "100%",
-  },
   avatarWrap: {
     position: "relative",
   },
-  bar: {
-    backgroundColor: profileColors.primary,
-    borderTopLeftRadius: radius.xs,
-    borderTopRightRadius: radius.xs,
-    width: 16,
-  },
-  barChart: {
-    alignItems: "flex-end",
-    flexDirection: "row",
-    height: 96,
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.sm,
-  },
-  barColumn: {
-    alignItems: "center",
-    height: "100%",
-    justifyContent: "flex-end",
-    width: 24,
-  },
   cardContent: {
     gap: spacing.md,
-  },
-  cardHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
   centerText: {
     textAlign: "center",
@@ -759,20 +592,6 @@ const styles = StyleSheet.create({
     gap: spacing.xxl,
     maxWidth: layout.maxContentWidth,
     width: "100%",
-  },
-  dayLabel: {
-    color: profileColors.onSurfaceVariant,
-    flex: 1,
-    fontSize: 10,
-    fontWeight: "600",
-    lineHeight: 14,
-    textAlign: "center",
-  },
-  dayLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.xs,
-    paddingTop: spacing.sm,
   },
   glassCard: {
     backgroundColor: profileColors.glass,
@@ -792,16 +611,6 @@ const styles = StyleSheet.create({
   gradePillText: {
     color: profileColors.onPrimaryContainer,
     fontWeight: "700",
-  },
-  growthMetric: {
-    gap: spacing.xs,
-  },
-  growthMetricHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  growthStack: {
-    gap: spacing.md,
   },
   header: {
     backgroundColor: profileColors.background,
@@ -860,19 +669,6 @@ const styles = StyleSheet.create({
   profileName: {
     color: profileColors.onSurface,
     textAlign: "center",
-  },
-  progressFill: {
-    borderRadius: radius.full,
-    height: "100%",
-  },
-  progressStack: {
-    gap: spacing.lg,
-  },
-  progressTrack: {
-    backgroundColor: profileColors.surfaceContainerHighest,
-    borderRadius: radius.full,
-    height: 8,
-    overflow: "hidden",
   },
   root: {
     backgroundColor: profileColors.background,

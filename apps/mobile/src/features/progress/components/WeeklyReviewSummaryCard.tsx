@@ -12,6 +12,7 @@ import {
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
+import { getWeekRangeLabelParams } from "../services/progressViewModel";
 import type { ProgressWeeklyReviewViewModel } from "../types";
 
 interface WeeklyReviewSummaryCardProps {
@@ -25,28 +26,32 @@ export function WeeklyReviewSummaryCard({
   onOpenWeeklyReview,
   weeklyReview,
 }: WeeklyReviewSummaryCardProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const firstHighlight = weeklyReview.highlights[0] ?? t("progress.weeklyReview.emptyDescription");
+  const weekLabel = t("progress.weeklyReview.weekRangeLabel", getWeekRangeLabelParams(locale, weeklyReview));
+  const firstHighlight = weeklyReview.highlights[0];
+  const firstHighlightLabel = firstHighlight
+    ? t(firstHighlight.key, firstHighlight.params)
+    : t("progress.weeklyReview.emptyDescription");
 
   return (
     <Card
-      accessibilityLabel={buildAccessibilityLabel([t("progress.weeklyReview.cardAccessibility"), weeklyReview.weekLabel])}
+      accessibilityLabel={buildAccessibilityLabel([t("progress.weeklyReview.cardAccessibility"), weekLabel])}
       gradeBand={gradeBand}
       testID="progress-weekly-review-card"
     >
       <Stack gap="md">
         <Stack gap="xs">
           <Text selectable style={[getAccessibleTextStyle(type.label, settings), { color: accessibleColors.mutedText }]}>
-            {weeklyReview.weekLabel}
+            {weekLabel}
           </Text>
           <Text selectable style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}>
             {t("progress.weeklyReview.cardTitle")}
           </Text>
           <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
-            {firstHighlight}
+            {firstHighlightLabel}
           </Text>
           {weeklyReview.nextFocusSkill ? (
             <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.secondary }]}>

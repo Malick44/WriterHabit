@@ -8,6 +8,7 @@ import {
   type ProgressScenario,
   type ProgressSkill,
   type ProgressTotals,
+  type ProgressWeeklyHighlight,
 } from "../types";
 
 interface GetProgressDashboardInput {
@@ -500,30 +501,30 @@ function getTotals(activity: ProgressDailyActivity[], gradeLevel: GradeLevel): P
   };
 }
 
-function createWeeklyHighlights(gradeLevel: GradeLevel, scenario: ProgressScenario): string[] {
+function createWeeklyHighlights(gradeLevel: GradeLevel, scenario: ProgressScenario): ProgressWeeklyHighlight[] {
   if (scenario === "empty") {
     return [];
   }
 
   if (gradeLevel <= 5) {
     return [
-      "You practiced sentence details on four days.",
-      "Handwriting practice is building a steady routine.",
+      { key: "progress.weeklyReview.highlights.elementarySentenceDetails", params: { count: 4 } },
+      { key: "progress.weeklyReview.highlights.elementaryHandwritingRoutine" },
     ];
   }
 
   if (gradeLevel <= 8) {
     return [
-      "You revised five times after feedback.",
-      "Organization and clarity both improved this week.",
-      "You used AI feedback as coaching notes, not replacement writing.",
+      { key: "progress.weeklyReview.highlights.middleRevisedAfterFeedback", params: { count: 5 } },
+      { key: "progress.weeklyReview.highlights.middleOrganizationClarity" },
+      { key: "progress.weeklyReview.highlights.middleAiCoachingNotes" },
     ];
   }
 
   return [
-    "You completed four focused writing blocks.",
-    "Evidence and organization improved across essay practice.",
-    "Revision work added clearer reasoning to your draft.",
+    { key: "progress.weeklyReview.highlights.highFocusedBlocks", params: { count: 4 } },
+    { key: "progress.weeklyReview.highlights.highEvidenceOrganization" },
+    { key: "progress.weeklyReview.highlights.highRevisionReasoning" },
   ];
 }
 
@@ -551,12 +552,13 @@ function createDashboard(input: GetProgressDashboardInput, scenario: ProgressSce
               ? "revision_quality"
               : "evidence_usage",
       weekEnd: "2026-06-09",
-      weekLabel: "Jun 3 - Jun 9",
       weekStart: "2026-06-03",
     },
   };
 
-  return progressApiResponseSchema.parse(response);
+  // Zod widens the highlight translation keys back to plain strings, so
+  // restore the narrowed type carried by the validated input.
+  return progressApiResponseSchema.parse(response) as ProgressApiResponse;
 }
 
 export const progressApi = {

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
+import { routes } from "@/core/navigation/routeNames";
 import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
@@ -27,7 +28,7 @@ export function AssignmentSubmissionScreen() {
       return;
     }
 
-    router.replace("/(student)/assignments/history");
+    router.replace(routes.studentAssignmentsHistory);
   };
 
   return (
@@ -66,7 +67,7 @@ export function AssignmentSubmissionScreen() {
           accessibilityLabel={t("assignments.detail.missingAccessibility")}
           description={t("assignments.detail.missingDescription")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.replace("/(student)/assignments/history")}
+          onActionPress={() => router.replace(routes.studentAssignmentsHistory)}
           testID="assignment-submission-missing"
           title={t("assignments.detail.missingTitle")}
         />

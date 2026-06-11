@@ -19,6 +19,7 @@ import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import { dashboardRadius, dashboardSpacing } from "@/shared/styles/dashboardMetrics";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,
@@ -58,22 +59,6 @@ const teacherColors = {
   surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
   surfaceContainerLow: colors.dashboard.surfaceContainerLow,
   tertiaryContainer: colors.dashboard.tertiaryContainer,
-} as const;
-
-const teacherSpacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  section: 32,
-} as const;
-
-const teacherRadius = {
-  sm: 4,
-  lg: 8,
-  xl: 12,
-  full: 999,
 } as const;
 
 const watchlistReasonKeys = {
@@ -652,6 +637,16 @@ function WatchlistSection({
             onActionPress={onActionPress}
           />
         ))}
+        {items.length === 0 ? (
+          <Text
+            style={[
+              getAccessibleTextStyle(styles.emptyInlineText, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
+            {t("teacher.dashboard.watchlist.empty")}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -791,6 +786,17 @@ function ActivitySection({
             showDivider={index < items.length - 1}
           />
         ))}
+        {items.length === 0 ? (
+          <Text
+            style={[
+              getAccessibleTextStyle(styles.emptyInlineText, settings),
+              styles.activityEmptyText,
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
+            {t("teacher.dashboard.activity.empty")}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -929,16 +935,16 @@ const cardShadow = {
 const styles = StyleSheet.create({
   actionButton: {
     alignItems: "center",
-    borderRadius: teacherRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
     flex: 1,
     flexDirection: "row",
-    gap: teacherSpacing.sm,
+    gap: dashboardSpacing.sm,
     justifyContent: "center",
     minHeight: 58,
     minWidth: 160,
-    paddingHorizontal: teacherSpacing.lg,
-    paddingVertical: teacherSpacing.md,
+    paddingHorizontal: dashboardSpacing.lg,
+    paddingVertical: dashboardSpacing.md,
   },
   actionButtonNeutral: {
     backgroundColor: teacherColors.card,
@@ -972,15 +978,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 180,
     minWidth: 220,
-    padding: teacherSpacing.lg,
+    padding: dashboardSpacing.lg,
   },
   activeIconBubble: {
     alignItems: "center",
     backgroundColor: teacherColors.surfaceContainerHigh,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 48,
     justifyContent: "center",
-    marginBottom: teacherSpacing.md,
+    marginBottom: dashboardSpacing.md,
     width: 48,
   },
   activeLabel: {
@@ -992,14 +998,14 @@ const styles = StyleSheet.create({
   },
   activeProgressFill: {
     backgroundColor: teacherColors.secondary,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: "100%",
   },
   activeProgressTrack: {
     backgroundColor: teacherColors.surfaceContainerHigh,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 8,
-    marginTop: teacherSpacing.lg,
+    marginTop: dashboardSpacing.lg,
     overflow: "hidden",
     width: "100%",
   },
@@ -1021,12 +1027,15 @@ const styles = StyleSheet.create({
   },
   activityCopy: {
     flex: 1,
-    gap: teacherSpacing.xs,
+    gap: dashboardSpacing.xs,
     minWidth: 0,
+  },
+  activityEmptyText: {
+    padding: dashboardSpacing.lg,
   },
   activityIconBubble: {
     alignItems: "center",
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 32,
     justifyContent: "center",
     width: 32,
@@ -1041,15 +1050,15 @@ const styles = StyleSheet.create({
   activityMetaRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: teacherSpacing.sm,
+    gap: dashboardSpacing.sm,
     minWidth: 0,
   },
   activityRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
     minHeight: 82,
-    padding: teacherSpacing.lg,
+    padding: dashboardSpacing.lg,
   },
   activityRowBorder: {
     borderBottomColor: teacherColors.outlineVariant,
@@ -1073,7 +1082,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: "center",
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 40,
     justifyContent: "center",
     width: 40,
@@ -1088,12 +1097,12 @@ const styles = StyleSheet.create({
     ...cardShadow,
     backgroundColor: teacherColors.card,
     borderColor: teacherColors.outlineVariant,
-    borderRadius: teacherRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
   },
   content: {
     alignSelf: "center",
-    gap: teacherSpacing.section,
+    gap: dashboardSpacing.section,
     maxWidth: 430,
     width: "100%",
   },
@@ -1103,9 +1112,9 @@ const styles = StyleSheet.create({
   countChip: {
     alignItems: "center",
     backgroundColor: teacherColors.surfaceContainerHigh,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     minHeight: 24,
-    paddingHorizontal: teacherSpacing.sm,
+    paddingHorizontal: dashboardSpacing.sm,
     paddingVertical: 2,
   },
   countChipText: {
@@ -1115,16 +1124,22 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   dashboardGrid: {
-    gap: teacherSpacing.section,
+    gap: dashboardSpacing.section,
   },
   dashboardGridTablet: {
     alignItems: "flex-start",
     flexDirection: "row",
   },
+  emptyInlineText: {
+    color: teacherColors.onSurfaceVariant,
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
+  },
   gradeRing: {
     alignItems: "center",
     borderColor: teacherColors.surfaceContainerHigh,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     borderTopColor: teacherColors.primary,
     borderWidth: 4,
     height: 64,
@@ -1140,11 +1155,11 @@ const styles = StyleSheet.create({
   growthChip: {
     alignItems: "center",
     backgroundColor: teacherColors.secondaryContainer,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     flexDirection: "row",
-    gap: teacherSpacing.xs,
+    gap: dashboardSpacing.xs,
     minHeight: 26,
-    paddingHorizontal: teacherSpacing.sm,
+    paddingHorizontal: dashboardSpacing.sm,
   },
   growthChipText: {
     color: teacherColors.secondary,
@@ -1154,7 +1169,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: teacherColors.surface,
-    paddingHorizontal: teacherSpacing.xl,
+    paddingHorizontal: dashboardSpacing.xl,
   },
   headerContentTablet: {
     alignSelf: "center",
@@ -1170,17 +1185,17 @@ const styles = StyleSheet.create({
     backgroundColor: teacherColors.inverseSurface,
     borderRadius: 20,
     flexDirection: "row",
-    gap: teacherSpacing.md,
-    padding: teacherSpacing.lg,
+    gap: dashboardSpacing.md,
+    padding: dashboardSpacing.lg,
   },
   insightCopy: {
     flex: 1,
-    gap: teacherSpacing.xs,
+    gap: dashboardSpacing.xs,
     minWidth: 0,
   },
   insightDismiss: {
     alignItems: "center",
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     justifyContent: "center",
     minHeight: 32,
     width: 32,
@@ -1188,7 +1203,7 @@ const styles = StyleSheet.create({
   insightIcon: {
     alignItems: "center",
     backgroundColor: teacherColors.primary,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 48,
     justifyContent: "center",
     width: 48,
@@ -1214,14 +1229,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   intro: {
-    gap: teacherSpacing.xs,
+    gap: dashboardSpacing.xs,
   },
   listStack: {
-    gap: teacherSpacing.md,
+    gap: dashboardSpacing.md,
   },
   metaDot: {
     backgroundColor: teacherColors.outline,
-    borderRadius: teacherRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 4,
     width: 4,
   },
@@ -1250,10 +1265,10 @@ const styles = StyleSheet.create({
     minHeight: 180,
     minWidth: 0,
     overflow: "hidden",
-    padding: teacherSpacing.lg,
+    padding: dashboardSpacing.lg,
   },
   performanceContent: {
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
     zIndex: 1,
   },
   performanceCopy: {
@@ -1261,7 +1276,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   performanceGrid: {
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
   },
   performanceGridTablet: {
     alignItems: "stretch",
@@ -1270,7 +1285,7 @@ const styles = StyleSheet.create({
   performanceHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
     justifyContent: "space-between",
   },
   performanceInsight: {
@@ -1299,7 +1314,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
   },
   quickActionsTablet: {
     flexWrap: "nowrap",
@@ -1312,8 +1327,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: teacherSpacing.sm,
-    marginTop: teacherSpacing.xs,
+    gap: dashboardSpacing.sm,
+    marginTop: dashboardSpacing.xs,
   },
   scoreText: {
     color: teacherColors.primary,
@@ -1324,14 +1339,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 132,
-    paddingHorizontal: teacherSpacing.xl,
-    paddingTop: teacherSpacing.xl,
+    paddingHorizontal: dashboardSpacing.xl,
+    paddingTop: dashboardSpacing.xl,
   },
   scrollContentTablet: {
     paddingHorizontal: 32,
   },
   section: {
-    gap: teacherSpacing.lg,
+    gap: dashboardSpacing.lg,
   },
   sectionHeader: {
     alignItems: "center",
@@ -1349,14 +1364,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     flexDirection: "row",
-    gap: teacherSpacing.sm,
+    gap: dashboardSpacing.sm,
     minWidth: 0,
   },
   viewAllButton: {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 32,
-    paddingHorizontal: teacherSpacing.sm,
+    paddingHorizontal: dashboardSpacing.sm,
   },
   viewAllText: {
     color: teacherColors.primary,
@@ -1367,12 +1382,12 @@ const styles = StyleSheet.create({
   watchlistButton: {
     alignItems: "center",
     borderColor: teacherColors.outlineVariant,
-    borderRadius: teacherRadius.lg,
+    borderRadius: dashboardRadius.lg,
     borderWidth: 1,
     minHeight: 36,
     minWidth: 72,
-    paddingHorizontal: teacherSpacing.md,
-    paddingVertical: teacherSpacing.xs,
+    paddingHorizontal: dashboardSpacing.md,
+    paddingVertical: dashboardSpacing.xs,
   },
   watchlistButtonText: {
     color: teacherColors.primary,
@@ -1392,7 +1407,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     flexDirection: "row",
-    gap: teacherSpacing.md,
+    gap: dashboardSpacing.md,
     minWidth: 0,
   },
   watchlistName: {
@@ -1411,12 +1426,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: teacherColors.card,
     borderColor: teacherColors.outlineVariant,
-    borderRadius: teacherRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
     flexDirection: "row",
-    gap: teacherSpacing.md,
+    gap: dashboardSpacing.md,
     justifyContent: "space-between",
     minHeight: 74,
-    padding: teacherSpacing.lg,
+    padding: dashboardSpacing.lg,
   },
 });

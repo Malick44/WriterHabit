@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors, typography } from "@/design/tokens";
+import { colors, palette, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -75,7 +75,7 @@ export function GradeSelectionScreen() {
             >
               {t(group.titleKey)}
             </Text>
-            <View style={styles.gradeGrid}>
+            <View accessibilityRole="radiogroup" style={styles.gradeGrid}>
               {group.grades.map((grade) => {
                 const isSelected = onboarding.progress.gradeLevel === grade;
                 return (
@@ -105,7 +105,7 @@ export function GradeSelectionScreen() {
                     </Text>
                     {isSelected ? (
                       <View style={styles.selectedBadge}>
-                        <Ionicons name="checkmark" size={22} color="#FFFFFF" />
+                        <Ionicons name="checkmark" size={22} color={palette.white} />
                       </View>
                     ) : null}
                   </Pressable>
@@ -122,8 +122,8 @@ export function GradeSelectionScreen() {
 const styles = StyleSheet.create({
   gradeButton: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#C5CBD8",
+    backgroundColor: colors.onboarding.surface,
+    borderColor: colors.onboarding.cardBorder,
     borderRadius: 12,
     borderWidth: 1.5,
     flexBasis: "30%",
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     opacity: 0.78,
   },
   gradeButtonSelected: {
-    backgroundColor: "#D8E8FF",
+    backgroundColor: colors.onboarding.iconBubble,
     borderColor: NAVY,
     borderWidth: 2.5,
   },
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     gap: 22,
   },
   gradeLabel: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 24,
     fontWeight: "500",
     lineHeight: 30,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     gap: 22,
   },
   groupTitle: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 24,
     fontWeight: "800",
     lineHeight: 30,

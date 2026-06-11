@@ -2136,6 +2136,17 @@ export const en = {
       summaryAccessibility: "Weekly review summary",
       summaryTitle: "What changed this week",
       summaryDescription: "These notes summarize practice signals and revision effort.",
+      weekRangeLabel: "{{start}} - {{end}}",
+      highlights: {
+        elementarySentenceDetails: "You practiced sentence details on {{count}} days.",
+        elementaryHandwritingRoutine: "Handwriting practice is building a steady routine.",
+        middleRevisedAfterFeedback: "You revised {{count}} times after feedback.",
+        middleOrganizationClarity: "Organization and clarity both improved this week.",
+        middleAiCoachingNotes: "You used AI feedback as coaching notes, not replacement writing.",
+        highFocusedBlocks: "You completed {{count}} focused writing blocks.",
+        highEvidenceOrganization: "Evidence and organization improved across essay practice.",
+        highRevisionReasoning: "Revision work added clearer reasoning to your draft.",
+      },
       sections: {
         highlights: "Highlights",
         highlightsSubtitle: "Evidence of writing practice this week.",
@@ -2252,6 +2263,7 @@ export const en = {
         title: "Recent Milestones",
       },
       upcoming: {
+        empty: "Nothing is due right now. New assignments appear here when they are ready.",
         openCalendar: "See full calendar",
         openCalendarAccessibility: "Open all parent assignment reviews",
         percent: "{{count}}%",
@@ -2574,6 +2586,7 @@ export const en = {
         reportAccessibility: "Open the class report",
       },
       activity: {
+        empty: "No recent student activity yet. New submissions and feedback appear here.",
         rowAccessibility: "{{activity}}",
         score: "{{score}}/100",
         title: "Recent Activity",
@@ -2607,6 +2620,7 @@ export const en = {
       watchlist: {
         actionAccessibility: "{{action}} {{student}}",
         count: "{{count}} Students",
+        empty: "No students need attention right now.",
         remindCta: "Remind",
         reviewCta: "Review",
         rowAccessibility: "{{student}}, {{reason}}",

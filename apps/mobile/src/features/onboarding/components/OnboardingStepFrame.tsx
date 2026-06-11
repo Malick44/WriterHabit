@@ -116,12 +116,14 @@ export function OnboardingStepFrame({
   const shouldShowBackButton = showBackButton ?? Boolean(secondaryLabel && onSecondaryPress);
   const activeIndex = progressActiveIndex ?? Math.max(PROGRESS_STEPS.indexOf(step), 0);
   const headerIsCentered = headerAlign === "center";
+  const mergedTitleStyle: TextStyle = { ...titleTextStyle, ...StyleSheet.flatten(titleStyle) };
+  const mergedSubtitleStyle: TextStyle = { ...subtitleTextStyle, ...StyleSheet.flatten(subtitleStyle) };
   const accessibleTitleStyle = getAccessibleTextStyle(
-    settings.highContrast ? { ...titleTextStyle, color: accessibleColors.text } : titleTextStyle,
+    settings.highContrast ? { ...mergedTitleStyle, color: accessibleColors.text } : mergedTitleStyle,
     settings,
   );
   const accessibleSubtitleStyle = getAccessibleTextStyle(
-    settings.highContrast ? { ...subtitleTextStyle, color: accessibleColors.text } : subtitleTextStyle,
+    settings.highContrast ? { ...mergedSubtitleStyle, color: accessibleColors.text } : mergedSubtitleStyle,
     settings,
   );
   const accessiblePrimaryButtonTextStyle = getAccessibleTextStyle(primaryButtonTextStyle, settings);
@@ -216,7 +218,6 @@ export function OnboardingStepFrame({
             style={[
               accessibleTitleStyle,
               headerIsCentered ? styles.titleCentered : null,
-              titleStyle,
             ]}
           >
             {title}
@@ -226,7 +227,6 @@ export function OnboardingStepFrame({
             style={[
               accessibleSubtitleStyle,
               headerIsCentered ? styles.subtitleCentered : null,
-              subtitleStyle,
             ]}
           >
             {subtitle}

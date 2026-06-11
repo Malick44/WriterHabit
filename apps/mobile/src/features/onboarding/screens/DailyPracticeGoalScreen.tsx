@@ -1,18 +1,13 @@
 import { useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type DimensionValue,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
 import { getGradeBandForGrade, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { LoadingState } from "@/shared/components/feedback";
+import { LoadingState, ProgressBar } from "@/shared/components/feedback";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import {
   type ThemeTuningColorPreset,
   type ThemeTuningScreenConfig,
@@ -288,6 +283,7 @@ export function DailyPracticeGoalScreen() {
     DAILY_PRACTICE_THEME_DEFAULTS,
   );
   const [showValidationError, setShowValidationError] = useState(false);
+  const { settings } = useAccessibilityContext();
 
   const gradeBand = getGradeBandForGrade(onboarding.progress.gradeLevel ?? 7);
   const type = typography.gradeBands[gradeBand];
@@ -295,7 +291,7 @@ export function DailyPracticeGoalScreen() {
   const selectedOption = dailyPracticeCopyKeys[selectedMinutes];
   const visibleSelectedOptionIndex = visibleDailyPracticeOptions.findIndex((minutes) => minutes === selectedMinutes);
   const selectedOptionIndex = Math.max(visibleSelectedOptionIndex, 0);
-  const selectedProgressWidth = `${((selectedOptionIndex + 1) / visibleDailyPracticeOptions.length) * 100}%` as DimensionValue;
+  const selectedProgressValue = (selectedOptionIndex + 1) / visibleDailyPracticeOptions.length;
   const readableAccentTextColor = getReadableControlColor(theme.accentColor);
 
   if (!onboarding.hydrated) {
@@ -399,27 +395,29 @@ export function DailyPracticeGoalScreen() {
 
             <View style={styles.summaryCopy}>
               <Text
-                style={[
-                  styles.eyebrow,
+                style={getAccessibleTextStyle(
                   {
+                    ...styles.eyebrow,
                     color: theme.accentColor,
                     fontSize: type.caption.fontSize * theme.bodyScale,
                     lineHeight: type.caption.lineHeight * theme.bodyScale,
                   },
-                ]}
+                  settings,
+                )}
               >
                 {t("onboarding.dailyPracticeGoal.summaryEyebrow")}
               </Text>
               <Text
                 accessibilityRole="header"
-                style={[
-                  styles.summaryTitle,
+                style={getAccessibleTextStyle(
                   {
+                    ...styles.summaryTitle,
                     color: theme.textColor,
                     fontSize: type.title.fontSize * theme.titleScale,
                     lineHeight: type.title.lineHeight * theme.titleScale,
                   },
-                ]}
+                  settings,
+                )}
               >
                 {t("onboarding.dailyPracticeGoal.summaryTitle", { minutes: selectedMinutes })}
               </Text>
@@ -427,56 +425,51 @@ export function DailyPracticeGoalScreen() {
           </View>
 
           <Text
-            style={[
-              styles.summaryDescription,
+            style={getAccessibleTextStyle(
               {
+                ...styles.summaryDescription,
                 color: theme.mutedTextColor,
                 fontSize: type.bodySmall.fontSize * theme.bodyScale,
                 lineHeight: type.bodySmall.lineHeight * theme.bodyScale,
               },
-            ]}
+              settings,
+            )}
           >
             {t(selectedOption.description)}
           </Text>
 
-          <View
-            accessibilityLabel={t("onboarding.dailyPracticeGoal.progressLabel")}
-            style={[styles.progressTrack, { backgroundColor: theme.progressTrackColor }]}
-          >
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: theme.accentColor,
-                  width: selectedProgressWidth,
-                },
-              ]}
-            />
-          </View>
+          <ProgressBar
+            gradeBand={gradeBand}
+            label={t("onboarding.dailyPracticeGoal.progressLabel")}
+            progressColor={theme.accentColor}
+            value={selectedProgressValue}
+          />
         </View>
 
         <View style={styles.optionsHeader}>
           <Text
-            style={[
-              styles.optionsTitle,
+            style={getAccessibleTextStyle(
               {
+                ...styles.optionsTitle,
                 color: theme.textColor,
                 fontSize: type.label.fontSize * theme.bodyScale,
                 lineHeight: type.label.lineHeight * theme.bodyScale,
               },
-            ]}
+              settings,
+            )}
           >
             {t("onboarding.dailyPracticeGoal.choosePaceTitle")}
           </Text>
           <Text
-            style={[
-              styles.flexibilityNote,
+            style={getAccessibleTextStyle(
               {
+                ...styles.flexibilityNote,
                 color: theme.mutedTextColor,
                 fontSize: type.caption.fontSize * theme.bodyScale,
                 lineHeight: type.caption.lineHeight * theme.bodyScale,
               },
-            ]}
+              settings,
+            )}
           >
             {t("onboarding.dailyPracticeGoal.flexibilityNote")}
           </Text>
@@ -521,34 +514,41 @@ export function DailyPracticeGoalScreen() {
                 <View style={styles.optionCopy}>
                   <View style={styles.optionTitleRow}>
                     <Text
-                      style={[
-                        styles.optionTitle,
+                      style={getAccessibleTextStyle(
                         {
+                          ...styles.optionTitle,
                           color: theme.textColor,
                           fontSize: type.bodyStrong.fontSize * theme.bodyScale,
                           lineHeight: type.bodyStrong.lineHeight * theme.bodyScale,
                         },
-                      ]}
+                        settings,
+                      )}
                     >
                       {t(dailyPracticeCopyKeys[minutes].label)}
                     </Text>
                     {minutes === 10 ? (
                       <View style={[styles.badge, { backgroundColor: theme.accentColor }]}>
-                        <Text style={[styles.badgeText, { color: readableAccentTextColor }]}>
+                        <Text
+                          style={getAccessibleTextStyle(
+                            { ...styles.badgeText, color: readableAccentTextColor },
+                            settings,
+                          )}
+                        >
                           {t("onboarding.dailyPracticeGoal.recommendedBadge")}
                         </Text>
                       </View>
                     ) : null}
                   </View>
                   <Text
-                    style={[
-                      styles.optionDescription,
+                    style={getAccessibleTextStyle(
                       {
+                        ...styles.optionDescription,
                         color: theme.mutedTextColor,
                         fontSize: type.bodySmall.fontSize * theme.bodyScale,
                         lineHeight: type.bodySmall.lineHeight * theme.bodyScale,
                       },
-                    ]}
+                      settings,
+                    )}
                   >
                     {t(dailyPracticeCopyKeys[minutes].description)}
                   </Text>
@@ -645,15 +645,6 @@ const styles = StyleSheet.create({
   },
   optionsTitle: {
     fontWeight: "800",
-  },
-  progressFill: {
-    borderRadius: radius.full,
-    height: "100%",
-  },
-  progressTrack: {
-    borderRadius: radius.full,
-    height: 8,
-    overflow: "hidden",
   },
   radioOuter: {
     alignItems: "center",

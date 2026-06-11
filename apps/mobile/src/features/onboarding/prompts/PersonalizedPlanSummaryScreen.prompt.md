@@ -1,42 +1,46 @@
 # Personalized Plan Summary Screen Design Prompt
 
 ## Target User
-Student (Grades 1-12)
+Student (Grades 1–12)
 
 ## Goal
-Design the final Personalized Plan Summary screen showcasing a futuristic custom-generated roadmap, week-one milestones, and coach parameters. The AI agent must generate at least 5 design variants.
+Design the final Personalized Plan Summary screen (step 6 of 6): a warm, celebratory reveal of the starter plan built from the student's choices, ending in a confident start CTA. The AI agent must generate 3 distinct design versions.
 
 ## Prompt
 
-You are a senior principal product designer and mobile UI/UX specialist.
-Design an elegant, premium, futuristic mobile app screen for WriterHabit AI (onboarding step 6 of 6: Personalized Plan Summary). The design must feel celebratory, premium, and visually stunning.
+You are a senior product designer and mobile UI specialist.
+Design a polished, realistic mobile screen for **WriterHabit AI** (onboarding step 6 of 6: Personalized Plan Summary). Follow the Daylight Glass system in `DESIGN.md`: light surfaces (`#F6FAFF` background, white cards), primary indigo `#2563EB`, teal `#14B8A6` for progress, reward yellow `#F59E0B` for celebration accents, soft salmon `#DC2626` for errors only. Subtle glassmorphism touches, 16–24px radii, modern high-readability typography. iPhone-style patterns with safe areas.
 
-### Futuristic Design & Aesthetic Directives:
-- **Celebratory UI**: Display generated custom plan parameters using glowing data visualizations, timeline graphics, and high-fidelity card panels.
-- **Elegant Structures**: Multi-layered glassmorphic dashboards, timeline flowcharts, and glowing metrics badges.
-- **Color Themes**: Dominated by success greens, neon teals, and vibrant indigos to create high energy and positive validation.
+### Tone & Integrity Directives
+- Celebratory but trustworthy — confetti-light, not casino. The plan is a learning plan, and the integrity promise is part of the reveal.
+- **Safety note (real copy, must appear):** "WriterHabit will coach with hints, questions, and revision tasks. It will not write assignments for the student."
 
-### Screen Purpose & Requirements:
-- **Progress Flow**: 100% complete indicator glowing brightly.
-- **Copy**:
-  - Title: "Personalized Roadmap Ready"
-  - Subtitle: "Your AI coach has constructed a custom writing path tailored to your parameters."
-- **Plan Dashboard Panels**:
-  - **Calibrated Metrics**: Grade, daily practice velocity, target focus, confidence calibration.
-  - **First-Week Milestones**: Interactive checklist or nodes highlighting initial goals.
-  - **Safety Safeguard Core**: Highlights academic integrity, framed as an interactive security shield indicator.
-- **CTA Actions**:
-  - Primary CTA: "Launch Dashboard" (with loader).
-  - Secondary CTA: "Recalibrate" (Back).
+### Screen Purpose & Requirements
+- **Progress:** Step indicator showing onboarding complete (6 of 6).
+- **Copy (real product strings — use these):**
+  - Title: "Here's your personalized plan!"
+  - Subtitle: "We've built a plan to help you reach your goals."
+- **Plan card ("Practice settings" — "This can change later as writing practice grows."):**
+  - GRADE LEVEL: "Grade 5"
+  - MAIN GOALS: goal chips, e.g., "Creative Writing", "Grammar", "Paragraphs"
+  - DAILY PLAN: "10 minutes / day" + "5 days per week"
+  - Coaching pace: from the confidence choice (e.g., "Friendly hints and simple steps")
+- **First week focus:** "These goals shape the first set of practice cards." — 2–3 milestone rows with teal checks.
+- **First assignment preview:** eyebrow "FIRST ASSIGNMENT PREVIEW", quote card: "Write a paragraph about a time you helped someone."
+- **Safety note card:** the integrity copy above, calm indigo tint treatment (trust signal, not a warning).
+- **CTA:** Primary "Start My First Assignment".
+- **Loading state:** "Creating your plan — Building a starter plan from the choices you made." with skeleton plan card and anticipation cue ("Crafting your plan...").
+- **Recovery state example:** "Plan is not ready yet — One or more required choices is missing." + "Review missing step".
 
 ---
 
-### Task: Generate At Least 5 Design Variants
-You must generate at least 5 distinct futuristic, premium design concepts for this screen:
-1. **Cybernetic Data Dashboard**: A high-tech HUD (Heads-Up Display) layout with glowing circular gauges, neon charts, and transparent glass panels.
-2. **Constellation Timeline Roadmap**: A vertical neon coordinate timeline linking milestones with animated light-beams.
-3. **Neomorphic command deck**: High-fidelity dark mode command panel with soft inset panels, pulsing status lamps, and holographic cards.
-4. **Fluid Glass Card Stack**: Translucent overlapping panels with dynamic neon drop-shadows that slide open or expand upon swipe/press.
-5. **Neon Security Shield Theme**: Grid lines, scanning lasers, and a centralized holographic shield highlighting the safety parameters.
+### Task: Generate 3 Distinct Design Versions
+Produce 3 complete versions, labeled **Version A**, **Version B**, **Version C** — meaningfully different in reveal structure, not just color:
 
-For each variant, provide layout specifications, CSS variables, visual hierarchy, and loading state transitions.
+1. **Version A — Plan Card Stack:** clean stacked cards (plan → first week → preview → safety note); calm, scannable, most conventional.
+2. **Version B — Celebration Reveal:** soft confetti header moment with the plan presented as one elevated glass summary card and expandable sections; the warmest take.
+3. **Version C — Roadmap:** a vertical path/timeline from "Today" through the first week milestones to the first assignment, plan settings as a compact header strip; skews Grades 6–12.
+
+For each version, provide layout description, key styling values, loading/reveal states, and accessibility notes (announcement of completion, heading order, touch targets).
+
+**Constant across versions:** exact color tokens, real product copy above, the safety note, first-assignment preview, loading and recovery states, iPhone patterns.

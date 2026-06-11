@@ -27,10 +27,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
-type ButtonSizeStyle = ViewStyle & {
-  minHeight: number;
-};
-
 export interface ButtonProps {
   label: string;
   onPress?: (event: GestureResponderEvent) => void;
@@ -49,19 +45,22 @@ export interface ButtonProps {
   testID?: string;
 }
 
-const buttonSizeStyles: Record<ButtonSize, ButtonSizeStyle> = {
+const buttonSizeMinHeights: Record<ButtonSize, number> = {
+  sm: layout.touchTarget,
+  md: layout.touchTarget,
+  lg: layout.touchTargetLarge,
+};
+
+const buttonSizeStyles: Record<ButtonSize, ViewStyle> = {
   sm: {
-    minHeight: layout.touchTarget,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   md: {
-    minHeight: layout.touchTarget,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   lg: {
-    minHeight: layout.touchTargetLarge,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
   },
@@ -129,7 +128,7 @@ export function Button({
   const borderColor = settings.highContrast && !isDisabled ? accessibleColors.border : variantStyle.borderColor;
   const minHeight = Math.max(
     getMinimumTouchTarget(settings),
-    gradeBand === "elementary" ? layout.touchTargetLarge : buttonSizeStyles[size].minHeight,
+    gradeBand === "elementary" ? layout.touchTargetLarge : buttonSizeMinHeights[size],
   );
 
   return (

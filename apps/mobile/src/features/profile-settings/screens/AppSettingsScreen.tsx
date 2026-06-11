@@ -351,9 +351,13 @@ export function AppSettingsScreen() {
               style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
             >
               <Ionicons color={settingsColors.error} name="log-out-outline" size={22} />
-              <Text style={styles.logoutText}>{t("profileSettings.settings.logout")}</Text>
+              <Text style={getAccessibleTextStyle(styles.logoutText, settings)}>
+                {t("profileSettings.settings.logout")}
+              </Text>
             </Pressable>
-            <Text style={styles.versionText}>{t("profileSettings.settings.version")}</Text>
+            <Text style={getAccessibleTextStyle(styles.versionText, settings)}>
+              {t("profileSettings.settings.version")}
+            </Text>
           </View>
         </View>
       </ScrollView>

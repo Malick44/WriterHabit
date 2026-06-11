@@ -1,7 +1,7 @@
 import type { WritingSkill } from "@WriterHabit/shared";
 
 import { typography } from "@/design/tokens";
-import { translate, type TranslationKey } from "@/i18n";
+import { translate, type Locale, type TranslationKey } from "@/i18n";
 
 import {
   type ProgressApiResponse,
@@ -12,6 +12,7 @@ import {
   type ProgressMetricViewModel,
   type ProgressSkillViewModel,
   type ProgressTotals,
+  type ProgressWeeklyReviewViewModel,
 } from "../types";
 import { evaluateBadgeUnlocks } from "./badgeUnlockService";
 import { calculateWritingStreak } from "./streakService";
@@ -117,6 +118,28 @@ const metricCopy = {
     valueKey: TranslationKey;
   }
 >;
+
+function formatWeekDate(locale: Locale, date: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00.000Z`));
+}
+
+/**
+ * Locale-formatted params for the `progress.weeklyReview.weekRangeLabel`
+ * translation, built from the ISO week bounds on the view model.
+ */
+export function getWeekRangeLabelParams(
+  locale: Locale,
+  weeklyReview: Pick<ProgressWeeklyReviewViewModel, "weekEnd" | "weekStart">,
+): { end: string; start: string } {
+  return {
+    end: formatWeekDate(locale, weeklyReview.weekEnd),
+    start: formatWeekDate(locale, weeklyReview.weekStart),
+  };
+}
 
 function getFirstName(displayName: string): string {
   const trimmed = displayName.trim();
@@ -362,7 +385,8 @@ export function buildProgressDashboardViewModel({
         .map((id) => metrics.find((metric) => metric.id === id))
         .filter((metric): metric is ProgressMetricViewModel => Boolean(metric)),
       nextFocusSkill,
-      weekLabel: dashboard.weeklyReview.weekLabel,
+      weekEnd: dashboard.weeklyReview.weekEnd,
+      weekStart: dashboard.weeklyReview.weekStart,
     },
   };
 }

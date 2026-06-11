@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -9,7 +9,7 @@ import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState, SuccessState } from "@/shared/components/feedback";
-import { CheckboxRow, ChoiceCard } from "@/shared/components/forms";
+import { CheckboxRow, ChoiceCard, SettingsToggleRow } from "@/shared/components/forms";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
 import {
@@ -22,6 +22,8 @@ import {
 import { useParentSettingsData } from "../hooks/useParent";
 import type { ParentSettings } from "../types";
 
+const SAVED_BANNER_DURATION_MS = 2500;
+
 export function ParentSettingsScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -30,7 +32,28 @@ export function ParentSettingsScreen() {
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[state.gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const [hasChangedSettings, setHasChangedSettings] = useState(false);
+  const isSaving = state.status === "success" && state.isSaving;
+  const [showSavedBanner, setShowSavedBanner] = useState(false);
+  const wasSavingRef = useRef(false);
+
+  useEffect(() => {
+    const wasSaving = wasSavingRef.current;
+
+    wasSavingRef.current = isSaving;
+
+    if (!wasSaving || isSaving) {
+      return undefined;
+    }
+
+    setShowSavedBanner(true);
+    const timeout = setTimeout(() => {
+      setShowSavedBanner(false);
+    }, SAVED_BANNER_DURATION_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isSaving]);
 
   const handleOpenPaywall = useCallback(() => {
     router.push(routes.paywall);
@@ -43,8 +66,6 @@ export function ParentSettingsScreen() {
   }, [router, signOut]);
 
   const handleUpdateSetting = <Key extends keyof ParentSettings>(key: Key, value: ParentSettings[Key]) => {
-    setHasChangedSettings(true);
-
     if (state.status === "success") {
       state.updateSetting(key, value);
     }
@@ -108,7 +129,7 @@ export function ParentSettingsScreen() {
             />
           ) : null}
 
-          {state.viewModel.linkedStudents.length > 0 && (state.isSaving || hasChangedSettings) ? (
+          {state.viewModel.linkedStudents.length > 0 && (state.isSaving || showSavedBanner) ? (
             <SuccessState
               accessibilityLabel={t("parent.settings.savedAccessibility")}
               description={
@@ -152,44 +173,29 @@ export function ParentSettingsScreen() {
             title={t("parent.settings.notificationsTitle")}
           >
             <Stack gap="sm">
-              <CheckboxRow
-                accessibilityLabel={t("parent.settings.weeklyEmailAccessibility")}
-                checked={state.viewModel.settings.weeklyReportEmailEnabled}
+              <SettingsToggleRow
                 description={t("parent.settings.weeklyEmailDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.weeklyEmailLabel")}
-                onPress={() =>
-                  handleUpdateSetting(
-                    "weeklyReportEmailEnabled",
-                    !state.viewModel.settings.weeklyReportEmailEnabled,
-                  )
-                }
+                onValueChange={(value) => handleUpdateSetting("weeklyReportEmailEnabled", value)}
+                value={state.viewModel.settings.weeklyReportEmailEnabled}
+                variant="outlined"
               />
-              <CheckboxRow
-                accessibilityLabel={t("parent.settings.assignmentAlertsAccessibility")}
-                checked={state.viewModel.settings.assignmentAlertsEnabled}
+              <SettingsToggleRow
                 description={t("parent.settings.assignmentAlertsDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.assignmentAlertsLabel")}
-                onPress={() =>
-                  handleUpdateSetting(
-                    "assignmentAlertsEnabled",
-                    !state.viewModel.settings.assignmentAlertsEnabled,
-                  )
-                }
+                onValueChange={(value) => handleUpdateSetting("assignmentAlertsEnabled", value)}
+                value={state.viewModel.settings.assignmentAlertsEnabled}
+                variant="outlined"
               />
-              <CheckboxRow
-                accessibilityLabel={t("parent.settings.practiceReminderAccessibility")}
-                checked={state.viewModel.settings.practiceReminderEnabled}
+              <SettingsToggleRow
                 description={t("parent.settings.practiceReminderDescription")}
                 gradeBand={state.gradeBand}
                 label={t("parent.settings.practiceReminderLabel")}
-                onPress={() =>
-                  handleUpdateSetting(
-                    "practiceReminderEnabled",
-                    !state.viewModel.settings.practiceReminderEnabled,
-                  )
-                }
+                onValueChange={(value) => handleUpdateSetting("practiceReminderEnabled", value)}
+                value={state.viewModel.settings.practiceReminderEnabled}
+                variant="outlined"
               />
             </Stack>
           </PageSection>
@@ -261,41 +267,41 @@ export function ParentSettingsScreen() {
               </Card>
             </Stack>
           </PageSection>
+
+          <PageSection
+            gradeBand={state.gradeBand}
+            subtitle={t("parent.settings.accountSubtitle")}
+            title={t("parent.settings.accountTitle")}
+          >
+            <Stack gap="md">
+              <Card
+                accessibilityHint={t("parent.settings.upgradeHint")}
+                accessibilityLabel={t("parent.settings.upgradeAccessibility")}
+                gradeBand={state.gradeBand}
+                onPress={handleOpenPaywall}
+                subtitle={t("parent.settings.upgradeDescription")}
+                testID="parent-settings-upgrade"
+                title={t("parent.settings.upgradeTitle")}
+              >
+                <Text
+                  selectable
+                  style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.actionBackground }]}
+                >
+                  {t("parent.settings.upgradeCta")}
+                </Text>
+              </Card>
+              <Button
+                accessibilityLabel={t("parent.settings.signOutAccessibility")}
+                fullWidth
+                label={t("parent.settings.signOut")}
+                onPress={handleSignOut}
+                testID="parent-settings-sign-out"
+                variant="danger"
+              />
+            </Stack>
+          </PageSection>
         </Stack>
       ) : null}
-
-      <PageSection
-        gradeBand={state.gradeBand}
-        subtitle={t("parent.settings.accountSubtitle")}
-        title={t("parent.settings.accountTitle")}
-      >
-        <Stack gap="md">
-          <Card
-            accessibilityHint={t("parent.settings.upgradeHint")}
-            accessibilityLabel={t("parent.settings.upgradeAccessibility")}
-            gradeBand={state.gradeBand}
-            onPress={handleOpenPaywall}
-            subtitle={t("parent.settings.upgradeDescription")}
-            testID="parent-settings-upgrade"
-            title={t("parent.settings.upgradeTitle")}
-          >
-            <Text
-              selectable
-              style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.actionBackground }]}
-            >
-              {t("parent.settings.upgradeCta")}
-            </Text>
-          </Card>
-          <Button
-            accessibilityLabel={t("parent.settings.signOutAccessibility")}
-            fullWidth
-            label={t("parent.settings.signOut")}
-            onPress={handleSignOut}
-            testID="parent-settings-sign-out"
-            variant="danger"
-          />
-        </Stack>
-      </PageSection>
     </Screen>
   );
 }

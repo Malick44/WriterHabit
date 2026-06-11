@@ -1,11 +1,22 @@
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Text, View, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  I18nManager,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
+import { routes } from "@/core/navigation/routeNames";
 import { colors, layout, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
+import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
 import { getAccessibleTextStyle, getAccessibleColors, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -85,58 +96,31 @@ export function WritingWorkspaceScreen() {
           },
         ]}
       >
-        <TouchableOpacity
+        <Button
           accessibilityLabel={t("writingWorkspace.saveDraft")}
-          accessibilityRole="button"
-          accessibilityState={{ busy: isSavingNow, disabled: isSavingNow }}
-          style={[
-            styles.footerButton,
-            styles.footerButtonSecondary,
-            { borderColor: primaryColor },
-            isSavingNow && styles.footerButtonDisabled,
-          ]}
+          disabled={isSavingNow}
+          gradeBand={state.gradeBand}
+          label={t("writingWorkspace.saveDraft")}
+          loading={isSavingNow}
           onPress={() => {
             void saveNow();
           }}
-          disabled={isSavingNow}
-        >
-          <Text
-            style={[
-              getAccessibleTextStyle(type.bodyStrong, settings),
-              { color: primaryColor },
-            ]}
-          >
-            {isSavingNow ? t("common.loading") : t("writingWorkspace.saveDraft")}
-          </Text>
-        </TouchableOpacity>
+          style={styles.footerButton}
+          variant="secondary"
+        />
 
-        <TouchableOpacity
+        <Button
           accessibilityLabel={t("writingWorkspace.submit.confirmCta")}
-          accessibilityRole="button"
-          accessibilityState={{
-            busy: successState.submitStatus === "loading",
-            disabled: !successState.viewModel.canSubmit || successState.submitStatus === "loading",
-          }}
-          style={[
-            styles.footerButton,
-            styles.footerButtonPrimary,
-            { backgroundColor: primaryColor },
-            (!successState.viewModel.canSubmit || successState.submitStatus === "loading") && styles.footerButtonDisabled,
-          ]}
+          disabled={!successState.viewModel.canSubmit}
+          gradeBand={state.gradeBand}
+          label={t("writingWorkspace.submit.confirmCta")}
+          loading={successState.submitStatus === "loading"}
           onPress={() => {
             void submitDraft();
           }}
-          disabled={!successState.viewModel.canSubmit || successState.submitStatus === "loading"}
-        >
-          <Text
-            style={[
-              getAccessibleTextStyle(type.bodyStrong, settings),
-              { color: colors.text.inverse },
-            ]}
-          >
-            {successState.submitStatus === "loading" ? t("common.loading") : t("writingWorkspace.submit.confirmCta")}
-          </Text>
-        </TouchableOpacity>
+          style={styles.footerButton}
+          variant="primary"
+        />
       </View>
     </KeyboardAvoidingView>
   ) : null;
@@ -177,7 +161,7 @@ export function WritingWorkspaceScreen() {
           accessibilityLabel={t("writingWorkspace.missing.accessibility")}
           description={t("writingWorkspace.missing.description")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.replace("/(student)/assignments/history")}
+          onActionPress={() => router.replace(routes.studentAssignmentsHistory)}
           testID="writing-workspace-missing"
           title={t("writingWorkspace.missing.title")}
         />
@@ -193,7 +177,7 @@ export function WritingWorkspaceScreen() {
               onPress={() => router.back()}
               style={[styles.headerIconContainer, { backgroundColor: accessibleColors.surface }]}
             >
-              <Ionicons name="arrow-back" size={24} color={primaryColor} />
+              <Ionicons name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"} size={24} color={primaryColor} />
             </TouchableOpacity>
 
             <Text
@@ -446,7 +430,6 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontWeight: "500",
-    lineHeight: 22,
   },
   editorContainer: {
     flexDirection: "column",
@@ -479,6 +462,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.xs,
+    minHeight: layout.touchTarget,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
@@ -520,20 +504,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   footerButton: {
-    alignItems: "center",
     borderRadius: radius.full,
     flex: 1,
-    justifyContent: "center",
-    paddingVertical: spacing.md,
-  },
-  footerButtonSecondary: {
-    borderWidth: 1,
-  },
-  footerButtonPrimary: {
-    borderWidth: 0,
-  },
-  footerButtonDisabled: {
-    opacity: 0.5,
   },
 });
 

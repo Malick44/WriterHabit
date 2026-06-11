@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getAssignmentSubmissionRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
+import { routes } from "@/core/navigation/routeNames";
 import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
@@ -22,6 +23,7 @@ import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/comp
 import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
+  getAccessibleColors,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
@@ -67,9 +69,18 @@ function DetailText({
 }) {
   const { settings } = useAccessibilityContext();
   const gradeBand = useContext(DetailGradeBandContext);
+  const accessibleColors = getAccessibleColors(settings);
+  const resolvedColor = settings.highContrast
+    ? color === detailColors.onSurfaceVariant
+      ? accessibleColors.mutedText
+      : accessibleColors.text
+    : color;
 
   return (
-    <Text selectable style={[getAccessibleTextStyle(typography.gradeBands[gradeBand][role], settings), { color }, style]}>
+    <Text
+      selectable
+      style={[getAccessibleTextStyle(typography.gradeBands[gradeBand][role], settings), { color: resolvedColor }, style]}
+    >
       {children}
     </Text>
   );
@@ -381,7 +392,7 @@ export function AssignmentDetailScreen() {
           accessibilityLabel={t("assignments.detail.missingAccessibility")}
           description={t("assignments.detail.missingDescription")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.push("/(student)/assignments/history")}
+          onActionPress={() => router.push(routes.studentAssignmentsHistory)}
           testID="assignment-detail-missing"
           title={t("assignments.detail.missingTitle")}
         />
@@ -462,7 +473,7 @@ const styles = StyleSheet.create({
   bottomBarSurface: {
     alignItems: "center",
     backgroundColor: detailColors.surfaceLowest,
-    borderColor: "rgba(195, 198, 213, 0.3)",
+    borderColor: colors.dashboard.outlineFaint,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     borderTopWidth: 1,
@@ -510,7 +521,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   header: {
-    backgroundColor: "rgba(248, 249, 255, 0.95)",
+    backgroundColor: colors.dashboard.backgroundOverlay,
     borderBottomWidth: 0,
     paddingBottom: spacing.sm,
     paddingHorizontal: 20,
@@ -606,7 +617,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   rubricDivider: {
-    borderBottomColor: "rgba(195, 198, 213, 0.5)",
+    borderBottomColor: colors.dashboard.outlineFaint,
     borderBottomWidth: 1,
   },
   rubricRow: {

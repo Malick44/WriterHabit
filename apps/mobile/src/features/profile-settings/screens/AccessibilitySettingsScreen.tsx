@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { AccessibilityTextSize } from "@/shared/utils/accessibility";
 import { Button } from "@/shared/components/buttons";
 import { ErrorState, LoadingState, SuccessState } from "@/shared/components/feedback";
-import { CheckboxRow, ChoiceCard } from "@/shared/components/forms";
+import { ChoiceCard, SettingsToggleRow } from "@/shared/components/forms";
 import { Screen } from "@/shared/components/layout/Screen";
 import { PageSection } from "@/shared/components/layout/PageSection";
 import { Stack } from "@/shared/components/layout/Stack";
@@ -39,6 +40,7 @@ function getTextSizeDescriptionKey(textSize: AccessibilityTextSize) {
 export function AccessibilitySettingsScreen() {
   const t = useT();
   const { error, hydrated, resetSettings, setTextSize, settings, updateSettings } = useAccessibilitySettingsStore();
+  const [hasChanged, setHasChanged] = useState(false);
 
   if (!hydrated) {
     return (
@@ -80,12 +82,13 @@ export function AccessibilitySettingsScreen() {
             description={t("accessibility.screen.errorDescription")}
             title={t("accessibility.screen.errorTitle")}
           />
-        ) : (
+        ) : null}
+        {!error && hasChanged ? (
           <SuccessState
             description={t("accessibility.screen.savedDescription")}
             title={t("accessibility.screen.savedTitle")}
           />
-        )}
+        ) : null}
 
         <PageSection
           subtitle={t("accessibility.textSize.description")}
@@ -98,6 +101,7 @@ export function AccessibilitySettingsScreen() {
                 description={t(getTextSizeDescriptionKey(textSize))}
                 label={t(getTextSizeLabelKey(textSize))}
                 onPress={() => {
+                  setHasChanged(true);
                   void setTextSize(textSize);
                 }}
                 selected={settings.textSize === textSize}
@@ -107,59 +111,72 @@ export function AccessibilitySettingsScreen() {
         </PageSection>
 
         <Stack gap="md">
-          <CheckboxRow
-            checked={settings.dyslexiaFriendlyFont}
+          <SettingsToggleRow
             description={t("accessibility.toggles.dyslexiaFriendlyFont.description")}
             label={t("accessibility.toggles.dyslexiaFriendlyFont.label")}
-            onPress={() => {
-              void updateSettings({ dyslexiaFriendlyFont: !settings.dyslexiaFriendlyFont });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ dyslexiaFriendlyFont: value });
             }}
+            value={settings.dyslexiaFriendlyFont}
+            variant="outlined"
           />
-          <CheckboxRow
-            checked={settings.highContrast}
+          <SettingsToggleRow
             description={t("accessibility.toggles.highContrast.description")}
             label={t("accessibility.toggles.highContrast.label")}
-            onPress={() => {
-              void updateSettings({ highContrast: !settings.highContrast });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ highContrast: value });
             }}
+            value={settings.highContrast}
+            variant="outlined"
           />
-          <CheckboxRow
-            checked={settings.reducedMotion}
+          <SettingsToggleRow
             description={t("accessibility.toggles.reducedMotion.description")}
             label={t("accessibility.toggles.reducedMotion.label")}
-            onPress={() => {
-              void updateSettings({ reducedMotion: !settings.reducedMotion });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ reducedMotion: value });
             }}
+            value={settings.reducedMotion}
+            variant="outlined"
           />
-          <CheckboxRow
-            checked={settings.textToSpeech}
+          <SettingsToggleRow
             description={t("accessibility.toggles.textToSpeech.description")}
             label={t("accessibility.toggles.textToSpeech.label")}
-            onPress={() => {
-              void updateSettings({ textToSpeech: !settings.textToSpeech });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ textToSpeech: value });
             }}
+            value={settings.textToSpeech}
+            variant="outlined"
           />
-          <CheckboxRow
-            checked={settings.speechToText}
+          <SettingsToggleRow
             description={t("accessibility.toggles.speechToText.description")}
             label={t("accessibility.toggles.speechToText.label")}
-            onPress={() => {
-              void updateSettings({ speechToText: !settings.speechToText });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ speechToText: value });
             }}
+            value={settings.speechToText}
+            variant="outlined"
           />
-          <CheckboxRow
-            checked={settings.simplifiedUi}
+          <SettingsToggleRow
             description={t("accessibility.toggles.simplifiedUi.description")}
             label={t("accessibility.toggles.simplifiedUi.label")}
-            onPress={() => {
-              void updateSettings({ simplifiedUi: !settings.simplifiedUi });
+            onValueChange={(value) => {
+              setHasChanged(true);
+              void updateSettings({ simplifiedUi: value });
             }}
+            value={settings.simplifiedUi}
+            variant="outlined"
           />
         </Stack>
 
         <Button
           label={t("accessibility.screen.resetCta")}
           onPress={() => {
+            setHasChanged(true);
             void resetSettings();
           }}
           variant="secondary"

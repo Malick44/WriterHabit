@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Animated, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -31,7 +31,7 @@ export function AiReviewLoadingScreen() {
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[state.gradeBand];
   const textColor = settings.highContrast ? accessibleColors.text : "#ffffff";
-  const mutedTextColor = settings.highContrast ? accessibleColors.mutedText : "#a5bdff";
+  const mutedTextColor = settings.highContrast ? accessibleColors.mutedText : colors.dashboard.onPrimaryContainer;
 
   // Animation values: lazy state keeps the instances stable across renders
   // without reading a ref during render.
@@ -76,6 +76,13 @@ export function AiReviewLoadingScreen() {
     };
   }, [pulseAnim, rotateAnim, settings.reducedMotion]);
 
+  useEffect(() => {
+    if (state.status === "success") {
+      // Let screen reader users know the review finished and the CTA appeared.
+      AccessibilityInfo.announceForAccessibility(t("feedbackReview.loadingContinueCta"));
+    }
+  }, [state.status, t]);
+
   const rotation = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
@@ -83,7 +90,7 @@ export function AiReviewLoadingScreen() {
 
   return (
     <Screen
-      backgroundColor={settings.highContrast ? accessibleColors.background : "#0b1c30"}
+      backgroundColor={settings.highContrast ? accessibleColors.background : colors.dashboard.onSurface}
       gradeBand={state.gradeBand}
       testID="ai-review-loading-screen"
     >
@@ -181,7 +188,7 @@ export function AiReviewLoadingScreen() {
                 },
               ]}
             />
-            <View style={[styles.avatarCircle, { borderColor: "#ffffff", backgroundColor: "#1a2c42" }]}>
+            <View style={[styles.avatarCircle, { borderColor: "#ffffff", backgroundColor: colors.dashboard.inverseSurfaceHigh }]}>
               <Image
                 accessible={false}
                 source={require("../../../../assets/generated/empty-states/ai-coach-avatar.png")}
@@ -195,7 +202,7 @@ export function AiReviewLoadingScreen() {
             {/* Step 1: Understanding prompt */}
             <View style={styles.checkItem}>
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
-                <Ionicons name="checkmark" size={14} color="#0b1c30" />
+                <Ionicons name="checkmark" size={14} color={colors.dashboard.onSurface} />
               </View>
               <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.understandingPrompt")}
@@ -205,7 +212,7 @@ export function AiReviewLoadingScreen() {
             {/* Step 2: Checking main idea */}
             <View style={styles.checkItem}>
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
-                <Ionicons name="checkmark" size={14} color="#0b1c30" />
+                <Ionicons name="checkmark" size={14} color={colors.dashboard.onSurface} />
               </View>
               <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.checkingMainIdea")}
@@ -215,7 +222,7 @@ export function AiReviewLoadingScreen() {
             {/* Step 3: Looking for details */}
             <View style={styles.checkItem}>
               <View style={[styles.checkCircle, styles.checkCircleComplete]}>
-                <Ionicons name="checkmark" size={14} color="#0b1c30" />
+                <Ionicons name="checkmark" size={14} color={colors.dashboard.onSurface} />
               </View>
               <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), styles.checkText, { color: textColor }]}>
                 {t("feedbackReview.loadingSteps.lookingForDetails")}
@@ -226,7 +233,7 @@ export function AiReviewLoadingScreen() {
             <View style={styles.checkItem}>
               {state.status === "success" ? (
                 <View style={[styles.checkCircle, styles.checkCircleComplete]}>
-                  <Ionicons name="checkmark" size={14} color="#0b1c30" />
+                  <Ionicons name="checkmark" size={14} color={colors.dashboard.onSurface} />
                 </View>
               ) : (
                 <View style={[styles.checkCircle, styles.checkCircleActive]}>
@@ -249,7 +256,7 @@ export function AiReviewLoadingScreen() {
             <View style={styles.checkItem}>
               {state.status === "success" ? (
                 <View style={[styles.checkCircle, styles.checkCircleComplete]}>
-                  <Ionicons name="checkmark" size={14} color="#0b1c30" />
+                  <Ionicons name="checkmark" size={14} color={colors.dashboard.onSurface} />
                 </View>
               ) : (
                 <View style={[styles.checkCircle, styles.checkCirclePending]} />
@@ -301,11 +308,11 @@ export function AiReviewLoadingScreen() {
               styles.tipCard,
               settings.highContrast
                 ? { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }
-                : { backgroundColor: "#1a2c42", borderColor: "rgba(42, 61, 86, 0.8)" },
+                : { backgroundColor: colors.dashboard.inverseSurfaceHigh, borderColor: "rgba(42, 61, 86, 0.8)" },
             ]}
           >
             <View style={styles.tipIconContainer}>
-              <Ionicons name="bulb-outline" size={20} color="#ffae3c" />
+              <Ionicons name="bulb-outline" size={20} color={colors.dashboard.tertiaryFixedDim} />
             </View>
             <View style={styles.tipTextContainer}>
               <Text style={[getAccessibleTextStyle(type.caption, settings), styles.tipLabel, { color: mutedTextColor }]}>
@@ -421,11 +428,11 @@ const styles = StyleSheet.create({
     width: 24,
   },
   checkCircleComplete: {
-    backgroundColor: "#4edea3",
+    backgroundColor: colors.dashboard.secondaryFixedDim,
   },
   checkCircleActive: {
     borderWidth: 2,
-    borderColor: "#a5bdff",
+    borderColor: colors.dashboard.onPrimaryContainer,
   },
   checkCirclePending: {
     borderWidth: 2,

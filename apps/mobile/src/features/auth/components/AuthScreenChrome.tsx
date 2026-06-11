@@ -1,6 +1,8 @@
 import { useMemo, type ComponentProps, type ReactNode } from "react";
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -154,67 +156,72 @@ export function AuthScreenFrame({
   return (
     <View style={styles.root} testID={testID}>
       <BackgroundPattern height={height} width={width} />
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            minHeight: height,
-            paddingBottom: Math.max(insets.bottom, 32),
-            paddingTop: Math.max(insets.top, 32),
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
       >
-        <View style={styles.card}>
-          <View style={styles.hero}>
-            <LinearGradient
-              colors={[authScreenColors.primarySubtle, "rgba(255, 255, 255, 0)"]}
-              pointerEvents="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <Image
-              accessibilityLabel={heroImageAccessibilityLabel}
-              source={require("../../../../assets/generated/auth/sign-in-coach-hero.png")}
-              style={styles.heroImage}
-            />
-            <View style={styles.heroIcon}>
-              <Ionicons
-                accessible={false}
-                color="#FFFFFF"
-                importantForAccessibility="no"
-                name={heroIconName}
-                size={27}
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              minHeight: height,
+              paddingBottom: Math.max(insets.bottom, 32),
+              paddingTop: Math.max(insets.top, 32),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <View style={styles.hero}>
+              <LinearGradient
+                colors={[authScreenColors.primarySubtle, "rgba(255, 255, 255, 0)"]}
+                pointerEvents="none"
+                style={StyleSheet.absoluteFill}
               />
-            </View>
-          </View>
-
-          <View style={[styles.content, { padding: contentPadding }, contentStyle]}>
-            <View style={styles.header}>
-              <Text
-                accessibilityRole="header"
-                style={[
-                  getAccessibleTextStyle(styles.title, settings),
-                  settings.highContrast ? { color: accessibleColors.text } : null,
-                ]}
-              >
-                {title}
-              </Text>
-              <Text
-                style={[
-                  getAccessibleTextStyle(styles.subtitle, settings),
-                  settings.highContrast ? { color: accessibleColors.mutedText } : null,
-                ]}
-              >
-                {subtitle}
-              </Text>
+              <Image
+                accessibilityLabel={heroImageAccessibilityLabel}
+                source={require("../../../../assets/generated/auth/sign-in-coach-hero.png")}
+                style={styles.heroImage}
+              />
+              <View style={styles.heroIcon}>
+                <Ionicons
+                  accessible={false}
+                  color={palette.white}
+                  importantForAccessibility="no"
+                  name={heroIconName}
+                  size={27}
+                />
+              </View>
             </View>
 
-            {children}
+            <View style={[styles.content, { padding: contentPadding }, contentStyle]}>
+              <View style={styles.header}>
+                <Text
+                  accessibilityRole="header"
+                  style={[
+                    getAccessibleTextStyle(styles.title, settings),
+                    settings.highContrast ? { color: accessibleColors.text } : null,
+                  ]}
+                >
+                  {title}
+                </Text>
+                <Text
+                  style={[
+                    getAccessibleTextStyle(styles.subtitle, settings),
+                    settings.highContrast ? { color: accessibleColors.mutedText } : null,
+                  ]}
+                >
+                  {subtitle}
+                </Text>
+              </View>
 
-            {footer}
+              {children}
+
+              {footer}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {showSupportBadge ? (
         <View
@@ -229,7 +236,7 @@ export function AuthScreenFrame({
           <View style={styles.supportIcon}>
             <Ionicons
               accessible={false}
-              color="#FFFFFF"
+              color={palette.white}
               importantForAccessibility="no"
               name="help"
               size={23}
@@ -345,7 +352,15 @@ export function AuthTextField({
           {...inputProps}
         />
       </View>
-      {error ? <Text style={getAccessibleTextStyle(styles.fieldError, settings)}>{error}</Text> : null}
+      {error ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          style={getAccessibleTextStyle(styles.fieldError, settings)}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -387,7 +402,7 @@ export function AuthSubmitButton({
       <Text style={getAccessibleTextStyle(styles.submitButtonText, settings)}>{label}</Text>
       <Ionicons
         accessible={false}
-        color="#FFFFFF"
+        color={palette.white}
         importantForAccessibility="no"
         name={iconName}
         size={22}
@@ -583,7 +598,7 @@ const styles = StyleSheet.create({
   },
   separatorText: {
     color: authScreenColors.outline,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "600",
     lineHeight: 16,
     textTransform: "uppercase",
@@ -619,7 +634,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   submitButtonText: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 20,
     fontWeight: "600",
     lineHeight: 28,
@@ -634,7 +649,7 @@ const styles = StyleSheet.create({
   supportBadge: {
     alignItems: "center",
     backgroundColor: authScreenColors.surfaceContainer,
-    borderColor: "#B1C5FF",
+    borderColor: colors.dashboard.primaryFixedBorder,
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: "row",

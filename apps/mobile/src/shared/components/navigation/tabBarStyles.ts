@@ -1,6 +1,6 @@
 import { StyleSheet, type TextStyle, type ViewStyle } from "react-native";
 
-import { colors, palette } from "@/design/tokens";
+import { colors, palette, typography } from "@/design/tokens";
 
 /**
  * Shared bottom tab bar styling for the student, parent, and teacher layouts.
@@ -30,9 +30,8 @@ export const tabBarStyles = StyleSheet.create({
     paddingTop: 4,
   },
   tabBarLabel: {
-    fontSize: 12,
+    ...typography.gradeBands.middle.caption,
     fontWeight: "700",
-    lineHeight: 16,
     marginTop: 2,
   } satisfies TextStyle,
 });

@@ -212,7 +212,10 @@ function SummaryCard({
         <Text selectable style={getAccessibleTextStyle(styles.summaryLabel, settings)}>
           {label}
         </Text>
-        <Text selectable style={[getAccessibleTextStyle(styles.summaryValue, settings), valueStyle]}>
+        <Text
+          selectable
+          style={getAccessibleTextStyle({ ...styles.summaryValue, ...StyleSheet.flatten(valueStyle) }, settings)}
+        >
           {value}
         </Text>
         {subvalue ? (
@@ -231,8 +234,8 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   previewCard: {
-    backgroundColor: "#D7E4FF",
-    borderColor: "#AFC8FF",
+    backgroundColor: colors.onboarding.previewCard,
+    borderColor: colors.onboarding.previewBorder,
     borderRadius: 18,
     borderWidth: 1.5,
     flexDirection: "row",
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   },
   previewIcon: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.onboarding.surface,
     borderRadius: 44,
     height: 88,
     justifyContent: "center",
@@ -264,7 +267,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   quoteBox: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.onboarding.surface,
     borderColor: "#E0E5EF",
     borderRadius: 12,
     borderWidth: 1,
@@ -272,15 +275,15 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   quoteText: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 26,
     fontStyle: "italic",
     lineHeight: 40,
   },
   summaryCard: {
     alignItems: "center",
-    backgroundColor: "#F8FAFF",
-    borderColor: "#C5CBD8",
+    backgroundColor: colors.onboarding.screenBackground,
+    borderColor: colors.onboarding.cardBorder,
     borderRadius: 18,
     borderWidth: 1.5,
     flexDirection: "row",
@@ -299,14 +302,14 @@ const styles = StyleSheet.create({
   },
   summaryIcon: {
     alignItems: "center",
-    backgroundColor: "#E8F1FF",
+    backgroundColor: colors.onboarding.iconBubbleSoft,
     borderRadius: 44,
     height: 88,
     justifyContent: "center",
     width: 88,
   },
   summaryLabel: {
-    color: "#3A3F4D",
+    color: colors.onboarding.label,
     fontSize: 19,
     fontWeight: "800",
     letterSpacing: 1.2,
@@ -316,12 +319,12 @@ const styles = StyleSheet.create({
     gap: 28,
   },
   summarySubvalue: {
-    color: "#343949",
+    color: colors.onboarding.subtitle,
     fontSize: 23,
     lineHeight: 30,
   },
   summaryValue: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 27,
     fontWeight: "500",
     lineHeight: 35,

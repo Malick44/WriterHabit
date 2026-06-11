@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
-import { colors } from "@/design/tokens";
+import { colors, palette } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -14,7 +14,7 @@ import { useOnboarding } from "../hooks/useOnboarding";
 import { ONBOARDING_ROLE_OPTIONS, onboardingErrorMessageKeys, type OnboardingRole } from "../types";
 
 const NAVY = colors.onboarding.navy;
-const SELECTED_BACKGROUND = "#EEF4FF";
+const SELECTED_BACKGROUND = colors.onboarding.selectedBackground;
 
 const roleIconNames = {
   parent: "people",
@@ -100,7 +100,7 @@ export function RoleSelectionScreen() {
       title={t("onboarding.roleSelection.title")}
       titleStyle={styles.title}
     >
-      <View style={styles.roles}>
+      <View accessibilityRole="radiogroup" style={styles.roles}>
         {ONBOARDING_ROLE_OPTIONS.map((role) => {
           const isSelected = selectedRole === role;
 
@@ -139,7 +139,7 @@ export function RoleSelectionScreen() {
               </View>
 
               <View style={[styles.checkOuter, isSelected ? styles.checkOuterSelected : null]}>
-                {isSelected ? <Ionicons name="checkmark" size={24} color="#FFFFFF" /> : null}
+                {isSelected ? <Ionicons name="checkmark" size={24} color={palette.white} /> : null}
               </View>
             </Pressable>
           );
@@ -152,7 +152,7 @@ export function RoleSelectionScreen() {
 const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
-    backgroundColor: "#D8E8FF",
+    backgroundColor: colors.onboarding.iconBubble,
     borderColor: "#C5D3E3",
     borderRadius: 44,
     borderWidth: 2,
@@ -162,8 +162,8 @@ const styles = StyleSheet.create({
   },
   card: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#C5CBD8",
+    backgroundColor: colors.onboarding.surface,
+    borderColor: colors.onboarding.cardBorder,
     borderRadius: 18,
     borderWidth: 1.5,
     flexDirection: "row",
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   checkOuter: {
     alignItems: "center",
-    borderColor: "#C7CBD7",
+    borderColor: colors.onboarding.checkBorder,
     borderRadius: 24,
     borderWidth: 3,
     height: 48,
@@ -194,12 +194,12 @@ const styles = StyleSheet.create({
     marginLeft: 34,
   },
   roleDescription: {
-    color: "#343949",
+    color: colors.onboarding.subtitle,
     fontSize: 26,
     lineHeight: 36,
   },
   roleLabel: {
-    color: "#071426",
+    color: colors.onboarding.ink,
     fontSize: 32,
     fontWeight: "400",
     lineHeight: 38,

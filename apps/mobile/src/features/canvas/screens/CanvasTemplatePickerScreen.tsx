@@ -29,10 +29,12 @@ export function CanvasTemplatePickerScreen() {
   const gradeBand = gradeLevel ? typography.getGradeBandForGrade(gradeLevel) : "middle";
   const gradeAdaptation = getCanvasGradeAdaptation(gradeLevel);
   const [creatingTemplate, setCreatingTemplate] = useState<CanvasTemplate | null>(null);
+  const [lastAttemptedTemplate, setLastAttemptedTemplate] = useState<CanvasTemplate | null>(null);
   const [createFailed, setCreateFailed] = useState(false);
 
   const createFromTemplate = async (template: CanvasTemplate) => {
     setCreatingTemplate(template);
+    setLastAttemptedTemplate(template);
     setCreateFailed(false);
 
     try {
@@ -75,7 +77,14 @@ export function CanvasTemplatePickerScreen() {
           accessibilityLabel={t("canvas.templates.errorAccessibility")}
           description={t("canvas.templates.errorDescription")}
           gradeBand={gradeBand}
-          onActionPress={() => setCreateFailed(false)}
+          onActionPress={() => {
+            if (lastAttemptedTemplate) {
+              void createFromTemplate(lastAttemptedTemplate);
+              return;
+            }
+
+            setCreateFailed(false);
+          }}
           title={t("canvas.templates.errorTitle")}
         />
       ) : null}

@@ -316,7 +316,9 @@ export function SignUpScreen() {
             />
 
             <View style={styles.roleSection}>
-              <Text style={styles.roleSectionLabel}>{t("auth.fields.roleLabel")}</Text>
+              <Text style={getAccessibleTextStyle(styles.roleSectionLabel, settings)}>
+                {t("auth.fields.roleLabel")}
+              </Text>
               <View style={authScreenStyles.roleList}>
                 {AUTH_ROLE_OPTIONS.map((roleOption) => (
                   <RoleOption
@@ -333,7 +335,15 @@ export function SignUpScreen() {
                   />
                 ))}
               </View>
-              {fieldErrors.role ? <Text style={styles.roleError}>{fieldErrors.role}</Text> : null}
+              {fieldErrors.role ? (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="alert"
+                  style={getAccessibleTextStyle(styles.roleError, settings)}
+                >
+                  {fieldErrors.role}
+                </Text>
+              ) : null}
             </View>
 
             <View style={authScreenStyles.submitStack}>

@@ -21,6 +21,7 @@ import { colors } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
+import { dashboardRadius, dashboardSpacing } from "@/shared/styles/dashboardMetrics";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,
@@ -48,6 +49,8 @@ const parentColors = {
   card: colors.dashboard.cardTranslucent,
   error: colors.dashboard.error,
   errorContainer: colors.dashboard.errorContainer,
+  glass: colors.dashboard.glass,
+  glassFaint: colors.dashboard.glassFaint,
   onErrorContainer: colors.dashboard.onErrorContainer,
   onPrimary: colors.dashboard.onPrimary,
   onPrimaryContainer: colors.dashboard.onPrimaryContainer,
@@ -58,26 +61,14 @@ const parentColors = {
   outlineVariant: colors.dashboard.outlineVariant,
   primary: colors.dashboard.primary,
   primaryFixed: colors.dashboard.primaryFixed,
+  primarySoft: colors.dashboard.primarySoft,
+  primarySubtle: colors.dashboard.primarySubtle,
   secondary: colors.dashboard.secondary,
   secondaryContainer: colors.dashboard.secondaryContainer,
+  secondaryContainerSoft: colors.dashboard.secondaryContainerSoft,
+  secondarySoft: colors.dashboard.secondarySoft,
   surface: colors.dashboard.surface,
   surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
-} as const;
-
-const parentSpacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  section: 32,
-} as const;
-
-const parentRadius = {
-  sm: 4,
-  lg: 8,
-  xl: 12,
-  full: 999,
 } as const;
 
 const writingLevelKeys = {
@@ -116,7 +107,7 @@ function getMilestoneColors(kind: ParentDashboardMilestone["kind"]) {
     case "assignment":
       return {
         backgroundColor: parentColors.primaryFixed,
-        borderColor: "rgba(0, 50, 125, 0.16)",
+        borderColor: parentColors.primarySoft,
         foregroundColor: parentColors.primary,
       };
     case "skill":
@@ -128,7 +119,7 @@ function getMilestoneColors(kind: ParentDashboardMilestone["kind"]) {
     case "streak":
       return {
         backgroundColor: parentColors.secondaryContainer,
-        borderColor: "rgba(0, 108, 73, 0.2)",
+        borderColor: parentColors.secondarySoft,
         foregroundColor: parentColors.onSecondaryContainer,
       };
   }
@@ -556,11 +547,10 @@ function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel 
           <View style={styles.weeklyRingCenter}>
             <Text
               adjustsFontSizeToFit
-              maxFontSizeMultiplier={1}
               minimumFontScale={0.72}
               numberOfLines={1}
               style={[
-                styles.weeklyMinutes,
+                getAccessibleTextStyle(styles.weeklyMinutes, settings),
                 settings.highContrast ? { color: accessibleColors.text } : null,
               ]}
             >
@@ -568,11 +558,10 @@ function WeeklyWritingCard({ viewModel }: { viewModel: ParentDashboardViewModel 
             </Text>
             <Text
               adjustsFontSizeToFit
-              maxFontSizeMultiplier={1}
               minimumFontScale={0.72}
               numberOfLines={1}
               style={[
-                styles.weeklyGoal,
+                getAccessibleTextStyle(styles.weeklyGoal, settings),
                 settings.highContrast ? { color: accessibleColors.mutedText } : null,
               ]}
             >
@@ -705,6 +694,16 @@ function UpcomingCard({
         {items.map((item) => (
           <UpcomingRow item={item} key={item.id} onPress={onOpenUpcomingItem} />
         ))}
+        {items.length === 0 ? (
+          <Text
+            style={[
+              getAccessibleTextStyle(styles.emptyInlineText, settings),
+              settings.highContrast ? { color: accessibleColors.mutedText } : null,
+            ]}
+          >
+            {t("parent.dashboard.upcoming.empty")}
+          </Text>
+        ) : null}
       </View>
       <Pressable
         accessibilityLabel={t("parent.dashboard.upcoming.openCalendarAccessibility")}
@@ -932,10 +931,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 292,
     minWidth: 0,
-    padding: parentSpacing.lg,
+    padding: dashboardSpacing.lg,
   },
   bentoGrid: {
-    gap: parentSpacing.lg,
+    gap: dashboardSpacing.lg,
   },
   bentoGridTablet: {
     alignItems: "stretch",
@@ -945,7 +944,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: parentSpacing.xl,
+    marginBottom: dashboardSpacing.xl,
   },
   cardShadow,
   cardTitle: {
@@ -973,8 +972,8 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   childTitleRow: {
-    gap: parentSpacing.md,
-    marginBottom: parentSpacing.lg,
+    gap: dashboardSpacing.md,
+    marginBottom: dashboardSpacing.lg,
   },
   childTitleRowTablet: {
     alignItems: "flex-end",
@@ -982,13 +981,13 @@ const styles = StyleSheet.create({
   },
   coachButton: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: parentRadius.lg,
+    backgroundColor: parentColors.glassFaint,
+    borderRadius: dashboardRadius.lg,
     flexDirection: "row",
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
     justifyContent: "center",
     minHeight: 48,
-    paddingHorizontal: parentSpacing.lg,
+    paddingHorizontal: dashboardSpacing.lg,
   },
   coachButtonText: {
     color: parentColors.onPrimary,
@@ -998,7 +997,7 @@ const styles = StyleSheet.create({
   },
   coachCard: {
     backgroundColor: parentColors.primary,
-    borderRadius: parentRadius.xl,
+    borderRadius: dashboardRadius.xl,
     flex: 1,
     justifyContent: "space-between",
     minHeight: 276,
@@ -1007,7 +1006,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   coachContent: {
-    gap: parentSpacing.lg,
+    gap: dashboardSpacing.lg,
     zIndex: 1,
   },
   coachText: {
@@ -1026,7 +1025,7 @@ const styles = StyleSheet.create({
   coachTitleRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
   },
   coachWatermark: {
     opacity: 0.1,
@@ -1036,7 +1035,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignSelf: "center",
-    gap: parentSpacing.section,
+    gap: dashboardSpacing.section,
     maxWidth: 430,
     width: "100%",
   },
@@ -1052,8 +1051,8 @@ const styles = StyleSheet.create({
   encouragementActions: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: parentSpacing.md,
-    paddingTop: parentSpacing.sm,
+    gap: dashboardSpacing.md,
+    paddingTop: dashboardSpacing.sm,
   },
   encouragementBand: {
     alignItems: "center",
@@ -1062,7 +1061,7 @@ const styles = StyleSheet.create({
   },
   encouragementCopy: {
     flex: 1,
-    gap: parentSpacing.md,
+    gap: dashboardSpacing.md,
     minWidth: 0,
   },
   encouragementText: {
@@ -1081,15 +1080,15 @@ const styles = StyleSheet.create({
     ...cardShadow,
     backgroundColor: parentColors.card,
     borderColor: parentColors.outlineVariant,
-    borderRadius: parentRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
   },
   gradeChip: {
     alignSelf: "flex-start",
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.full,
-    paddingHorizontal: parentSpacing.lg,
-    paddingVertical: parentSpacing.xs,
+    borderRadius: dashboardRadius.full,
+    paddingHorizontal: dashboardSpacing.lg,
+    paddingVertical: dashboardSpacing.xs,
   },
   gradeChipText: {
     color: parentColors.onSurfaceVariant,
@@ -1099,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: parentColors.surface,
-    paddingHorizontal: parentSpacing.xl,
+    paddingHorizontal: dashboardSpacing.xl,
   },
   headerContentTablet: {
     alignSelf: "center",
@@ -1110,8 +1109,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   heroBubblePrimary: {
-    backgroundColor: "rgba(108, 248, 187, 0.18)",
-    borderRadius: parentRadius.full,
+    backgroundColor: parentColors.secondaryContainerSoft,
+    borderRadius: dashboardRadius.full,
     height: 192,
     position: "absolute",
     right: -54,
@@ -1119,8 +1118,8 @@ const styles = StyleSheet.create({
     width: 192,
   },
   heroBubbleSecondary: {
-    backgroundColor: "rgba(0, 71, 171, 0.08)",
-    borderRadius: parentRadius.full,
+    backgroundColor: parentColors.primarySubtle,
+    borderRadius: dashboardRadius.full,
     bottom: -28,
     height: 128,
     left: -24,
@@ -1128,7 +1127,7 @@ const styles = StyleSheet.create({
     width: 128,
   },
   heroContent: {
-    gap: parentSpacing.md,
+    gap: dashboardSpacing.md,
     zIndex: 1,
   },
   heroEyebrow: {
@@ -1138,7 +1137,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   heroGrid: {
-    gap: parentSpacing.lg,
+    gap: dashboardSpacing.lg,
   },
   heroGridTablet: {
     alignItems: "stretch",
@@ -1146,16 +1145,16 @@ const styles = StyleSheet.create({
   },
   heroStat: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    backgroundColor: parentColors.glass,
     borderColor: parentColors.outlineVariant,
-    borderRadius: parentRadius.lg,
+    borderRadius: dashboardRadius.lg,
     borderWidth: 1,
     flexDirection: "row",
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
     minHeight: 68,
     minWidth: 154,
-    paddingHorizontal: parentSpacing.lg,
-    paddingVertical: parentSpacing.sm,
+    paddingHorizontal: dashboardSpacing.lg,
+    paddingVertical: dashboardSpacing.sm,
   },
   heroStatCopy: {
     flex: 1,
@@ -1172,8 +1171,8 @@ const styles = StyleSheet.create({
   heroStats: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: parentSpacing.md,
-    marginTop: parentSpacing.sm,
+    gap: dashboardSpacing.md,
+    marginTop: dashboardSpacing.sm,
   },
   heroStatValue: {
     color: parentColors.onSurface,
@@ -1183,10 +1182,10 @@ const styles = StyleSheet.create({
   },
   mascotBadge: {
     backgroundColor: parentColors.secondaryContainer,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     bottom: -8,
-    paddingHorizontal: parentSpacing.lg,
-    paddingVertical: parentSpacing.xs,
+    paddingHorizontal: dashboardSpacing.lg,
+    paddingVertical: dashboardSpacing.xs,
     position: "absolute",
   },
   mascotBadgeText: {
@@ -1198,7 +1197,7 @@ const styles = StyleSheet.create({
   mascotCircle: {
     alignItems: "center",
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 192,
     justifyContent: "center",
     width: 192,
@@ -1210,7 +1209,7 @@ const styles = StyleSheet.create({
   },
   milestoneCopy: {
     flex: 1,
-    gap: parentSpacing.xs,
+    gap: dashboardSpacing.xs,
     minWidth: 0,
   },
   milestoneDescription: {
@@ -1222,22 +1221,22 @@ const styles = StyleSheet.create({
   milestoneIcon: {
     alignItems: "center",
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 40,
     justifyContent: "center",
     width: 40,
   },
   milestoneList: {
-    gap: parentSpacing.md,
+    gap: dashboardSpacing.md,
   },
   milestoneRow: {
     alignItems: "flex-start",
-    borderRadius: parentRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
     flexDirection: "row",
-    gap: parentSpacing.md,
+    gap: dashboardSpacing.md,
     minHeight: 78,
-    padding: parentSpacing.md,
+    padding: dashboardSpacing.md,
   },
   milestoneTitle: {
     color: parentColors.onSurface,
@@ -1252,10 +1251,10 @@ const styles = StyleSheet.create({
   primaryPillButton: {
     alignItems: "center",
     backgroundColor: parentColors.primary,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     minHeight: 48,
     paddingHorizontal: 28,
-    paddingVertical: parentSpacing.md,
+    paddingVertical: dashboardSpacing.md,
   },
   primaryPillButtonText: {
     color: parentColors.onPrimary,
@@ -1277,7 +1276,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 132,
-    paddingHorizontal: parentSpacing.xl,
+    paddingHorizontal: dashboardSpacing.xl,
     paddingTop: 28,
   },
   scrollContentTablet: {
@@ -1286,11 +1285,11 @@ const styles = StyleSheet.create({
   secondaryPillButton: {
     alignItems: "center",
     borderColor: parentColors.primary,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     borderWidth: 1,
     minHeight: 48,
     paddingHorizontal: 28,
-    paddingVertical: parentSpacing.md,
+    paddingVertical: dashboardSpacing.md,
   },
   secondaryPillButtonText: {
     color: parentColors.primary,
@@ -1299,12 +1298,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   streakBlock: {
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
     width: "100%",
   },
   streakFill: {
     backgroundColor: parentColors.primary,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: "100%",
   },
   streakLabel: {
@@ -1320,7 +1319,7 @@ const styles = StyleSheet.create({
   },
   streakTrack: {
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 8,
     overflow: "hidden",
   },
@@ -1333,9 +1332,9 @@ const styles = StyleSheet.create({
   textButton: {
     alignItems: "center",
     flexDirection: "row",
-    gap: parentSpacing.xs,
+    gap: dashboardSpacing.xs,
     justifyContent: "center",
-    marginTop: parentSpacing.md,
+    marginTop: dashboardSpacing.md,
     minHeight: 44,
   },
   textButtonLabel: {
@@ -1346,8 +1345,8 @@ const styles = StyleSheet.create({
   },
   upcomingBadge: {
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.sm,
-    paddingHorizontal: parentSpacing.sm,
+    borderRadius: dashboardRadius.sm,
+    paddingHorizontal: dashboardSpacing.sm,
     paddingVertical: 2,
   },
   upcomingBadgeText: {
@@ -1370,17 +1369,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   upcomingFill: {
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: "100%",
   },
   upcomingHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
     justifyContent: "space-between",
   },
   upcomingList: {
-    gap: parentSpacing.md,
+    gap: dashboardSpacing.md,
   },
   upcomingPercent: {
     color: parentColors.onSurfaceVariant,
@@ -1391,15 +1390,15 @@ const styles = StyleSheet.create({
   upcomingProgressRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: parentSpacing.sm,
+    gap: dashboardSpacing.sm,
   },
   upcomingRow: {
     backgroundColor: parentColors.card,
     borderColor: parentColors.outlineVariant,
-    borderRadius: parentRadius.xl,
+    borderRadius: dashboardRadius.xl,
     borderWidth: 1,
-    gap: parentSpacing.sm,
-    padding: parentSpacing.lg,
+    gap: dashboardSpacing.sm,
+    padding: dashboardSpacing.lg,
   },
   upcomingRowPressed: {
     borderColor: parentColors.primary,
@@ -1413,7 +1412,7 @@ const styles = StyleSheet.create({
   },
   upcomingTrack: {
     backgroundColor: parentColors.surfaceContainerHigh,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     flex: 1,
     height: 6,
     overflow: "hidden",
@@ -1421,7 +1420,7 @@ const styles = StyleSheet.create({
   weeklyBody: {
     alignItems: "center",
     flex: 1,
-    gap: parentSpacing.xl,
+    gap: dashboardSpacing.xl,
     justifyContent: "center",
   },
   weeklyGoal: {
@@ -1446,7 +1445,7 @@ const styles = StyleSheet.create({
   weeklyRingCenter: {
     alignItems: "center",
     backgroundColor: parentColors.card,
-    borderRadius: parentRadius.full,
+    borderRadius: dashboardRadius.full,
     height: 104,
     justifyContent: "center",
     width: 104,

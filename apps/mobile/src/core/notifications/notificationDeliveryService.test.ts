@@ -4,6 +4,7 @@ import { routes } from "@/core/navigation/routeNames";
 
 import {
   buildScheduledNotificationRequests,
+  resolveExpoProjectId,
   WRITEWISE_NOTIFICATION_CHANNEL_ID,
 } from "./notificationDeliveryService";
 import { defaultNotificationPreferences } from "./notificationService";
@@ -62,5 +63,74 @@ describe("notificationDeliveryService", () => {
     });
 
     expect(requests.map((request) => request.type)).toEqual(["incomplete_assignment", "streak"]);
+  });
+
+  it("ignores placeholder EAS project ids for push token registration", () => {
+    expect(
+      resolveExpoProjectId({
+        easConfig: null,
+        expoConfig: {
+          extra: {
+            eas: {
+              projectId: "WRITEWISE_EAS_PROJECT_ID_REQUIRED",
+            },
+          },
+        },
+      }),
+    ).toBeNull();
+  });
+
+  it("reads a real EAS project id from Expo config extras", () => {
+    const projectId = "123e4567-e89b-12d3-a456-426614174000";
+
+    expect(
+      resolveExpoProjectId({
+        easConfig: null,
+        expoConfig: {
+          extra: {
+            eas: {
+              projectId,
+            },
+          },
+        },
+      }),
+    ).toBe(projectId);
+  });
+
+  it("prefers Constants.easConfig over Expo config extras", () => {
+    const easProjectId = "123e4567-e89b-12d3-a456-426614174000";
+    const extraProjectId = "223e4567-e89b-12d3-a456-426614174000";
+
+    expect(
+      resolveExpoProjectId({
+        easConfig: {
+          projectId: easProjectId,
+        },
+        expoConfig: {
+          extra: {
+            eas: {
+              projectId: extraProjectId,
+            },
+          },
+        },
+      }),
+    ).toBe(easProjectId);
+  });
+
+  it("falls back to Expo config extras when Constants.easConfig is empty", () => {
+    const projectId = "123e4567-e89b-12d3-a456-426614174000";
+
+    expect(
+      resolveExpoProjectId({
+        easConfig: {},
+        expoConfig: {
+          extra: {
+            eas: {
+              projectId,
+            },
+          },
+        },
+      }),
+    ).toBe(projectId);
   });
 });

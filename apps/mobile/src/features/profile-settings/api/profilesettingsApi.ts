@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 
 import { apiClient } from "@/core/api/apiClient";
-import { supabase } from "@/core/supabase/supabaseClient";
+import { getApiAccessToken } from "@/core/api/apiTokenProvider";
 
 export type NotificationDevicePlatform = "android" | "ios" | "web";
 
@@ -31,15 +31,14 @@ function getNotificationPlatform(): NotificationDevicePlatform {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string> | null> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const accessToken = await getApiAccessToken();
 
-  if (!token) {
+  if (!accessToken) {
     return null;
   }
 
   return {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${accessToken}`,
   };
 }
 
@@ -63,7 +62,7 @@ export const profilesettingsApi = {
         idempotencyKey,
         platform,
       },
-      { headers },
+      { auth: "manual", headers },
     );
   },
 
@@ -82,7 +81,7 @@ export const profilesettingsApi = {
       {
         expoPushToken,
       },
-      { headers },
+      { auth: "manual", headers },
     );
   },
 };

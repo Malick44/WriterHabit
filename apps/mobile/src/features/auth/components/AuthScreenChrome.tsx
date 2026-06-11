@@ -18,6 +18,7 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { colors, palette } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleHitSlop,
@@ -27,18 +28,18 @@ import {
 } from "@/shared/utils/accessibility";
 
 export const authScreenColors = {
-  background: "#F8F9FF",
-  border: "#C3C6D5",
-  danger: "#BA1A1A",
-  inputBackground: "#EFF4FF",
-  muted: "#434653",
-  outline: "#737784",
-  primary: "#00327D",
-  primarySubtle: "rgba(0, 50, 125, 0.05)",
-  secondary: "#006C49",
-  surface: "#FFFFFF",
-  surfaceContainer: "#DCE9FF",
-  text: "#0B1C30",
+  background: colors.dashboard.background,
+  border: colors.dashboard.outlineVariant,
+  danger: colors.dashboard.error,
+  inputBackground: colors.dashboard.surfaceContainerLow,
+  muted: colors.dashboard.onSurfaceVariant,
+  outline: colors.dashboard.outline,
+  primary: colors.dashboard.primary,
+  primarySubtle: colors.dashboard.primarySubtle,
+  secondary: colors.dashboard.secondary,
+  surface: colors.dashboard.card,
+  surfaceContainer: colors.dashboard.surfaceContainerHigh,
+  text: colors.dashboard.onSurface,
 } as const;
 
 const patternCellSize = 24;
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     maxWidth: 480,
     overflow: "hidden",
-    shadowColor: "#000000",
+    shadowColor: palette.black,
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.04,
     shadowRadius: 24,
@@ -519,7 +520,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 48,
     justifyContent: "center",
-    shadowColor: "#000000",
+    shadowColor: palette.black,
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.16,
     shadowRadius: 16,
@@ -612,7 +613,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 8,
     paddingHorizontal: 18,
-    shadowColor: "#000000",
+    shadowColor: palette.black,
     shadowOffset: { height: 3, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
@@ -641,7 +642,7 @@ const styles = StyleSheet.create({
     padding: 16,
     position: "absolute",
     right: 32,
-    shadowColor: "#000000",
+    shadowColor: palette.black,
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 16,

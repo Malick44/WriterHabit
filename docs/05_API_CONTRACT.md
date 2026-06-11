@@ -15,11 +15,24 @@ Base path:
 /api/v1
 ```
 
+Mobile API base URL:
+
+- Runtime backend calls go through `apps/mobile/src/core/api/apiClient.ts`.
+- Production builds must set `EXPO_PUBLIC_API_BASE_URL` to a valid HTTPS URL
+  that includes the API base path, for example
+  `https://api.your-domain.example.com/api/v1`.
+- Development builds may fall back to `http://localhost:3000/api/v1` only when
+  `__DEV__` is true.
+- The client attaches a Supabase bearer token when one exists, sends an
+  `x-request-id` header, times out requests, parses the standard error shape,
+  and supports optional Zod response validation at call sites.
+
 ## Current Implementation Reality
 
-The mobile app does not yet call a running WriteWise backend API. It currently
-uses a mix of public Supabase auth, feature-owned deterministic mock APIs, and
-local device persistence:
+The mobile app has a production-safe fetch boundary for planned backend calls,
+but there is still no running WriteWise backend runtime. Most product areas
+currently use a mix of public Supabase auth, feature-owned deterministic mock
+APIs, direct Supabase persistence, and local device persistence:
 
 | Area | Current path |
 | --- | --- |

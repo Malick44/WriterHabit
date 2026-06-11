@@ -30,8 +30,8 @@ Current decision: do not release publicly yet.
 - [x] Shared contracts are exposed through `packages/shared/` and shared app modules.
 - [x] Data crossing API, storage, and AI boundaries is validated with Zod in implemented scaffolds.
 - [x] Generated native folders are not kept in the repo for the current Expo CNG workflow.
-- [ ] `npm run lint` passes in `apps/mobile/`.
-- [ ] CI runs typecheck, lint, tests, Expo Doctor, and mobile bundle export gates.
+- [x] `npm run lint -- --max-warnings=0` passes in `apps/mobile/`.
+- [x] CI runs typecheck, zero-warning lint, tests, Expo Doctor, and mobile bundle export gates through `.github/workflows/mobile-release.yml`.
 
 ## Flow 1: Student First Assignment
 
@@ -79,6 +79,7 @@ Current decision: do not release publicly yet.
 - [x] Database schema and RLS migration drafts exist.
 - [x] Framework-neutral AI, canvas, audit, and feature-boundary scaffolds exist.
 - [x] Mobile app uses public Expo Supabase env vars only.
+- [x] Mobile API client requires `EXPO_PUBLIC_API_BASE_URL` outside development and sends Supabase bearer auth, request IDs, timeouts, structured errors, and optional Zod response validation.
 - [ ] Production API framework, package manifest, deployment path, and runtime checks exist.
 - [ ] Migrations run in a controlled environment and RLS policies are verified with role tests.
 - [ ] Signed URL endpoints are implemented for canvas/object storage.
@@ -90,7 +91,10 @@ Current decision: do not release publicly yet.
 - [x] `npx expo export --platform ios` passes to a temp output directory.
 - [x] `npx expo export --platform android` passes to a temp output directory.
 - [x] Expo Doctor passes.
-- [ ] EAS build profiles are configured for development, preview, and production.
+- [x] EAS build profiles are configured for development, preview, and production in `apps/mobile/eas.json`.
+- [x] `expo-updates`, `runtimeVersion.policy`, `updates.url`, and `extra.eas.projectId` are wired in app config.
+- [ ] Expo project owner links the real EAS project id and replaces `WRITEWISE_EAS_PROJECT_ID_REQUIRED`.
+- [ ] EAS/APNs/FCM credentials are configured for iOS and Android push delivery.
 - [ ] iOS and Android store metadata, privacy labels, age rating, and screenshots are prepared.
 - [ ] Crash reporting, analytics, support diagnostics, and safe metadata logging are selected.
 - [ ] Release rollback, incident response, and data-deletion support procedures are documented.
@@ -104,9 +108,10 @@ Run from the project root unless noted:
 ./script/build_and_run.sh --typecheck
 ./script/build_and_run.sh --test
 ./script/build_and_run.sh --doctor
-cd apps/mobile && npm run lint
-npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
-npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
+cd apps/mobile && npx expo install --check
+cd apps/mobile && npm run lint -- --max-warnings=0
+cd apps/mobile && npx expo export --platform ios --output-dir /tmp/writewise-expo-export-ios
+cd apps/mobile && npx expo export --platform android --output-dir /tmp/writewise-expo-export-android
 ```
 
 If web is declared in scope, also run:
@@ -119,6 +124,7 @@ If web is declared in scope, also run:
 
 - P0 known issues in `docs/KNOWN_ISSUES.md` are closed.
 - Required commands pass in CI.
+- Real EAS project id, OTA update URL, and EAS credentials are configured and verified with `cd apps/mobile && npx eas-cli@latest config`.
 - Flow 1 and Flow 2 pass in a mobile E2E runner and on manual QA devices.
 - Backend authorization, RLS, audit, retention, and deletion workflows are verified.
 - Payment and entitlement behavior is verified with sandbox store accounts.

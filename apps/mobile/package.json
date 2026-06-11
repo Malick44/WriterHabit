@@ -27,6 +27,7 @@
     "expo-secure-store": "~56.0.4",
     "expo-speech": "~56.0.3",
     "expo-sqlite": "~56.0.5",
+    "expo-updates": "~56.0.19",
     "react": "19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "latest",

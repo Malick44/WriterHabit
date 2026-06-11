@@ -4,21 +4,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
-import { typography } from "@/design/tokens";
+import { colors, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
 import { GRADE_GROUPS, onboardingErrorMessageKeys, onboardingValidationMessageKeys } from "../types";
 
-const NAVY = "#083E8E";
+const NAVY = colors.onboarding.navy;
 
 export function GradeSelectionScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const onboarding = useOnboarding();
   const [showValidationError, setShowValidationError] = useState(false);
+  const { settings } = useAccessibilityContext();
 
   const gradeBand = onboarding.progress.gradeLevel
     ? typography.getGradeBandForGrade(onboarding.progress.gradeLevel)
@@ -55,8 +57,6 @@ export function GradeSelectionScreen() {
         router.back();
       }}
       primaryLabel={t("common.continue")}
-      progressActiveIndex={0}
-      progressStepsCount={2}
       secondaryLabel={t("common.back")}
       showProgressDots
       step="grade"
@@ -71,7 +71,7 @@ export function GradeSelectionScreen() {
             <Text
               accessibilityRole="header"
               selectable
-              style={styles.groupTitle}
+              style={getAccessibleTextStyle(styles.groupTitle, settings)}
             >
               {t(group.titleKey)}
             </Text>
@@ -89,9 +89,18 @@ export function GradeSelectionScreen() {
                       setShowValidationError(false);
                       void onboarding.setGradeLevel(grade);
                     }}
-                    style={[styles.gradeButton, isSelected ? styles.gradeButtonSelected : null]}
+                    style={({ pressed }) => [
+                      styles.gradeButton,
+                      isSelected ? styles.gradeButtonSelected : null,
+                      pressed ? styles.gradeButtonPressed : null,
+                    ]}
                   >
-                    <Text style={[styles.gradeLabel, isSelected ? styles.gradeLabelSelected : null]}>
+                    <Text
+                      style={[
+                        getAccessibleTextStyle(styles.gradeLabel, settings),
+                        isSelected ? styles.gradeLabelSelected : null,
+                      ]}
+                    >
                       {t("onboarding.gradeSelection.gradeLabel", { grade })}
                     </Text>
                     {isSelected ? (
@@ -123,6 +132,9 @@ const styles = StyleSheet.create({
     minHeight: 88,
     paddingHorizontal: 16,
     position: "relative",
+  },
+  gradeButtonPressed: {
+    opacity: 0.78,
   },
   gradeButtonSelected: {
     backgroundColor: "#D8E8FF",

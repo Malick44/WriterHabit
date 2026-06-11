@@ -5,8 +5,10 @@ import { useRouter } from "expo-router";
 import type { WritingGoal } from "@writewise/shared";
 
 import { routes } from "@/core/navigation/routeNames";
+import { colors, getGradeBandForGrade } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { writingGoalCopyKeys } from "../constants";
 import { OnboardingStepFrame } from "../components";
@@ -17,7 +19,7 @@ import {
   onboardingValidationMessageKeys,
 } from "../types";
 
-const NAVY = "#083E8E";
+const NAVY = colors.onboarding.navy;
 const GREEN = "#087A58";
 const SCREEN_BACKGROUND = "#F8FAFF";
 
@@ -47,10 +49,9 @@ export function WritingGoalsScreen() {
   const { t } = useI18n();
   const onboarding = useOnboarding();
   const [showValidationError, setShowValidationError] = useState(false);
+  const { settings } = useAccessibilityContext();
 
-  const gradeBand = onboarding.progress.gradeLevel
-    ? "middle"
-    : "middle";
+  const gradeBand = getGradeBandForGrade(onboarding.progress.gradeLevel ?? 7);
 
   const selectedGoalCount = onboarding.progress.writingGoals.length;
   const hasReachedGoalLimit = selectedGoalCount >= MAX_WRITING_GOALS;
@@ -92,8 +93,6 @@ export function WritingGoalsScreen() {
       footerStyle={{ backgroundColor: SCREEN_BACKGROUND }}
       headerAlign="center"
       primaryLabel={t("common.continue")}
-      progressActiveIndex={3}
-      progressStepsCount={5}
       secondaryLabel={t("common.back")}
       showProgressDots
       step="goals"
@@ -118,10 +117,11 @@ export function WritingGoalsScreen() {
                 setShowValidationError(false);
                 void onboarding.toggleWritingGoal(goal);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.goalCard,
                 selected ? styles.goalCardSelected : null,
                 disabled ? styles.goalCardDisabled : null,
+                pressed && !disabled ? styles.goalCardPressed : null,
               ]}
             >
               <View style={styles.goalIcon}>
@@ -133,8 +133,12 @@ export function WritingGoalsScreen() {
               </View>
 
               <View style={styles.goalCopy}>
-                <Text style={styles.goalTitle}>{t(writingGoalCopyKeys[goal].label)}</Text>
-                <Text style={styles.goalDescription}>{t(writingGoalCopyKeys[goal].description)}</Text>
+                <Text style={getAccessibleTextStyle(styles.goalTitle, settings)}>
+                  {t(writingGoalCopyKeys[goal].label)}
+                </Text>
+                <Text style={getAccessibleTextStyle(styles.goalDescription, settings)}>
+                  {t(writingGoalCopyKeys[goal].description)}
+                </Text>
               </View>
 
               <View style={[styles.checkOuter, selected ? styles.checkOuterSelected : null]}>
@@ -176,6 +180,9 @@ const styles = StyleSheet.create({
   },
   goalCardDisabled: {
     opacity: 0.42,
+  },
+  goalCardPressed: {
+    opacity: 0.78,
   },
   goalCardSelected: {
     backgroundColor: "#EEF4FF",

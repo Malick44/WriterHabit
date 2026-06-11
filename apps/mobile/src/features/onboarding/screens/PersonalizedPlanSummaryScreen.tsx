@@ -5,8 +5,11 @@ import { useRouter } from "expo-router";
 import type { WritingGoal } from "@writewise/shared";
 
 import { routes } from "@/core/navigation/routeNames";
+import { colors, getGradeBandForGrade } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { ErrorState, LoadingState } from "@/shared/components/feedback";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+import type { AccessibilitySettings } from "@/shared/utils/accessibility";
 
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
@@ -16,8 +19,8 @@ import {
   onboardingStepRoutes,
 } from "../types";
 
-const NAVY = "#083E8E";
-const SCREEN_BACKGROUND = "#FFFFFF";
+const NAVY = colors.onboarding.navy;
+const SCREEN_BACKGROUND = colors.onboarding.surface;
 
 const goalSummaryCopyKeys: Partial<Record<WritingGoal, TranslationKey>> = {
   creative_writing: "onboarding.planSummary.goalNames.creativeWriting",
@@ -37,10 +40,9 @@ export function PersonalizedPlanSummaryScreen() {
   const onboarding = useOnboarding();
   const [isCompleting, setIsCompleting] = useState(false);
 
+  const { settings } = useAccessibilityContext();
   const profile = getCompletedOnboardingProfile(onboarding.progress);
-  const gradeBand = onboarding.progress.gradeLevel
-    ? "middle"
-    : "middle";
+  const gradeBand = getGradeBandForGrade(onboarding.progress.gradeLevel ?? 7);
 
   useEffect(() => {
     if (!onboarding.hydrated || onboarding.plan || onboarding.status !== "idle" || !profile.success) {
@@ -131,6 +133,7 @@ export function PersonalizedPlanSummaryScreen() {
       primaryLabel={t("onboarding.planSummary.startCta")}
       primaryLoading={isCompleting || onboarding.authOperationStatus === "loading"}
       secondaryLabel={t("common.back")}
+      showProgressDots
       step="planSummary"
       subtitle={t("onboarding.planSummary.description")}
       title={t("onboarding.planSummary.title")}
@@ -143,12 +146,14 @@ export function PersonalizedPlanSummaryScreen() {
         <SummaryCard
           iconName="school-outline"
           label={t("onboarding.planSummary.gradeLabel")}
+          settings={settings}
           value={t("onboarding.gradeSelection.gradeLabel", { grade: onboarding.plan.gradeLevel })}
         />
 
         <SummaryCard
           iconName="checkmark-circle-outline"
           label={t("onboarding.planSummary.goalsLabel")}
+          settings={settings}
           value={goalSummary}
           valueStyle={styles.goalsValue}
         />
@@ -156,6 +161,7 @@ export function PersonalizedPlanSummaryScreen() {
         <SummaryCard
           iconName="time-outline"
           label={t("onboarding.planSummary.practiceLabel")}
+          settings={settings}
           subvalue={t("onboarding.planSummary.practiceSubvalue")}
           value={t("onboarding.planSummary.practiceValue", {
             daily: onboarding.plan.dailyPracticeMinutes,
@@ -167,11 +173,11 @@ export function PersonalizedPlanSummaryScreen() {
             <Ionicons name="document-text-outline" size={34} color={NAVY} />
           </View>
           <View style={styles.previewCopy}>
-            <Text selectable style={styles.previewLabel}>
+            <Text selectable style={getAccessibleTextStyle(styles.previewLabel, settings)}>
               {t("onboarding.planSummary.assignmentPreviewTitle")}
             </Text>
             <View style={styles.quoteBox}>
-              <Text selectable style={styles.quoteText}>
+              <Text selectable style={getAccessibleTextStyle(styles.quoteText, settings)}>
                 {t("onboarding.planSummary.assignmentPreviewQuote")}
               </Text>
             </View>
@@ -186,12 +192,14 @@ function SummaryCard({
   iconName,
   label,
   value,
+  settings,
   subvalue,
   valueStyle,
 }: {
   iconName: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
+  settings: AccessibilitySettings;
   subvalue?: string;
   valueStyle?: StyleProp<TextStyle>;
 }) {
@@ -201,14 +209,14 @@ function SummaryCard({
         <Ionicons name={iconName} size={34} color={NAVY} />
       </View>
       <View style={styles.summaryCopy}>
-        <Text selectable style={styles.summaryLabel}>
+        <Text selectable style={getAccessibleTextStyle(styles.summaryLabel, settings)}>
           {label}
         </Text>
-        <Text selectable style={[styles.summaryValue, valueStyle]}>
+        <Text selectable style={[getAccessibleTextStyle(styles.summaryValue, settings), valueStyle]}>
           {value}
         </Text>
         {subvalue ? (
-          <Text selectable style={styles.summarySubvalue}>
+          <Text selectable style={getAccessibleTextStyle(styles.summarySubvalue, settings)}>
             {subvalue}
           </Text>
         ) : null}
@@ -301,7 +309,7 @@ const styles = StyleSheet.create({
     color: "#3A3F4D",
     fontSize: 19,
     fontWeight: "800",
-    letterSpacing: 2.5,
+    letterSpacing: 1.2,
     lineHeight: 25,
   },
   summaryStack: {

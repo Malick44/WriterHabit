@@ -1,0 +1,197 @@
+name: Mobile Release Surface
+
+on:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "packages/shared/**"
+      - ".github/workflows/mobile-release.yml"
+      - "script/build_and_run.sh"
+      - "docs/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/mobile/**"
+      - "packages/shared/**"
+      - ".github/workflows/mobile-release.yml"
+      - "script/build_and_run.sh"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      run_eas_update:
+        description: Publish an OTA update through EAS after checks pass.
+        required: true
+        type: boolean
+        default: false
+      run_android_build:
+        description: Run a gated Android EAS build after checks pass.
+        required: true
+        type: boolean
+        default: false
+      run_ios_build:
+        description: Run a gated iOS EAS build after checks pass.
+        required: true
+        type: boolean
+        default: false
+      eas_profile:
+        description: EAS build profile for gated build steps.
+        required: true
+        type: choice
+        default: preview
+        options:
+          - development
+          - preview
+          - production
+      eas_update_branch:
+        description: EAS Update branch for gated OTA publish.
+        required: true
+        type: choice
+        default: preview
+        options:
+          - preview
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  mobile-ci:
+    name: Mobile CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Expo package versions
+        run: npx expo install --check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Test
+        run: npm test -- --runInBand
+
+      - name: Expo Doctor
+        run: npx expo-doctor
+
+      - name: Export iOS bundle
+        run: |
+          rm -rf /tmp/writewise-release-ios
+          npx expo export --platform ios --output-dir /tmp/writewise-release-ios
+
+      - name: Export Android bundle
+        run: |
+          rm -rf /tmp/writewise-release-android
+          npx expo export --platform android --output-dir /tmp/writewise-release-android
+
+  eas-release:
+    name: Gated EAS Release
+    runs-on: ubuntu-latest
+    needs: mobile-ci
+    if: github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      WRITEWISE_EAS_PROJECT_ID: ${{ vars.WRITEWISE_EAS_PROJECT_ID }}
+      EAS_PROFILE: ${{ inputs.eas_profile }}
+      EAS_UPDATE_BRANCH: ${{ inputs.eas_update_branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare EAS project identity
+        id: eas_identity
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const placeholder = "WRITEWISE_EAS_PROJECT_ID_REQUIRED";
+          const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          const configPath = "app.json";
+          const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+          const committedProjectId = config.extra?.eas?.projectId;
+          const overrideProjectId = process.env.WRITEWISE_EAS_PROJECT_ID;
+          const projectId = uuidPattern.test(overrideProjectId || "") ? overrideProjectId : committedProjectId;
+
+          if (uuidPattern.test(projectId || "")) {
+            config.extra = {
+              ...config.extra,
+              eas: {
+                ...config.extra?.eas,
+                projectId,
+              },
+            };
+            config.updates = {
+              ...config.updates,
+              url: `https://u.expo.dev/${projectId}`,
+            };
+            fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "ready=true\n");
+          } else {
+            if (committedProjectId === placeholder || !committedProjectId) {
+              console.log("No real EAS project ID is configured. Set vars.WRITEWISE_EAS_PROJECT_ID or commit the project ID from eas init.");
+            } else {
+              console.log("Configured EAS project ID is not UUID-shaped.");
+            }
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "ready=false\n");
+          }
+          NODE
+
+      - name: Validate EAS config
+        if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true'
+        run: npx eas-cli@latest config --non-interactive
+
+      - name: Skip EAS steps without credentials
+        if: env.EXPO_TOKEN == '' || steps.eas_identity.outputs.ready != 'true'
+        run: |
+          echo "Skipping EAS update/build steps because EXPO_TOKEN and a real EAS project ID are required."
+
+      - name: Publish OTA update
+        if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true' && inputs.run_eas_update
+        run: |
+          npx eas-cli@latest update --branch "$EAS_UPDATE_BRANCH" --platform all --message "WriteWise ${GITHUB_SHA}" --non-interactive
+
+      - name: Build Android
+        if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true' && inputs.run_android_build
+        run: npx eas-cli@latest build --platform android --profile "$EAS_PROFILE" --non-interactive
+
+      - name: Build iOS
+        if: env.EXPO_TOKEN != '' && steps.eas_identity.outputs.ready == 'true' && inputs.run_ios_build
+        run: npx eas-cli@latest build --platform ios --profile "$EAS_PROFILE" --non-interactive

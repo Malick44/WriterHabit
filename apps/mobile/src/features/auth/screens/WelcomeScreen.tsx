@@ -7,14 +7,13 @@ import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Screen } from "@/shared/components/layout/Screen";
 import { Stack } from "@/shared/components/layout/Stack";
-import { radius, spacing, typography } from "@/design/tokens";
+import { colors, radius, spacing, typography } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleHitSlop,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -23,9 +22,9 @@ export function WelcomeScreen() {
   const { t } = useI18n();
   const { clearError, isBusy } = useAuth();
   const { settings } = useAccessibilityContext();
-  const { primaryColor, fontSizeScale } = useGlacierThemeStore();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.roles;
+  const brandColor = settings.highContrast ? accessibleColors.text : colors.action.primary.background;
 
   return (
     <Screen
@@ -39,14 +38,14 @@ export function WelcomeScreen() {
           <Ionicons
             name="create"
             size={16}
-            color={primaryColor}
+            color={brandColor}
             accessibilityLabel={t("auth.welcome.logoIconAccessibility")}
           />
           <Text
             style={[
               getAccessibleTextStyle(type.bodySmall, settings),
               styles.brandText,
-              { color: primaryColor, fontSize: type.bodySmall.fontSize * fontSizeScale },
+              { color: brandColor },
             ]}
           >
             {t("auth.welcome.logoLabel")}
@@ -57,9 +56,9 @@ export function WelcomeScreen() {
           <Text
             accessibilityRole="header"
             style={[
-              getAccessibleTextStyle(type.bodyStrong, settings),
+              getAccessibleTextStyle(type.heading, settings),
               styles.heroTitle,
-              { color: accessibleColors.text, fontSize: type.bodyStrong.fontSize * fontSizeScale },
+              { color: accessibleColors.text },
             ]}
           >
             {t("auth.welcome.heroTitle")}
@@ -68,7 +67,7 @@ export function WelcomeScreen() {
             style={[
               getAccessibleTextStyle(type.body, settings),
               styles.heroSubtitle,
-              { color: accessibleColors.mutedText, fontSize: type.body.fontSize * fontSizeScale },
+              { color: accessibleColors.mutedText },
             ]}
           >
             {t("auth.welcome.heroSubtitle")}
@@ -159,11 +158,10 @@ const styles = StyleSheet.create({
     maxWidth: 260,
   },
   heroSubtitle: {
-    lineHeight: 20,
     textAlign: "center",
   },
   heroTitle: {
-    maxWidth: 210,
+    maxWidth: 260,
     textAlign: "center",
   },
   illustrationContainer: {

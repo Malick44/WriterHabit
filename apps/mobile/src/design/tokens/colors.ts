@@ -229,6 +229,18 @@ export const colors = {
     tertiaryFixedDim: "#FFB95F",
     tertiaryText: "#653E00",
   },
+  /**
+   * Navy onboarding flow palette, previously hardcoded across the
+   * onboarding step frame and selection screens.
+   */
+  onboarding: {
+    navy: "#083E8E",
+    ink: "#071426",
+    subtitle: "#333949",
+    surface: "#FFFFFF",
+    dotInactive: "#D9E4FF",
+    buttonShadow: "#061D42",
+  },
   overlay: {
     scrim: "rgba(15, 23, 42, 0.42)",
   },

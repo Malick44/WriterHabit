@@ -11,6 +11,7 @@ import { StatusState } from "@/shared/components/feedback";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import {
   getAccessibleHitSlop,
+  getAccessibleTextStyle,
   getMinimumTouchTarget,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
@@ -120,8 +121,8 @@ function RoleOption({
         ) : null}
       </View>
       <View style={styles.roleCopy}>
-        <Text style={styles.roleLabel}>{label}</Text>
-        <Text style={styles.roleDescription}>{description}</Text>
+        <Text style={getAccessibleTextStyle(styles.roleLabel, settings)}>{label}</Text>
+        <Text style={getAccessibleTextStyle(styles.roleDescription, settings)}>{description}</Text>
       </View>
     </Pressable>
   );
@@ -130,6 +131,7 @@ function RoleOption({
 export function SignUpScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
   const { clearError, errorCode, isBusy, signUpWithEmail } = useAuth();
   const [displayName, setDisplayName] = useState("");
@@ -343,7 +345,7 @@ export function SignUpScreen() {
                   void handleSubmit();
                 }}
               />
-              <Text style={authScreenStyles.helperText}>{t("auth.signUp.helper")}</Text>
+              <Text style={getAccessibleTextStyle(authScreenStyles.helperText, settings)}>{t("auth.signUp.helper")}</Text>
             </View>
           </View>
         </>

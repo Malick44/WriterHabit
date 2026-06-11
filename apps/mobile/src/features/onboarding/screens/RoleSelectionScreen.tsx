@@ -4,14 +4,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
+import { colors } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
+import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
 import { ONBOARDING_ROLE_OPTIONS, onboardingErrorMessageKeys, type OnboardingRole } from "../types";
 
-const NAVY = "#083E8E";
+const NAVY = colors.onboarding.navy;
 const SELECTED_BACKGROUND = "#EEF4FF";
 
 const roleIconNames = {
@@ -53,6 +55,7 @@ export function RoleSelectionScreen() {
   const { t } = useI18n();
   const onboarding = useOnboarding();
   const [isCompletingRole, setIsCompletingRole] = useState(false);
+  const { settings } = useAccessibilityContext();
 
   if (!onboarding.hydrated) {
     return (
@@ -91,6 +94,7 @@ export function RoleSelectionScreen() {
       }}
       primaryLabel={t("common.continue")}
       primaryLoading={isCompletingRole || onboarding.authOperationStatus === "loading"}
+      showProgressDots
       step="role"
       subtitle={t("onboarding.roleSelection.description")}
       title={t("onboarding.roleSelection.title")}
@@ -110,9 +114,10 @@ export function RoleSelectionScreen() {
               onPress={() => {
                 void onboarding.setRole(role);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.card,
                 isSelected ? styles.selectedCard : null,
+                pressed ? styles.cardPressed : null,
               ]}
             >
               <View style={styles.avatar}>
@@ -120,10 +125,15 @@ export function RoleSelectionScreen() {
               </View>
 
               <View style={styles.copy}>
-                <Text style={[styles.roleLabel, isSelected ? styles.selectedLabel : null]}>
+                <Text
+                  style={[
+                    getAccessibleTextStyle(styles.roleLabel, settings),
+                    isSelected ? styles.selectedLabel : null,
+                  ]}
+                >
                   {t(roleCopyKeys[role].label)}
                 </Text>
-                <Text style={styles.roleDescription}>
+                <Text style={getAccessibleTextStyle(styles.roleDescription, settings)}>
                   {t(roleCopyKeys[role].description)}
                 </Text>
               </View>
@@ -160,6 +170,9 @@ const styles = StyleSheet.create({
     minHeight: 132,
     paddingHorizontal: 30,
     paddingVertical: 24,
+  },
+  cardPressed: {
+    opacity: 0.78,
   },
   checkOuter: {
     alignItems: "center",

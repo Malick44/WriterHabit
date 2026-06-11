@@ -41,6 +41,11 @@ interface NotificationCopyInput {
   type: NotificationType;
 }
 
+interface ExpoProjectIdConfig {
+  easConfig?: { projectId?: unknown } | null;
+  expoConfig?: { extra?: { eas?: { projectId?: unknown } } } | null;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
@@ -284,8 +289,17 @@ export async function cancelWriteWiseScheduledNotifications(studentId: string): 
   );
 }
 
-function getExpoProjectId(): string | null {
-  return Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId ?? null;
+export function resolveExpoProjectId(config: ExpoProjectIdConfig): string | null {
+  const projectId = config.easConfig?.projectId ?? config.expoConfig?.extra?.eas?.projectId;
+  const isRealProjectId =
+    typeof projectId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
+
+  return isRealProjectId ? projectId : null;
+}
+
+export function getExpoProjectId(): string | null {
+  return resolveExpoProjectId(Constants);
 }
 
 async function registerPushToken(studentId: string): Promise<NotificationDeliverySyncResult["pushRegistrationStatus"]> {

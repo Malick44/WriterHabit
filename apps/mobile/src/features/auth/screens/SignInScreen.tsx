@@ -17,6 +17,11 @@ import {
   authScreenStyles,
   type AuthSocialProvider,
 } from "../components";
+import {
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
+
 import { useAuth } from "../hooks/useAuth";
 import { authErrorMessageKeys, loginLinkInputSchema } from "../types";
 
@@ -27,6 +32,7 @@ function getValidationMessageKey(message: string | undefined): TranslationKey {
 export function SignInScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
   const { clearError, errorCode, isBusy, signInWithEmailLink } = useAuth();
   const [email, setEmail] = useState("");
@@ -145,7 +151,7 @@ export function SignInScreen() {
             }}
             tone={loginLinkSent ? "success" : "primary"}
           />
-          <Text style={authScreenStyles.helperText}>
+          <Text style={getAccessibleTextStyle(authScreenStyles.helperText, settings)}>
             {loginLinkSent ? t("auth.signIn.linkSentHelper") : t("auth.signIn.helper")}
           </Text>
         </View>

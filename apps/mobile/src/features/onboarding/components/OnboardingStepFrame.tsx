@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  I18nManager,
   Pressable,
   StyleSheet,
   Text,
@@ -11,11 +12,16 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { GradeBand } from "@/design/tokens";
+import { colors, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { StatusState } from "@/shared/components/feedback";
 import { Screen } from "@/shared/components/layout/Screen";
+import {
+  getAccessibleColors,
+  getAccessibleTextStyle,
+  useAccessibilityContext,
+} from "@/shared/utils/accessibility";
 
 import type { OnboardingStep } from "../types";
 
@@ -49,9 +55,30 @@ type OnboardingStepFrameProps = {
   progressInactiveColor?: string;
 };
 
-const NAVY = "#083E8E";
-const SURFACE = "#FFFFFF";
+const NAVY = colors.onboarding.navy;
+const SURFACE = colors.onboarding.surface;
 const PROGRESS_STEPS: OnboardingStep[] = ["role", "grade", "goals", "dailyPractice", "planSummary"];
+
+const titleTextStyle: TextStyle = {
+  color: NAVY,
+  fontSize: 34,
+  fontWeight: "800",
+  lineHeight: 42,
+};
+
+const subtitleTextStyle: TextStyle = {
+  color: colors.onboarding.subtitle,
+  fontSize: 21,
+  fontWeight: "400",
+  lineHeight: 30,
+};
+
+const primaryButtonTextStyle: TextStyle = {
+  color: colors.onboarding.surface,
+  fontSize: 22,
+  fontWeight: "800",
+  lineHeight: 28,
+};
 
 export function OnboardingStepFrame({
   children,
@@ -78,15 +105,26 @@ export function OnboardingStepFrame({
   primaryButtonStyle,
   titleStyle,
   subtitleStyle,
-  backIconColor = "#071426",
+  backIconColor = colors.onboarding.ink,
   progressActiveColor = NAVY,
-  progressInactiveColor = "#D9E4FF",
+  progressInactiveColor = colors.onboarding.dotInactive,
 }: OnboardingStepFrameProps) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const shouldShowBackButton = showBackButton ?? Boolean(secondaryLabel && onSecondaryPress);
   const activeIndex = progressActiveIndex ?? Math.max(PROGRESS_STEPS.indexOf(step), 0);
   const headerIsCentered = headerAlign === "center";
+  const accessibleTitleStyle = getAccessibleTextStyle(
+    settings.highContrast ? { ...titleTextStyle, color: accessibleColors.text } : titleTextStyle,
+    settings,
+  );
+  const accessibleSubtitleStyle = getAccessibleTextStyle(
+    settings.highContrast ? { ...subtitleTextStyle, color: accessibleColors.text } : subtitleTextStyle,
+    settings,
+  );
+  const accessiblePrimaryButtonTextStyle = getAccessibleTextStyle(primaryButtonTextStyle, settings);
 
   const footer =
     primaryLabel && onPrimaryPress ? (
@@ -109,7 +147,7 @@ export function OnboardingStepFrame({
           onPress={onPrimaryPress}
           size="lg"
           style={[styles.primaryButton, primaryButtonStyle]}
-          textStyle={styles.primaryButtonText}
+          textStyle={accessiblePrimaryButtonTextStyle}
         />
       </View>
     ) : null;
@@ -133,12 +171,21 @@ export function OnboardingStepFrame({
               onPress={onSecondaryPress}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={32} color={backIconColor} />
+              <Ionicons
+                name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
+                size={32}
+                color={backIconColor}
+              />
             </Pressable>
           ) : null}
 
           {showProgressDots ? (
-            <View accessibilityLabel={t("onboarding.progressLabel")} style={styles.progressDots}>
+            <View
+              accessibilityLabel={t("onboarding.progressLabel")}
+              accessibilityRole="progressbar"
+              accessibilityValue={{ max: progressStepsCount, min: 0, now: activeIndex + 1 }}
+              style={styles.progressDots}
+            >
               {Array.from({ length: progressStepsCount }).map((_, index) => {
                 const isActive = index === activeIndex;
 
@@ -167,7 +214,7 @@ export function OnboardingStepFrame({
             accessibilityRole="header"
             selectable
             style={[
-              styles.title,
+              accessibleTitleStyle,
               headerIsCentered ? styles.titleCentered : null,
               titleStyle,
             ]}
@@ -177,7 +224,7 @@ export function OnboardingStepFrame({
           <Text
             selectable
             style={[
-              styles.subtitle,
+              accessibleSubtitleStyle,
               headerIsCentered ? styles.subtitleCentered : null,
               subtitleStyle,
             ]}
@@ -237,19 +284,13 @@ const styles = StyleSheet.create({
     borderColor: NAVY,
     borderRadius: 16,
     minHeight: 64,
-    shadowColor: "#061D42",
+    shadowColor: colors.onboarding.buttonShadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
   },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "500",
-    lineHeight: 28,
-  },
   progressDot: {
-    backgroundColor: "#D9E4FF",
+    backgroundColor: colors.onboarding.dotInactive,
     borderRadius: 7,
     height: 14,
     width: 14,
@@ -264,21 +305,9 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: "center",
   },
-  subtitle: {
-    color: "#333949",
-    fontSize: 21,
-    fontWeight: "400",
-    lineHeight: 30,
-  },
   subtitleCentered: {
     maxWidth: 620,
     textAlign: "center",
-  },
-  title: {
-    color: NAVY,
-    fontSize: 34,
-    fontWeight: "800",
-    lineHeight: 42,
   },
   titleCentered: {
     maxWidth: 540,

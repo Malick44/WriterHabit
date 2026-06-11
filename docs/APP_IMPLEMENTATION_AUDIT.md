@@ -9,19 +9,19 @@ Goal: plan and audit the entire implementation so the app can reach UI `9.5/10` 
 
 Current public-production verdict: **No-go** for real student/payment data (backend runtime, payments, and parent/teacher data remain mocked). UI quality target reached at code level.
 
-Current score estimate (re-scored after the 2026-06-11 remediation pass):
+Current score estimate (re-scored after the 2026-06-11 remediation pass and API client hardening):
 
 | Dimension | Current Score | Target | Reason |
 | --- | ---: | ---: | --- |
 | UI quality | 9.5/10 | 9.5/10 | Every code-level blocker from the original audit is closed: Grades 1-12 onboarding, accessibility settings consumed by shared UI and auth chrome, honest language settings, canvas tap dots, no dead actions, parent/teacher tab icon polish, grade-band adaptation in assignment detail, truthful autosave/submit states, virtualized long lists, and deep-link/app config alignment. The residual half point is reserved for confirmation on real devices (VoiceOver/TalkBack, large text, screenshot matrix), which cannot be exercised from this environment. |
-| Production functionality | 5.5/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, and Expo Doctor/strict lint/exports all pass. Still missing for 10/10: deployed backend runtime, server-derived roles, verified RLS hardening, payments, AI provider, object storage, audit/retention workers, EAS/CI/E2E. |
-| Internal demo readiness | 8.5/10 | n/a | Deterministic mocks, local-first storage, passing Jest (43 suites / 175 tests), strict lint, Expo Doctor 21/21, and both platform exports make controlled demos reliable. |
+| Production functionality | 5.6/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, the mobile API client now fails closed without a production base URL and sends bearer auth/request IDs/timeouts/typed errors/optional Zod validation, Expo Doctor/strict lint/exports all pass, and the EAS/OTA/CI release surface now exists. Still missing for 10/10: deployed backend runtime, server-derived roles, verified RLS hardening, payments, AI provider, object storage, audit/retention workers, owner-linked EAS project credentials, and E2E automation. |
+| Internal demo readiness | 8.5/10 | n/a | Deterministic mocks, local-first storage, passing Jest (44 suites / 187 tests), strict lint, Expo Doctor 21/21, and both platform exports make controlled demos reliable. |
 
 The app remains a pre-production scaffold for data/payment purposes and must not process real student/classroom/payment data until the remaining P0 items below are closed.
 
 ## Remediation Update (2026-06-11)
 
-All work was validated with `tsc --noEmit`, `eslint . --max-warnings=0`, the full Jest suite (43 suites / 175 tests, up from 42/170), `expo-doctor` (21/21), and iOS/Android `expo export`.
+The original remediation pass was validated with `tsc --noEmit`, `eslint . --max-warnings=0`, the full Jest suite, `expo-doctor` (21/21), and iOS/Android `expo export`. The API client hardening update was validated with typecheck, zero-warning lint, the full Jest suite (44 suites / 187 tests), and Expo Doctor; platform exports were not rerun for this API-only change.
 
 | Finding | Status | What changed |
 | --- | --- | --- |
@@ -39,6 +39,7 @@ All work was validated with `tsc --noEmit`, `eslint . --max-warnings=0`, the ful
 | P1-11 unsupported locales | **Closed** | Only `en` is selectable; legacy stored `es`/`fr` coerce safely; settings copy sets honest expectations. |
 | P1-12 service copy localization | **Closed (documented)** | `docs/CONTENT_LOCALIZATION_STRATEGY.md` defines client-localized chrome vs server-authored content (key + fallback columns) and the gate for enabling new locales. |
 | P1-13 list fetch/render pressure | **Closed** | Assignment history and canvas home use `FlatList`; history queries order newest-first with `.limit(50)` and fetch only needed draft columns; canvas summaries read a new generated `stroke_count` column (migration `202606100002`, applied to dev Supabase) instead of full stroke payloads. |
+| P1-8 apiClient hardening | **Closed (mobile client)** | `apps/mobile/src/core/api/apiClient.ts` now requires `EXPO_PUBLIC_API_BASE_URL` outside dev, validates production HTTPS/non-localhost configuration, injects Supabase bearer auth through `apps/mobile/src/core/api/apiTokenProvider.ts`, sends `x-request-id`, supports timeouts, 204/empty responses, query params, structured `ApiError`, GET-only default retries, and optional Zod response validation. Backend runtime, endpoint implementation, and server-side authorization remain open under P0/P1 backend findings. |
 | P2 canvas tap dots | **Closed** | Taps below the drag threshold now record single-point strokes that render as dots. |
 | P2 dead actions | **Closed** | Student home/progress notification icons open notification settings; parent home notification icon opens parent settings; teacher dashboard's dead notification/settings/avatar chrome removed; revision screen's dead ellipsis/fullscreen icons removed and "View Full Screen" opens a real modal. |
 | P2 parent/teacher tab polish | **Closed** | Both tab bars now have focused/unfocused icons, tint colors, and label styling consistent with student tabs. |
@@ -46,7 +47,7 @@ All work was validated with `tsc --noEmit`, `eslint . --max-warnings=0`, the ful
 | P2 minimal app config | **Closed** | `app.json` now has name/slug/version, orientation, build number, version code, tablet support, and user interface style. |
 | P2 assignment detail grade band | **Closed** | `DetailText` resolves typography from the screen's grade band via context instead of hardcoding the middle band. |
 
-Remaining open findings (all server-side, tracked in the roadmap): P0-1 backend runtime, P0-2 server-derived roles, P0-4 RLS escalation review, P0-8 payments, P0-9 parent/teacher data, P0-10 audit/retention, P0-11 EAS/CI, P1-4 E2E automation, P1-8 apiClient hardening, P1-9 provider integrations, P1-14 notification status separation, P1-15 teacher moderation, P1-16 seed data.
+Remaining open findings (tracked in the roadmap): P0-1 backend runtime, P0-2 server-derived roles, P0-4 RLS escalation review, P0-8 payments, P0-9 parent/teacher data, P0-10 audit/retention, owner-linked EAS project credentials, P1-4 E2E automation, P1-9 provider integrations, P1-14 notification status separation, P1-15 teacher moderation, P1-16 seed data.
 
 ## Audit Plan Used
 
@@ -69,13 +70,13 @@ Commands run from `/Users/malickdes/WorkSpace/writewise` unless noted. Updated 2
 | Check | Result | Notes |
 | --- | --- | --- |
 | `cd apps/mobile && npx tsc --noEmit` | Pass | Typecheck clean. |
-| `cd apps/mobile && npx jest` | Pass | 43 suites, 175 tests passed (adds autosave race and production mock-auth rejection tests). |
+| `cd apps/mobile && npx jest` | Pass | 44 suites, 187 tests passed, including focused API client hardening coverage. |
 | `cd apps/mobile && npm run lint -- --max-warnings=0` | Pass | Strict zero-warning lint gate passes. |
 | `cd apps/mobile && npx expo-doctor` | Pass | 21/21 checks. |
 | `cd apps/mobile && npx expo install --check` | Pass | All Expo SDK 56 packages on expected versions. |
 | Web export | Descoped | Web is not a supported release platform; iOS/Android exports are the gates. |
-| `cd apps/mobile && npx expo export --platform ios` | Pass | iOS JS bundle exported. |
-| `cd apps/mobile && npx expo export --platform android` | Pass | Android JS bundle exported. |
+| `cd apps/mobile && npx expo export --platform ios` | Pass from earlier 2026-06-11 release audit | iOS JS bundle exported; not rerun for the API-client-only update. |
+| `cd apps/mobile && npx expo export --platform android` | Pass from earlier 2026-06-11 release audit | Android JS bundle exported; not rerun for the API-client-only update. |
 | `node scripts/supabase-admin.mjs health` | Pass for local dev | Postgres Meta reachable; `authUsersVisible: true`; storage bucket count is `0`. |
 | `node scripts/supabase-admin.mjs tables public` | Pass for local dev | 38 public tables visible; migration `202606100002` (canvas `stroke_count`) applied. |
 
@@ -100,7 +101,7 @@ Evidence:
 
 - `services/api/README.md` says there is no running API server, package manifest, production migration runner, or deployment configuration.
 - `services/api/src/features/*` contains framework-neutral controllers/services, not deployed endpoints.
-- `apps/mobile/src/core/api/apiClient.ts` defaults to `http://localhost:3000/api/v1`.
+- `apps/mobile/src/core/api/apiClient.ts` reads `EXPO_PUBLIC_API_BASE_URL`, falls back to `http://localhost:3000/api/v1` only in `__DEV__`, and rejects missing, invalid, insecure, or localhost production API base URLs.
 
 Impact: real users cannot safely persist, sync, authorize, audit, or recover student, parent, teacher, assignment, feedback, canvas, progress, subscription, or notification data.
 
@@ -255,20 +256,21 @@ Fix:
 - Persist audit events to `audit_logs`.
 - Implement retention config, export/delete request records, deletion workers, object-storage cleanup, and audit events for every sensitive action.
 
-### P0-11: EAS/OTA/CI Release Surface Is Not Configured
+### P0-11: EAS/OTA/CI Release Surface Is Partially Configured
 
 Evidence:
 
-- No `eas.json`, `.eas/`, or `.github/` workflow files were found.
-- `apps/mobile/app.json` has no EAS project id, update policy, explicit runtime version, build number/version code, or OTA policy.
-- `expo-updates` is not installed.
+- Updated 2026-06-11: `expo-updates` is installed, `apps/mobile/app.json` has `runtimeVersion.policy: "fingerprint"`, OTA update config, and `extra.eas.projectId`, `apps/mobile/eas.json` defines development/preview/production profiles, `apps/mobile/.eas/workflows/release.yml` exists, and `.github/workflows/mobile-release.yml` runs release gates.
+- `npx eas-cli@latest init --non-interactive` could not complete because the logged-in user has multiple Expo owners (`malickb` and `ai-orbit-studio`) and the app config does not choose one.
+- The committed EAS project id is the documented placeholder `WRITEWISE_EAS_PROJECT_ID_REQUIRED` until the owner links the real EAS project.
 
-Impact: there is no reproducible dev/preview/production build path, no automated release gates, and no reliable OTA runtime policy.
+Impact: there is now a reproducible local/CI release surface and OTA runtime policy, but EAS-hosted update/build/push-token behavior is blocked until the real EAS project id and credentials are configured.
 
 Fix:
 
-- Add EAS project config, profiles, runtime/update policy, CI workflows, and release-channel strategy.
-- Run dev, preview, and production builds before public release.
+- Owner must choose the Expo owner and run `cd apps/mobile && npx eas-cli@latest init --force && npx eas-cli@latest update:configure --non-interactive`.
+- Commit the real `extra.eas.projectId` and matching `updates.url`.
+- Configure EAS credentials/APNs/FCM, then run preview and production builds before public release.
 
 ## P1 Findings
 
@@ -316,9 +318,11 @@ Fix: require exact submission ownership/match and show a missing/error state oth
 
 ### P1-8: API Client Has No Bearer Auth, Timeout, Or Response Validation
 
-Evidence: `apps/mobile/src/core/api/apiClient.ts` sends only JSON headers and casts `response.json()` to `T`.
+Status: closed for the mobile client on 2026-06-11.
 
-Fix: inject Supabase access token, add request IDs, timeout/abort, typed errors, 401 sign-out/refresh behavior, and Zod response validation.
+Current evidence: `apps/mobile/src/core/api/apiClient.ts` resolves `EXPO_PUBLIC_API_BASE_URL`, refuses production localhost/insecure URLs, injects Supabase access tokens from `apps/mobile/src/core/api/apiTokenProvider.ts`, sends `x-request-id`, supports abort timeouts, handles 204/empty responses, parses the standard backend error shape into `ApiError`, defaults retries to safe GET cases only, and accepts optional Zod response schemas.
+
+Remaining backend assumptions: the production API must honor bearer tokens, return the standard error shape from `services/api/docs/ERROR_CODES.md`, propagate request IDs, enforce authorization server-side, and provide actual endpoint implementations.
 
 ### P1-9: AI, Canvas Storage, Notifications, And Entitlements Are Scaffolds
 
@@ -468,7 +472,7 @@ Deployment impact:
 1. Disable mock auth in production.
 2. Remove mobile role mutation and derive roles server-side.
 3. Fix the `users` self-update RLS escalation path.
-4. Add Bearer auth, timeout, typed errors, and response validation to `apiClient`.
+4. Implement and deploy the backend runtime that the hardened mobile `apiClient` can call.
 5. Add stale-write protection to writing and canvas autosave.
 6. Block review/completion UI until durable backend acceptance exists.
 
@@ -535,8 +539,7 @@ Start with the security/data-truth cluster:
 1. Disable production mock auth.
 2. Remove client role mutation.
 3. Fix `users` self-update RLS escalation.
-4. Add authenticated `apiClient`.
+4. Wire deployed endpoints into the authenticated `apiClient` and replace remaining deterministic mocks where production data is required.
 5. Add autosave stale-write protection.
 
 Those changes reduce the highest student-data and work-loss risk before larger backend implementation begins.
-

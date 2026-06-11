@@ -72,6 +72,14 @@ Mobile app code may use only public Expo Supabase environment variables:
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - optional compatibility fallback `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
+Mobile backend calls may use only the public API origin variable:
+
+- `EXPO_PUBLIC_API_BASE_URL`
+
+`EXPO_PUBLIC_API_BASE_URL` is not a secret, but production builds must point it
+at the deployed HTTPS API origin and must not rely on the development localhost
+fallback in `apps/mobile/src/core/api/apiClient.ts`.
+
 Service-role keys, database admin credentials, model-provider credentials, store
 provider secrets, webhook signing secrets, APNs/FCM credentials, and raw push
 tokens must never be placed in mobile app code, docs, `.codex`, screenshots,

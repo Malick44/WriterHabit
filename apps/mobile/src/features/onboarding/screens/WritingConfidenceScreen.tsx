@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
+import { getGradeBandForGrade } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { ChoiceCard } from "@/shared/components/forms";
 import { LoadingState } from "@/shared/components/feedback";
 import { Stack } from "@/shared/components/layout/Stack";
-import { useGlacierThemeStore } from "@/shared/theme/glacierThemeStore";
 
 import { confidenceCopyKeys } from "../constants";
 import { OnboardingStepFrame } from "../components";
@@ -17,25 +17,13 @@ import {
   onboardingValidationMessageKeys,
 } from "../types";
 
-// Helper to convert hex to rgba
-function hexToRgba(hex: string, alpha: number) {
-  const cleanHex = hex.replace("#", "");
-  const r = parseInt(cleanHex.slice(0, 2), 16);
-  const g = parseInt(cleanHex.slice(2, 4), 16);
-  const b = parseInt(cleanHex.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 export function WritingConfidenceScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const onboarding = useOnboarding();
   const [showValidationError, setShowValidationError] = useState(false);
-  const { primaryColor } = useGlacierThemeStore();
 
-  const gradeBand = onboarding.progress.gradeLevel
-    ? "middle"
-    : "middle";
+  const gradeBand = getGradeBandForGrade(onboarding.progress.gradeLevel ?? 7);
 
   if (!onboarding.hydrated) {
     return (
@@ -88,14 +76,6 @@ export function WritingConfidenceScreen() {
                 void onboarding.setConfidenceLevel(confidenceLevel);
               }}
               selected={isSelected}
-              style={{
-                backgroundColor: isSelected
-                  ? hexToRgba(primaryColor, 0.15)
-                  : "rgba(255, 255, 255, 0.03)",
-                borderColor: isSelected
-                  ? primaryColor
-                  : "rgba(255, 255, 255, 0.08)",
-              }}
             />
           );
         })}

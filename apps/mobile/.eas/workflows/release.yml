@@ -1,0 +1,71 @@
+name: WriteWise Mobile Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        type: choice
+        description: EAS build profile.
+        required: true
+        default: preview
+        options:
+          - preview
+          - production
+      platform:
+        type: choice
+        description: Platform build target.
+        required: true
+        default: all
+        options:
+          - all
+          - android
+          - ios
+      publish_update:
+        type: boolean
+        description: Publish an EAS Update before building.
+        required: true
+        default: false
+      update_branch:
+        type: choice
+        description: EAS Update branch.
+        required: true
+        default: preview
+        options:
+          - preview
+          - production
+
+jobs:
+  fingerprint:
+    name: Compute Runtime Fingerprint
+    type: fingerprint
+
+  publish_update:
+    name: Publish OTA Update
+    type: update
+    needs:
+      - fingerprint
+    if: ${{ inputs.publish_update == true }}
+    params:
+      branch: ${{ inputs.update_branch }}
+      platform: all
+      message: WriteWise OTA update from EAS Workflow
+
+  build_android:
+    name: Build Android
+    type: build
+    needs:
+      - fingerprint
+    if: ${{ inputs.platform == 'android' || inputs.platform == 'all' }}
+    params:
+      platform: android
+      profile: ${{ inputs.profile }}
+
+  build_ios:
+    name: Build iOS
+    type: build
+    needs:
+      - fingerprint
+    if: ${{ inputs.platform == 'ios' || inputs.platform == 'all' }}
+    params:
+      platform: ios
+      profile: ${{ inputs.profile }}

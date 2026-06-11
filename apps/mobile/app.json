@@ -2,10 +2,23 @@
   "name": "WriteWise",
   "slug": "writewise",
   "version": "0.1.0",
+  "platforms": [
+    "ios",
+    "android"
+  ],
   "orientation": "default",
   "icon": "./assets/images/logo.png",
   "scheme": "writewise",
   "userInterfaceStyle": "light",
+  "runtimeVersion": {
+    "policy": "fingerprint"
+  },
+  "updates": {
+    "url": "https://u.expo.dev/WRITEWISE_EAS_PROJECT_ID_REQUIRED",
+    "enabled": true,
+    "checkAutomatically": "ON_LOAD",
+    "fallbackToCacheTimeout": 0
+  },
   "plugins": [
     "expo-font",
     "expo-sqlite",
@@ -47,9 +60,14 @@
         ],
         "category": [
           "BROWSABLE",
-          "DEFAULT"
+        "DEFAULT"
         ]
       }
     ]
+  },
+  "extra": {
+    "eas": {
+      "projectId": "WRITEWISE_EAS_PROJECT_ID_REQUIRED"
+    }
   }
 }

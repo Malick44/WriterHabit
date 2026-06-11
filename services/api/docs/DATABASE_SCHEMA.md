@@ -1,17 +1,23 @@
 # WriterHabit Database Schema
 
-Status: Supabase/Postgres schema draft, applied to the configured development
-Supabase instance through `202606110001_server_owned_roles.sql` on 2026-06-11.
+Status: Supabase/Postgres schema draft with a controlled migration/RLS test
+runner, applied to the configured development Supabase instance through
+`202606110002_resource_rls_hardening.sql` on 2026-06-11.
 The current mobile app still uses Supabase auth, feature-owned deterministic
 mock APIs, and local device storage. A Fastify API runtime shell now exists in
 `services/api/`, but these tables are not wired to production route handlers
-yet. The migration drafts live in:
+yet. The migration files live in:
 
-- `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`
+- `services/api/migrations/202606090001_initial_writewise_schema.sql`
 - `services/api/migrations/202606090002_privacy_rls_policies.sql`
+- `services/api/migrations/202606100001_profile_settings_notification_sync.sql`
+- `services/api/migrations/202606100002_canvas_document_stroke_count.sql`
 - `services/api/migrations/202606110001_server_owned_roles.sql`
+- `services/api/migrations/202606110002_resource_rls_hardening.sql`
 
-No production migration runner or deployment pipeline has been selected yet.
+Use `node scripts/supabase-migrations.mjs apply-and-verify` to apply ordered
+migrations with checksum tracking and run the rollback-only RLS verification
+suite in `services/api/tests/rls/resource-policy-verification.sql`.
 
 ## Schema Rules
 
@@ -38,7 +44,7 @@ No production migration runner or deployment pipeline has been selected yet.
 | `parent_profiles` | Parent display profile. | Unique `user_id`. |
 | `parent_settings` | Parent report and notification settings. | Primary key `parent_user_id`, constrained setting values. |
 | `teacher_profiles` | Teacher display profile and optional school label. | Unique `user_id`. |
-| `parent_student_links` | Parent-to-student relationship state. | Active/pending/revoked status, unique parent/student pair, indexes by parent and student status. |
+| `parent_student_links` | Parent-to-student relationship state. | Active/pending/revoked status, unique parent/student pair, indexes by parent and student status; public clients can read visible links but link status changes are backend/admin-owned. |
 
 `studentId` in planned API contracts maps to `student_profiles.id`. A student's
 auth account remains available through `student_profiles.user_id`.
@@ -48,7 +54,7 @@ auth account remains available through `student_profiles.user_id`.
 | Table | Purpose | Important constraints and indexes |
 | --- | --- | --- |
 | `classes` | Teacher-owned class container. | FK to `teacher_profiles`, grade 1-12, active/archived status, `(teacher_profile_id, status)` index. |
-| `class_students` | Student roster membership. | FK to class and student profile, active/removed status, partial unique active membership. |
+| `class_students` | Student roster membership. | FK to class and student profile, active/removed status, partial unique active membership; roster changes are backend/admin-owned because active rows grant teacher access to student work. |
 | `rubrics` | Assignment rubric header. | Grade range, assignment type allow-list, creator FK, `(assignment_type, grade_level_min, grade_level_max)` index. |
 | `rubric_criteria` | Ordered rubric criteria. | FK to rubric, skill allow-list, max score fixed at 4, unique `(rubric_id, sort_order)`. |
 | `assignments` | Catalog or teacher-created writing assignment. | FK to rubric, optional class, type/skill/difficulty constraints, prompt safety status, catalog and class indexes. |
@@ -108,7 +114,9 @@ excerpts for review and audit; it does not store provider secrets or model keys.
 
 Progress tables are denormalized for dashboard reads. Backend services should
 derive them from submissions, revisions, feedback application, canvas activity,
-and assignment completion events.
+and assignment completion events. Public clients can read authorized rows but
+cannot directly mutate progress totals, skill progress, activity days, weekly
+reviews, or student badge state.
 
 ## Entitlements And Notifications
 
@@ -144,11 +152,29 @@ present, from copying client-writable `raw_user_meta_data.role` into
 execution after the corresponding teacher approval, parent link, or operational
 admin workflow.
 
-`scripts/verify-server-owned-roles.mjs` is the local development RLS verifier
-for this boundary. It applies the idempotent role-hardening migration when run
-with `--apply-local-migration`, then proves auth metadata cannot elevate role,
-authenticated direct role changes to parent/teacher/admin fail, safe profile
-field self-updates still work, and database admin role grants still work.
+`services/api/migrations/202606110002_resource_rls_hardening.sql` removes
+public-client write policies for parent link state, class roster membership,
+AI coach interaction logs, AI review jobs, progress tables, weekly reviews,
+student badges, and prepared notifications. Authorized read policies remain in
+place for owning students, active linked parents, and currently assigned
+teachers.
+
+`scripts/supabase-migrations.mjs` is the controlled migration and RLS verifier.
+It records applied checksums in `public.writerhabit_schema_migrations`, applies
+SQL files in filename order, and can run the resource RLS suite:
+
+```bash
+node scripts/supabase-migrations.mjs status
+node scripts/supabase-migrations.mjs apply-and-verify
+node scripts/supabase-migrations.mjs verify-rls
+```
+
+The RLS verification proves auth metadata cannot elevate role, students cannot
+become admin, students cannot read/write another student's profile or
+submission, parents can read active linked children only, revoked links deny
+access, teachers can read class student submissions only while active in the
+class roster, public clients cannot write system-owned review/AI/progress rows,
+and the trusted service/admin SQL path can perform backend transitions.
 
 ## Audit Logs
 
@@ -185,13 +211,17 @@ relationship columns to keep access checks bounded.
 
 ## Migration Notes
 
-These migrations are applied to the configured development Supabase instance and
-remain drafts for the future backend. Before production use:
+These migrations are applied to the configured development Supabase instance
+through `node scripts/supabase-migrations.mjs apply-and-verify`. Before
+production use:
 
-1. Add a production migration runner for the Fastify API deployment path.
-2. Decide whether public app clients will query these tables directly or only
+1. Run `node scripts/supabase-migrations.mjs apply-and-verify` against a
+   disposable Supabase branch or staging project using production-shaped
+   credentials.
+2. Run the same command against production during a controlled release window
+   and archive the non-secret command output.
+3. Decide whether public app clients will query these tables directly or only
    through backend API handlers.
-3. Re-run the migrations against a disposable Supabase branch or local Supabase
-   project as a production-readiness rehearsal.
 4. Add seed data for catalog rubrics, badges, and assignment templates.
-5. Add integration tests for student, parent, teacher, and admin access paths.
+5. Keep adding endpoint-level integration tests as production route handlers
+   replace deterministic mobile mocks.

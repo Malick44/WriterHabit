@@ -30,7 +30,15 @@ Last updated: 2026-06-11
 - Prompt 26 performance, offline support, autosave reliability, retry, and error-state polish is complete.
 - Prompt 27 final QA and release checklist is complete.
 - WW-REL-001 production backend runtime shell is implemented in `services/api/`.
-- Next recommended engineering step: close P0/P1 release blockers in `docs/KNOWN_ISSUES.md`, starting with database migration/RLS verification, resource-level API authorization, payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
+- WW-REL-002 database migration/RLS verification is implemented and verified
+  against the configured development Supabase. `scripts/supabase-migrations.mjs`
+  applies ordered migrations with a checksum ledger, and
+  `services/api/tests/rls/resource-policy-verification.sql` covers role
+  escalation, student isolation, parent revocation, teacher roster removal,
+  system-owned row write denial, and trusted service/admin transitions.
+- Next recommended engineering step: close remaining P0/P1 release blockers in
+  `docs/KNOWN_ISSUES.md`, starting with resource-level API authorization,
+  payment entitlement sync, mobile E2E automation, and backend lint/CI wiring.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.
@@ -38,8 +46,9 @@ Last updated: 2026-06-11
 - Expo mobile app lives at `apps/mobile/`.
 - Supabase mobile client is configured with public Expo env variables.
 - Supabase local admin CLI is configured for development-only use.
-- Configured development Supabase has the 38-table app schema and RLS policy
-  draft applied from `services/api/migrations/`.
+- Configured development Supabase has the app schema, RLS policies, and
+  `public.writerhabit_schema_migrations` ledger applied through
+  `202606110002_resource_rls_hardening.sql`.
 - `services/api/` now has a Fastify TypeScript runtime with health, request IDs,
   CORS, request logging, Supabase JWT verification, standard API errors,
   authenticated session/profile smoke endpoints, fail-closed feature route
@@ -56,8 +65,10 @@ Last updated: 2026-06-11
   `node scripts/verify-server-owned-roles.mjs --apply-local-migration` passed
   for auth-metadata escalation, authenticated student-to-parent/teacher/admin
   role changes, safe profile self-updates, and the database admin grant path.
-  Production migration application and broader resource RLS role-boundary tests
-  remain owner/backend follow-up work.
+  Production migration application remains an owner/backend release operation.
+- WW-REL task 03 round 1 RLS migration runner and policy tests are implemented
+  locally. `node scripts/supabase-migrations.mjs apply-and-verify` passed
+  against the configured development Supabase on 2026-06-11.
 - Every task should start by reading `AGENTS.md`, `docs/00_CONTEXT_BRIEF.md`, `prompts/01_master_agent_rules.md`, and `.codex/EXECUTION_STATE.md`.
 
 ## Completed Work

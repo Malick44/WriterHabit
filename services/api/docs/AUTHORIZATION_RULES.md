@@ -1,9 +1,11 @@
 # WriterHabit API Authorization Rules
 
 Status: service-level authorization model. The API runtime now verifies
-Supabase bearer JWTs before protected route shells run, but resource-level
-student, parent, teacher, admin, and provider authorization is not implemented
-for production workflows yet. Database RLS and migration details live in
+Supabase bearer JWTs before protected route shells run, and the database has a
+repeatable migration/RLS verification command for core student, parent, teacher,
+system-owned, and service/admin boundaries. Resource-level API handler
+authorization is still incomplete for production workflows. Database RLS and
+migration details live in
 `services/api/docs/DATABASE_SCHEMA.md`, `services/api/docs/DATA_RELATIONSHIPS.md`,
 and `services/api/migrations/`.
 
@@ -62,16 +64,23 @@ implementations.
   provider webhooks, notification device registration, and admin access.
 - Public mobile sign-up and onboarding must not write `role`, `admin`,
   `teacher`, `parent`, or entitlement fields into client-writable auth metadata.
-- `public.users.role` is server-owned. Draft migration
+- `public.users.role` is server-owned. Migration
   `202606110001_server_owned_roles.sql` restores the self-update policy and adds
   an invoker-rights trigger that rejects role changes unless the update runs as
   a database admin or Supabase `service_role`. The same migration keeps legacy
   `auth.users` sync hooks, when present, from copying client-writable
   `raw_user_meta_data.role` into `public.users.role`.
-- `node scripts/verify-server-owned-roles.mjs --apply-local-migration` verifies
-  the configured development Supabase rejects authenticated
+- `202606110002_resource_rls_hardening.sql` makes parent link state, class
+  roster membership, AI coach interaction logs, review jobs, progress tables,
+  weekly reviews, student badges, and prepared notifications backend/admin-owned
+  writes. Public clients can read authorized rows through scoped policies, but
+  cannot forge relationship or derived system state.
+- `node scripts/supabase-migrations.mjs apply-and-verify` verifies the
+  configured development Supabase rejects authenticated
   student-to-parent/teacher/admin role changes, rejects auth metadata role
-  escalation, and still permits the approved database admin grant path.
+  escalation, enforces student/parent/teacher read boundaries, denies public
+  writes to system-owned review/AI/progress rows, and still permits the trusted
+  service/admin SQL path.
 - Teacher access requires an invite/admin/server approval flow that creates the
   trusted role/profile/class ownership state. Parent access requires an active
   server-backed `parent_student_links` row.
@@ -86,9 +95,9 @@ implementations.
 | Drafts | Own drafts | No write; no full draft by default | No write; bounded preview after submission | Scoped operational access |
 | Submissions | Own submissions | Linked student summaries and bounded excerpts | Class submissions and bounded review detail | Scoped operational access |
 | Canvas documents | Own documents | Linked student previews | Class submission previews | Scoped operational access |
-| AI coach | Own active work only | No direct coaching call | No direct student coaching call | No direct coaching call except diagnostics |
-| AI review | Own submissions | Read linked feedback summaries | Read class feedback summaries | Scoped operational access |
-| Progress | Own progress | Linked student reports | Class aggregates and enrolled student progress | Scoped operational access |
+| AI coach | Own active work only through backend; own logs read-only | No direct coaching call | No direct student coaching call | Scoped operational diagnostics |
+| AI review | Own submissions and feedback read-only; review request through backend | Read linked feedback summaries | Read class feedback summaries | Scoped operational access |
+| Progress | Own progress read-only | Linked student reports | Class aggregates and enrolled student progress | Scoped operational access |
 | Subscriptions | Own account or managed family account | Own account/family account | Own account/school account if enabled | Scoped operational access |
 
 ## Endpoint Rules
@@ -122,6 +131,8 @@ implementations.
   submit assignments.
 - Teachers can create assignments only for classes they own.
 - Teachers can read assignment and submission state only for their classes.
+- Class roster membership changes require audited backend/admin execution;
+  direct public-client roster writes are denied by RLS.
 - Assignment prompts and teacher comments must be checked for academic integrity
   and age-appropriate content.
 
@@ -171,6 +182,8 @@ implementations.
 - Parent and teacher access to review data follows linked student and class
   scope.
 - Review job retries must be idempotent by submission ID and idempotency key.
+- Review jobs, feedback rows, rubric scores, grammar suggestions, AI coach
+  interaction logs, and progress transitions are backend/service-owned writes.
 
 ### Progress
 
@@ -179,6 +192,9 @@ implementations.
 - Teachers can read aggregate class progress and enrolled student progress.
 - Teacher class aggregates should avoid exposing sensitive individual details in
   aggregate endpoints unless the class roster scope is explicit.
+- Progress totals, skill progress, activity days, weekly reviews, and student
+  badge state are derived system rows. Public clients cannot mutate them
+  directly.
 
 ### Subscriptions
 
@@ -193,7 +209,7 @@ implementations.
 
 Framework-neutral audit event contracts and metadata sanitization live in
 `services/api/src/features/audit/`. The draft database row shape is
-`public.audit_logs` in `services/api/migrations/202606090001_initial_WriterHabit_schema.sql`.
+`public.audit_logs` in `services/api/migrations/202606090001_initial_writewise_schema.sql`.
 
 Audit the following backend actions:
 

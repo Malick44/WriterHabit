@@ -1,4 +1,6 @@
 const mockStore = new Map<string, unknown>();
+const mockApiPost = jest.fn();
+const mockApiPut = jest.fn();
 
 jest.mock("@/services/storage/localJsonStorage", () => ({
   localJsonStorage: {
@@ -12,10 +14,20 @@ jest.mock("@/services/storage/localJsonStorage", () => ({
   },
 }));
 
+jest.mock("@/core/api/apiClient", () => ({
+  apiClient: {
+    post: (...args: unknown[]) => mockApiPost(...args),
+    put: (...args: unknown[]) => mockApiPut(...args),
+  },
+}));
+
 import { addCanvasStroke, createCanvasDocument, createCanvasStroke } from "./canvasDocumentService";
 import { canvasPersistenceService } from "./canvasPersistenceService";
 import {
   CANVAS_AUTOSAVE_DEBOUNCE_MS,
+  canvasBackendMetadataSchema,
+  canvasExportPlaceholderSchema,
+  canvasSignedUploadPlaceholderSchema,
   canvasSyncService,
   createCanvasAutosaveScheduler,
 } from "./canvasSyncService";
@@ -26,6 +38,8 @@ describe("canvasSyncService", () => {
 
   beforeEach(() => {
     mockStore.clear();
+    mockApiPost.mockReset();
+    mockApiPut.mockReset();
     delete process.env.EXPO_PUBLIC_WriterHabit_CANVAS_SCENARIO;
     delete process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC;
   });
@@ -107,6 +121,78 @@ describe("canvasSyncService", () => {
       assignmentId: "assignment-1",
       syncStatus: "local_only",
     });
+  });
+
+  it("uses schema-backed API calls when backend canvas sync is enabled", async () => {
+    process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC = "true";
+    const document = createCanvasDocument({
+      studentId: "student-1",
+      template: "essay_plan",
+      timestamp: "2026-06-09T09:00:00.000Z",
+    });
+    const signedUpload = {
+      contentType: "application/json",
+      expiresAt: "2026-06-09T09:15:00.000Z",
+      method: "PUT",
+      objectPath: `students/student-1/canvas/${document.id}/v1.json`,
+      requiredHeaders: {
+        "content-type": "application/json",
+      },
+      uploadUrl: "https://storage.example/upload",
+    };
+    const metadata = {
+      attachedAt: null,
+      canvasDocumentId: document.id,
+      clientVersion: 1,
+      previewImageUrl: null,
+      serverVersion: 1,
+      storageObjectPath: signedUpload.objectPath,
+      syncedAt: "2026-06-09T09:01:00.000Z",
+    };
+    const exportPlaceholder = {
+      canvasDocumentId: document.id,
+      exportId: "export-1",
+      format: "preview_png",
+      generatedAt: "2026-06-09T09:02:00.000Z",
+      previewImageUrl: null,
+      status: "queued",
+    };
+
+    mockApiPost.mockResolvedValueOnce(signedUpload).mockResolvedValueOnce(exportPlaceholder);
+    mockApiPut.mockResolvedValueOnce(metadata);
+
+    const result = await canvasSyncService.saveLocalFirst({
+      document,
+      studentId: "student-1",
+    });
+
+    expect(result.backendStatus).toBe("synced");
+    expect(mockApiPost).toHaveBeenNthCalledWith(
+      1,
+      `/canvas-documents/${document.id}/upload-url`,
+      expect.objectContaining({
+        contentType: "application/json",
+        fileKind: "stroke-document",
+      }),
+      { schema: canvasSignedUploadPlaceholderSchema },
+    );
+    expect(mockApiPut).toHaveBeenCalledWith(
+      `/canvas-documents/${document.id}`,
+      expect.objectContaining({
+        storageObjectPath: signedUpload.objectPath,
+        studentId: "student-1",
+      }),
+      { schema: canvasBackendMetadataSchema },
+    );
+    expect(mockApiPost).toHaveBeenNthCalledWith(
+      2,
+      `/canvas-documents/${document.id}/export`,
+      expect.objectContaining({
+        format: "preview_png",
+        sourceObjectPath: signedUpload.objectPath,
+      }),
+      { schema: canvasExportPlaceholderSchema },
+    );
   });
 
   it("debounces autosave to the latest pending document", async () => {

@@ -1,5 +1,6 @@
 import { z, type ZodType } from "zod";
 
+import { clearApiSession, refreshApiAccessToken } from "./apiAuthRecovery";
 import { getApiAccessToken } from "./apiTokenProvider";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -462,6 +463,42 @@ function createHttpError(response: Response, payload: unknown, fallbackRequestId
   });
 }
 
+function shouldAttemptAuthRecovery(input: {
+  authMode: ApiAuthMode;
+  error: ApiError;
+  hasAttemptedAuthRecovery: boolean;
+}): boolean {
+  return (
+    input.authMode === "auto" &&
+    !input.hasAttemptedAuthRecovery &&
+    input.error.status === 401 &&
+    input.error.code === "auth.expired_token" &&
+    input.error.retryable
+  );
+}
+
+async function recoverFromExpiredToken(error: ApiError, requestId: string): Promise<void> {
+  try {
+    const refreshedToken = await refreshApiAccessToken();
+
+    if (!refreshedToken) {
+      throw new Error("Session refresh did not return an access token.");
+    }
+  } catch (cause) {
+    await clearApiSession().catch(() => undefined);
+
+    throw new ApiError({
+      cause,
+      code: "auth.refresh_failed",
+      kind: "auth",
+      requestId: error.requestId ?? requestId,
+      retryable: false,
+      safeMessage: "Sign in to continue.",
+      status: 401,
+    });
+  }
+}
+
 function validatePayload<T>(payload: unknown, schema: ZodType<T> | undefined, input: {
   requestId: string;
   status: number;
@@ -617,14 +654,29 @@ async function executeRequest<T>(path: string, options: ApiRequestOptions<T>, re
 
 async function request<T>(path: string, options: ApiRequestOptions<T> = {}): Promise<T> {
   const method = options.method ?? "GET";
+  const authMode = options.auth ?? "auto";
   const requestId = options.requestId ?? createRequestId();
   const retryPolicy = resolveRetryPolicy(method, options.retry);
+  let hasAttemptedAuthRecovery = false;
   let attempt = 0;
 
   while (true) {
     try {
       return await executeRequest(path, { ...options, method }, requestId);
     } catch (error) {
+      if (
+        error instanceof ApiError &&
+        shouldAttemptAuthRecovery({
+          authMode,
+          error,
+          hasAttemptedAuthRecovery,
+        })
+      ) {
+        hasAttemptedAuthRecovery = true;
+        await recoverFromExpiredToken(error, requestId);
+        continue;
+      }
+
       if (!(error instanceof ApiError) || attempt >= retryPolicy.retries || !shouldRetry(error)) {
         throw error;
       }

@@ -154,14 +154,16 @@ async function requestSignedUploadPlaceholder(document: CanvasDocument): Promise
     return placeholder;
   }
 
-  const response = await apiClient.post<unknown>(`/canvas-documents/${document.id}/upload-url`, {
-    clientVersion: getClientVersion(document),
-    contentType: placeholder.contentType,
-    fileKind: "stroke-document",
-    sizeBytes: estimateStrokePayloadSize(document),
-  });
-
-  return canvasSignedUploadPlaceholderSchema.parse(response);
+  return apiClient.post(
+    `/canvas-documents/${document.id}/upload-url`,
+    {
+      clientVersion: getClientVersion(document),
+      contentType: placeholder.contentType,
+      fileKind: "stroke-document",
+      sizeBytes: estimateStrokePayloadSize(document),
+    },
+    { schema: canvasSignedUploadPlaceholderSchema },
+  );
 }
 
 async function upsertBackendMetadata(
@@ -174,19 +176,21 @@ async function upsertBackendMetadata(
     return placeholder;
   }
 
-  const response = await apiClient.put<unknown>(`/canvas-documents/${document.id}`, {
-    assignmentId: document.assignmentId ?? null,
-    clientVersion: getClientVersion(document),
-    previewImageUrl: document.previewImageUrl ?? null,
-    storageObjectPath: signedUpload.objectPath,
-    strokeCount: document.strokes.length,
-    studentId: document.studentId,
-    template: document.template,
-    title: document.title,
-    updatedAt: document.updatedAt,
-  });
-
-  return canvasBackendMetadataSchema.parse(response);
+  return apiClient.put(
+    `/canvas-documents/${document.id}`,
+    {
+      assignmentId: document.assignmentId ?? null,
+      clientVersion: getClientVersion(document),
+      previewImageUrl: document.previewImageUrl ?? null,
+      storageObjectPath: signedUpload.objectPath,
+      strokeCount: document.strokes.length,
+      studentId: document.studentId,
+      template: document.template,
+      title: document.title,
+      updatedAt: document.updatedAt,
+    },
+    { schema: canvasBackendMetadataSchema },
+  );
 }
 
 async function attachBackendCanvas(document: CanvasDocument, assignmentId: string): Promise<void> {
@@ -194,11 +198,15 @@ async function attachBackendCanvas(document: CanvasDocument, assignmentId: strin
     return;
   }
 
-  await apiClient.post<unknown>(`/canvas-documents/${document.id}/attach`, {
-    assignmentId,
-    clientVersion: getClientVersion(document),
-    studentId: document.studentId,
-  });
+  await apiClient.post(
+    `/canvas-documents/${document.id}/attach`,
+    {
+      assignmentId,
+      clientVersion: getClientVersion(document),
+      studentId: document.studentId,
+    },
+    { schema: z.undefined() },
+  );
 }
 
 async function requestPreviewExportPlaceholder(document: CanvasDocument): Promise<CanvasExportPlaceholder> {
@@ -208,13 +216,15 @@ async function requestPreviewExportPlaceholder(document: CanvasDocument): Promis
     return placeholder;
   }
 
-  const response = await apiClient.post<unknown>(`/canvas-documents/${document.id}/export`, {
-    clientVersion: getClientVersion(document),
-    format: "preview_png",
-    sourceObjectPath: document.storageObjectPath ?? getCanvasObjectPath(document),
-  });
-
-  return canvasExportPlaceholderSchema.parse(response);
+  return apiClient.post(
+    `/canvas-documents/${document.id}/export`,
+    {
+      clientVersion: getClientVersion(document),
+      format: "preview_png",
+      sourceObjectPath: document.storageObjectPath ?? getCanvasObjectPath(document),
+    },
+    { schema: canvasExportPlaceholderSchema },
+  );
 }
 
 async function markSyncFailed(localDocument: CanvasDocument): Promise<CanvasDocument> {

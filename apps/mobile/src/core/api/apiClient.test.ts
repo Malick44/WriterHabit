@@ -1,9 +1,16 @@
 import { z } from "zod";
 
 const mockGetApiAccessToken = jest.fn<Promise<string | null>, []>();
+const mockRefreshApiAccessToken = jest.fn<Promise<string | null>, []>();
+const mockClearApiSession = jest.fn<Promise<void>, []>();
 
 jest.mock("./apiTokenProvider", () => ({
   getApiAccessToken: () => mockGetApiAccessToken(),
+}));
+
+jest.mock("./apiAuthRecovery", () => ({
+  clearApiSession: () => mockClearApiSession(),
+  refreshApiAccessToken: () => mockRefreshApiAccessToken(),
 }));
 
 import { ApiError, apiClient } from "./apiClient";
@@ -42,6 +49,10 @@ describe("apiClient", () => {
     devGlobal.__DEV__ = false;
     mockGetApiAccessToken.mockReset();
     mockGetApiAccessToken.mockResolvedValue(null);
+    mockRefreshApiAccessToken.mockReset();
+    mockRefreshApiAccessToken.mockResolvedValue("refreshed-token");
+    mockClearApiSession.mockReset();
+    mockClearApiSession.mockResolvedValue(undefined);
     jest.useRealTimers();
   });
 
@@ -201,5 +212,130 @@ describe("apiClient", () => {
 
     await expect(apiClient.post("/submissions", { text: "draft" })).rejects.toBeInstanceOf(ApiError);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes an expired Supabase token once and retries the request", async () => {
+    mockGetApiAccessToken.mockResolvedValueOnce("expired-token").mockResolvedValueOnce("fresh-token");
+    mockRefreshApiAccessToken.mockResolvedValue("fresh-token");
+    fetchMock
+      .mockResolvedValueOnce(
+        createMockResponse({
+          body: {
+            error: {
+              code: "auth.expired_token",
+              fallbackMessage: "Your session expired. Sign in again.",
+              requestId: "req_expired",
+              retryable: true,
+            },
+          },
+          status: 401,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createMockResponse({
+          body: { status: "ok" },
+          status: 200,
+        }),
+      );
+
+    await expect(
+      apiClient.get<{ status: "ok" }>("/students/me", {
+        requestId: "req_auth_retry",
+        retry: false,
+        schema: z.object({ status: z.literal("ok") }),
+      }),
+    ).resolves.toEqual({ status: "ok" });
+
+    expect(mockRefreshApiAccessToken).toHaveBeenCalledTimes(1);
+    expect(mockClearApiSession).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).headers).toMatchObject({
+      Authorization: "Bearer expired-token",
+      "x-request-id": "req_auth_retry",
+    });
+    expect((fetchMock.mock.calls[1]?.[1] as RequestInit).headers).toMatchObject({
+      Authorization: "Bearer fresh-token",
+      "x-request-id": "req_auth_retry",
+    });
+  });
+
+  it("clears the Supabase session and returns a safe auth error when refresh fails", async () => {
+    mockGetApiAccessToken.mockResolvedValue("expired-token");
+    mockRefreshApiAccessToken.mockRejectedValue(new Error("refresh failed with provider detail"));
+    fetchMock.mockResolvedValue(
+      createMockResponse({
+        body: {
+          error: {
+            code: "auth.expired_token",
+            fallbackMessage: "Your session expired. Sign in again.",
+            requestId: "req_refresh_failed",
+            retryable: true,
+          },
+        },
+        status: 401,
+      }),
+    );
+
+    await expect(apiClient.get("/students/me", { retry: false })).rejects.toMatchObject({
+      code: "auth.refresh_failed",
+      kind: "auth",
+      message: "Sign in to continue.",
+      requestId: "req_refresh_failed",
+      retryable: false,
+      status: 401,
+    });
+    expect(mockRefreshApiAccessToken).toHaveBeenCalledTimes(1);
+    expect(mockClearApiSession).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refresh or retry forbidden authorization failures", async () => {
+    mockGetApiAccessToken.mockResolvedValue("valid-token");
+    fetchMock.mockResolvedValue(
+      createMockResponse({
+        body: {
+          error: {
+            code: "authorization.student_scope_denied",
+            fallbackMessage: "You do not have access to this student profile.",
+            requestId: "req_forbidden",
+            retryable: false,
+          },
+        },
+        status: 403,
+      }),
+    );
+
+    await expect(apiClient.get("/students/student-2", { retry: false })).rejects.toMatchObject({
+      code: "authorization.student_scope_denied",
+      status: 403,
+    });
+    expect(mockRefreshApiAccessToken).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not enter an infinite refresh loop when the retried request is still unauthorized", async () => {
+    mockGetApiAccessToken.mockResolvedValueOnce("expired-token").mockResolvedValueOnce("fresh-token");
+    mockRefreshApiAccessToken.mockResolvedValue("fresh-token");
+    fetchMock.mockResolvedValue(
+      createMockResponse({
+        body: {
+          error: {
+            code: "auth.expired_token",
+            fallbackMessage: "Your session expired. Sign in again.",
+            requestId: "req_still_expired",
+            retryable: true,
+          },
+        },
+        status: 401,
+      }),
+    );
+
+    await expect(apiClient.get("/students/me", { retry: false })).rejects.toMatchObject({
+      code: "auth.expired_token",
+      requestId: "req_still_expired",
+      status: 401,
+    });
+    expect(mockRefreshApiAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

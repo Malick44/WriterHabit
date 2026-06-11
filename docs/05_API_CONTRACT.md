@@ -25,7 +25,11 @@ Mobile API base URL:
   `__DEV__` is true.
 - The client attaches a Supabase bearer token when one exists, sends an
   `x-request-id` header, times out requests, parses the standard error shape,
-  and supports optional Zod response validation at call sites.
+  refreshes once on retryable `401 auth.expired_token`, and supports Zod
+  response validation at call sites.
+- Current backend-bound canvas sync and notification device registration calls
+  pass Zod schemas into the client. Future backend endpoint wrappers should do
+  the same before trusting response data.
 
 ## Current Implementation Reality
 

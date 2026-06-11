@@ -46,6 +46,8 @@ Review and specialist generation actions are backed by `script/review_agent.sh`.
 
 Autonomous implementation actions are backed by `script/autonomous_prompt_runner.sh`; see `.codex/AUTONOMOUS_PROMPTS.md`.
 
+Release-blocker implementation/review loops are backed by `script/release_blocker_agent_runner.sh`; see `.codex/RELEASE_BLOCKER_AUTOMATION.md`.
+
 The autonomous and review-agent scripts run nested Codex with `--dangerously-bypass-approvals-and-sandbox` for local development so approval prompts do not block unattended work. Do not use these scripts against untrusted repositories or with secrets staged for commit.
 
 ## Prompt Library

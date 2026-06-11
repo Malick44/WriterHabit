@@ -2,6 +2,24 @@
 
 This document records the current shared UI foundation in the Expo mobile app.
 
+## Brand Direction — "Daylight Glass"
+
+WriterHabit AI should feel **educational, trustworthy, premium, and friendly** for Grades 1–12 students and their families. Light, airy surfaces with subtle glassmorphism accents — never dark-mode-first, neon, or sci-fi. Full per-feature design prompts (with screen briefs and variant directions) live in `docs/design-prompts/`; the screen-level visual spec is `apps/mobile/src/features/onboarding/prompts/DESIGN.md`.
+
+Palette roles (values are the canonical tokens in `apps/mobile/src/design/tokens/colors.ts`):
+
+- **Indigo/blue `#2563EB`** — primary interactive color, selection, focus (tints `#DBEAFE`, `#EFF6FF`).
+- **Teal `#14B8A6` / green `#16A34A`** — progress and success only.
+- **Warm yellow `#F59E0B`** — streaks, points, badges, rewards only.
+- **Soft salmon/red `#DC2626`** — error states only, never decoration.
+- **Surfaces** — app background `#F6FAFF`, cards `#FFFFFF`/`#FCFEFF`; text slate `#0F172A` / `#475569` / `#94A3B8`.
+
+Voice and integrity rules that bind UI copy:
+
+- **Coaching, not completion.** Approved coach CTAs only: "Give me a hint", "Help me brainstorm", "Check my sentence", "Explain this mistake", "Help me revise", "Suggest a stronger word", "Ask me a question". Never "Write my essay", "Finish for me", "Do my homework", or similar.
+- Warm, motivating success copy ("Streak Active", "Daily Rhythm", "Skill Milestone"); calm, empathetic recovery copy ("You're offline, but your draft is safe on your device."); anticipation cues while processing ("Crafting your feedback card...").
+- Every screen ships with loading skeleton, empty, error, and offline states.
+
 ## Canonical Token Path
 
 Design tokens live in:

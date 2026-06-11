@@ -80,6 +80,11 @@ Mobile backend calls may use only the public API origin variable:
 at the deployed HTTPS API origin and must not rely on the development localhost
 fallback in `apps/mobile/src/core/api/apiClient.ts`.
 
+The mobile API client refreshes Supabase sessions once for backend responses
+that use `401 auth.expired_token` with `retryable: true`. Other authentication
+or authorization failures remain fail-closed and must be enforced by the
+backend/RLS layer.
+
 Service-role keys, database admin credentials, model-provider credentials, store
 provider secrets, webhook signing secrets, APNs/FCM credentials, and raw push
 tokens must never be placed in mobile app code, docs, `.codex`, screenshots,

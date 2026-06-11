@@ -8,7 +8,7 @@
   ],
   "orientation": "default",
   "icon": "./assets/images/logo.png",
-  "scheme": "WriterHabit",
+  "scheme": "writerhabit",
   "userInterfaceStyle": "light",
   "runtimeVersion": {
     "policy": "fingerprint"
@@ -37,7 +37,7 @@
     "supportsTablet": true,
     "icon": "./assets/images/logo.png",
     "associatedDomains": [
-      "applinks:WriterHabit.app"
+      "applinks:writerhabit.app"
     ]
   },
   "android": {
@@ -54,7 +54,7 @@
         "data": [
           {
             "scheme": "https",
-            "host": "WriterHabit.app",
+            "host": "writerhabit.app",
             "pathPrefix": "/"
           }
         ],

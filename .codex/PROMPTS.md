@@ -55,6 +55,12 @@ Then read the selected prompt and any relevant project skill.
 
 Automated Codex specialist actions are configured in `.codex/environments/environment.toml` and backed by `script/review_agent.sh`.
 
+## Release Blocker Agent Prompts
+
+Release blocker prompts live in `prompts/release_blocker_agents/`.
+
+Use `script/release_blocker_agent_runner.sh` to run them through an implementation agent followed by a review agent loop. See `.codex/RELEASE_BLOCKER_AUTOMATION.md`.
+
 ## Screen Design Prompts
 
 Screen design prompts live in `prompts/WriterHabit_screen_design_prompts/`.

@@ -79,7 +79,7 @@ Current decision: do not release publicly yet.
 - [x] Database schema and RLS migration drafts exist.
 - [x] Framework-neutral AI, canvas, audit, and feature-boundary scaffolds exist.
 - [x] Mobile app uses public Expo Supabase env vars only.
-- [x] Mobile API client requires `EXPO_PUBLIC_API_BASE_URL` outside development and sends Supabase bearer auth, request IDs, timeouts, structured errors, and optional Zod response validation.
+- [x] Mobile API client requires `EXPO_PUBLIC_API_BASE_URL` outside development and sends Supabase bearer auth, request IDs, timeouts, structured errors, one-shot expired-token refresh, and Zod response validation for current backend-bound call sites.
 - [ ] Production API framework, package manifest, deployment path, and runtime checks exist.
 - [ ] Migrations run in a controlled environment and RLS policies are verified with role tests.
 - [ ] Signed URL endpoints are implemented for canvas/object storage.

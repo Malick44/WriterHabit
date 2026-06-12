@@ -228,7 +228,7 @@ export const styles = StyleSheet.create({
       ios: "AvenirNextCondensed-DemiBold",
       default: undefined,
     }),
-    fontWeight: "700",
+    fontWeight: "400",
     letterSpacing: 0,
   },
   subtitleText: {

@@ -44,8 +44,8 @@ not complete.
 | Flow 2: canvas assignment | Partially verified | `tests/e2e/flow-2-canvas-assignment.md` documents the scenario, and integration/unit tests cover canvas creation, stroke persistence, assignment attachment, and recovery behavior. No installed-app E2E runner is configured. |
 | Parent flow | Partially verified | Parent screens, view models, loading/empty/error/offline states, and tests exist. Real backend linking, authorization, and report delivery are not implemented. |
 | Teacher flow | Partially verified | Teacher dashboard, assignment creation, class progress, submissions, review screens, validation, loading/empty/error/offline states, and tests exist. Real roster sync, publication, and authorization are not implemented. |
-| Paywall flow | Partially verified | Local entitlement service, guarded paywall, upgrade prompts, restore placeholder, and entitlement tests exist. Real store checkout, receipt validation, and backend entitlement sync are not implemented. |
-| Backend readiness | Blocked for production | `services/api/` contains contracts, migrations, and framework-neutral service scaffolds only. There is no running production API server or migration runner. |
+| Paywall flow | Partially verified | Server-backed RevenueCat entitlement reads, restore reconciliation, webhook sync, guarded paywall, upgrade prompts, Plus-surface gates/redaction, and entitlement tests exist. Native RevenueCat purchase launch and sandbox store QA remain required. |
+| Backend readiness | Blocked for production | `services/api/` contains a Fastify runtime with health/auth/profile, writing-loop workflows, dashboard reads, and subscription entitlement routes. Several production feature handlers, deployment, and provider credentials remain incomplete. |
 
 ## Checks Run
 

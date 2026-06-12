@@ -46,8 +46,6 @@ export const studentTabRoutes = [
   routes.studentHome,
   routes.studentAssignmentsHistory,
   routes.studentCanvasHome,
-  routes.studentProgress,
-  routes.studentProfile,
 ] as const;
 
 export const parentTabRoutes = [

@@ -57,11 +57,25 @@ Current decision: do not release publicly yet.
 
 - [x] Parent home, reports, assignment review, student detail, and settings surfaces exist.
 - [x] Teacher dashboard, assignment creation, class progress, submissions, and review surfaces exist.
-- [x] Local paywall, upgrade prompts, entitlement service, and restore placeholder exist.
+- [x] Paywall, upgrade prompts, server-backed entitlement service, and restore flow exist.
 - [x] Parent, teacher, and entitlement view-model tests pass.
 - [ ] Parent-student and teacher-class authorization is enforced by production backend APIs.
 - [ ] Weekly reports, classroom data, assignment publication, and teacher comments persist server-side.
-- [ ] Store checkout, receipt validation, restore, refunds, and server-side entitlement sync are implemented.
+- [x] Server-side RevenueCat entitlement sync, restore reconciliation, refunds, expirations, cancellations, renewals, grace-period states, provider event idempotency, and stale-event ordering guards are implemented.
+- [ ] Native RevenueCat purchase SDK, owner app keys, store products, and sandbox purchase launch are configured in a rebuild.
+
+## RevenueCat Sandbox Payment Test Plan
+
+- [ ] Configure RevenueCat products for `WriterHabit_plus_monthly` and `WriterHabit_plus_yearly` with entitlement id `plus`.
+- [ ] Set `REVENUECAT_WEBHOOK_AUTHORIZATION` and `REVENUECAT_SECRET_API_KEY` in the API environment; do not expose them to the mobile app.
+- [ ] Configure RevenueCat webhook delivery to `POST /api/v1/webhooks/revenuecat` and verify invalid Authorization returns `401 webhook.invalid_signature`.
+- [ ] Build a native app containing the RevenueCat SDK and owner-provided public iOS/Android app keys before testing purchase launch.
+- [ ] App Store sandbox: buy monthly, start trial, cancel renewal, refund, restore on a fresh install, and verify `GET /me/entitlements` changes only after webhook/restore sync.
+- [ ] Play Billing test purchase: buy yearly, trigger renewal, enter grace period/past due where supported, cancel, refund, restore, and verify server states.
+- [ ] Replay the same RevenueCat webhook event id and verify only one `entitlement_provider_events` row is processed.
+- [ ] Replay an older distinct RevenueCat renewal after a newer refund, expiration, and billing issue; verify the event row is ignored and Plus access is not restored until a newer `REFUND_REVERSED` or valid renewal arrives.
+- [ ] Exercise RevenueCat transfer and alias cases: transfer a purchase between app user ids, restore on the new signed-in account, and verify the server reconciles only the intended account.
+- [ ] Confirm free student writing, parent, and teacher flows remain available when entitlement state is `free`, `past_due`, `expired`, or `refunded`, while extended progress history, family reports, teacher class insights, rubric detail, and canvas archive show upgrade or payment-issue states.
 
 ## Localization And Accessibility
 
@@ -132,5 +146,5 @@ If web is declared in scope, also run:
 - Real EAS project id, OTA update URL, and EAS credentials are configured and verified with `cd apps/mobile && npx eas-cli@latest config`.
 - Flow 1 and Flow 2 pass in a mobile E2E runner and on manual QA devices.
 - Backend authorization, RLS, audit, retention, and deletion workflows are verified.
-- Payment and entitlement behavior is verified with sandbox store accounts.
+- Payment and entitlement behavior is verified with RevenueCat, App Store, and Play Store sandbox accounts.
 - Product, privacy, security, and education reviews approve the release build.

@@ -15,6 +15,89 @@ export type SubmissionStatus =
   | "completed";
 
 export type AssignmentDifficulty = "easy" | "moderate" | "challenging";
+export type EntitlementStatus =
+  | "free"
+  | "trial"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "expired"
+  | "refunded"
+  | "grace_period";
+export type EntitlementProvider = "revenuecat" | "stripe" | "manual";
+export type EntitlementProviderEventStatus = "received" | "processed" | "ignored" | "failed";
+export type EntitlementScopeType = "personal" | "family" | "class" | "school";
+export type SubscriptionPlanId = "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly";
+export type BillingPeriod = "month" | "year";
+
+export interface EntitlementRecord {
+  billingPeriod: BillingPeriod | null;
+  canAccessPremium: boolean;
+  createdAt: string;
+  currentPeriodEndsAt: string | null;
+  currentPlanId: SubscriptionPlanId | null;
+  id: string;
+  managementUrl: string | null;
+  ownerUserId: string;
+  provider: EntitlementProvider | null;
+  providerCustomerId: string | null;
+  providerLastEventId: string | null;
+  providerLastEventTimestampMs: number | null;
+  providerLastEventType: string | null;
+  providerSubscriptionId: string | null;
+  scopeId: string | null;
+  scopeType: EntitlementScopeType;
+  status: EntitlementStatus;
+  trialEndsAt: string | null;
+  updatedAt: string;
+}
+
+export interface UpsertEntitlementInput {
+  billingPeriod: BillingPeriod | null;
+  canAccessPremium: boolean;
+  currentPeriodEndsAt: string | null;
+  currentPlanId: SubscriptionPlanId | null;
+  managementUrl: string | null;
+  ownerUserId: string;
+  provider: EntitlementProvider | null;
+  providerCustomerId: string | null;
+  providerLastEventId?: string | null;
+  providerLastEventTimestampMs?: number | null;
+  providerLastEventType?: string | null;
+  providerSubscriptionId: string | null;
+  scopeId: string | null;
+  scopeType: EntitlementScopeType;
+  status: EntitlementStatus;
+  trialEndsAt: string | null;
+}
+
+export interface EntitlementProviderEventRecord {
+  eventType: string;
+  id: string;
+  metadata: Record<string, unknown>;
+  ownerUserId: string | null;
+  processedAt: string | null;
+  processingStatus: EntitlementProviderEventStatus;
+  provider: Extract<EntitlementProvider, "revenuecat" | "stripe">;
+  providerEventId: string;
+  receivedAt: string;
+}
+
+export interface ApplyEntitlementProviderEventInput {
+  entitlement?: UpsertEntitlementInput;
+  eventType: string;
+  metadata: Record<string, unknown>;
+  ownerUserId: string | null;
+  provider: Extract<EntitlementProvider, "revenuecat" | "stripe">;
+  providerEventId: string;
+  processingStatus?: Extract<EntitlementProviderEventStatus, "ignored" | "processed">;
+}
+
+export interface ApplyEntitlementProviderEventResult {
+  entitlement: EntitlementRecord | null;
+  event: EntitlementProviderEventRecord;
+  wasDuplicate: boolean;
+}
 
 export interface StudentProfileRecord {
   gradeLevel: number;
@@ -448,6 +531,9 @@ export interface StudentAssignmentUpdate {
  * the placeholder registrations.
  */
 export interface Database {
+  applyEntitlementProviderEvent(
+    input: ApplyEntitlementProviderEventInput,
+  ): Promise<ApplyEntitlementProviderEventResult>;
   /** Counts published assignments created for the class. */
   countClassActiveAssignments(classId: string): Promise<number>;
   countClassStudentAssignments(
@@ -467,6 +553,7 @@ export interface Database {
   createSubmissionRevision(input: CreateSubmissionRevisionInput): Promise<SubmissionRevisionRecord>;
   deleteDraft(studentAssignmentId: string): Promise<void>;
   getClassById(classId: string): Promise<ClassRecord | null>;
+  getLatestEntitlementForUser(ownerUserId: string): Promise<EntitlementRecord | null>;
   getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null>;
   getTeacherProfileById(id: string): Promise<TeacherProfileRecord | null>;
   getTeacherProfileByUserId(userId: string): Promise<TeacherProfileRecord | null>;
@@ -537,4 +624,5 @@ export interface Database {
   saveDraft(input: SaveDraftInput): Promise<DraftRecord>;
   transitionReviewJob(input: TransitionReviewJobInput): Promise<ReviewJobRecord>;
   updateStudentAssignment(id: string, update: StudentAssignmentUpdate): Promise<void>;
+  upsertEntitlement(input: UpsertEntitlementInput): Promise<EntitlementRecord>;
 }

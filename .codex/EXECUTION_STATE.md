@@ -47,10 +47,26 @@ Last updated: 2026-06-11
   workflow migrations through `202606110004_review_job_lifecycle.sql` were
   applied and verified against the configured development Supabase on
   2026-06-11.
+- WW-REL-003 payments and entitlements round 3 is implemented locally.
+  RevenueCat is the selected iOS/Android entitlement provider. `services/api/`
+  now exposes trusted entitlement reads, RevenueCat checkout intent, restore
+  reconciliation, and Authorization-verified idempotent RevenueCat webhooks.
+  Mobile subscription gates no longer trust `activated_preview` or local session
+  entitlement state for paid access. Advertised Plus surfaces now use
+  entitlement gates and server-side entitlement checks/redaction for extended
+  progress history, parent family reports, teacher class insights, rubric
+  detail, and canvas archive. Stale older RevenueCat lifecycle events are
+  recorded as ignored and cannot re-enable access after newer refund,
+  expiration, or billing-issue events. Migrations through
+  `202606110006_subscription_event_ordering.sql` have been applied and verified
+  against the configured development Supabase. Native RevenueCat SDK
+  purchase launch, owner app keys/store products, server env values,
+  transfer/alias QA, and sandbox store QA remain required before paid plans can
+  be enabled publicly.
 - Next recommended engineering step: close remaining P0/P1 release blockers in
-  `docs/KNOWN_ISSUES.md`, starting with payment entitlement sync, mobile E2E
-  automation, production AI provider/worker integration, canvas storage sync,
-  and backend lint/CI wiring.
+  `docs/KNOWN_ISSUES.md`, starting with native RevenueCat store setup, mobile
+  E2E automation, production AI provider/worker integration, canvas storage
+  sync, and backend lint/CI wiring.
 - Project-local Codex actions are configured in `.codex/environments/environment.toml`.
 - Automated specialist review and asset-generation actions are configured through `script/review_agent.sh`.
 - Autonomous prompt sequencing is configured through `script/autonomous_prompt_runner.sh`.

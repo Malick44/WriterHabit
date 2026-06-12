@@ -26,6 +26,7 @@ interface ApiErrorResponse {
 | --- | --- | --- |
 | 400 | `validation.*` | Request shape or field values are invalid. |
 | 401 | `auth.*` | The user is not authenticated or the token is invalid. |
+| 402 | `subscription.entitlement_required` | The user is authenticated but lacks an active paid entitlement for the feature. |
 | 403 | `authorization.*` | The user is authenticated but not allowed to access the resource. |
 | 404 | `resource.*` | The requested resource is missing or hidden by authorization scope. |
 | 409 | `conflict.*` | The request conflicts with current server state. |
@@ -108,7 +109,10 @@ interface ApiErrorResponse {
 | Code | HTTP | Retryable | User-facing fallback |
 | --- | --- | --- | --- |
 | `subscription.plan_not_found` | 404 | false | That plan is not available. |
+| `subscription.entitlement_required` | 402 | false | Upgrade to WriterHabit Plus to use this feature. |
+| `subscription.checkout_unavailable` | 409 | false | Store checkout is not available yet. Your plan was not changed. |
 | `subscription.checkout_failed` | 502 | true | Checkout could not start. Try again. |
+| `subscription.provider_unconfigured` | 503 | false | Purchase restore is not configured yet. Your plan was not changed. |
 | `subscription.restore_not_found` | 404 | false | We could not find an active purchase to restore. |
 | `webhook.invalid_signature` | 401 | false | Webhook signature could not be verified. |
 | `webhook.duplicate_event` | 200 | false | Event was already processed. |

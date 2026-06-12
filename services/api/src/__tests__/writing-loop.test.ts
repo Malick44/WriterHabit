@@ -3,7 +3,7 @@ import { SignJWT } from "jose";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { MemoryDatabase } from "../data";
-import type { AssignmentRecord, StudentAssignmentRecord } from "../data/types";
+import type { AssignmentRecord, EntitlementRecord, StudentAssignmentRecord } from "../data/types";
 import type { ApiConfig } from "../runtime/config";
 import { buildServer } from "../server";
 
@@ -30,6 +30,12 @@ function createTestConfig(): ApiConfig {
     environment: "test",
     host: "127.0.0.1",
     logLevel: "silent",
+    payments: {
+      provider: "revenuecat",
+      revenueCat: {
+        entitlementId: "plus",
+      },
+    },
     port: 3000,
   };
 }
@@ -98,6 +104,31 @@ function makeStudentAssignment(
     teacherNoteFallback: null,
     teacherNoteKey: null,
     updatedAt: "2026-06-10T08:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makeEntitlement(ownerUserId: string, overrides: Partial<EntitlementRecord> = {}): EntitlementRecord {
+  return {
+    billingPeriod: "year",
+    canAccessPremium: true,
+    createdAt: "2026-06-11T08:00:00.000Z",
+    currentPeriodEndsAt: "2026-07-11T08:00:00.000Z",
+    currentPlanId: "WriterHabit_plus_yearly",
+    id: `entitlement-${ownerUserId}-${overrides.status ?? "active"}`,
+    managementUrl: null,
+    ownerUserId,
+    provider: "revenuecat",
+    providerCustomerId: ownerUserId,
+    providerLastEventId: null,
+    providerLastEventTimestampMs: null,
+    providerLastEventType: null,
+    providerSubscriptionId: `${ownerUserId}:WriterHabit_plus_yearly`,
+    scopeId: null,
+    scopeType: "personal",
+    status: "active",
+    trialEndsAt: null,
+    updatedAt: "2026-06-11T08:00:00.000Z",
     ...overrides,
   };
 }
@@ -746,6 +777,34 @@ describe("WriterHabit writing loop API", () => {
         assignmentsCompleted: 1,
         revisionsCompleted: 1,
       });
+    });
+
+    it("redacts rubric detail until the caller has a verified Plus entitlement", async () => {
+      const submissionId = await createSubmission({
+        idempotencyKey: "key-rubric-redaction",
+      });
+      await publishFeedback(submissionId);
+
+      const freeFeedback = await inject(studentToken, {
+        method: "GET",
+        url: `/api/v1/submissions/${submissionId}/feedback`,
+      });
+      expect(freeFeedback.statusCode).toBe(200);
+      expect(freeFeedback.json().review.rubricScores).toEqual([]);
+
+      database.entitlements.push(makeEntitlement("user-student-1"));
+
+      const plusFeedback = await inject(studentToken, {
+        method: "GET",
+        url: `/api/v1/submissions/${submissionId}/feedback`,
+      });
+      expect(plusFeedback.statusCode).toBe(200);
+      expect(plusFeedback.json().review.rubricScores).toEqual([
+        expect.objectContaining({
+          criterionId: "criterion-1",
+          maxScore: 4,
+        }),
+      ]);
     });
 
     it("returns processing before feedback is published and rejects early revisions", async () => {

@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import * as Linking from "expo-linking";
 
 import { useAuthStore } from "./authStore";
+import { sessionService } from "./sessionService";
 
 export function AuthSessionProvider({ children }: { children: ReactNode }) {
   const hydrateSession = useAuthStore((state) => state.hydrateSession);
@@ -24,51 +25,39 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      void import("./sessionService").then(({ sessionService }) => {
-        if (!isMounted) {
+      const handleAuthCallbackUrl = async (url: string | null) => {
+        if (!url || !isMounted) {
           return;
         }
 
-        const handleAuthCallbackUrl = async (url: string | null) => {
-          if (!url || !isMounted) {
-            return;
+        try {
+          const recoveredSession = await sessionService.recoverSessionFromUrl(url);
+
+          if (recoveredSession && isMounted) {
+            setSession(recoveredSession);
           }
-
-          try {
-            const recoveredSession = await sessionService.recoverSessionFromUrl(url);
-
-            if (recoveredSession && isMounted) {
-              setSession(recoveredSession);
-            }
-          } catch {
-            if (isMounted) {
-              setErrorCode("sign_in_failed");
-            }
-          }
-        };
-
-        const deepLinkSubscription = Linking.addEventListener("url", (event) => {
-          void handleAuthCallbackUrl(event.url);
-        });
-        removeDeepLinkListener = () => {
-          deepLinkSubscription.remove();
-        };
-
-        void Linking.getInitialURL().then(handleAuthCallbackUrl).catch(() => {
+        } catch {
           if (isMounted) {
             setErrorCode("sign_in_failed");
           }
-        });
-
-        unsubscribe = sessionService.subscribeToSessionChanges((session) => {
-          setSession(session);
-        });
-      }).catch(() => {
-        if (!isMounted) {
-          return;
         }
+      };
 
-        useAuthStore.getState().setErrorCode("restore_failed");
+      const deepLinkSubscription = Linking.addEventListener("url", (event) => {
+        void handleAuthCallbackUrl(event.url);
+      });
+      removeDeepLinkListener = () => {
+        deepLinkSubscription.remove();
+      };
+
+      void Linking.getInitialURL().then(handleAuthCallbackUrl).catch(() => {
+        if (isMounted) {
+          setErrorCode("sign_in_failed");
+        }
+      });
+
+      unsubscribe = sessionService.subscribeToSessionChanges((session) => {
+        setSession(session);
       });
     });
 

@@ -59,8 +59,8 @@ export function useSubscriptions(): SubscriptionsState {
   const userId = session?.user.id ?? "local-user";
   const role = session?.user.role ?? "student";
   const gradeLevel = session?.user.gradeLevel;
-  const sessionSubscriptionStatus = session?.subscriptionStatus ?? "free";
-  const queryKey = ["subscriptions", userId, role, gradeLevel, sessionSubscriptionStatus] as const;
+  const sessionSource = session?.source ?? "mock";
+  const queryKey = ["subscriptions", userId, role, gradeLevel, sessionSource] as const;
   const fallbackGradeBand = getFallbackGradeBand(gradeLevel);
 
   const query = useQuery({
@@ -69,24 +69,11 @@ export function useSubscriptions(): SubscriptionsState {
       subscriptionsApi.getEntitlements({
         gradeLevel,
         role,
-        sessionSubscriptionStatus,
+        sessionSource,
         userId,
       }),
     queryKey,
   });
-
-  const updateSessionSubscriptionStatus = (
-    result: SubscriptionCheckoutResult | SubscriptionRestoreResult,
-  ) => {
-    if (!session) {
-      return;
-    }
-
-    auth.setSession({
-      ...session,
-      subscriptionStatus: result.entitlement.status,
-    });
-  };
 
   const checkoutMutation = useMutation({
     mutationFn: (planId: SubscriptionPlanId) =>
@@ -94,12 +81,11 @@ export function useSubscriptions(): SubscriptionsState {
         gradeLevel,
         planId,
         role,
-        sessionSubscriptionStatus,
+        sessionSource,
         userId,
       }),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result.entitlement);
-      updateSessionSubscriptionStatus(result);
     },
   });
 
@@ -108,14 +94,11 @@ export function useSubscriptions(): SubscriptionsState {
       subscriptionsApi.restorePurchases({
         gradeLevel,
         role,
-        sessionSubscriptionStatus,
+        sessionSource,
         userId,
       }),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result.entitlement);
-      if (result.status === "restored") {
-        updateSessionSubscriptionStatus(result);
-      }
     },
   });
 

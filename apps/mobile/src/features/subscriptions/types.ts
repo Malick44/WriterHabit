@@ -4,7 +4,16 @@ import type { AuthSession, NavigableUserRole } from "@/core/auth/authTypes";
 import type { GradeBand } from "@/design/tokens";
 import type { TranslationKey } from "@/i18n";
 
-export const subscriptionStatusSchema = z.enum(["free", "trial", "active", "past_due"]);
+export const subscriptionStatusSchema = z.enum([
+  "free",
+  "trial",
+  "active",
+  "past_due",
+  "canceled",
+  "expired",
+  "refunded",
+  "grace_period",
+]);
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
 
 export const subscriptionScenarioSchema = z.enum([
@@ -49,6 +58,7 @@ export const subscriptionPlanSchema = z.object({
   billingPeriod: z.enum(["month", "year"]),
   isRecommended: z.boolean(),
   priceLabel: z.string().min(1),
+  productId: z.string().min(1).optional(),
   trialDays: z.number().int().nonnegative(),
 });
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
@@ -72,6 +82,7 @@ export const subscriptionApiResponseSchema = z.object({
   canAccessPremium: z.boolean(),
   connectionStatus: subscriptionConnectionStatusSchema,
   currentPlanId: subscriptionPlanIdSchema.nullable(),
+  currentPeriodEndsAt: z.string().datetime().nullable().optional(),
   features: z.array(subscriptionFeatureSchema),
   generatedAt: z.string().datetime(),
   managementUrl: z.string().url().nullable(),
@@ -79,6 +90,7 @@ export const subscriptionApiResponseSchema = z.object({
   renewalLabel: z.string().min(1).nullable(),
   role: z.enum(["student", "parent", "teacher", "admin"]),
   status: subscriptionStatusSchema,
+  trialEndsAt: z.string().datetime().nullable().optional(),
   trustLinks: subscriptionTrustLinksSchema,
   userId: z.string().min(1),
 });
@@ -88,9 +100,12 @@ export type SubscriptionApiResponse = z.infer<typeof subscriptionApiResponseSche
 };
 
 export const subscriptionCheckoutResultSchema = z.object({
+  appUserId: z.string().min(1).optional(),
   entitlement: subscriptionApiResponseSchema,
   planId: subscriptionPlanIdSchema,
-  status: z.enum(["activated_preview"]),
+  productId: z.string().min(1).optional(),
+  provider: z.enum(["revenuecat"]).optional(),
+  status: z.enum(["pending_store_purchase"]),
 });
 export type SubscriptionCheckoutResult = z.infer<typeof subscriptionCheckoutResultSchema> & {
   entitlement: SubscriptionApiResponse;
@@ -107,7 +122,7 @@ export type SubscriptionRestoreResult = z.infer<typeof subscriptionRestoreResult
 export interface SubscriptionApiInput {
   gradeLevel?: number;
   role: NavigableUserRole;
-  sessionSubscriptionStatus: AuthSession["subscriptionStatus"];
+  sessionSource: AuthSession["source"];
   userId: string;
 }
 
@@ -116,7 +131,7 @@ export interface SubscriptionCheckoutInput extends SubscriptionApiInput {
 }
 
 export interface SubscriptionRestoreInput extends SubscriptionApiInput {
-  expectedStatus?: AuthSession["subscriptionStatus"];
+  idempotencyKey?: string;
 }
 
 export interface SubscriptionGradeAdaptation {

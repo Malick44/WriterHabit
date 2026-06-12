@@ -12,33 +12,36 @@ import { UpgradePromptCard } from "./UpgradePromptCard";
 
 interface EntitlementGateProps {
   children: ReactNode;
+  fallbackWrapper?: (content: ReactNode) => ReactNode;
   featureId: PremiumFeatureId;
   onContinueFreePress?: () => void;
 }
 
 export function EntitlementGate({
   children,
+  fallbackWrapper,
   featureId,
   onContinueFreePress,
 }: EntitlementGateProps) {
   const router = useRouter();
   const { t } = useI18n();
   const state = useSubscriptions();
+  const renderFallback = (content: ReactNode) => (fallbackWrapper ? fallbackWrapper(content) : content);
 
   if (state.status === "loading") {
-    return (
+    return renderFallback(
       <LoadingState
         accessibilityLabel={t("subscriptions.gate.loadingAccessibility")}
         description={t("subscriptions.gate.loadingDescription")}
         gradeBand={state.gradeBand}
         label={t("subscriptions.gate.loadingTitle")}
         testID="entitlement-gate-loading"
-      />
+      />,
     );
   }
 
   if (state.status === "error") {
-    return (
+    return renderFallback(
       <ErrorState
         accessibilityLabel={t("subscriptions.gate.errorAccessibility")}
         actionLabel={t("common.retry")}
@@ -47,12 +50,12 @@ export function EntitlementGate({
         onActionPress={state.refetch}
         testID="entitlement-gate-error"
         title={t("subscriptions.gate.errorTitle")}
-      />
+      />,
     );
   }
 
   if (state.status === "empty") {
-    return (
+    return renderFallback(
       <EmptyState
         accessibilityLabel={t("subscriptions.gate.emptyAccessibility")}
         actionLabel={t("subscriptions.gate.viewPlansCta")}
@@ -61,7 +64,7 @@ export function EntitlementGate({
         onActionPress={() => router.push(routes.paywall)}
         testID="entitlement-gate-empty"
         title={t("subscriptions.gate.emptyTitle")}
-      />
+      />,
     );
   }
 
@@ -75,13 +78,13 @@ export function EntitlementGate({
     return children;
   }
 
-  return (
+  return renderFallback(
     <UpgradePromptCard
       featureId={featureId}
       gateReason={decision.reason}
       gradeBand={state.gradeBand}
       onContinueFreePress={onContinueFreePress}
       onUpgradePress={() => router.push(routes.paywall)}
-    />
+    />,
   );
 }

@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import type {
   ActivityDateRange,
+  ApplyEntitlementProviderEventInput,
+  ApplyEntitlementProviderEventResult,
   AssignmentRecord,
   BadgeRecord,
   ClassRecord,
@@ -10,6 +12,8 @@ import type {
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
+  EntitlementProviderEventRecord,
+  EntitlementRecord,
   FeedbackRecord,
   FeedbackRubricScoreRecord,
   FeedbackWithDetails,
@@ -36,10 +40,15 @@ import type {
   SubmissionRevisionRecord,
   TeacherProfileRecord,
   TransitionReviewJobInput,
+  UpsertEntitlementInput,
   WeeklyReviewRecord,
 } from "./types";
 import { ApiHttpError, createResourceNotFoundError } from "../runtime/errors";
 import { assertReviewJobTransition } from "../features/workflows/writing-workflow-state-machine";
+import {
+  shouldIgnoreStaleProviderEvent,
+  withStaleProviderEventMetadata,
+} from "./entitlement-event-ordering";
 
 export interface MemoryParentLink {
   parentUserId: string;
@@ -71,6 +80,8 @@ export interface MemoryDatabaseSeed {
   classStudents?: MemoryClassStudent[];
   classes?: ClassRecord[];
   drafts?: DraftRecord[];
+  entitlementProviderEvents?: EntitlementProviderEventRecord[];
+  entitlements?: EntitlementRecord[];
   feedback?: FeedbackRecord[];
   feedbackRubricScores?: FeedbackRubricScoreRecord[];
   grammarSuggestions?: GrammarSuggestionRecord[];
@@ -108,6 +119,8 @@ export class MemoryDatabase implements Database {
   readonly classStudents: MemoryClassStudent[];
   readonly classes: ClassRecord[];
   readonly drafts: DraftRecord[];
+  readonly entitlementProviderEvents: EntitlementProviderEventRecord[];
+  readonly entitlements: EntitlementRecord[];
   readonly feedback: FeedbackRecord[];
   readonly feedbackRubricScores: FeedbackRubricScoreRecord[];
   readonly grammarSuggestions: GrammarSuggestionRecord[];
@@ -135,6 +148,8 @@ export class MemoryDatabase implements Database {
     this.classStudents = [...(seed.classStudents ?? [])];
     this.classes = [...(seed.classes ?? [])];
     this.drafts = [...(seed.drafts ?? [])];
+    this.entitlementProviderEvents = [...(seed.entitlementProviderEvents ?? [])];
+    this.entitlements = [...(seed.entitlements ?? [])];
     this.feedback = [...(seed.feedback ?? [])];
     this.feedbackRubricScores = [...(seed.feedbackRubricScores ?? [])];
     this.grammarSuggestions = [...(seed.grammarSuggestions ?? [])];
@@ -216,6 +231,131 @@ export class MemoryDatabase implements Database {
         .map((record) => ({ ...record })),
       studentAssignment: { ...studentAssignment, dailySelectionMetadata: { ...studentAssignment.dailySelectionMetadata } },
       submission: { ...submission, canvasDocumentIds: [...submission.canvasDocumentIds] },
+    };
+  }
+
+  private copyEntitlement(record: EntitlementRecord): EntitlementRecord {
+    return { ...record };
+  }
+
+  private copyEntitlementProviderEvent(record: EntitlementProviderEventRecord): EntitlementProviderEventRecord {
+    return { ...record, metadata: { ...record.metadata } };
+  }
+
+  private createFreeEntitlement(input: UpsertEntitlementInput): EntitlementRecord {
+    const timestamp = nowIso();
+
+    return {
+      billingPeriod: input.billingPeriod,
+      canAccessPremium: input.canAccessPremium,
+      createdAt: timestamp,
+      currentPeriodEndsAt: input.currentPeriodEndsAt,
+      currentPlanId: input.currentPlanId,
+      id: randomUUID(),
+      managementUrl: input.managementUrl,
+      ownerUserId: input.ownerUserId,
+      provider: input.provider,
+      providerCustomerId: input.providerCustomerId,
+      providerLastEventId: input.providerLastEventId ?? null,
+      providerLastEventTimestampMs: input.providerLastEventTimestampMs ?? null,
+      providerLastEventType: input.providerLastEventType ?? null,
+      providerSubscriptionId: input.providerSubscriptionId,
+      scopeId: input.scopeId,
+      scopeType: input.scopeType,
+      status: input.status,
+      trialEndsAt: input.trialEndsAt,
+      updatedAt: timestamp,
+    };
+  }
+
+  private findMatchingEntitlement(input: UpsertEntitlementInput): EntitlementRecord | undefined {
+    if (input.provider && input.providerSubscriptionId) {
+      return this.entitlements.find(
+        (record) =>
+          record.provider === input.provider &&
+          record.providerSubscriptionId === input.providerSubscriptionId,
+      );
+    }
+
+    return this.entitlements.find(
+      (record) =>
+        record.ownerUserId === input.ownerUserId &&
+        record.scopeType === input.scopeType &&
+        record.scopeId === input.scopeId &&
+        record.provider === input.provider,
+    );
+  }
+
+  async applyEntitlementProviderEvent(
+    input: ApplyEntitlementProviderEventInput,
+  ): Promise<ApplyEntitlementProviderEventResult> {
+    const existing = this.entitlementProviderEvents.find(
+      (record) =>
+        record.provider === input.provider &&
+        record.providerEventId === input.providerEventId,
+    );
+    let event = existing;
+    let wasDuplicate = Boolean(existing);
+
+    if (!event) {
+      event = {
+        eventType: input.eventType,
+        id: randomUUID(),
+        metadata: { ...input.metadata },
+        ownerUserId: input.ownerUserId,
+        processedAt: null,
+        processingStatus: "received",
+        provider: input.provider,
+        providerEventId: input.providerEventId,
+        receivedAt: nowIso(),
+      };
+      this.entitlementProviderEvents.push(event);
+    }
+
+    if (wasDuplicate && (event.processingStatus === "processed" || event.processingStatus === "ignored")) {
+      return {
+        entitlement: input.ownerUserId ? await this.getLatestEntitlementForUser(input.ownerUserId) : null,
+        event: this.copyEntitlementProviderEvent(event),
+        wasDuplicate,
+      };
+    }
+
+    let entitlement: EntitlementRecord | null = null;
+    let metadata = { ...input.metadata };
+    let processingStatus = input.processingStatus ?? (input.entitlement ? "processed" : "ignored");
+
+    if (input.entitlement) {
+      const existingEntitlement = this.findMatchingEntitlement(input.entitlement);
+
+      if (
+        existingEntitlement &&
+        shouldIgnoreStaleProviderEvent({
+          existing: this.copyEntitlement(existingEntitlement),
+          incoming: input.entitlement,
+        })
+      ) {
+        entitlement = this.copyEntitlement(existingEntitlement);
+        metadata = withStaleProviderEventMetadata({
+          existing: entitlement,
+          incoming: input.entitlement,
+          metadata,
+        });
+        processingStatus = "ignored";
+      } else {
+        entitlement = await this.upsertEntitlement(input.entitlement);
+      }
+    }
+
+    event.eventType = input.eventType;
+    event.metadata = metadata;
+    event.ownerUserId = input.ownerUserId;
+    event.processedAt = nowIso();
+    event.processingStatus = processingStatus;
+
+    return {
+      entitlement,
+      event: this.copyEntitlementProviderEvent(event),
+      wasDuplicate,
     };
   }
 
@@ -443,6 +583,14 @@ export class MemoryDatabase implements Database {
   async getFeedbackBySubmissionId(submissionId: string): Promise<FeedbackWithDetails | null> {
     const feedback = this.feedback.find((record) => record.submissionId === submissionId);
     return feedback ? this.withFeedbackDetails(feedback) : null;
+  }
+
+  async getLatestEntitlementForUser(ownerUserId: string): Promise<EntitlementRecord | null> {
+    const [record] = this.entitlements
+      .filter((candidate) => candidate.ownerUserId === ownerUserId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+
+    return record ? this.copyEntitlement(record) : null;
   }
 
   async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
@@ -940,5 +1088,42 @@ export class MemoryDatabase implements Database {
     }
 
     record.updatedAt = nowIso();
+  }
+
+  async upsertEntitlement(input: UpsertEntitlementInput): Promise<EntitlementRecord> {
+    const existing = this.findMatchingEntitlement(input);
+    const timestamp = nowIso();
+
+    if (!existing) {
+      const entitlement = this.createFreeEntitlement(input);
+      this.entitlements.push(entitlement);
+      return this.copyEntitlement(entitlement);
+    }
+
+    existing.billingPeriod = input.billingPeriod;
+    existing.canAccessPremium = input.canAccessPremium;
+    existing.currentPeriodEndsAt = input.currentPeriodEndsAt;
+    existing.currentPlanId = input.currentPlanId;
+    existing.managementUrl = input.managementUrl;
+    existing.ownerUserId = input.ownerUserId;
+    existing.provider = input.provider;
+    existing.providerCustomerId = input.providerCustomerId;
+    if (input.providerLastEventId !== undefined) {
+      existing.providerLastEventId = input.providerLastEventId;
+    }
+    if (input.providerLastEventTimestampMs !== undefined) {
+      existing.providerLastEventTimestampMs = input.providerLastEventTimestampMs;
+    }
+    if (input.providerLastEventType !== undefined) {
+      existing.providerLastEventType = input.providerLastEventType;
+    }
+    existing.providerSubscriptionId = input.providerSubscriptionId;
+    existing.scopeId = input.scopeId;
+    existing.scopeType = input.scopeType;
+    existing.status = input.status;
+    existing.trialEndsAt = input.trialEndsAt;
+    existing.updatedAt = timestamp;
+
+    return this.copyEntitlement(existing);
   }
 }

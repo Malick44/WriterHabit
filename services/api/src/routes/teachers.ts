@@ -13,6 +13,7 @@ import {
   authorizeSubmissionRead,
   requirePrincipal,
 } from "../runtime/authorization";
+import { assertPremiumFeatureAccess } from "../features/subscriptions/entitlement-authorization";
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
 import { localizedCopy, mapSubmissionResponse } from "./writing-shared";
 import { currentWeekRange, emptyProgressTotals, type IsoDateRange } from "./dashboards-shared";
@@ -166,6 +167,7 @@ export async function registerTeacherRoutes(
     const principal = requirePrincipal(request);
     const params = validateRequestParams(request, classParamsSchema);
     const { classRecord } = await authorizeOwnedClassRead(database, principal, params.classId);
+    await assertPremiumFeatureAccess(database, principal, "teacher_class_insights");
 
     const week = currentWeekRange();
     const roster = await database.listClassStudents(classRecord.id, classRosterLimit);

@@ -18,7 +18,11 @@ import { colors } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
-import { AppHeader } from "@/shared/components/navigation";
+import {
+  AppHeader,
+  BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
+  useBottomMenuScrollHandler,
+} from "@/shared/components/navigation";
 import { dashboardRadius, dashboardSpacing } from "@/shared/styles/dashboardMetrics";
 import {
   getAccessibleColors,
@@ -128,6 +132,7 @@ export function TeacherDashboardScreen() {
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
   const [isInsightVisible, setIsInsightVisible] = useState(false);
+  const handleBottomMenuScroll = useBottomMenuScrollHandler();
   const insightDismissedKey = `${INSIGHT_DISMISSED_KEY_PREFIX}.${session?.user.id ?? "preview-teacher"}`;
 
   useEffect(() => {
@@ -212,13 +217,15 @@ export function TeacherDashboardScreen() {
         ]}
         showSafeArea={false}
         style={[styles.header, isTablet ? styles.headerTablet : null]}
-        titleKey="common.appName"
+        titleKey="common.dashboard"
         variant="compact"
       />
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, isTablet ? styles.scrollContentTablet : null]}
         contentInsetAdjustmentBehavior="automatic"
+        onScroll={handleBottomMenuScroll}
+        scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
         showsVerticalScrollIndicator={false}
         testID="teacher-dashboard-screen"
       >

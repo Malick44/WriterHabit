@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routeNames";
 import { colors, layout, radius, shadows, spacing } from "@/design/tokens";
+import { EntitlementGate } from "@/features/subscriptions";
 import { useI18n, type Locale, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
@@ -304,11 +305,13 @@ export function StudentProgressScreen() {
                 isTablet={isTablet}
                 onOpenBadges={handleOpenBadges}
               />
-              <AssignmentHistorySection
-                isTablet={isTablet}
-                onOpenAssignments={handleOpenAssignments}
-                rows={buildHistoryRows(t, locale, state.viewModel)}
-              />
+              <EntitlementGate featureId="extended_progress_history">
+                <AssignmentHistorySection
+                  isTablet={isTablet}
+                  onOpenAssignments={handleOpenAssignments}
+                  rows={buildHistoryRows(t, locale, state.viewModel)}
+                />
+              </EntitlementGate>
             </>
           ) : null}
         </View>

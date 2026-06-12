@@ -2,6 +2,10 @@ import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 
 import type { Database } from "../data/types";
+import {
+  assertPremiumFeatureAccess,
+  canAccessPremiumFeature,
+} from "../features/subscriptions/entitlement-authorization";
 import { authorizeStudentScopeRead, requirePrincipal } from "../runtime/authorization";
 import { createResourceNotFoundError } from "../runtime/errors";
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
@@ -41,13 +45,18 @@ export async function registerProgressRoutes(
     const principal = requirePrincipal(request);
     const params = validateRequestParams(request, studentParamsSchema);
     const profile = await authorizeStudentScopeRead(database, principal, params.studentId);
+    const includeExtendedProgress = await canAccessPremiumFeature(
+      database,
+      principal,
+      "extended_progress_history",
+    );
 
     const [totalsRows, skills, badges, studentBadges, weeklyReview] = await Promise.all([
       database.listProgressTotalsForStudents([profile.id]),
       database.listSkillProgressForStudents([profile.id]),
       database.listActiveBadges(badgeCatalogLimit),
       database.listStudentBadges(profile.id),
-      database.getLatestWeeklyReview(profile.id),
+      includeExtendedProgress ? database.getLatestWeeklyReview(profile.id) : Promise.resolve(null),
     ]);
 
     const now = new Date();
@@ -84,6 +93,7 @@ export async function registerProgressRoutes(
       const principal = requirePrincipal(request);
       const params = validateRequestParams(request, skillParamsSchema);
       const profile = await authorizeStudentScopeRead(database, principal, params.studentId);
+      await assertPremiumFeatureAccess(database, principal, "extended_progress_history");
 
       const skills = await database.listSkillProgressForStudents([profile.id]);
       const skill = skills.find((record) => record.skill === params.skillId);
@@ -137,6 +147,7 @@ export async function registerProgressRoutes(
     const principal = requirePrincipal(request);
     const params = validateRequestParams(request, studentParamsSchema);
     const profile = await authorizeStudentScopeRead(database, principal, params.studentId);
+    await assertPremiumFeatureAccess(database, principal, "extended_progress_history");
 
     const weeklyReview = await database.getLatestWeeklyReview(profile.id);
 

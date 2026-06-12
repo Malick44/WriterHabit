@@ -202,12 +202,13 @@ export function PaywallScreen() {
                 </Stack>
               </PageSection>
 
-              {state.checkoutStatus === "success" ? (
-                <SuccessState
-                  accessibilityLabel={t("subscriptions.checkout.successAccessibility")}
-                  description={t("subscriptions.checkout.successDescription")}
+              {state.checkoutResult?.status === "pending_store_purchase" ? (
+                <StatusState
+                  accessibilityLabel={t("subscriptions.checkout.pendingAccessibility")}
+                  description={t("subscriptions.checkout.pendingDescription")}
                   gradeBand={state.gradeBand}
-                  title={t("subscriptions.checkout.successTitle")}
+                  title={t("subscriptions.checkout.pendingTitle")}
+                  tone="info"
                 />
               ) : null}
 

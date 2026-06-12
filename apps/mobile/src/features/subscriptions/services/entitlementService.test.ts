@@ -95,7 +95,22 @@ describe("entitlementService", () => {
   it("detects premium entitlement from active and trial states", () => {
     expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "active" }))).toBe(true);
     expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "trial" }))).toBe(true);
+    expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "grace_period" }))).toBe(true);
+    expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "canceled" }))).toBe(true);
     expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: false, status: "free" }))).toBe(false);
+  });
+
+  it("does not unlock premium for expired or refunded server states", () => {
+    expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "expired" }))).toBe(false);
+    expect(hasPremiumEntitlement(createEntitlement({ canAccessPremium: true, status: "refunded" }))).toBe(false);
+    expect(evaluateEntitlementGate(createEntitlement({ canAccessPremium: false, status: "expired" }), "rubric_detail")).toEqual({
+      allowed: false,
+      reason: "premium_required",
+    });
+    expect(evaluateEntitlementGate(createEntitlement({ canAccessPremium: false, status: "refunded" }), "rubric_detail")).toEqual({
+      allowed: false,
+      reason: "premium_required",
+    });
   });
 
   it("blocks premium features for free users and allows active users", () => {

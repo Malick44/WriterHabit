@@ -104,6 +104,30 @@ const errorCatalog = {
     retryable: true,
     statusCode: 500,
   },
+  "subscription.checkout_unavailable": {
+    fallbackMessage: "Store checkout is not available yet. Your plan was not changed.",
+    messageKey: "errors.subscription.checkoutUnavailable",
+    retryable: false,
+    statusCode: 409,
+  },
+  "subscription.plan_not_found": {
+    fallbackMessage: "That plan is not available.",
+    messageKey: "errors.subscription.planNotFound",
+    retryable: false,
+    statusCode: 404,
+  },
+  "subscription.entitlement_required": {
+    fallbackMessage: "Upgrade to WriterHabit Plus to use this feature.",
+    messageKey: "errors.subscription.entitlementRequired",
+    retryable: false,
+    statusCode: 402,
+  },
+  "subscription.provider_unconfigured": {
+    fallbackMessage: "Purchase restore is not configured yet. Your plan was not changed.",
+    messageKey: "errors.subscription.providerUnconfigured",
+    retryable: false,
+    statusCode: 503,
+  },
   "validation.empty_submission": {
     fallbackMessage: "Add your own writing before submitting.",
     messageKey: "errors.validation.emptySubmission",
@@ -121,6 +145,12 @@ const errorCatalog = {
     messageKey: "errors.validation.invalidJson",
     retryable: false,
     statusCode: 400,
+  },
+  "webhook.invalid_signature": {
+    fallbackMessage: "Webhook authorization could not be verified.",
+    messageKey: "errors.webhook.invalidSignature",
+    retryable: false,
+    statusCode: 401,
   },
 } satisfies Record<string, ErrorCatalogEntry>;
 

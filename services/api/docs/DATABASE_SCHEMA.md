@@ -2,7 +2,7 @@
 
 Status: Supabase/Postgres schema draft with a controlled migration/RLS test
 runner, applied to the configured development Supabase instance through
-`202606110002_resource_rls_hardening.sql` on 2026-06-11.
+`202606110006_subscription_event_ordering.sql` on 2026-06-11.
 The current mobile app still uses Supabase auth, feature-owned deterministic
 mock APIs, and local device storage. A Fastify API runtime shell now exists in
 `services/api/`, but these tables are not wired to production route handlers
@@ -14,6 +14,10 @@ yet. The migration files live in:
 - `services/api/migrations/202606100002_canvas_document_stroke_count.sql`
 - `services/api/migrations/202606110001_server_owned_roles.sql`
 - `services/api/migrations/202606110002_resource_rls_hardening.sql`
+- `services/api/migrations/202606110003_workflow_state_machines.sql`
+- `services/api/migrations/202606110004_review_job_lifecycle.sql`
+- `services/api/migrations/202606110005_subscription_entitlement_lifecycle.sql`
+- `services/api/migrations/202606110006_subscription_event_ordering.sql`
 
 Use `node scripts/supabase-migrations.mjs apply-and-verify` to apply ordered
 migrations with checksum tracking and run the rollback-only RLS verification
@@ -135,6 +139,16 @@ status transition.
 | `notification_preferences` | Per-student notification settings. | Unique student profile, weekday/time checks. |
 | `notification_devices` | Backend-only push device registration metadata. | Owner user FK, token hash uniqueness, encrypted token field, platform check. |
 | `prepared_notifications` | Scheduled notification payload metadata. | FK student, notification type/status checks, due partial index. |
+
+`202606110005_subscription_entitlement_lifecycle.sql` expands
+`entitlements.status` from the local scaffold states to
+`free`, `trial`, `active`, `past_due`, `canceled`, `expired`, `refunded`, and
+`grace_period`, and adds an owner/update index for entitlement reads.
+`202606110006_subscription_event_ordering.sql` adds
+`provider_last_event_id`, `provider_last_event_timestamp_ms`, and
+`provider_last_event_type` to `entitlements` so RevenueCat webhook processing
+can ignore delayed older events for the same provider subscription while still
+recording the provider event row for audit.
 
 Push tokens should be encrypted or otherwise protected by backend infrastructure.
 Application logs and docs should use token hashes or opaque IDs only.

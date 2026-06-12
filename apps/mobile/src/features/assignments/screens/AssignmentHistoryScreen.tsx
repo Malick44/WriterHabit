@@ -7,7 +7,11 @@ import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
-import { AppHeader } from "@/shared/components/navigation";
+import {
+  AppHeader,
+  BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
+  useBottomMenuScrollHandler,
+} from "@/shared/components/navigation";
 
 import { AssignmentHistoryTabs, AssignmentListCard } from "../components";
 import { useAssignmentHistoryData } from "../hooks/useAssignments";
@@ -18,6 +22,7 @@ export function AssignmentHistoryScreen() {
   const { t } = useI18n();
   const [selectedTab, setSelectedTab] = useState<AssignmentHistoryTab>("all");
   const state = useAssignmentHistoryData(selectedTab);
+  const handleBottomMenuScroll = useBottomMenuScrollHandler();
 
   const renderAssignment = useCallback(
     ({ item }: { item: AssignmentRecord }) => (
@@ -75,6 +80,8 @@ export function AssignmentHistoryScreen() {
           renderItem={renderAssignment}
           ItemSeparatorComponent={ItemSeparator}
           contentContainerStyle={styles.listContent}
+          onScroll={handleBottomMenuScroll}
+          scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Stack gap="lg" style={styles.listHeader}>

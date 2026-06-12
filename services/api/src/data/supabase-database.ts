@@ -3,6 +3,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ApiHttpError } from "../runtime/errors";
 import type {
   ActivityDateRange,
+  ApplyEntitlementProviderEventInput,
+  ApplyEntitlementProviderEventResult,
   AssignmentRecord,
   BadgeRecord,
   ClassRecord,
@@ -11,6 +13,8 @@ import type {
   CreateSubmissionRevisionInput,
   Database,
   DraftRecord,
+  EntitlementProviderEventRecord,
+  EntitlementRecord,
   FeedbackRecord,
   FeedbackRubricScoreRecord,
   FeedbackWithDetails,
@@ -36,8 +40,13 @@ import type {
   SubmissionRevisionRecord,
   TeacherProfileRecord,
   TransitionReviewJobInput,
+  UpsertEntitlementInput,
   WeeklyReviewRecord,
 } from "./types";
+import {
+  shouldIgnoreStaleProviderEvent,
+  withStaleProviderEventMetadata,
+} from "./entitlement-event-ordering";
 
 export interface SupabaseDatabaseConfig {
   serviceRoleKey: string;
@@ -114,6 +123,12 @@ const revisionSelect =
 
 const reviewJobSelect =
   "id, submission_id, student_profile_id, status, idempotency_key, safety_flags, queued_at, started_at, completed_at, failed_at, failure_code, created_at";
+
+const entitlementSelect =
+  "id, owner_user_id, scope_type, scope_id, status, can_access_premium, current_plan_id, billing_period, provider, provider_customer_id, provider_subscription_id, provider_last_event_id, provider_last_event_timestamp_ms, provider_last_event_type, current_period_ends_at, trial_ends_at, management_url, created_at, updated_at";
+
+const entitlementProviderEventSelect =
+  "id, provider, provider_event_id, event_type, owner_user_id, received_at, processed_at, processing_status, metadata";
 
 const feedbackSelect =
   "id, submission_id, student_profile_id, grade_level, submitted_text_excerpt, strength_key, strength_fallback, improvement_key, improvement_fallback, next_revision_task_key, next_revision_task_fallback, progress_minutes, progress_points, progress_skill, created_at, updated_at";
@@ -249,6 +264,56 @@ function mapReviewJobRow(row: Record<string, unknown>): ReviewJobRecord {
     status: row.status as ReviewJobRecord["status"],
     studentProfileId: row.student_profile_id as string,
     submissionId: row.submission_id as string,
+  };
+}
+
+function mapEntitlementRow(row: Record<string, unknown>): EntitlementRecord {
+  return {
+    billingPeriod: (row.billing_period as EntitlementRecord["billingPeriod"]) ?? null,
+    canAccessPremium: Boolean(row.can_access_premium),
+    createdAt: row.created_at as string,
+    currentPeriodEndsAt: (row.current_period_ends_at as string | null) ?? null,
+    currentPlanId: (row.current_plan_id as EntitlementRecord["currentPlanId"]) ?? null,
+    id: row.id as string,
+    managementUrl: (row.management_url as string | null) ?? null,
+    ownerUserId: row.owner_user_id as string,
+    provider: (row.provider as EntitlementRecord["provider"]) ?? null,
+    providerCustomerId: (row.provider_customer_id as string | null) ?? null,
+    providerLastEventId: (row.provider_last_event_id as string | null) ?? null,
+    providerLastEventTimestampMs: nullableNumber(row.provider_last_event_timestamp_ms),
+    providerLastEventType: (row.provider_last_event_type as string | null) ?? null,
+    providerSubscriptionId: (row.provider_subscription_id as string | null) ?? null,
+    scopeId: (row.scope_id as string | null) ?? null,
+    scopeType: row.scope_type as EntitlementRecord["scopeType"],
+    status: row.status as EntitlementRecord["status"],
+    trialEndsAt: (row.trial_ends_at as string | null) ?? null,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function nullableNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+
+  return null;
+}
+
+function mapEntitlementProviderEventRow(row: Record<string, unknown>): EntitlementProviderEventRecord {
+  return {
+    eventType: row.event_type as string,
+    id: row.id as string,
+    metadata: (row.metadata as Record<string, unknown> | null) ?? {},
+    ownerUserId: (row.owner_user_id as string | null) ?? null,
+    processedAt: (row.processed_at as string | null) ?? null,
+    processingStatus: row.processing_status as EntitlementProviderEventRecord["processingStatus"],
+    provider: row.provider as EntitlementProviderEventRecord["provider"],
+    providerEventId: row.provider_event_id as string,
+    receivedAt: row.received_at as string,
   };
 }
 
@@ -473,6 +538,171 @@ export class SupabaseDatabase implements Database {
 
   constructor(client: SupabaseClient) {
     this.client = client;
+  }
+
+  private async findEntitlementForUpsert(input: UpsertEntitlementInput): Promise<EntitlementRecord | null> {
+    if (input.provider && input.providerSubscriptionId) {
+      const { data, error } = await this.client
+        .from("entitlements")
+        .select(entitlementSelect)
+        .eq("provider", input.provider)
+        .eq("provider_subscription_id", input.providerSubscriptionId)
+        .maybeSingle();
+
+      if (error) {
+        throw toDatabaseError(error, "entitlements.findByProviderSubscription");
+      }
+
+      return data ? mapEntitlementRow(data as Record<string, unknown>) : null;
+    }
+
+    let query = this.client
+      .from("entitlements")
+      .select(entitlementSelect)
+      .eq("owner_user_id", input.ownerUserId)
+      .eq("scope_type", input.scopeType)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (input.scopeId) {
+      query = query.eq("scope_id", input.scopeId);
+    } else {
+      query = query.is("scope_id", null);
+    }
+
+    if (input.provider) {
+      query = query.eq("provider", input.provider);
+    } else {
+      query = query.is("provider", null);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw toDatabaseError(error, "entitlements.findForUpsert");
+    }
+
+    const row = (data as Record<string, unknown>[] | null)?.[0];
+    return row ? mapEntitlementRow(row) : null;
+  }
+
+  private async getEntitlementProviderEvent(
+    provider: EntitlementProviderEventRecord["provider"],
+    providerEventId: string,
+  ): Promise<EntitlementProviderEventRecord | null> {
+    const { data, error } = await this.client
+      .from("entitlement_provider_events")
+      .select(entitlementProviderEventSelect)
+      .eq("provider", provider)
+      .eq("provider_event_id", providerEventId)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "entitlement_provider_events.get");
+    }
+
+    return data ? mapEntitlementProviderEventRow(data as Record<string, unknown>) : null;
+  }
+
+  async applyEntitlementProviderEvent(
+    input: ApplyEntitlementProviderEventInput,
+  ): Promise<ApplyEntitlementProviderEventResult> {
+    const insertResult = await this.client
+      .from("entitlement_provider_events")
+      .insert({
+        event_type: input.eventType,
+        metadata: input.metadata,
+        owner_user_id: input.ownerUserId,
+        processing_status: "received",
+        provider: input.provider,
+        provider_event_id: input.providerEventId,
+      })
+      .select(entitlementProviderEventSelect)
+      .single();
+
+    let event: EntitlementProviderEventRecord;
+    let wasDuplicate = false;
+
+    if (insertResult.error) {
+      if (insertResult.error.code !== uniqueViolationCode) {
+        throw toDatabaseError(insertResult.error, "entitlement_provider_events.insert");
+      }
+
+      const existingEvent = await this.getEntitlementProviderEvent(input.provider, input.providerEventId);
+
+      if (!existingEvent) {
+        throw toDatabaseError(
+          { message: "duplicate entitlement provider event missing after conflict" },
+          "entitlement_provider_events.getAfterConflict",
+        );
+      }
+
+      event = existingEvent;
+      wasDuplicate = true;
+
+      if (event.processingStatus === "processed" || event.processingStatus === "ignored") {
+        return {
+          entitlement: input.ownerUserId ? await this.getLatestEntitlementForUser(input.ownerUserId) : null,
+          event,
+          wasDuplicate,
+        };
+      }
+    } else {
+      event = mapEntitlementProviderEventRow(insertResult.data as Record<string, unknown>);
+    }
+
+    let entitlement: EntitlementRecord | null = null;
+    let metadata = input.metadata;
+    let processingStatus = input.processingStatus ?? (input.entitlement ? "processed" : "ignored");
+
+    if (input.entitlement) {
+      const existingEntitlement = await this.findEntitlementForUpsert(input.entitlement);
+
+      if (
+        existingEntitlement &&
+        shouldIgnoreStaleProviderEvent({
+          existing: existingEntitlement,
+          incoming: input.entitlement,
+        })
+      ) {
+        entitlement = existingEntitlement;
+        metadata = withStaleProviderEventMetadata({
+          existing: existingEntitlement,
+          incoming: input.entitlement,
+          metadata,
+        });
+        processingStatus = "ignored";
+      } else {
+        entitlement = await this.upsertEntitlement(input.entitlement);
+      }
+    }
+
+    const processedAt = new Date().toISOString();
+    const { data, error } = await this.client
+      .from("entitlement_provider_events")
+      .update({
+        event_type: input.eventType,
+        metadata,
+        owner_user_id: input.ownerUserId,
+        processed_at: processedAt,
+        processing_status: processingStatus,
+      })
+      .eq("provider", input.provider)
+      .eq("provider_event_id", input.providerEventId)
+      .select(entitlementProviderEventSelect)
+      .single();
+
+    if (error || !data) {
+      throw toDatabaseError(error ?? { message: "missing provider event after update" }, "entitlement_provider_events.update");
+    }
+
+    event = mapEntitlementProviderEventRow(data as Record<string, unknown>);
+
+    return {
+      entitlement,
+      event,
+      wasDuplicate,
+    };
   }
 
   async countClassActiveAssignments(classId: string): Promise<number> {
@@ -753,6 +983,22 @@ export class SupabaseDatabase implements Database {
       studentAssignment,
       submission,
     };
+  }
+
+  async getLatestEntitlementForUser(ownerUserId: string): Promise<EntitlementRecord | null> {
+    const { data, error } = await this.client
+      .from("entitlements")
+      .select(entitlementSelect)
+      .eq("owner_user_id", ownerUserId)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      throw toDatabaseError(error, "entitlements.getLatestForUser");
+    }
+
+    const row = (data as Record<string, unknown>[] | null)?.[0];
+    return row ? mapEntitlementRow(row) : null;
   }
 
   async getLatestWeeklyReview(studentProfileId: string): Promise<WeeklyReviewRecord | null> {
@@ -1361,6 +1607,62 @@ export class SupabaseDatabase implements Database {
     if (error) {
       throw toDatabaseError(error, "student_assignments.update");
     }
+  }
+
+  async upsertEntitlement(input: UpsertEntitlementInput): Promise<EntitlementRecord> {
+    const existing = await this.findEntitlementForUpsert(input);
+    const values: Record<string, unknown> = {
+      billing_period: input.billingPeriod,
+      can_access_premium: input.canAccessPremium,
+      current_period_ends_at: input.currentPeriodEndsAt,
+      current_plan_id: input.currentPlanId,
+      management_url: input.managementUrl,
+      owner_user_id: input.ownerUserId,
+      provider: input.provider,
+      provider_customer_id: input.providerCustomerId,
+      provider_subscription_id: input.providerSubscriptionId,
+      scope_id: input.scopeId,
+      scope_type: input.scopeType,
+      status: input.status,
+      trial_ends_at: input.trialEndsAt,
+    };
+
+    if (input.providerLastEventId !== undefined) {
+      values.provider_last_event_id = input.providerLastEventId;
+    }
+    if (input.providerLastEventTimestampMs !== undefined) {
+      values.provider_last_event_timestamp_ms = input.providerLastEventTimestampMs;
+    }
+    if (input.providerLastEventType !== undefined) {
+      values.provider_last_event_type = input.providerLastEventType;
+    }
+
+    if (existing) {
+      const { data, error } = await this.client
+        .from("entitlements")
+        .update(values)
+        .eq("id", existing.id)
+        .select(entitlementSelect)
+        .single();
+
+      if (error || !data) {
+        throw toDatabaseError(error ?? { message: "missing entitlement after update" }, "entitlements.update");
+      }
+
+      return mapEntitlementRow(data as Record<string, unknown>);
+    }
+
+    const { data, error } = await this.client
+      .from("entitlements")
+      .insert(values)
+      .select(entitlementSelect)
+      .single();
+
+    if (error || !data) {
+      throw toDatabaseError(error ?? { message: "missing entitlement after insert" }, "entitlements.insert");
+    }
+
+    return mapEntitlementRow(data as Record<string, unknown>);
   }
 }
 

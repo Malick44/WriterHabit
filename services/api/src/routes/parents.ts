@@ -19,6 +19,7 @@ import {
   mapStreak,
   mapWeeklyReviewSummary,
 } from "./dashboards-shared";
+import { assertPremiumFeatureAccess } from "../features/subscriptions/entitlement-authorization";
 
 const maxLinkedStudents = 50;
 const dashboardStudentLimit = 20;
@@ -140,6 +141,7 @@ export async function registerParentRoutes(
         params.parentId,
         params.studentId,
       );
+      await assertPremiumFeatureAccess(database, principal, "family_progress_reports");
 
       const week = currentWeekRange();
       const [totalsRows, skills, activityDays, assignedAssignments, weeklyReview] =

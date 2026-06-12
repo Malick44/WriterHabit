@@ -28,6 +28,12 @@ function createTestConfig(): ApiConfig {
     environment: "test",
     host: "127.0.0.1",
     logLevel: "silent",
+    payments: {
+      provider: "revenuecat",
+      revenueCat: {
+        entitlementId: "plus",
+      },
+    },
     port: 3000,
   };
 }

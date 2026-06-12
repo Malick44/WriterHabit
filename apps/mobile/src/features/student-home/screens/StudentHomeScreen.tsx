@@ -29,7 +29,11 @@ import {
 import { palette } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
-import { AppHeader } from "@/shared/components/navigation";
+import {
+  AppHeader,
+  BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
+  useBottomMenuScrollHandler,
+} from "@/shared/components/navigation";
 import {
   getAccessibleColors,
   getAccessibleTextStyle,
@@ -175,6 +179,7 @@ export function StudentHomeScreen() {
   const state = useStudentHomeData();
   const viewModel = state.status === "success" ? state.viewModel : null;
   const isTablet = width >= TABLET_BREAKPOINT;
+  const handleBottomMenuScroll = useBottomMenuScrollHandler();
 
   useRegisterTunableScreen(studentHomeScreenConfig);
   useRegisterTunableComponents(studentHomeComponentConfigs);
@@ -269,6 +274,7 @@ export function StudentHomeScreen() {
       <AppHeader
         gradeBand={state.gradeBand}
         leftAction={{ type: "none" }}
+        titleKey="common.dashboard"
         rightActions={[
           {
             accessibilityLabelKey: "studentHome.header.notificationsAccessibility",
@@ -293,6 +299,8 @@ export function StudentHomeScreen() {
       <ScrollView
         contentContainerStyle={[styles.scrollContent, isTablet ? styles.scrollContentTablet : null]}
         contentInsetAdjustmentBehavior="automatic"
+        onScroll={handleBottomMenuScroll}
+        scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
         showsVerticalScrollIndicator={false}
         testID="student-home-screen"
       >
@@ -622,15 +630,28 @@ function WeeklyProgressSummary({
   ];
 
   return (
-    <View style={[styles.statsGrid, isTablet ? styles.statsGridTablet : null]}>
+    <View
+      style={[
+        styles.card,
+        styles.statsGroupCard,
+        isTablet ? styles.statsGroupCardTablet : null,
+        tunedCardStyle(tuned, "regular"),
+      ]}
+    >
       {stats.map((stat) => (
-        <WeeklyStatCard key={stat.key} stat={stat} />
+        <WeeklyStatCard isTablet={isTablet} key={stat.key} stat={stat} />
       ))}
     </View>
   );
 }
 
-function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
+function WeeklyStatCard({
+  isTablet = false,
+  stat,
+}: {
+  isTablet?: boolean;
+  stat: WeeklyStat;
+}) {
   const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
   const highContrastText = getHighContrastTextStyles(settings);
@@ -639,7 +660,7 @@ function WeeklyStatCard({ stat }: { stat: WeeklyStat }) {
     <View
       accessible
       accessibilityLabel={`${stat.value}, ${stat.label}`}
-      style={[styles.card, styles.statCard, tunedCardStyle(tuned, "regular")]}
+      style={[styles.statCard, isTablet ? styles.statCardTablet : null]}
     >
       <View style={[styles.statIconBubble, { backgroundColor: stat.backgroundColor }]}>
         <Ionicons name={stat.icon} size={23} color={stat.accentColor} />
@@ -1226,7 +1247,10 @@ const styles = StyleSheet.create({
     gap: homeSpacing.md,
     minHeight: 74,
     minWidth: 0,
-    padding: homeSpacing.lg,
+    paddingHorizontal: homeSpacing.sm,
+  },
+  statCardTablet: {
+    minHeight: 88,
   },
   statCopy: {
     flex: 1,
@@ -1252,12 +1276,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 24,
   },
-  statsGrid: {
+  statsGroupCard: {
     flexDirection: "row",
-    gap: homeSpacing.lg,
-  },
-  statsGridTablet: {
     gap: homeSpacing.md,
+    padding: homeSpacing.lg,
+  },
+  statsGroupCardTablet: {
+    flexDirection: "row",
+    gap: homeSpacing.md,
+    paddingHorizontal: homeSpacing.md,
+    paddingVertical: homeSpacing.lg,
   },
   tabletDashboardGrid: {
     alignItems: "flex-start",

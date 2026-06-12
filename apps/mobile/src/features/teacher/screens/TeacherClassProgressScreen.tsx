@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { colors } from "@/design/tokens";
@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { EntitlementGate } from "@/features/subscriptions";
 
 import {
   TeacherInstructionalGroupCard,
@@ -20,6 +21,27 @@ function getParamValue(value: string | string[] | undefined): string | undefined
 }
 
 export function TeacherClassProgressScreen() {
+  const { t } = useI18n();
+  const fallbackWrapper = (content: ReactNode) => (
+    <Screen
+      backgroundColor={colors.background.subtle}
+      gradeBand="middle"
+      subtitle={t("teacher.classProgress.subtitle")}
+      testID="teacher-class-progress-screen"
+      title={t("teacher.classProgress.title")}
+    >
+      {content}
+    </Screen>
+  );
+
+  return (
+    <EntitlementGate fallbackWrapper={fallbackWrapper} featureId="teacher_class_insights">
+      <TeacherClassProgressContent />
+    </EntitlementGate>
+  );
+}
+
+function TeacherClassProgressContent() {
   const router = useRouter();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ classId?: string | string[] }>();

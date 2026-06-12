@@ -3,7 +3,7 @@ import { SignJWT } from "jose";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { MemoryDatabase } from "../data";
-import type { AssignmentRecord, StudentAssignmentRecord } from "../data/types";
+import type { AssignmentRecord, EntitlementRecord, StudentAssignmentRecord } from "../data/types";
 import { currentWeekRange } from "../routes/dashboards-shared";
 import type { ApiConfig } from "../runtime/config";
 import { buildServer } from "../server";
@@ -31,6 +31,12 @@ function createTestConfig(): ApiConfig {
     environment: "test",
     host: "127.0.0.1",
     logLevel: "silent",
+    payments: {
+      provider: "revenuecat",
+      revenueCat: {
+        entitlementId: "plus",
+      },
+    },
     port: 3000,
   };
 }
@@ -101,6 +107,31 @@ function makeStudentAssignment(
   };
 }
 
+function makeEntitlement(ownerUserId: string, overrides: Partial<EntitlementRecord> = {}): EntitlementRecord {
+  return {
+    billingPeriod: "year",
+    canAccessPremium: true,
+    createdAt: "2026-06-11T08:00:00.000Z",
+    currentPeriodEndsAt: "2026-07-11T08:00:00.000Z",
+    currentPlanId: "WriterHabit_plus_yearly",
+    id: `entitlement-${ownerUserId}-${overrides.status ?? "active"}`,
+    managementUrl: null,
+    ownerUserId,
+    provider: "revenuecat",
+    providerCustomerId: ownerUserId,
+    providerLastEventId: null,
+    providerLastEventTimestampMs: null,
+    providerLastEventType: null,
+    providerSubscriptionId: `${ownerUserId}:WriterHabit_plus_yearly`,
+    scopeId: null,
+    scopeType: "personal",
+    status: "active",
+    trialEndsAt: null,
+    updatedAt: "2026-06-11T08:00:00.000Z",
+    ...overrides,
+  };
+}
+
 const week = currentWeekRange();
 const today = new Date().toISOString().slice(0, 10);
 
@@ -150,6 +181,11 @@ function createSeededDatabase(): MemoryDatabase {
     classes: [
       { gradeLevel: 4, id: "class-1", name: "Period 1 Writing", status: "active", teacherProfileId: "tp-1" },
       { gradeLevel: 5, id: "class-2", name: "Period 2 Writing", status: "active", teacherProfileId: "tp-2" },
+    ],
+    entitlements: [
+      makeEntitlement("user-student-1"),
+      makeEntitlement("user-parent-1"),
+      makeEntitlement("user-teacher-1"),
     ],
     parentLinks: [
       {
@@ -385,6 +421,21 @@ describe("WriterHabit dashboards API", () => {
       expect(teacherResponse.statusCode).toBe(200);
     });
 
+    it("redacts extended progress history from the dashboard when Plus is not active", async () => {
+      database.entitlements.splice(0, database.entitlements.length);
+
+      const response = await inject(studentToken, {
+        method: "GET",
+        url: "/api/v1/students/sp-1/progress",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        studentId: "sp-1",
+        weeklyReview: null,
+      });
+    });
+
     it("rejects a student reading another student's progress with 403", async () => {
       const response = await inject(otherStudentToken, {
         method: "GET",
@@ -438,6 +489,24 @@ describe("WriterHabit dashboards API", () => {
         skill: "grammar",
         studentId: "sp-1",
       });
+    });
+
+    it("requires Plus for extended skill history and weekly reviews", async () => {
+      database.entitlements.splice(0, database.entitlements.length);
+
+      const skill = await inject(studentToken, {
+        method: "GET",
+        url: "/api/v1/students/sp-1/progress/skills/grammar",
+      });
+      expect(skill.statusCode).toBe(402);
+      expect(skill.json().error.code).toBe("subscription.entitlement_required");
+
+      const weeklyReview = await inject(studentToken, {
+        method: "GET",
+        url: "/api/v1/students/sp-1/weekly-review",
+      });
+      expect(weeklyReview.statusCode).toBe(402);
+      expect(weeklyReview.json().error.code).toBe("subscription.entitlement_required");
     });
 
     it("rejects unknown skill names with 400 and missing skill rows with 404", async () => {
@@ -495,6 +564,8 @@ describe("WriterHabit dashboards API", () => {
     });
 
     it("returns 404 when no weekly review exists yet", async () => {
+      database.entitlements.push(makeEntitlement("user-student-2"));
+
       const response = await inject(otherStudentToken, {
         method: "GET",
         url: "/api/v1/students/sp-2/weekly-review",
@@ -573,6 +644,44 @@ describe("WriterHabit dashboards API", () => {
       });
       expect(body.skills).toHaveLength(2);
       expect(body.weeklyReview).not.toBeNull();
+    });
+
+    it.each([
+      { entitlement: null, label: "free" },
+      {
+        entitlement: makeEntitlement("user-parent-1", {
+          canAccessPremium: false,
+          currentPeriodEndsAt: "2026-05-11T08:00:00.000Z",
+          status: "expired",
+        }),
+        label: "expired",
+      },
+      {
+        entitlement: makeEntitlement("user-parent-1", {
+          canAccessPremium: false,
+          currentPeriodEndsAt: "2026-05-11T08:00:00.000Z",
+          status: "refunded",
+        }),
+        label: "refunded",
+      },
+    ])("requires active Plus for family reports when the parent entitlement is $label", async ({ entitlement }) => {
+      database.entitlements.splice(
+        0,
+        database.entitlements.length,
+        makeEntitlement("user-student-1"),
+        makeEntitlement("user-teacher-1"),
+        ...(entitlement ? [entitlement] : []),
+      );
+
+      const response = await inject(parentToken, {
+        method: "GET",
+        url: "/api/v1/parents/user-parent-1/students/sp-1/report",
+      });
+
+      expect(response.statusCode).toBe(402);
+      expect(response.json().error).toMatchObject({
+        code: "subscription.entitlement_required",
+      });
     });
 
     it("rejects a parent reading an unlinked student's report with 403", async () => {
@@ -686,6 +795,28 @@ describe("WriterHabit dashboards API", () => {
           weeklyWritingMinutes: 15,
         },
       ]);
+    });
+
+    it("requires active Plus for teacher class insights", async () => {
+      database.entitlements.splice(
+        0,
+        database.entitlements.length,
+        makeEntitlement("user-student-1"),
+        makeEntitlement("user-parent-1"),
+        makeEntitlement("user-teacher-1", {
+          canAccessPremium: false,
+          currentPeriodEndsAt: "2026-05-11T08:00:00.000Z",
+          status: "refunded",
+        }),
+      );
+
+      const response = await inject(teacherToken, {
+        method: "GET",
+        url: "/api/v1/classes/class-1/progress",
+      });
+
+      expect(response.statusCode).toBe(402);
+      expect(response.json().error.code).toBe("subscription.entitlement_required");
     });
 
     it("hides un-owned and unknown classes behind 404", async () => {

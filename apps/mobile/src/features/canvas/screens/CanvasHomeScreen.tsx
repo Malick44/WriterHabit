@@ -4,20 +4,70 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
-import { colors, spacing } from "@/design/tokens";
+import { useAuthSession } from "@/core/auth/useAuthSession";
+import { colors, spacing, typography, type GradeBand } from "@/design/tokens";
+import { EntitlementGate } from "@/features/subscriptions";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { BOTTOM_MENU_SCROLL_EVENT_THROTTLE, useBottomMenuScrollHandler } from "@/shared/components/navigation";
 
 import { CanvasDocumentCard } from "../components";
 import { useCanvasHomeData } from "../hooks/useCanvas";
 import type { CanvasDocumentSummary } from "../types";
 
+function getFallbackGradeBand(gradeLevel?: number): GradeBand {
+  return gradeLevel ? typography.getGradeBandForGrade(gradeLevel) : "middle";
+}
+
 export function CanvasHomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { session } = useAuthSession();
+  const gradeBand = getFallbackGradeBand(session?.user.gradeLevel);
+
+  const createButton = (
+    <Button
+      accessibilityLabel={t("canvas.home.createAccessibility")}
+      fullWidth
+      gradeBand={gradeBand}
+      label={t("canvas.home.createCta")}
+      leftAccessory={<Ionicons color={colors.action.primary.foreground} name="add" size={20} />}
+      onPress={() => router.push(getCanvasTemplatePickerRoute())}
+      size={gradeBand === "elementary" ? "lg" : "md"}
+      testID="canvas-home-create"
+    />
+  );
+
+  return (
+    <Screen
+      backgroundColor={colors.gradeBand[gradeBand].background}
+      contentStyle={styles.screenContent}
+      gradeBand={gradeBand}
+      scroll={false}
+      subtitle={t("canvas.home.subtitle")}
+      testID="canvas-home-screen"
+      title={t("canvas.home.title")}
+    >
+      <Stack gap="lg" style={styles.archiveShell}>
+        {createButton}
+        <EntitlementGate
+          featureId="canvas_archive"
+          onContinueFreePress={() => router.push(getCanvasTemplatePickerRoute())}
+        >
+          <CanvasArchiveList />
+        </EntitlementGate>
+      </Stack>
+    </Screen>
+  );
+}
+
+function CanvasArchiveList() {
+  const router = useRouter();
+  const { t } = useI18n();
   const state = useCanvasHomeData();
+  const handleBottomMenuScroll = useBottomMenuScrollHandler();
 
   const renderDocument = useCallback(
     ({ item }: { item: CanvasDocumentSummary }) => (
@@ -30,28 +80,8 @@ export function CanvasHomeScreen() {
     [router, state.gradeBand],
   );
 
-  const createButton = (
-    <Button
-      accessibilityLabel={t("canvas.home.createAccessibility")}
-      fullWidth
-      gradeBand={state.gradeBand}
-      label={t("canvas.home.createCta")}
-      leftAccessory={<Ionicons color={colors.action.primary.foreground} name="add" size={20} />}
-      onPress={() => router.push(getCanvasTemplatePickerRoute())}
-      size={state.gradeBand === "elementary" ? "lg" : "md"}
-      testID="canvas-home-create"
-    />
-  );
-
   return (
-    <Screen
-      backgroundColor={colors.gradeBand[state.gradeBand].background}
-      gradeBand={state.gradeBand}
-      scroll={false}
-      subtitle={t("canvas.home.subtitle")}
-      testID="canvas-home-screen"
-      title={t("canvas.home.title")}
-    >
+    <Stack gap="lg" style={styles.archiveShell}>
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("canvas.home.loadingAccessibility")}
@@ -107,6 +137,8 @@ export function CanvasHomeScreen() {
           renderItem={renderDocument}
           ItemSeparatorComponent={ItemSeparator}
           contentContainerStyle={styles.listContent}
+          onScroll={handleBottomMenuScroll}
+          scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Stack gap="lg" style={styles.listHeader}>
@@ -122,8 +154,6 @@ export function CanvasHomeScreen() {
                 />
               ) : null}
 
-              {createButton}
-
               <PageSection
                 gradeBand={state.gradeBand}
                 subtitle={t("canvas.home.recentSubtitle")}
@@ -133,9 +163,10 @@ export function CanvasHomeScreen() {
               </PageSection>
             </Stack>
           }
+          style={styles.archiveList}
         />
       ) : null}
-    </Screen>
+    </Stack>
   );
 }
 
@@ -144,6 +175,12 @@ function ItemSeparator() {
 }
 
 const styles = StyleSheet.create({
+  archiveList: {
+    flex: 1,
+  },
+  archiveShell: {
+    flex: 1,
+  },
   itemSeparator: {
     height: spacing.md,
   },
@@ -152,5 +189,8 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     paddingBottom: spacing.md,
+  },
+  screenContent: {
+    flex: 1,
   },
 });

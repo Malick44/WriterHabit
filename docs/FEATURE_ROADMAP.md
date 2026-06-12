@@ -288,7 +288,7 @@ Primary features:
 
 Work:
 
-- Paywall, upgrade prompt, entitlement hook/service, entitlement gate, restore placeholder, and localized trust copy are implemented locally in `apps/mobile/src/features/subscriptions/`.
+- Paywall, upgrade prompt, entitlement hook/service, entitlement gate, restore flow, and localized trust copy are implemented in `apps/mobile/src/features/subscriptions/`; paid access now reads backend RevenueCat entitlement state instead of local preview state. Extended progress history, family reports, teacher class insights, rubric detail, and canvas archive are wired to those gates or server redaction.
 - Performance/offline polish is implemented with shared offline and retry components, skeleton loading states, bounded query cache defaults, stronger local draft/canvas recovery, retryable AI review and canvas sync states, and pagination placeholders for history-style lists.
 - Extend accessibility settings as feature screens add read-aloud and dictation affordances.
 - Complete empty, loading, error, and success states across major flows.

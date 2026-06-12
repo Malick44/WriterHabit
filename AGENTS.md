@@ -56,10 +56,22 @@ After that, read the task-specific implementation prompt, screen prompt, project
   tables are denied. Workflow migrations through
   `202606110004_review_job_lifecycle.sql` have been applied and verified against
   the configured development Supabase.
+- WW-REL-003 payments/entitlements round 3 is implemented locally:
+  RevenueCat is the selected entitlement provider, backend entitlements,
+  checkout intent, restore reconciliation, and RevenueCat webhooks are
+  implemented in `services/api/`, mobile paywall gates read trusted server state,
+  local `activated_preview` unlocking has been removed, advertised Plus surfaces
+  are gated or server-redacted, and delayed older RevenueCat lifecycle events are
+  ignored instead of re-enabling access after newer refund, expiration, or
+  billing-issue events. Migrations through
+  `202606110006_subscription_event_ordering.sql` have been applied and verified
+  against the configured development Supabase. Native RevenueCat SDK
+  purchase launch, owner app keys, store products, transfer/alias QA, and
+  sandbox store QA remain required before paid plans can be enabled.
 - Next recommended engineering step: close remaining P0/P1 release blockers in
-  `docs/KNOWN_ISSUES.md`, starting with payment entitlement sync, mobile E2E
-  automation, production AI provider/worker integration, canvas storage sync,
-  and backend lint/CI wiring.
+  `docs/KNOWN_ISSUES.md`, starting with native RevenueCat store setup/mobile
+  E2E automation, production AI provider/worker integration, canvas storage
+  sync, and backend lint/CI wiring.
 - Git is initialized on branch `main`; implementation commits exist.
 - Project-local Codex state is in `.codex/EXECUTION_STATE.md`.
 - Codex actions are in `.codex/environments/environment.toml`.

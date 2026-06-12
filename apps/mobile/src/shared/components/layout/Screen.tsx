@@ -6,6 +6,8 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -18,6 +20,10 @@ import {
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 import { useGradeBand } from "@/shared/utils/gradeBand";
+import {
+  BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
+  useBottomMenuScrollHandler,
+} from "@/shared/components/navigation/bottom-menu";
 
 interface ScreenProps extends PropsWithChildren {
   title?: string;
@@ -28,6 +34,8 @@ interface ScreenProps extends PropsWithChildren {
   keyboardAvoiding?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
   testID?: string;
 }
 
@@ -40,6 +48,8 @@ export function Screen({
   keyboardAvoiding = false,
   contentStyle,
   backgroundColor,
+  onScroll,
+  scrollEventThrottle,
   testID,
   children,
 }: ScreenProps) {
@@ -50,6 +60,7 @@ export function Screen({
   const isTablet = width >= 768;
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
+  const handleBottomMenuScroll = useBottomMenuScrollHandler();
   const horizontalPadding = isTablet
     ? layout.screenPadding.tablet
     : settings.simplifiedUi
@@ -115,6 +126,11 @@ export function Screen({
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps={keyboardAvoiding ? "handled" : undefined}
+      onScroll={(event) => {
+        handleBottomMenuScroll(event);
+        onScroll?.(event);
+      }}
+      scrollEventThrottle={scrollEventThrottle ?? BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
       contentContainerStyle={{
         paddingBottom: Math.max(insets.bottom, spacing.xl),
         paddingHorizontal: horizontalPadding,

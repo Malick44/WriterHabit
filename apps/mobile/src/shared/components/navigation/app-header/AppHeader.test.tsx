@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 
 import { I18nProvider } from "@/i18n";
 
@@ -41,7 +42,12 @@ describe("AppHeader", () => {
       />,
     );
 
-    expect(rendered.getByText("Student home")).toBeTruthy();
+    expect(rendered.getByText("STUDENT HOME")).toBeTruthy();
+    const titleStyle = StyleSheet.flatten(rendered.getByTestId(APP_HEADER_TEST_IDS.title).props.style);
+    expect(titleStyle.textAlign).toBe("center");
+    expect(titleStyle.fontSize).toBe(18);
+    expect(titleStyle.fontWeight).toBe("700");
+    expect(titleStyle.letterSpacing).toBe(0);
     expect(rendered.getByText("Daily assignments, draft status, and coaching next steps.")).toBeTruthy();
     await fireEvent.press(rendered.getByText("View"));
     expect(onPress).toHaveBeenCalledTimes(1);

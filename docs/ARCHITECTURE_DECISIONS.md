@@ -66,7 +66,7 @@ Current evidence:
 - `apps/mobile/src/shared/query/queryClient.ts` owns the shared TanStack Query client defaults.
 - Zustand is used in `apps/mobile/src/shared/state/session.ts`, `apps/mobile/src/shared/state/preferences.tsx`, and canvas tool state.
 - Secure storage facade exists in `apps/mobile/src/services/storage/secureStorage.ts`.
-- Subscription entitlement state and checkout/restore placeholders use TanStack Query in `apps/mobile/src/features/subscriptions/hooks/useSubscriptions.ts`.
+- Subscription entitlement state, checkout intent, and restore status use TanStack Query in `apps/mobile/src/features/subscriptions/hooks/useSubscriptions.ts`; paid access is derived from the backend entitlement response, not mobile session state.
 
 ## ADR-004: Localization Is Required for User-Facing Copy
 
@@ -676,7 +676,7 @@ Backend responsibilities currently documented:
   mock provider boundaries.
 - Progress calculation.
 - Parent and teacher reporting.
-- Subscription entitlement sync. The mobile app currently uses local deterministic subscription mocks in `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts`.
+- Subscription entitlement sync now uses RevenueCat as the selected provider. Mobile reads `GET /me/entitlements` and cannot unlock paid access through local checkout state; `services/api/src/features/subscriptions/subscriptions.service.ts` owns RevenueCat webhook and restore reconciliation. Provider webhook application persists last-applied RevenueCat event metadata so stale older lifecycle events cannot re-enable paid access after a newer refund, expiration, or billing issue. Advertised Plus surfaces are also gated or server-redacted for extended progress history, family reports, teacher class insights, rubric detail, and canvas archive. Native purchase launch still requires owner-provided RevenueCat app keys/products and a rebuild that includes the native SDK.
 - Notifications and weekly reports.
 
 Canonical planned backend docs:

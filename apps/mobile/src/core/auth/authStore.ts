@@ -14,6 +14,7 @@ import type {
   MockSessionScenario,
 } from "./authTypes";
 import { getDefaultDemoUserForRole, getDemoUserById, type DemoUserProfile } from "./demoUsers";
+import { sessionService } from "./sessionService";
 
 type AuthStoreState = {
   status: "hydrating" | "ready";
@@ -117,7 +118,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     }
 
     try {
-      const { sessionService } = await import("./sessionService");
       const session = await sessionService.getCurrentSession();
       set({
         errorCode: null,
@@ -135,7 +135,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   signInWithEmail: async (input) => {
     set({ errorCode: null, operationStatus: "loading" });
     try {
-      const { sessionService } = await import("./sessionService");
       const result = await sessionService.signInWithEmail(input);
       set({
         errorCode: null,
@@ -152,7 +151,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   signInWithEmailLink: async (input) => {
     set({ errorCode: null, operationStatus: "loading" });
     try {
-      const { sessionService } = await import("./sessionService");
       const result = await sessionService.signInWithEmailLink(input);
       set({
         errorCode: null,
@@ -169,7 +167,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   signUpWithEmail: async (input) => {
     set({ errorCode: null, operationStatus: "loading" });
     try {
-      const { sessionService } = await import("./sessionService");
       const result = await sessionService.signUpWithEmail(input);
       set({
         errorCode: null,
@@ -240,7 +237,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     set({ errorCode: null, operationStatus: "loading" });
     try {
-      const { sessionService } = await import("./sessionService");
       const session = await sessionService.completeOnboarding(input);
       set({
         errorCode: null,
@@ -260,7 +256,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     try {
       if (currentSession?.source === "supabase") {
-        const { sessionService } = await import("./sessionService");
         await sessionService.signOut();
       }
     } finally {

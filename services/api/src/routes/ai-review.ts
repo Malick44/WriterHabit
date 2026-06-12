@@ -5,6 +5,7 @@ import type { Database, FeedbackWithDetails, PublishFeedbackInput, SubmissionRec
 import {
   AiReviewService,
 } from "../features/ai/review/ai-review.service";
+import { canAccessPremiumFeature } from "../features/subscriptions/entitlement-authorization";
 import {
   createLocalizedCopy,
   isGradeLevel,
@@ -123,7 +124,10 @@ function toPublishFeedbackInput(input: {
   };
 }
 
-function createFeedbackReview(details: FeedbackWithDetails) {
+function createFeedbackReview(
+  details: FeedbackWithDetails,
+  options: { includeRubricScores: boolean } = { includeRubricScores: true },
+) {
   const feedback = details.feedback;
   const revisionTask = details.revisionTask;
 
@@ -160,15 +164,17 @@ function createFeedbackReview(details: FeedbackWithDetails) {
       originalExcerpt: revisionTask.originalExcerpt,
       targetSkill: revisionTask.targetSkill,
     },
-    rubricScores: details.rubricScores.map((score) => ({
-      coachingNote: score.coachingNoteFallback,
-      criterionId: score.criterionId,
-      description: score.criterionDescriptionFallback,
-      label: score.criterionLabelFallback,
-      level: score.level,
-      maxScore: 4,
-      score: score.score,
-    })),
+    rubricScores: options.includeRubricScores
+      ? details.rubricScores.map((score) => ({
+          coachingNote: score.coachingNoteFallback,
+          criterionId: score.criterionId,
+          description: score.criterionDescriptionFallback,
+          label: score.criterionLabelFallback,
+          level: score.level,
+          maxScore: 4,
+          score: score.score,
+        }))
+      : [],
     status: "completed",
     studentId: feedback.studentProfileId,
     submissionId: feedback.submissionId,
@@ -181,10 +187,13 @@ function createFeedbackReview(details: FeedbackWithDetails) {
   };
 }
 
-function createFeedbackResponse(details: FeedbackWithDetails) {
+function createFeedbackResponse(
+  details: FeedbackWithDetails,
+  options: { includeRubricScores: boolean } = { includeRubricScores: true },
+) {
   return {
     generatedAt: new Date().toISOString(),
-    review: createFeedbackReview(details),
+    review: createFeedbackReview(details, options),
     reviewJobStatus: "completed",
     status: "completed",
     submissionId: details.submission.id,
@@ -368,6 +377,8 @@ export async function registerAiReviewRoutes(
       };
     }
 
-    return createFeedbackResponse(feedback);
+    const includeRubricScores = await canAccessPremiumFeature(database, principal, "rubric_detail");
+
+    return createFeedbackResponse(feedback, { includeRubricScores });
   });
 }

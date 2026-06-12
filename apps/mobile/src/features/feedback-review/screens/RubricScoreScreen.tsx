@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getStudentReviewRevisionRoute } from "@/core/navigation/deepLinks";
@@ -6,6 +6,7 @@ import { colors } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { EntitlementGate } from "@/features/subscriptions";
 
 import { RubricScoreCard } from "../components";
 import { useFeedbackReview } from "../hooks/useFeedbackReview";
@@ -15,6 +16,27 @@ function getParamValue(value: string | string[] | undefined): string | undefined
 }
 
 export function RubricScoreScreen() {
+  const { t } = useI18n();
+  const fallbackWrapper = (content: ReactNode) => (
+    <Screen
+      backgroundColor={colors.background.subtle}
+      gradeBand="middle"
+      subtitle={t("feedbackReview.rubric.subtitle")}
+      testID="feedback-rubric-screen"
+      title={t("feedbackReview.rubric.title")}
+    >
+      {content}
+    </Screen>
+  );
+
+  return (
+    <EntitlementGate fallbackWrapper={fallbackWrapper} featureId="rubric_detail">
+      <RubricScoreContent />
+    </EntitlementGate>
+  );
+}
+
+function RubricScoreContent() {
   const router = useRouter();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ submissionId?: string | string[] }>();

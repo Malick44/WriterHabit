@@ -45,7 +45,7 @@ implementations.
 | Parent | Verified user with trusted server-owned role `parent`. | Can access linked students through active parent-student links. |
 | Teacher | Verified user with trusted server-owned role `teacher`. | Can access classes they own and students enrolled in those classes. |
 | Admin | Verified user with trusted server-owned role `admin`. | Operational access only; actions must be audited. |
-| Provider webhook | Verified signature | Limited to subscription or provider event endpoints. |
+| Provider webhook | Verified provider authorization | Limited to subscription or provider event endpoints. RevenueCat webhooks must send the configured Authorization header value. |
 
 ## Global Rules
 
@@ -67,6 +67,17 @@ implementations.
   object paths server-side, and audit URL creation without logging the URL.
 - Rate limits must apply to AI, auth abuse thresholds, signed URL creation,
   provider webhooks, notification device registration, and admin access.
+- Subscription entitlements are server-owned. Mobile state, mock sessions, and
+  client-writable auth metadata cannot grant paid access. RevenueCat webhook
+  events and restore reconciliation are the only implemented production write
+  paths for `entitlements`.
+- Paid feature data must be checked server-side after resource-scope
+  authorization. Parent reports, teacher class progress, extended progress
+  detail, and rubric detail cannot rely on Expo route or component gates alone.
+- Shared endpoints that also serve free workflows must redact paid fields rather
+  than leak them. `GET /submissions/:submissionId/feedback` returns free
+  feedback and revision data, but `review.rubricScores` is empty without active
+  Plus.
 - Public mobile sign-up and onboarding must not write `role`, `admin`,
   `teacher`, `parent`, or entitlement fields into client-writable auth metadata.
 - `public.users.role` is server-owned. Migration
@@ -218,8 +229,18 @@ implementations.
 
 - `GET /me/entitlements` is account-owned.
 - Checkout and restore actions are account-owned and require idempotency keys.
-- Store-provider webhooks require verified signatures and provider event
-  idempotency.
+  Checkout returns a `pending_store_purchase` intent and never mutates
+  entitlement state by itself.
+- Plus parent access is currently personal to the signed-in parent account:
+  linked-student family reports require that parent's active entitlement.
+  Student and teacher accounts do not inherit the parent's personal Plus row.
+- Plus teacher class insights are personal to the signed-in teacher account.
+  Class or school scope entitlements are represented in the schema but not yet
+  active release behavior.
+- Store-provider webhooks require verified RevenueCat Authorization headers,
+  provider event idempotency, and monotonic provider event ordering so delayed
+  older events cannot re-enable access after a newer refund, expiration, or
+  billing issue.
 - Webhook handlers must not trust provider payload account mapping without
   looking up the internal user or family entitlement record.
 

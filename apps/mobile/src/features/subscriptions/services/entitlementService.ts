@@ -82,7 +82,15 @@ const premiumFeatureCopy = {
 } satisfies Record<PremiumFeatureId, PremiumFeatureCopy>;
 
 export function hasPremiumEntitlement(entitlement: Pick<SubscriptionApiResponse, "status" | "canAccessPremium">): boolean {
-  return entitlement.canAccessPremium && (entitlement.status === "active" || entitlement.status === "trial");
+  return (
+    entitlement.canAccessPremium &&
+    (
+      entitlement.status === "active" ||
+      entitlement.status === "trial" ||
+      entitlement.status === "grace_period" ||
+      entitlement.status === "canceled"
+    )
+  );
 }
 
 export function getSubscriptionGradeAdaptation(gradeLevel?: number): SubscriptionGradeAdaptation {

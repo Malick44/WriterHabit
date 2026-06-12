@@ -1,32 +1,28 @@
+import { sessionService } from "@/core/auth/sessionService";
 import type { AuthLoginLinkInput, AuthSignInInput, AuthSignUpInput } from "@/core/auth/authTypes";
-
-async function getSessionService() {
-  const { sessionService } = await import("@/core/auth/sessionService");
-  return sessionService;
-}
 
 export const authApi = {
   async getCurrentSession() {
-    return getSessionService().then((sessionService) => sessionService.getCurrentSession());
+    return sessionService.getCurrentSession();
   },
 
   async signInWithEmail(input: AuthSignInInput) {
-    return getSessionService().then((sessionService) => sessionService.signInWithEmail(input));
+    return sessionService.signInWithEmail(input);
   },
 
   async signInWithEmailLink(input: AuthLoginLinkInput) {
-    return getSessionService().then((sessionService) => sessionService.signInWithEmailLink(input));
+    return sessionService.signInWithEmailLink(input);
   },
 
   async signUpWithEmail(input: AuthSignUpInput) {
-    return getSessionService().then((sessionService) => sessionService.signUpWithEmail(input));
+    return sessionService.signUpWithEmail(input);
   },
 
   async completeOnboarding() {
-    return getSessionService().then((sessionService) => sessionService.completeOnboarding());
+    return sessionService.completeOnboarding();
   },
 
   async signOut() {
-    return getSessionService().then((sessionService) => sessionService.signOut());
+    return sessionService.signOut();
   },
 };

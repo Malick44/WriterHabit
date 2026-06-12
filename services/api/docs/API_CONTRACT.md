@@ -1069,19 +1069,35 @@ instructional feedback; they must not replace a student's draft.
 
 ## Subscriptions
 
-The current mobile subscription feature uses deterministic local entitlement
-mocks. Backend entitlement and provider sync are planned here.
+RevenueCat is the selected payment/entitlement provider for iOS and Android.
+The API is the trusted entitlement source for the mobile app: mobile checkout
+cannot grant Plus access by itself, and entitlement gates read
+`GET /me/entitlements`.
+
+RevenueCat webhook setup must configure the API endpoint below with an
+Authorization header that matches `REVENUECAT_WEBHOOK_AUTHORIZATION`. Restore
+reconciliation uses `REVENUECAT_SECRET_API_KEY` when configured. Without the
+provider key, restore fails closed unless an active entitlement already exists
+from a verified webhook event.
 
 ```txt
 GET  /me/entitlements
 POST /subscriptions/checkout
 POST /subscriptions/restore
 POST /webhooks/revenuecat
-POST /webhooks/stripe
+POST /webhooks/stripe   // registered fail-closed placeholder only
 ```
 
 ```ts
-type SubscriptionStatus = "free" | "trial" | "active" | "past_due";
+type SubscriptionStatus =
+  | "free"
+  | "trial"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "expired"
+  | "refunded"
+  | "grace_period";
 
 interface EntitlementsResponse {
   userId: string;
@@ -1089,8 +1105,10 @@ interface EntitlementsResponse {
   status: SubscriptionStatus;
   canAccessPremium: boolean;
   currentPlanId: "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly" | null;
+  currentPeriodEndsAt: string | null;
+  trialEndsAt: string | null;
   renewalLabel: string | null;
-  connectionStatus: ConnectionStatus;
+  connectionStatus: "online";
   generatedAt: string;
   managementUrl: string | null;
   trustLinks: {
@@ -1105,6 +1123,7 @@ interface SubscriptionPlan {
   id: "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly";
   billingPeriod: "month" | "year";
   priceLabel: string;
+  productId: string;
   trialDays: number;
   isRecommended: boolean;
 }
@@ -1124,24 +1143,83 @@ interface SubscriptionFeature {
 
 interface CheckoutRequest {
   planId: SubscriptionPlan["id"];
-  returnUrl: string;
   idempotencyKey: string;
+  platform?: "android" | "ios" | "web";
 }
 
 interface CheckoutResponse {
-  status: "created";
-  checkoutUrl: string;
-  expiresAt: string;
+  status: "pending_store_purchase";
+  provider: "revenuecat";
+  appUserId: string;
+  planId: SubscriptionPlan["id"];
+  productId: string;
+  entitlement: EntitlementsResponse;
 }
 
 interface RestoreResponse {
   status: "restored" | "not_found";
-  entitlements: EntitlementsResponse;
+  entitlement: EntitlementsResponse;
 }
 ```
 
-Webhook endpoints must verify provider signatures before parsing payloads and
-must be idempotent by provider event ID.
+`POST /subscriptions/checkout` currently creates a trusted server-side purchase
+intent only. It does not mutate entitlements. The mobile app must complete the
+RevenueCat native purchase flow in a rebuild that includes the RevenueCat SDK
+and owner-provided app keys/store products; webhook or restore reconciliation
+then updates the server entitlement row.
+
+`POST /webhooks/revenuecat` verifies the configured Authorization header,
+normalizes RevenueCat lifecycle events, stores an idempotency row in
+`entitlement_provider_events`, and upserts `entitlements`. Duplicate
+`(provider, provider_event_id)` webhooks return the existing processed or
+ignored result without applying entitlement changes twice. Entitlement rows
+persist the last applied provider event id, type, and `event_timestamp_ms`;
+older distinct provider events for the same provider subscription are recorded
+as ignored and cannot loosen access after a newer refund, expiration, or
+billing issue. Newer recovery events such as `REFUND_REVERSED` or a valid
+renewal can restore access.
+
+Paid feature enforcement is explicit at both mobile and API boundaries:
+
+- `extended_progress_history`: `GET /students/:studentId/progress` redacts
+  `weeklyReview` unless the caller has active Plus access; skill history and
+  weekly review detail endpoints return `402 subscription.entitlement_required`
+  without active Plus.
+- `family_progress_reports`:
+  `GET /parents/:parentId/students/:studentId/report` requires active Plus on
+  the signed-in parent account after parent/student link authorization.
+- `teacher_class_insights`: `GET /classes/:classId/progress` requires active
+  Plus on the signed-in teacher account after class ownership authorization.
+- `rubric_detail`: `GET /submissions/:submissionId/feedback` still returns the
+  free feedback summary/revision task, but redacts `review.rubricScores` unless
+  the caller has active Plus. The mobile rubric-detail route is additionally
+  wrapped in the entitlement gate before it fetches review data.
+- `canvas_archive`: the mobile canvas archive/list is entitlement-gated while
+  creating current canvas work remains available as free writing input. Backend
+  canvas storage endpoints are still registered fail-closed placeholders; when
+  enabled, archive/list and signed download paths must enforce the same
+  `canvas_archive` entitlement.
+
+Family access in this implementation is account-owned: a parent Plus
+entitlement unlocks that parent's linked-student reports, but it does not
+automatically grant Plus to a child's separate student login. Future `family`,
+`class`, or `school` scope entitlements can use the existing
+`entitlements.scope_type` and `scope_id` columns, but those scopes are not
+active release behavior yet.
+
+Represented provider lifecycle states:
+
+- `INITIAL_PURCHASE`, `RENEWAL`, `UNCANCELLATION`, `PRODUCT_CHANGE`,
+  `SUBSCRIPTION_EXTENDED`, `TEMPORARY_ENTITLEMENT_GRANT`, and
+  `REFUND_REVERSED` map to `trial` or `active` when the period is valid.
+- `BILLING_ISSUE` and billing-error cancellations map to `grace_period` while
+  the store grace period is valid, otherwise `past_due`.
+- ordinary cancellations map to `canceled` while the paid period remains valid.
+- subscription pause notifications map to `canceled` while the paid period
+  remains valid; access is removed only after `EXPIRATION`.
+- expirations map to `expired`.
+- refund indicators, including `CUSTOMER_SUPPORT` cancellation/expiration
+  reasons, map to `refunded`.
 
 ## Notifications
 

@@ -10,6 +10,9 @@ const envSchema = z.object({
   LOG_LEVEL: logLevelSchema.default("info"),
   NODE_ENV: nodeEnvSchema.default("development"),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
+  REVENUECAT_PLUS_ENTITLEMENT_ID: z.string().min(1).default("plus"),
+  REVENUECAT_SECRET_API_KEY: z.string().min(20).optional(),
+  REVENUECAT_WEBHOOK_AUTHORIZATION: z.string().min(16).optional(),
   SUPABASE_JWKS_URL: z.string().url().optional(),
   SUPABASE_JWT_AUDIENCE: z.string().min(1).optional(),
   SUPABASE_JWT_ISSUER: z.string().min(1).optional(),
@@ -44,6 +47,14 @@ export interface ApiConfig {
   environment: RuntimeEnvironment;
   host: string;
   logLevel: LogLevel;
+  payments: {
+    provider: "revenuecat";
+    revenueCat: {
+      entitlementId: string;
+      secretApiKey?: string;
+      webhookAuthorization?: string;
+    };
+  };
   port: number;
 }
 
@@ -120,6 +131,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     environment: data.NODE_ENV,
     host: data.HOST,
     logLevel: data.LOG_LEVEL,
+    payments: {
+      provider: "revenuecat",
+      revenueCat: {
+        entitlementId: data.REVENUECAT_PLUS_ENTITLEMENT_ID,
+        ...(data.REVENUECAT_SECRET_API_KEY ? { secretApiKey: data.REVENUECAT_SECRET_API_KEY } : {}),
+        ...(data.REVENUECAT_WEBHOOK_AUTHORIZATION
+          ? { webhookAuthorization: data.REVENUECAT_WEBHOOK_AUTHORIZATION }
+          : {}),
+      },
+    },
     port: data.PORT,
   };
 }

@@ -167,11 +167,9 @@ This is public demo state only. Demo sessions use `source: "mock"` and skip Supa
 ## Student Bottom Tabs
 
 ```txt
-Home      -> /(student)/home
-Write     -> /(student)/assignments/history
-Canvas    -> /(student)/canvas
-Progress  -> /(student)/progress
-Profile   -> /(student)/profile
+Home        -> /(student)/home
+Assignments -> /(student)/assignments/history
+Library     -> /(student)/canvas
 ```
 
 Student detail routes are hidden from the tab bar:
@@ -181,9 +179,11 @@ Student detail routes are hidden from the tab bar:
 /(student)/assignments/submit
 /(student)/canvas/templates
 /(student)/canvas/[canvasId]
+/(student)/progress
 /(student)/progress/badges
 /(student)/progress/skills/[skillId]
 /(student)/progress/weekly-review
+/(student)/profile
 /(student)/edit-profile
 /(student)/writing-goals
 /(student)/notification-settings
@@ -222,6 +222,7 @@ Teacher navigation currently uses bottom tabs:
 Dashboard   -> /(teacher)/dashboard
 Assignments -> /(teacher)/assignments
 Submissions -> /(teacher)/submissions
+Settings    -> /(teacher)/settings
 ```
 
 Teacher tab screens export feature screens from `apps/mobile/src/features/teacher/screens/`.
@@ -235,7 +236,14 @@ Teacher detail routes are hidden from the tab bar:
 /(teacher)/assignments/create
 /(teacher)/classes/[classId]/progress
 /(teacher)/submissions/[submissionId]
+/(teacher)/accessibility-settings
 ```
+
+Student, parent, and teacher route groups share the reusable animated bottom
+menu from `apps/mobile/src/shared/components/navigation/bottom-menu/`. Downward
+scroll collapses secondary menu items so only the home/dashboard item remains.
+Pressing that home/dashboard item while collapsed expands the menu; pressing it
+while expanded navigates back to the role dashboard.
 
 ## Deep Linking
 
@@ -295,7 +303,7 @@ Auth routes currently include:
 
 `/(auth)/welcome` offers Supabase sign-in/sign-up entry points and local demo role shortcuts. `/(auth)/sign-in` sends Supabase email login links and recovers sessions from auth deep-link callbacks through `apps/mobile/src/core/auth/sessionService.ts`. `/(auth)/sign-up` still submits email/password account creation through `apps/mobile/src/core/auth/authStore.ts`.
 
-`/paywall` exports `PaywallRouteScreen` from `apps/mobile/src/features/subscriptions/screens/PaywallRouteScreen.tsx`. The screen renders loading, empty, error, free, past-due, and active Plus states from the local subscription entitlement hook. Inline premium gates can send users to this route without blocking free writing flows.
+`/paywall` exports `PaywallRouteScreen` from `apps/mobile/src/features/subscriptions/screens/PaywallRouteScreen.tsx`. The screen renders loading, empty, error, free, past-due, and active Plus states from the server-backed subscription entitlement hook. Inline premium gates can send users to this route without blocking free writing flows.
 
 Student onboarding routes currently include:
 

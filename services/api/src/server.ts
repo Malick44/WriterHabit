@@ -16,8 +16,10 @@ import { registerPlaceholderRoutes } from "./routes/placeholders";
 import { registerProfileRoutes } from "./routes/profile";
 import { registerProgressRoutes } from "./routes/progress";
 import { registerSubmissionRoutes } from "./routes/submissions";
+import { registerSubscriptionRoutes } from "./routes/subscriptions";
 import { registerTeacherRoutes } from "./routes/teachers";
 import { writingLoopImplementedEndpoints } from "./routes/writing-shared";
+import { implementedSubscriptionEndpoints } from "./features/subscriptions/subscriptions.contracts";
 
 interface BuildServerOptions {
   authVerifier?: AuthVerifier;
@@ -91,7 +93,9 @@ export async function buildServer(options: BuildServerOptions = {}) {
             "*.accessToken",
             "*.refreshToken",
             "*.password",
+            "*.secretApiKey",
             "*.serviceRoleKey",
+            "*.webhookAuthorization",
           ],
           remove: true,
         },
@@ -126,6 +130,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
         await registerProgressRoutes(v1, authenticate, database);
         await registerParentRoutes(v1, authenticate, database);
         await registerTeacherRoutes(v1, authenticate, database);
+        await registerSubscriptionRoutes(v1, authenticate, database, config.payments);
       }
 
       await registerPlaceholderRoutes(v1, authenticate, {
@@ -134,6 +139,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
               implementedEndpoints: new Set([
                 ...writingLoopImplementedEndpoints,
                 ...dashboardImplementedEndpoints,
+                ...implementedSubscriptionEndpoints,
               ]),
             }
           : {}),

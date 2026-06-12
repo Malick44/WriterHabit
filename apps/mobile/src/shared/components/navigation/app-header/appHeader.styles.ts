@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 
 import { colors, layout, palette, radius, shadows, spacing } from "@/design/tokens";
 
@@ -221,7 +221,15 @@ export const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   titleText: {
+    alignSelf: "stretch",
     flexShrink: 1,
+    fontFamily: Platform.select({
+      android: "sans-serif-condensed",
+      ios: "AvenirNextCondensed-DemiBold",
+      default: undefined,
+    }),
+    fontWeight: "700",
+    letterSpacing: 0,
   },
   subtitleText: {
     flexShrink: 1,

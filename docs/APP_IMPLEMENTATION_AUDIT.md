@@ -7,14 +7,14 @@ Goal: plan and audit the entire implementation so the app can reach UI `9.5/10` 
 
 ## Executive Verdict
 
-Current public-production verdict: **No-go** for real student/payment data (backend feature persistence, payments, and parent/teacher data remain mocked). UI quality target reached at code level.
+Current public-production verdict: **No-go** for real student/payment data (several backend feature handlers, native payment purchase launch, and parent/teacher production workflows remain incomplete). UI quality target reached at code level.
 
 Current score estimate (re-scored after the 2026-06-11 remediation pass and API client hardening):
 
 | Dimension | Current Score | Target | Reason |
 | --- | ---: | ---: | --- |
 | UI quality | 9.5/10 | 9.5/10 | Every code-level blocker from the original audit is closed: Grades 1-12 onboarding, accessibility settings consumed by shared UI and auth chrome, honest language settings, canvas tap dots, no dead actions, parent/teacher tab icon polish, grade-band adaptation in assignment detail, truthful autosave/submit states, virtualized long lists, and deep-link/app config alignment. The residual half point is reserved for confirmation on real devices (VoiceOver/TalkBack, large text, screenshot matrix), which cannot be exercised from this environment. |
-| Production functionality | 5.7/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, the mobile API client now fails closed without a production base URL and sends bearer auth/request IDs/timeouts/typed errors/Zod validation for current backend call sites/one-shot expired-token refresh, the local Fastify runtime shell verifies Supabase JWTs and ignores client-writable role metadata, Expo Doctor/strict lint/exports all pass, and the EAS/OTA/CI release surface now exists. Still missing for 10/10: deployed API infrastructure, production feature handlers, profile-table role and entitlement hydration, verified RLS hardening, payments, AI provider, object storage, audit/retention workers, owner-linked EAS project credentials, and E2E automation. |
+| Production functionality | 5.7/10 | 10/10 | Improved: mock auth now fails closed outside dev builds, submissions and revisions persist through Supabase with durable ids before success is shown, autosave is race-safe, write errors are surfaced, the mobile API client now fails closed without a production base URL and sends bearer auth/request IDs/timeouts/typed errors/Zod validation for current backend call sites/one-shot expired-token refresh, the local Fastify runtime shell verifies Supabase JWTs and ignores client-writable role metadata, RevenueCat entitlement sync routes exist, Expo Doctor/strict lint/exports all pass, and the EAS/OTA/CI release surface now exists. Still missing for 10/10: deployed API infrastructure, remaining production feature handlers, profile-table role hydration, native RevenueCat purchase launch/store setup, AI provider, object storage, audit/retention workers, owner-linked EAS project credentials, and E2E automation. |
 | Internal demo readiness | 8.5/10 | n/a | Deterministic mocks, local-first storage, passing Jest (44 suites / 187 tests), strict lint, Expo Doctor 21/21, and both platform exports make controlled demos reliable. |
 
 The app remains a pre-production scaffold for data/payment purposes and must not process real student/classroom/payment data until the remaining P0 items below are closed.
@@ -246,15 +246,27 @@ Fix:
 
 Evidence:
 
-- `apps/mobile/src/features/subscriptions/api/subscriptionsApi.ts` uses static plans/prices and returns `activated_preview`.
-- `services/api/src/features/subscriptions/subscriptions.controller.ts` is a placeholder.
+- Round 2 release-blocker work on 2026-06-11 replaced `activated_preview` with
+  server-backed entitlement reads and `pending_store_purchase` checkout state.
+- `services/api/src/features/subscriptions/subscriptions.service.ts` now
+  implements RevenueCat webhook/restore reconciliation and idempotent provider
+  event persistence.
+- Extended progress history, parent family reports, teacher class insights,
+  rubric detail, and canvas archive are wired to entitlement gates or
+  server-side redaction/checks.
 
-Impact: paid plans, restore purchases, renewals, refunds, family access, and entitlement gates cannot be trusted.
+Impact: paid access is no longer unlocked by mobile state. Native RevenueCat
+purchase launch, owner app keys, store products, and sandbox account verification
+still need to happen before paid plans can be enabled publicly.
 
 Fix:
 
-- Integrate StoreKit/Play Billing or a provider such as RevenueCat.
-- Add receipt validation, signed webhooks, entitlement persistence, restore/refund handling, and server-side entitlement gates.
+- Review and deploy the RevenueCat backend entitlement path.
+- Configure `REVENUECAT_WEBHOOK_AUTHORIZATION` and `REVENUECAT_SECRET_API_KEY`
+  in server environments.
+- Add the native RevenueCat SDK/app-key purchase flow in a rebuild and verify
+  App Store / Play Store sandbox purchases, renewals, cancellations, refunds,
+  expirations, restore, grace periods, transfer, and alias scenarios.
 
 ### P0-9: Parent And Teacher Experiences Are Mocked
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
@@ -10,6 +10,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
+import { EntitlementGate } from "@/features/subscriptions";
 import {
   buildAccessibilityLabel,
   getAccessibleColors,
@@ -29,6 +30,27 @@ function getParamValue(value: string | string[] | undefined): string | undefined
 }
 
 export function ParentStudentReportScreen() {
+  const { t } = useI18n();
+  const fallbackWrapper = (content: ReactNode) => (
+    <Screen
+      backgroundColor={colors.background.subtle}
+      gradeBand="middle"
+      subtitle={t("parent.report.subtitle")}
+      testID="parent-student-report-screen"
+      title={t("parent.reportTitle")}
+    >
+      {content}
+    </Screen>
+  );
+
+  return (
+    <EntitlementGate fallbackWrapper={fallbackWrapper} featureId="family_progress_reports">
+      <ParentStudentReportContent />
+    </EntitlementGate>
+  );
+}
+
+function ParentStudentReportContent() {
   const router = useRouter();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ studentId?: string | string[] }>();

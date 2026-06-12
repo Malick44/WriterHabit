@@ -1,74 +1,212 @@
-# Design Prompt — Student Home (WriterHabit AI)
+# Prototype Requirement — Student Home Dashboard
 
-> Paste this entire file into Claude design as one prompt. It produces a prototype of the **student home dashboard** in 3 distinct versions.
+Create a polished, clickable mobile prototype for **WriterHabit AI Student Home** using the design direction above.
+
+This should not be a static concept board. It should feel like a real app prototype that a founder, designer, engineer, parent, or school decision-maker can test.
+
+## Prototype Goals
+
+The prototype must show how a student understands and uses the home screen in under 3 seconds:
+
+1. See today’s most important writing task.
+2. Understand progress and motivation.
+3. Continue writing or get coaching help.
+4. Access practice, messages, profile, and new draft creation.
+
+The prototype should feel fast, calm, premium, and focused.
+
+## Prototype Structure
+
+Create **3 separate clickable prototype versions**:
+
+* **Version A — Focus First**
+* **Version B — Habit Loop**
+* **Version C — Grade 9–12 Productivity**
+
+Each version should include:
+
+* Full iPhone home dashboard
+* Bottom tab bar
+* Working tap targets
+* Visible interaction states
+* Required loading, empty, offline, and practice complete states
+* Realistic transitions between major cards and states
+
+## Required Prototype Interactions
+
+Make these elements clickable or visually interactive:
+
+### 1. Start Writing
+
+When tapped, open a lightweight writing-start preview or bottom sheet showing:
+
+* Assignment title: **The Magic Forest Adventure**
+* Step 1: Understand the prompt
+* Step 2: Plan your ideas
+* Step 3: Write your draft
+* Step 4: Review and revise
+* CTA: **Begin Step 1**
+
+The interaction must reinforce that the app guides the student, not writes for them.
 
 ---
 
-## Role & Design Guide (applies to every screen and every version)
+### 2. Use Canvas
 
-You are a senior product designer and mobile UI specialist. Design polished, realistic mobile app screens for **WriterHabit AI**, an AI writing assistant for Grades 1–12 students. Tagline direction: *Build better writing skills every day.* The app must feel educational, trustworthy, premium, friendly, and implementation-ready. Use iPhone-style mobile UI patterns (status bar, safe areas, bottom tab bar) unless stated otherwise.
+When tapped, open a simple canvas preview state showing:
 
-### Academic integrity & coaching tone (non-negotiable)
-WriterHabit AI is a learning app, not a cheating tool. The AI coach helps students think, plan, and revise their own work.
-- **Forbidden CTAs/labels:** "Write my essay", "Finish for me", "Give me the answer", "Generate final draft", "Do my homework".
-- **Approved CTAs/labels:** "Give me a hint", "Help me brainstorm", "Check my sentence", "Explain this mistake", "Help me revise", "Suggest a stronger word", "Ask me a question".
+* Brainstorm area
+* Idea map
+* “Add idea” action
+* Coach chip: **Ask me a question**
 
-### Premium copy & microcopy system
-- **Action verbs:** Spark Ideas, Outline, Map Out, Refine, Elevate, Sculpt, Tune, Inspect, Audit.
-- **Success & celebration:** "Streak Active", "Daily Rhythm", "Skill Milestone", "Wordsmith", "You've unlocked a new way of expressing your ideas!"
-- **Calm, empathetic recovery:** "You're offline, but your draft is safe on your device.", "Something stumbled. Let's retry."
-- **Anticipation cues for processing:** "Reading your story...", "Crafting your feedback card...", "Analyzing your style..."
-
-### Visual system (use these exact tokens)
-- **Primary Indigo/Blue:** `#2563EB` (pressed `#1D4ED8`; tints `#DBEAFE`, `#EFF6FF`)
-- **Progress Teal/Green:** `#14B8A6`, success `#16A34A` (tints `#F0FDFA`, `#DCFCE7`)
-- **Reward Warm Yellow:** `#F59E0B` (tint `#FEF3C7`) — streaks, points, badges only
-- **Error Soft Salmon/Red:** `#DC2626` on tint `#FEE2E2` — error states only, never decoration
-- **Surfaces & text:** app background `#F6FAFF`, cards `#FFFFFF`/`#FCFEFF`, text slate `#0F172A` / `#475569` / muted `#94A3B8`
-- Light surfaces with subtle glassmorphism touches (translucent blurred headers), 16–24px card radii, soft shadows. No generic primary red/green/blue.
-- **Typography:** modern, high-readability hierarchy; sizes and weights adapt to grade band.
-
-### Grade-band adaptation
-- **Grades 1–5:** larger friendly controls, simple wording, fewer visible metrics, audio/read-aloud affordances.
-- **Grades 6–8:** structured learning cards, skill progress, paragraph structure support.
-- **Grades 9–12:** mature layout, essay planning tools, rubric detail, productivity-focused UI.
-
-### Edge & loading states
-Show loading skeletons, friendly empty states, and offline retry banners so every mockup reads as a complete, production-ready screen.
-
-### Output style
-Make every screen realistic, polished, and easy for engineers to implement: complete navigation, cards, buttons, and believable, localization-ready copy following the vocabulary rules above.
+Keep this lightweight. Do not design a full canvas product, just enough to show the flow.
 
 ---
 
-## Feature Brief: Student Home
+### 3. Continue Draft
 
-The daily anchor screen. A student (use "Alex", Grade 5) opens the app and should know in 3 seconds: today's writing step, their streak, and where to get help. Real product copy to use:
+When tapped, open a draft continuation preview showing:
 
-- Greeting: **"Good morning, Alex 👋"** + "Let's make today a great writing day."
-- Stats row: **🔥 7 day streak**, **⭐ 1,240 WriterHabit points**, **Level 4 · Word Explorer**.
-- **Weekly Goal** card: "Great progress! You're on track." — "4 of 5 days" with teal progress ring/bar.
-- **Today's Assignment** card: title (e.g., "The Magic Forest Adventure"), Estimated time, Skill focus, Rubric focus, Status chip, CTAs **Start Writing** and **Use Canvas**, secondary **Details**.
-- **Continue Your Draft** card: eyebrow "CONTINUE WHERE YOU LEFT OFF", "240 words · Step 2 of 4 · 6 min left", CTA **Continue draft**.
-- **Daily Practice** card: badge "TODAY'S PRACTICE", "Build your writing habit with a quick 10-minute session." — "10 mins · 3 steps", CTA **Start practice**.
-- **Writing coach** entry card: "Ask for hints and questions while you keep control of the writing." Quick chips: **Give me a hint**, **Help me brainstorm**, **Help me revise**.
-- **Recent Feedback** card: snippet + "+15 pts" + CTA **Review**.
-- **Skill Progress** preview: 2–3 skills with percent bars in teal ("Scores update after assignments, feedback, and revisions.").
-- **Your Achievements** strip: badges like *First Steps*, *Word Explorer*, *On Fire* (reward yellow).
-- Bottom tab bar: **Home, Practice, ➕ (Create new draft), Messages, Profile** with a raised center create button.
+* Current progress: **240 words · Step 2 of 4**
+* Next suggested action: **Refine your opening sentence**
+* CTA: **Continue draft**
+* Secondary action: **Ask for a hint**
 
-## States to include
-- **Loading**: skeleton dashboard ("Preparing today's writing plan.")
-- **Empty**: "No assignment yet — Daily practice and feedback will appear here when they are ready." + **View assignments**.
-- **Offline banner**: "Offline mode — Showing saved dashboard details. New feedback and progress sync when the connection returns." + **Check again**.
-- **Practice complete**: "Practice complete today — You kept the writing habit going."
+---
 
-## Deliverable — design 3 distinct versions
+### 4. Writing Coach Chips
 
-Produce **3 complete versions**, labeled **Version A**, **Version B**, **Version C**, each a full dashboard with the tab bar — differing in information architecture and visual rhythm, not just color:
+When tapping coach chips, show small conversational preview cards:
 
-- **Version A — Focus First:** hero "Today's Assignment" dominates above the fold; everything else stacks below in calm cards.
-- **Version B — Habit Loop:** streak/Daily Rhythm ring is the hero; horizontal carousels for assignment, draft, and feedback; gamified but tasteful.
-- **Version C — Grade 9–12 Productivity:** denser, mature layout; compact stat header, agenda-style list of today's steps, muted celebration.
+* **Give me a hint**
 
-**What must stay constant across versions:** exact color tokens, academic-integrity copy rules, the listed content modules, tab bar, required states, iPhone patterns.
+  * Response preview: “What detail could help your reader picture the forest more clearly?”
+
+* **Help me brainstorm**
+
+  * Response preview: “Let’s list three possible magical things Alex might discover.”
+
+* **Help me revise**
+
+  * Response preview: “Choose one sentence you want to make stronger.”
+
+The coach must ask questions and guide thinking. It must not generate final answers.
+
+---
+
+### 5. Recent Feedback
+
+When tapped, open a compact feedback card:
+
+* Positive note
+* One improvement suggestion
+* Reward: **+15 pts**
+* CTA: **Revise one sentence**
+
+---
+
+### 6. Bottom Tab Bar
+
+Make tab bar interactions feel realistic:
+
+* Home: current selected state
+* Practice: opens a practice preview
+* Center plus: opens **Create new draft** bottom sheet
+* Messages: opens simple messages preview
+* Profile: opens profile snapshot
+
+These secondary screens can be lightweight prototype previews, not full product screens.
+
+---
+
+## Required States in Prototype
+
+Include these as clickable or selectable states:
+
+### Loading
+
+Show skeleton dashboard with copy:
+
+**Preparing today’s writing plan.**
+
+Use shimmer-like placeholders and preserve layout structure.
+
+### Empty
+
+Show:
+
+**No assignment yet — Daily practice and feedback will appear here when they are ready.**
+
+CTA:
+
+**View assignments**
+
+### Offline
+
+Show banner:
+
+**Offline mode — Showing saved dashboard details. New feedback and progress sync when the connection returns.**
+
+CTA:
+
+**Check again**
+
+### Practice Complete
+
+Show:
+
+**Practice complete today — You kept the writing habit going.**
+
+Use calm success treatment.
+
+---
+
+## Prototype Quality Bar
+
+The prototype must feel:
+
+* Realistic enough for investor or user testing
+* Clear enough for engineers to implement
+* Premium enough to stand apart from generic EdTech apps
+* Focused enough that students are not overwhelmed
+* Trustworthy enough for parents and schools
+
+Avoid fake complexity.
+Avoid unnecessary screens.
+Avoid showing every feature at once.
+Avoid anything that makes the app feel like a cheating tool.
+
+The prototype should communicate:
+
+**WriterHabit AI helps students build writing skill through guided practice, coaching, and revision — without taking control of the writing.**
+
+---
+
+## Final Deliverable
+
+Produce a clickable prototype with:
+
+1. **Version A — Focus First**
+
+   * Assignment-first dashboard
+   * Clear primary action
+   * Calm stacked cards
+
+2. **Version B — Habit Loop**
+
+   * Streak and weekly rhythm as the emotional hero
+   * Horizontal momentum cards
+   * Tasteful gamification
+
+3. **Version C — Grade 9–12 Productivity**
+
+   * Mature agenda-style layout
+   * Compact productivity-first structure
+   * Subtle progress and rubric cues
+
+Each version must include realistic UI, microinteractions, app states, and clickable flows.
+
+Most important principle:
+
+**Do not waste the student’s precious time. Every visible item must help them take the next meaningful writing step.**

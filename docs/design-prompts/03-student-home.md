@@ -1,5 +1,18 @@
 # Prototype Requirement — Student Home Dashboard
 
+---
+
+## Current Prototype Direction Override
+
+Use this file together with `00-AGENT-DIRECTION-HABIT-LOOP.md`.
+
+The current selected product direction is **Option B — Habit Loop only**. If this file mentions creating three versions, treat that older instruction as historical exploration context. For current implementation, continue with the Habit Loop direction only.
+
+Preserve the existing Canvas implementation. Integrate with Canvas through existing routes/components where possible. Do not redesign, replace, or duplicate Canvas.
+
+---
+
+
 Create a polished, clickable mobile prototype for **WriterHabit AI Student Home** using the design direction above.
 
 This should not be a static concept board. It should feel like a real app prototype that a founder, designer, engineer, parent, or school decision-maker can test.

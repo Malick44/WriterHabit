@@ -56,12 +56,11 @@ export const AppHeaderTitle = memo(function AppHeaderTitle({
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const title = titleKey ? t(titleKey, titleParams) : undefined;
-  const displayTitle = title?.toUpperCase();
   const subtitle = subtitleKey ? t(subtitleKey, subtitleParams) : undefined;
   const numberOfTitleLines = variant === "compact" ? 1 : variant === "large" ? 3 : 2;
   const titleStyle = useMemo(
-    () => getCompactTitleStyle(getAccessibleTextStyle(type[titleRole], settings)),
-    [settings, titleRole, type],
+    () => getCompactTitleStyle(getAccessibleTextStyle(type.display, settings)),
+    [settings, type],
   );
   const subtitleStyle = useMemo(
     () => getAccessibleTextStyle(type.bodySmall, settings),
@@ -97,7 +96,7 @@ export const AppHeaderTitle = memo(function AppHeaderTitle({
           ]}
           testID={APP_HEADER_TEST_IDS.title}
         >
-          {displayTitle}
+          {title}
         </Text>
       ) : null}
 

@@ -1,5 +1,18 @@
 # WriterHabit AI — Design Prompts
 
+---
+
+## Current Prototype Direction Override
+
+Use this file together with `00-AGENT-DIRECTION-HABIT-LOOP.md`.
+
+The current selected product direction is **Option B — Habit Loop only**. If this file mentions creating three versions, treat that older instruction as historical exploration context. For current implementation, continue with the Habit Loop direction only.
+
+Preserve the existing Canvas implementation. Integrate with Canvas through existing routes/components where possible. Do not redesign, replace, or duplicate Canvas.
+
+---
+
+
 One prompt file per feature. Each file is **standalone**: paste the entire file into Claude design (or any design agent) as a single prompt and it will produce a prototype for that one feature in **3 distinct versions**.
 
 Every prompt embeds the shared design guide (brand, integrity rules, copy system, exact color tokens from `apps/mobile/src/design/tokens/colors.ts`) plus a feature brief grounded in the real product copy from `apps/mobile/src/shared/i18n/en.ts`.

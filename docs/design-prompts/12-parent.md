@@ -4,6 +4,19 @@
 
 ---
 
+---
+
+## Current Prototype Direction Override
+
+Use this file together with `00-AGENT-DIRECTION-HABIT-LOOP.md`.
+
+The current selected product direction is **Option B — Habit Loop only**. If this file mentions creating three versions, treat that older instruction as historical exploration context. For current implementation, continue with the Habit Loop direction only.
+
+Preserve the existing Canvas implementation. Integrate with Canvas through existing routes/components where possible. Do not redesign, replace, or duplicate Canvas.
+
+---
+
+
 ## Role & Design Guide (applies to every screen and every version)
 
 You are a senior product designer and mobile UI specialist. Design polished, realistic mobile app screens for **WriterHabit AI**, an AI writing assistant for Grades 1–12 students. Tagline direction: *Build better writing skills every day.* The app must feel educational, trustworthy, premium, friendly, and implementation-ready. Use iPhone-style mobile UI patterns (status bar, safe areas, tab/navigation) unless stated otherwise.

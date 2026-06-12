@@ -9,11 +9,31 @@ import { useI18n } from "@/i18n";
 import { LoadingState } from "@/shared/components/feedback";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
+import type { GradeLevel } from "@WriterHabit/shared";
+
+import type { TranslationKey } from "@/i18n";
+
 import { OnboardingStepFrame } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
 import { GRADE_GROUPS, onboardingErrorMessageKeys, onboardingValidationMessageKeys } from "../types";
 
 const NAVY = colors.onboarding.navy;
+
+function getAdaptationHintKey(grade: GradeLevel): TranslationKey {
+  if (grade <= 2) {
+    return "onboarding.gradeSelection.adaptationHints.earlyElementary";
+  }
+
+  if (grade <= 5) {
+    return "onboarding.gradeSelection.adaptationHints.upperElementary";
+  }
+
+  if (grade <= 8) {
+    return "onboarding.gradeSelection.adaptationHints.middle";
+  }
+
+  return "onboarding.gradeSelection.adaptationHints.high";
+}
 
 export function GradeSelectionScreen() {
   const router = useRouter();
@@ -66,7 +86,12 @@ export function GradeSelectionScreen() {
       titleStyle={styles.title}
     >
       <View style={styles.groups}>
-        {GRADE_GROUPS.map((group) => (
+        {GRADE_GROUPS.map((group) => {
+          const selectedGrade = onboarding.progress.gradeLevel;
+          const groupHasSelection =
+            selectedGrade != null && (group.grades as readonly GradeLevel[]).includes(selectedGrade);
+
+          return (
           <View key={group.titleKey} style={styles.group}>
             <Text
               accessibilityRole="header"
@@ -112,14 +137,44 @@ export function GradeSelectionScreen() {
                 );
               })}
             </View>
+            {groupHasSelection && selectedGrade != null ? (
+              <View style={styles.adaptationHint}>
+                <Ionicons name="sparkles" size={16} color={palette.teal[500]} />
+                <Text
+                  selectable
+                  style={getAccessibleTextStyle(styles.adaptationHintText, settings)}
+                >
+                  {t(getAdaptationHintKey(selectedGrade))}
+                </Text>
+              </View>
+            ) : null}
           </View>
-        ))}
+          );
+        })}
       </View>
     </OnboardingStepFrame>
   );
 }
 
 const styles = StyleSheet.create({
+  adaptationHint: {
+    alignItems: "center",
+    backgroundColor: palette.teal[50],
+    borderColor: palette.teal[100],
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  adaptationHintText: {
+    color: palette.teal[700],
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
   gradeButton: {
     alignItems: "center",
     backgroundColor: colors.onboarding.surface,
@@ -129,8 +184,8 @@ const styles = StyleSheet.create({
     flexBasis: "30%",
     flexGrow: 1,
     justifyContent: "center",
-    minHeight: 88,
-    paddingHorizontal: 16,
+    minHeight: 72,
+    paddingHorizontal: 10,
     position: "relative",
   },
   gradeButtonPressed: {
@@ -144,13 +199,13 @@ const styles = StyleSheet.create({
   gradeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 22,
+    gap: 10,
   },
   gradeLabel: {
     color: colors.onboarding.ink,
-    fontSize: 24,
-    fontWeight: "500",
-    lineHeight: 30,
+    fontSize: 18,
+    fontWeight: "600",
+    lineHeight: 22,
     textAlign: "center",
   },
   gradeLabelSelected: {
@@ -158,30 +213,30 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   group: {
-    gap: 22,
+    gap: 10,
   },
   groupTitle: {
     color: colors.onboarding.ink,
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "800",
-    lineHeight: 30,
+    lineHeight: 20,
   },
   groups: {
-    gap: 54,
+    gap: 16,
   },
   selectedBadge: {
     alignItems: "center",
     backgroundColor: NAVY,
-    borderRadius: 18,
-    height: 36,
+    borderRadius: 16,
+    height: 30,
     justifyContent: "center",
     position: "absolute",
-    right: -14,
-    top: -14,
-    width: 36,
+    right: -10,
+    top: -10,
+    width: 30,
   },
   title: {
-    fontSize: 36,
-    lineHeight: 44,
+    fontSize: 28,
+    lineHeight: 34,
   },
 });

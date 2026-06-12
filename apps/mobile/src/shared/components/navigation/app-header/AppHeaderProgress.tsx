@@ -59,7 +59,17 @@ export const AppHeaderProgress = memo(function AppHeaderProgress({
         <View style={styles.progressMeta}>
           <Text
             numberOfLines={1}
-            style={[getAccessibleTextStyle(type.caption, settings), { color: headerColors.mutedText }]}
+            style={[
+              getAccessibleTextStyle(type.caption, settings),
+              {
+                color: headerColors.mutedText,
+                fontSize: 13,
+                fontWeight: "800",
+                letterSpacing: 1.2,
+                lineHeight: 16,
+                textTransform: "uppercase",
+              },
+            ]}
           >
             {label}
           </Text>

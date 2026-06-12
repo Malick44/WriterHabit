@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, type GradeBand } from "@/design/tokens";
+import { colors, palette, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { StatusState } from "@/shared/components/feedback";
@@ -57,20 +57,20 @@ type OnboardingStepFrameProps = {
 
 const NAVY = colors.onboarding.navy;
 const SURFACE = colors.onboarding.surface;
-const PROGRESS_STEPS: OnboardingStep[] = ["role", "grade", "goals", "dailyPractice", "planSummary"];
+const PROGRESS_STEPS: OnboardingStep[] = ["role", "grade", "goals", "confidence", "dailyPractice", "planSummary"];
 
 const titleTextStyle: TextStyle = {
   color: NAVY,
-  fontSize: 34,
+  fontSize: 30,
   fontWeight: "800",
-  lineHeight: 42,
+  lineHeight: 38,
 };
 
 const subtitleTextStyle: TextStyle = {
   color: colors.onboarding.subtitle,
-  fontSize: 21,
+  fontSize: 18,
   fontWeight: "400",
-  lineHeight: 30,
+  lineHeight: 24,
 };
 
 const primaryButtonTextStyle: TextStyle = {
@@ -158,6 +158,7 @@ export function OnboardingStepFrame({
     <View style={{ flex: 1, backgroundColor }}>
       <Screen
         backgroundColor={backgroundColor}
+        contentPaddingTop={0}
         contentStyle={[styles.content, contentStyle]}
         footer={footer}
         gradeBand={gradeBand}
@@ -174,37 +175,42 @@ export function OnboardingStepFrame({
               style={styles.backButton}
             >
               <Ionicons
-                name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
-                size={32}
+                name={I18nManager.isRTL ? "chevron-forward" : "chevron-back"}
+                size={24}
                 color={backIconColor}
               />
             </Pressable>
           ) : null}
 
           {showProgressDots ? (
-            <View
-              accessibilityLabel={t("onboarding.progressLabel")}
-              accessibilityRole="progressbar"
-              accessibilityValue={{ max: progressStepsCount, min: 0, now: activeIndex + 1 }}
-              style={styles.progressDots}
-            >
-              {Array.from({ length: progressStepsCount }).map((_, index) => {
-                const isActive = index === activeIndex;
-
-                return (
-                  <View
-                    key={`${step}-progress-${index}`}
-                    style={[
-                      styles.progressDot,
-                      { backgroundColor: progressInactiveColor },
-                      isActive ? [styles.progressDotActive, { backgroundColor: progressActiveColor }] : null,
-                    ]}
-                  />
-                );
-              })}
-            </View>
+            <Text selectable={false} style={styles.stepLabel}>
+              {t("onboarding.stepLabel", { current: activeIndex + 1, total: progressStepsCount })}
+            </Text>
           ) : null}
         </View>
+
+        {showProgressDots ? (
+          <View
+            accessibilityLabel={t("onboarding.progressLabel")}
+            accessibilityRole="progressbar"
+            accessibilityValue={{ max: progressStepsCount, min: 0, now: activeIndex + 1 }}
+            style={styles.progressSegments}
+          >
+            {Array.from({ length: progressStepsCount }).map((_, index) => {
+              const isFilled = index <= activeIndex;
+
+              return (
+                <View
+                  key={`${step}-progress-${index}`}
+                  style={[
+                    styles.progressSegment,
+                    { backgroundColor: isFilled ? progressActiveColor : progressInactiveColor },
+                  ]}
+                />
+              );
+            })}
+          </View>
+        ) : null}
 
         <View
           style={[
@@ -251,10 +257,18 @@ export function OnboardingStepFrame({
 const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
+    backgroundColor: colors.onboarding.surface,
+    borderColor: palette.slate[200],
+    borderRadius: 22,
+    borderWidth: 1,
     height: 44,
     justifyContent: "center",
     left: 0,
     position: "absolute",
+    shadowColor: colors.onboarding.cardShadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
     top: 0,
     width: 44,
   },
@@ -263,47 +277,48 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 0,
-    paddingBottom: 104,
+    paddingBottom: 88,
   },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 12,
   },
   header: {
-    gap: 12,
-    marginBottom: 32,
-    marginTop: 28,
+    gap: 6,
+    marginBottom: 12,
+    marginTop: 0,
   },
   headerCentered: {
     alignItems: "center",
-    marginBottom: 42,
-    marginTop: 38,
+    marginBottom: 14,
+    marginTop: 6,
   },
   primaryButton: {
     backgroundColor: NAVY,
     borderColor: NAVY,
-    borderRadius: 16,
-    minHeight: 64,
+    borderRadius: 14,
+    minHeight: 56,
     shadowColor: colors.onboarding.buttonShadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
   },
-  progressDot: {
-    backgroundColor: colors.onboarding.dotInactive,
-    borderRadius: 7,
-    height: 14,
-    width: 14,
+  progressSegment: {
+    borderRadius: 999,
+    flex: 1,
+    height: 5,
   },
-  progressDotActive: {
-    backgroundColor: NAVY,
-    width: 44,
-  },
-  progressDots: {
-    alignItems: "center",
+  progressSegments: {
     flexDirection: "row",
-    gap: 12,
-    justifyContent: "center",
+    gap: 6,
+    marginTop: 8,
+  },
+  stepLabel: {
+    color: palette.slate[500],
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   subtitleCentered: {
     maxWidth: 620,
@@ -315,9 +330,9 @@ const styles = StyleSheet.create({
   },
   topBar: {
     alignItems: "center",
-    height: 44,
+    height: 36,
     justifyContent: "center",
-    marginTop: 4,
+    marginTop: 2,
     position: "relative",
   },
 });

@@ -33,6 +33,7 @@ interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
   keyboardAvoiding?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  contentPaddingTop?: number;
   backgroundColor?: string;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollEventThrottle?: number;
@@ -47,6 +48,7 @@ export function Screen({
   scroll = true,
   keyboardAvoiding = false,
   contentStyle,
+  contentPaddingTop,
   backgroundColor,
   onScroll,
   scrollEventThrottle,
@@ -67,6 +69,7 @@ export function Screen({
       ? layout.screenPadding.phone + spacing.sm
       : layout.screenPadding.phone;
   const resolvedBackgroundColor = backgroundColor ?? accessibleColors.background;
+  const resolvedContentPaddingTop = contentPaddingTop ?? Math.max(insets.top, spacing.lg);
   const content = (
     <View
       style={[
@@ -113,7 +116,7 @@ export function Screen({
           flex: 1,
           paddingBottom: Math.max(insets.bottom, spacing.lg),
           paddingHorizontal: horizontalPadding,
-          paddingTop: Math.max(insets.top, spacing.lg),
+          paddingTop: resolvedContentPaddingTop,
         }}
       >
         {content}
@@ -134,7 +137,7 @@ export function Screen({
       contentContainerStyle={{
         paddingBottom: Math.max(insets.bottom, spacing.xl),
         paddingHorizontal: horizontalPadding,
-        paddingTop: Math.max(insets.top, spacing.lg),
+        paddingTop: resolvedContentPaddingTop,
       }}
     >
       {content}

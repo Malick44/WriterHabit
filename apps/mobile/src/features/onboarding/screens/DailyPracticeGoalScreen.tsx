@@ -526,18 +526,6 @@ export function DailyPracticeGoalScreen() {
                     >
                       {t(dailyPracticeCopyKeys[minutes].label)}
                     </Text>
-                    {minutes === 10 ? (
-                      <View style={[styles.badge, { backgroundColor: theme.accentColor }]}>
-                        <Text
-                          style={getAccessibleTextStyle(
-                            { ...styles.badgeText, color: readableAccentTextColor },
-                            settings,
-                          )}
-                        >
-                          {t("onboarding.dailyPracticeGoal.recommendedBadge")}
-                        </Text>
-                      </View>
-                    ) : null}
                   </View>
                   <Text
                     style={getAccessibleTextStyle(
@@ -604,9 +592,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     flexDirection: "row",
-    minHeight: 88,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    minHeight: 68,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 8,
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
@@ -614,18 +602,18 @@ const styles = StyleSheet.create({
   },
   optionCopy: {
     flex: 1,
-    gap: 2,
-    marginLeft: spacing.md,
+    gap: 1,
+    marginLeft: spacing.xs,
   },
   optionDescription: {
     fontWeight: "500",
   },
   optionIcon: {
     alignItems: "center",
-    borderRadius: 24,
-    height: 48,
+    borderRadius: 18,
+    height: 36,
     justifyContent: "center",
-    width: 48,
+    width: 36,
   },
   optionTitle: {
     flexShrink: 1,
@@ -648,20 +636,20 @@ const styles = StyleSheet.create({
   },
   radioOuter: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 2,
-    height: 32,
+    height: 28,
     justifyContent: "center",
-    marginLeft: spacing.sm,
-    width: 32,
+    marginLeft: 6,
+    width: 28,
   },
   subtitle: {
     fontWeight: "500",
   },
   summaryCard: {
     borderWidth: 1,
-    gap: spacing.md,
-    padding: spacing.lg,
+    gap: spacing.sm,
+    padding: spacing.md,
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
@@ -681,10 +669,10 @@ const styles = StyleSheet.create({
   },
   summaryIcon: {
     alignItems: "center",
-    borderRadius: 34,
-    height: 68,
+    borderRadius: 28,
+    height: 56,
     justifyContent: "center",
-    width: 68,
+    width: 56,
   },
   summaryTitle: {
     fontWeight: "800",

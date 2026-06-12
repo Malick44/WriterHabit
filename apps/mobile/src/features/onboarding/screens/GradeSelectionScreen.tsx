@@ -92,63 +92,63 @@ export function GradeSelectionScreen() {
             selectedGrade != null && (group.grades as readonly GradeLevel[]).includes(selectedGrade);
 
           return (
-          <View key={group.titleKey} style={styles.group}>
-            <Text
-              accessibilityRole="header"
-              selectable
-              style={getAccessibleTextStyle(styles.groupTitle, settings)}
-            >
-              {t(group.titleKey)}
-            </Text>
-            <View accessibilityRole="radiogroup" style={styles.gradeGrid}>
-              {group.grades.map((grade) => {
-                const isSelected = onboarding.progress.gradeLevel === grade;
-                return (
-                  <Pressable
-                    accessibilityHint={t("onboarding.gradeSelection.gradeAccessibilityHint", { grade })}
-                    accessibilityLabel={t("onboarding.gradeSelection.gradeLabel", { grade })}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                    key={grade}
-                    onPress={() => {
-                      setShowValidationError(false);
-                      void onboarding.setGradeLevel(grade);
-                    }}
-                    style={({ pressed }) => [
-                      styles.gradeButton,
-                      isSelected ? styles.gradeButtonSelected : null,
-                      pressed ? styles.gradeButtonPressed : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        getAccessibleTextStyle(styles.gradeLabel, settings),
-                        isSelected ? styles.gradeLabelSelected : null,
+            <View key={group.titleKey} style={styles.group}>
+              <Text
+                accessibilityRole="header"
+                selectable
+                style={getAccessibleTextStyle(styles.groupTitle, settings)}
+              >
+                {t(group.titleKey)}
+              </Text>
+              <View accessibilityRole="radiogroup" style={styles.gradeGrid}>
+                {group.grades.map((grade) => {
+                  const isSelected = onboarding.progress.gradeLevel === grade;
+                  return (
+                    <Pressable
+                      accessibilityHint={t("onboarding.gradeSelection.gradeAccessibilityHint", { grade })}
+                      accessibilityLabel={t("onboarding.gradeSelection.gradeLabel", { grade })}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected }}
+                      key={grade}
+                      onPress={() => {
+                        setShowValidationError(false);
+                        void onboarding.setGradeLevel(grade);
+                      }}
+                      style={({ pressed }) => [
+                        styles.gradeButton,
+                        isSelected ? styles.gradeButtonSelected : null,
+                        pressed ? styles.gradeButtonPressed : null,
                       ]}
                     >
-                      {t("onboarding.gradeSelection.gradeLabel", { grade })}
-                    </Text>
-                    {isSelected ? (
-                      <View style={styles.selectedBadge}>
-                        <Ionicons name="checkmark" size={22} color={palette.white} />
-                      </View>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-            {groupHasSelection && selectedGrade != null ? (
-              <View style={styles.adaptationHint}>
-                <Ionicons name="sparkles" size={16} color={palette.teal[500]} />
-                <Text
-                  selectable
-                  style={getAccessibleTextStyle(styles.adaptationHintText, settings)}
-                >
-                  {t(getAdaptationHintKey(selectedGrade))}
-                </Text>
+                      <Text
+                        style={[
+                          getAccessibleTextStyle(styles.gradeLabel, settings),
+                          isSelected ? styles.gradeLabelSelected : null,
+                        ]}
+                      >
+                        {t("onboarding.gradeSelection.gradeLabel", { grade })}
+                      </Text>
+                      {isSelected ? (
+                        <View style={styles.selectedBadge}>
+                          <Ionicons name="checkmark" size={22} color={palette.white} />
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
               </View>
-            ) : null}
-          </View>
+              {groupHasSelection && selectedGrade != null ? (
+                <View style={styles.adaptationHint}>
+                  <Ionicons name="sparkles" size={16} color={palette.teal[500]} />
+                  <Text
+                    selectable
+                    style={getAccessibleTextStyle(styles.adaptationHintText, settings)}
+                  >
+                    {t(getAdaptationHintKey(selectedGrade))}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           );
         })}
       </View>

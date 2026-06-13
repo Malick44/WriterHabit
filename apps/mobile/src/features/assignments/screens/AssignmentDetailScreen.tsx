@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ComponentProps, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import {
   Pressable,
   ScrollView,
@@ -6,85 +6,39 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type StyleProp,
-  type TextStyle,
-  type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getAssignmentSubmissionRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
+import {
+  getAssignmentSubmissionRoute,
+  getCanvasTemplatePickerRoute,
+  getWritingWorkspaceRoute,
+} from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors, layout, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
+import { colors, fonts, layout, palette, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
-  getAccessibleColors,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
+import { AssignmentStatusBadge } from "../components";
 import { useAssignmentDetailData } from "../hooks/useAssignments";
-import type { AssignmentRecord } from "../types";
+import type { AssignmentRecord, AssignmentStatus } from "../types";
 
-type IconName = ComponentProps<typeof Ionicons>["name"];
-
-const detailColors = {
-  background: colors.dashboard.background,
-  onPrimary: colors.dashboard.onPrimary,
-  onSurface: colors.dashboard.onSurface,
-  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
-  outlineVariant: colors.dashboard.outlineVariant,
-  primary: colors.dashboard.primary,
-  secondary: colors.dashboard.secondary,
-  surface: colors.dashboard.surface,
-  surfaceContainer: colors.dashboard.surfaceContainer,
-  surfaceLowest: colors.dashboard.surfaceLowest,
-} as const;
-
-const detailShadow = {
-  boxShadow: "0 4px 12px rgba(11, 28, 48, 0.04)",
-} as const;
+const dashboard = colors.dashboard;
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
 const DetailGradeBandContext = createContext<GradeBand>("middle");
-
-function DetailText({
-  children,
-  color = detailColors.onSurface,
-  role = "body",
-  style,
-}: {
-  children: string;
-  color?: string;
-  role?: keyof typeof typography.gradeBands.middle;
-  style?: StyleProp<TextStyle>;
-}) {
-  const { settings } = useAccessibilityContext();
-  const gradeBand = useContext(DetailGradeBandContext);
-  const accessibleColors = getAccessibleColors(settings);
-  const resolvedColor = settings.highContrast
-    ? color === detailColors.onSurfaceVariant
-      ? accessibleColors.mutedText
-      : accessibleColors.text
-    : color;
-
-  return (
-    <Text
-      selectable
-      style={[getAccessibleTextStyle(typography.gradeBands[gradeBand][role], settings), { color: resolvedColor }, style]}
-    >
-      {children}
-    </Text>
-  );
-}
 
 function StateFrame({ children }: { children: ReactNode }) {
   return (
@@ -103,111 +57,131 @@ function StateFrame({ children }: { children: ReactNode }) {
   );
 }
 
-function DetailTile({
-  children,
-  style,
-}: {
-  children: ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return <View style={[styles.tile, style]}>{children}</View>;
-}
-
-function MetricTile({
-  icon,
-  iconColor,
+function FactRow({
+  divider = true,
   label,
   value,
-  valueAccessory,
+  valueChip = false,
 }: {
-  icon: IconName;
-  iconColor: string;
+  divider?: boolean;
   label: string;
   value: string;
-  valueAccessory?: ReactNode;
+  valueChip?: boolean;
 }) {
-  return (
-    <DetailTile style={styles.metricTile}>
-      <View style={styles.metricLabelRow}>
-        <Ionicons color={iconColor} name={icon} size={18} />
-        <DetailText color={detailColors.onSurfaceVariant} role="caption">
-          {label}
-        </DetailText>
-      </View>
-      <View style={styles.metricValueRow}>
-        <DetailText role="bodyStrong">{value}</DetailText>
-        {valueAccessory}
-      </View>
-    </DetailTile>
-  );
-}
+  const { settings } = useAccessibilityContext();
 
-function DifficultyBars({ difficulty }: { difficulty: AssignmentRecord["difficulty"] }) {
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.difficultyBars}>
-      <View style={[styles.difficultyBar, styles.difficultyBarOne]} />
-      <View
-        style={[
-          styles.difficultyBar,
-          styles.difficultyBarTwo,
-          difficulty === "easy" ? styles.difficultyBarMuted : null,
-        ]}
-      />
-      <View
-        style={[
-          styles.difficultyBar,
-          styles.difficultyBarThree,
-          difficulty !== "challenging" ? styles.difficultyBarMuted : null,
-        ]}
-      />
+    <View style={[styles.factRow, divider ? styles.factRowDivider : null]}>
+      <Text selectable style={getAccessibleTextStyle(styles.factLabel, settings)}>
+        {label}
+      </Text>
+      {valueChip ? (
+        <View style={styles.factChip}>
+          <Text selectable style={getAccessibleTextStyle(styles.factChipText, settings)}>
+            {value}
+          </Text>
+        </View>
+      ) : (
+        <Text selectable style={[getAccessibleTextStyle(styles.factValue, settings), styles.factValueAligned]}>
+          {value}
+        </Text>
+      )}
     </View>
   );
 }
 
-function RubricList({ assignment }: { assignment: AssignmentRecord }) {
+type JourneyStage = "draft" | "submitted" | "feedback" | "revised" | "complete";
+
+const journeyStages: JourneyStage[] = ["draft", "submitted", "feedback", "revised", "complete"];
+
+function getJourneyStageIndex(status: AssignmentStatus): number {
+  switch (status) {
+    case "not_started":
+    case "in_progress":
+      return 0;
+    case "submitted":
+    case "reviewing":
+      return 1;
+    case "feedback_ready":
+      return 2;
+    case "revision_in_progress":
+      return 3;
+    case "completed":
+      return 4;
+  }
+}
+
+function StatusJourney({ status }: { status: AssignmentStatus }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const currentIndex = getJourneyStageIndex(status);
 
   return (
     <View
-      accessibilityLabel={t("assignments.detail.rubricAccessibility")}
+      accessibilityLabel={t("assignments.detail.statusJourneyAccessibility", {
+        current: t(`assignments.detail.journey.${journeyStages[currentIndex]}`),
+      })}
       accessible
-      style={styles.rubricCard}
-      testID="assignment-detail-rubric"
+      style={styles.journeyCard}
+      testID="assignment-detail-journey"
     >
-      {assignment.rubric.map((item, index) => (
-        <View
-          key={item.id}
-          style={[styles.rubricRow, index < assignment.rubric.length - 1 ? styles.rubricDivider : null]}
-        >
-          <View style={styles.rubricCopy}>
-            <DetailText role="body">{item.label}</DetailText>
-            {item.description ? (
-              <DetailText color={detailColors.onSurfaceVariant} role="caption" style={styles.rubricDescription}>
-                {item.description}
-              </DetailText>
-            ) : null}
-          </View>
-          <Ionicons color={detailColors.outlineVariant} name="ellipse-outline" size={22} />
-        </View>
-      ))}
+      <Text selectable style={getAccessibleTextStyle(styles.cardEyebrow, settings)}>
+        {t("assignments.detail.statusSectionTitle")}
+      </Text>
+      <View style={styles.journeyRow}>
+        <View style={styles.journeyTrack} />
+        {journeyStages.map((stage, index) => {
+          const isCurrent = index === currentIndex;
+          const isDone = index < currentIndex;
+
+          return (
+            <View key={stage} style={styles.journeyStep}>
+              <View
+                style={[
+                  styles.journeyDot,
+                  isCurrent ? styles.journeyDotCurrent : null,
+                  isDone ? styles.journeyDotDone : null,
+                ]}
+              >
+                {isCurrent ? <View style={styles.journeyDotCore} /> : null}
+                {isDone ? <Ionicons color={dashboard.onPrimary} name="checkmark" size={13} /> : null}
+              </View>
+              <Text
+                selectable={false}
+                style={[
+                  getAccessibleTextStyle(styles.journeyLabel, settings),
+                  isCurrent || isDone ? styles.journeyLabelActive : null,
+                ]}
+              >
+                {t(`assignments.detail.journey.${stage}`)}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 function AssignmentContent({
   assignment,
-  hintVisible,
   isOffline,
   onRefresh,
 }: {
   assignment: AssignmentRecord;
-  hintVisible: boolean;
   isOffline: boolean;
   onRefresh: () => void;
 }) {
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const gradeBand = useContext(DetailGradeBandContext);
+  const type = typography.gradeBands[gradeBand];
   const skillFocus = assignment.skillFocus.map((skill) => t(`assignments.skills.${skill}`)).join(", ");
-  const hintText = assignment.instructions[0] ?? assignment.teacherNote ?? t("assignments.detail.safetyNote");
+  const gradeRange =
+    assignment.gradeLevelMin === assignment.gradeLevelMax
+      ? `${assignment.gradeLevelMin}`
+      : `${assignment.gradeLevelMin}–${assignment.gradeLevelMax}`;
+  const rubricFocus = assignment.rubric[0]?.label;
 
   return (
     <>
@@ -239,67 +213,69 @@ function AssignmentContent({
             />
           ) : null}
 
+          <View>
+            <Text selectable style={getAccessibleTextStyle(styles.typeEyebrow, settings)}>
+              {t("assignments.detail.typeEyebrow", {
+                type: t(`assignments.types.${assignment.assignmentType}`),
+                grade: gradeRange,
+              })}
+            </Text>
+            <View style={styles.titleRow}>
+              <Text
+                selectable
+                style={[getAccessibleTextStyle(type.heading, settings), styles.titleText]}
+                testID="assignment-detail-title"
+              >
+                {assignment.title}
+              </Text>
+              <AssignmentStatusBadge gradeBand={gradeBand} status={assignment.status} />
+            </View>
+          </View>
+
           <View
             accessibilityLabel={buildAccessibilityLabel([t("assignments.detail.promptAccessibility"), assignment.prompt])}
             accessible
-            style={styles.promptSection}
+            style={styles.card}
             testID="assignment-detail-prompt"
           >
-            <DetailText color={detailColors.primary} role="title" style={styles.promptText}>
+            <Text selectable style={getAccessibleTextStyle(styles.cardEyebrow, settings)}>
+              {t("assignments.detail.promptTitle")}
+            </Text>
+            <Text selectable style={getAccessibleTextStyle(styles.promptText, settings)}>
               {assignment.prompt}
-            </DetailText>
+            </Text>
           </View>
 
-          {hintVisible ? (
-            <DetailTile style={styles.hintCard}>
-              <View style={styles.hintTitleRow}>
-                <Ionicons color={detailColors.primary} name="bulb-outline" size={20} />
-                <DetailText role="label">{t("assignments.detail.hintTitle")}</DetailText>
-              </View>
-              <DetailText color={detailColors.onSurfaceVariant} role="bodySmall">
-                {hintText}
-              </DetailText>
-            </DetailTile>
-          ) : null}
-
-          <View style={styles.bentoGrid}>
-            <DetailTile style={styles.skillTile}>
-              <View style={styles.skillIcon}>
-                <Ionicons color={detailColors.primary} name="radio-button-on" size={20} />
-              </View>
-              <View style={styles.skillCopy}>
-                <DetailText color={detailColors.onSurfaceVariant} role="caption">
-                  {t("assignments.detail.skillsSectionTitle")}
-                </DetailText>
-                <DetailText role="bodyStrong">{skillFocus || t("assignments.detail.generalWriting")}</DetailText>
-              </View>
-            </DetailTile>
-
-            <View style={styles.metricGrid}>
-              <MetricTile
-                icon="time-outline"
-                iconColor={detailColors.primary}
-                label={t("assignments.detail.estimatedTimeLabel")}
-                value={t("assignments.detail.estimatedTime", { count: assignment.estimatedMinutes })}
-              />
-              <MetricTile
-                icon="bar-chart-outline"
-                iconColor={detailColors.secondary}
-                label={t("assignments.detail.difficultyLabel")}
-                value={t(`assignments.difficulty.${assignment.difficulty}`)}
-                valueAccessory={<DifficultyBars difficulty={assignment.difficulty} />}
-              />
-            </View>
+          <View
+            accessibilityLabel={t("assignments.detail.factsAccessibility")}
+            accessible
+            style={[styles.card, styles.factsCard]}
+            testID="assignment-detail-facts"
+          >
+            <FactRow label={t("assignments.detail.skillFocusLabel")} value={skillFocus || t("assignments.detail.generalWriting")} />
+            {rubricFocus ? <FactRow label={t("assignments.detail.rubricFocusLabel")} value={rubricFocus} /> : null}
+            <FactRow
+              label={t("assignments.detail.estimatedTimeLabel")}
+              value={t("assignments.detail.estimatedTime", { count: assignment.estimatedMinutes })}
+            />
+            <FactRow
+              label={t("assignments.detail.difficultyLabel")}
+              value={t(`assignments.difficulty.${assignment.difficulty}`)}
+              valueChip
+            />
+            <FactRow divider={false} label={t("assignments.detail.dueDateLabel")} value={assignment.dueLabel} />
           </View>
 
-          {assignment.rubric.length > 0 ? (
-            <View style={styles.rubricSection}>
-              <DetailText role="title" style={styles.sectionTitle}>
-                {t("assignments.detail.successCriteriaTitle")}
-              </DetailText>
-              <RubricList assignment={assignment} />
+          <StatusJourney status={assignment.status} />
+
+          <View style={styles.coachBanner}>
+            <View style={styles.coachIcon}>
+              <Ionicons color={dashboard.secondary} name="sparkles" size={16} />
             </View>
-          ) : null}
+            <Text selectable style={[getAccessibleTextStyle(styles.coachText, settings), styles.coachTextFlex]}>
+              {t("assignments.detail.coachNote")}
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </>
@@ -309,17 +285,13 @@ function AssignmentContent({
 export function AssignmentDetailScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ assignmentId?: string | string[] }>();
   const assignmentId = useMemo(() => getParamValue(params.assignmentId), [params.assignmentId]);
   const state = useAssignmentDetailData(assignmentId);
-  const [hintVisible, setHintVisible] = useState(false);
   const contentWidth = Math.min(width, 480);
-
-  const handleHintPress = useCallback(() => {
-    setHintVisible((current) => !current);
-  }, []);
 
   const startWriting = useCallback(async () => {
     if (state.status !== "success" || !state.viewModel.assignment) {
@@ -339,6 +311,14 @@ export function AssignmentDetailScreen() {
     }
 
     router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
+  }, [router, state]);
+
+  const openCanvas = useCallback(() => {
+    if (state.status !== "success" || !state.viewModel.assignment) {
+      return;
+    }
+
+    router.push(getCanvasTemplatePickerRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
   const handlePrimaryPress = useCallback(() => {
@@ -401,15 +381,19 @@ export function AssignmentDetailScreen() {
   }
 
   const assignment = state.viewModel.assignment;
+  const primaryLabel = state.viewModel.canSubmit
+    ? t("assignments.submit.reviewCta")
+    : assignment?.status === "not_started"
+      ? t("assignments.detail.startWritingCta")
+      : t("assignments.continueDraft");
 
   return (
-    <View style={[styles.root, { paddingBottom: 0 }]}>
+    <View style={styles.root}>
       <View style={[styles.phoneFrame, { maxWidth: contentWidth }]}>
         {assignment ? (
           <DetailGradeBandContext.Provider value={state.gradeBand}>
             <AssignmentContent
               assignment={assignment}
-              hintVisible={hintVisible}
               isOffline={state.viewModel.isOffline}
               onRefresh={state.refetch}
             />
@@ -422,95 +406,175 @@ export function AssignmentDetailScreen() {
           styles.footerFrame,
           {
             maxWidth: contentWidth,
-            paddingBottom: Math.max(insets.bottom, spacing.xl),
+            paddingBottom: Math.max(insets.bottom, spacing.lg),
           },
         ]}
       >
         <View style={styles.bottomBarSurface}>
-          {/* Shared Button does not forward accessibilityState, so the hint
-              toggle uses Pressable to expose its expanded/collapsed state. */}
-          <Pressable
-            accessibilityHint={t("assignments.detail.hintButtonHint")}
-            accessibilityLabel={t("assignments.detail.hintButtonAccessibility")}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: hintVisible }}
-            onPress={handleHintPress}
-            style={({ pressed }) => [styles.hintButton, pressed ? styles.hintButtonPressed : null]}
-          >
-            <Ionicons color={detailColors.onSurface} name="bulb-outline" size={20} />
-            <DetailText role="button" style={styles.hintButtonText}>
-              {t("assignments.detail.hintCta")}
-            </DetailText>
-          </Pressable>
-          <Button
-            accessibilityHint={
-              state.viewModel.canSubmit ? t("assignments.submit.hint") : t("assignments.detail.startWritingHint")
-            }
-            accessibilityLabel={
-              state.viewModel.canSubmit
-                ? t("assignments.submit.ctaAccessibility")
-                : t("assignments.detail.startWritingAccessibility")
-            }
-            disabled={!state.viewModel.canStartWriting && !state.viewModel.canSubmit}
-            fullWidth
-            label={state.viewModel.canSubmit ? t("assignments.submit.reviewCta") : t("assignments.detail.startWritingCta")}
-            loading={state.startStatus === "loading"}
-            onPress={handlePrimaryPress}
-            size="md"
-            style={styles.primaryButton}
-            variant="primary"
-          />
+          <View style={styles.bottomButtonRow}>
+            <Button
+              accessibilityHint={
+                state.viewModel.canSubmit ? t("assignments.submit.hint") : t("assignments.detail.startWritingHint")
+              }
+              accessibilityLabel={
+                state.viewModel.canSubmit
+                  ? t("assignments.submit.ctaAccessibility")
+                  : t("assignments.detail.startWritingAccessibility")
+              }
+              disabled={!state.viewModel.canStartWriting && !state.viewModel.canSubmit}
+              label={primaryLabel}
+              loading={state.startStatus === "loading"}
+              onPress={handlePrimaryPress}
+              size="md"
+              style={styles.primaryButton}
+              variant="primary"
+            />
+            {state.viewModel.canStartCanvas ? (
+              <Button
+                accessibilityHint={t("assignments.detail.startCanvasHint")}
+                accessibilityLabel={t("assignments.detail.startCanvasAccessibility")}
+                label={t("assignments.detail.useCanvasCta")}
+                onPress={openCanvas}
+                size="md"
+                style={styles.canvasButton}
+                variant="secondary"
+              />
+            ) : null}
+          </View>
+          {!state.viewModel.canSubmit && state.viewModel.assignment?.draft ? (
+            <Pressable
+              accessibilityLabel={t("assignments.detail.submitLinkAccessibility")}
+              accessibilityRole="button"
+              onPress={openSubmit}
+              style={({ pressed }) => [styles.submitLink, pressed ? styles.submitLinkPressed : null]}
+            >
+              <Text selectable={false} style={getAccessibleTextStyle(styles.submitLinkText, settings)}>
+                {t("assignments.detail.submitLinkCta")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </View>
   );
 }
 
+const cardShadow = {
+  elevation: 2,
+  shadowColor: colors.dashboard.onSurface,
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+} as const;
+
 const styles = StyleSheet.create({
-  bentoGrid: {
-    gap: spacing.md,
-  },
   bottomBarSurface: {
-    alignItems: "center",
-    backgroundColor: detailColors.surfaceLowest,
-    borderColor: colors.dashboard.outlineFaint,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    backgroundColor: dashboard.backgroundOverlay,
+    borderTopColor: dashboard.surfaceContainerHigh,
     borderTopWidth: 1,
+    gap: spacing.sm,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  bottomButtonRow: {
     flexDirection: "row",
-    gap: spacing.lg,
-    paddingHorizontal: 20,
-    paddingTop: spacing.lg,
-    ...shadows.card,
+    gap: 10,
+  },
+  canvasButton: {
+    borderRadius: 14,
+  },
+  card: {
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderCurve: "continuous",
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 17,
+    ...cardShadow,
+  },
+  cardEyebrow: {
+    color: dashboard.outline,
+    fontSize: 10.5,
+    fontWeight: "700",
+    letterSpacing: 1.1,
+    lineHeight: 14,
+    marginBottom: 9,
+    textTransform: "uppercase",
+  },
+  coachBanner: {
+    alignItems: "flex-start",
+    backgroundColor: dashboard.primarySubtle,
+    borderColor: dashboard.primaryFixedBorder,
+    borderRadius: 15,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 11,
+    padding: 14,
+  },
+  coachIcon: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderRadius: 9,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
+  },
+  coachText: {
+    color: dashboard.onSecondaryContainer,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  coachTextFlex: {
+    flex: 1,
   },
   content: {
-    gap: spacing.xxl,
-    paddingHorizontal: 20,
-    paddingTop: spacing.xl,
+    gap: spacing.lg,
+    paddingHorizontal: 16,
+    paddingTop: spacing.lg,
     width: "100%",
   },
-  difficultyBar: {
-    backgroundColor: detailColors.secondary,
-    borderRadius: radius.xs,
-    width: 6,
+  factChip: {
+    borderColor: colors.feedback.warning.border,
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
-  difficultyBarMuted: {
-    backgroundColor: detailColors.outlineVariant,
+  factChipText: {
+    color: dashboard.tertiaryText,
+    fontSize: 10.5,
+    fontWeight: "600",
+    lineHeight: 13,
   },
-  difficultyBarOne: {
-    height: 8,
+  factLabel: {
+    color: dashboard.outline,
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 17,
   },
-  difficultyBarThree: {
-    height: 16,
-  },
-  difficultyBarTwo: {
-    height: 12,
-  },
-  difficultyBars: {
-    alignItems: "flex-end",
+  factRow: {
+    alignItems: "center",
     flexDirection: "row",
-    gap: 2,
-    height: 16,
+    gap: 14,
+    justifyContent: "space-between",
+    paddingVertical: 13,
+  },
+  factRowDivider: {
+    borderBottomColor: dashboard.surfaceContainer,
+    borderBottomWidth: 1,
+  },
+  factValue: {
+    color: dashboard.onSurface,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
+  factValueAligned: {
+    flexShrink: 1,
+    textAlign: "right",
+  },
+  factsCard: {
+    paddingVertical: 4,
   },
   footerFrame: {
     alignSelf: "center",
@@ -521,138 +585,98 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   header: {
-    backgroundColor: colors.dashboard.backgroundOverlay,
+    backgroundColor: dashboard.backgroundOverlay,
     borderBottomWidth: 0,
     paddingBottom: spacing.sm,
     paddingHorizontal: 20,
     paddingTop: spacing.sm,
   },
-  hintButton: {
+  journeyCard: {
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderCurve: "continuous",
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 17,
+    ...cardShadow,
+  },
+  journeyDot: {
     alignItems: "center",
-    backgroundColor: "transparent",
-    borderColor: detailColors.outlineVariant,
-    borderRadius: radius.full,
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.surfaceDim,
+    borderRadius: 12,
     borderWidth: 2,
-    flexDirection: "row",
-    flexShrink: 0,
-    gap: spacing.sm,
-    height: 52,
+    height: 24,
     justifyContent: "center",
-    minWidth: 104,
-    paddingHorizontal: spacing.lg,
+    width: 24,
   },
-  hintButtonPressed: {
-    opacity: 0.7,
+  journeyDotCore: {
+    backgroundColor: dashboard.onPrimary,
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
-  hintButtonText: {
-    fontWeight: "800",
+  journeyDotCurrent: {
+    backgroundColor: dashboard.primary,
+    borderColor: dashboard.primary,
   },
-  hintCard: {
-    gap: spacing.sm,
+  journeyDotDone: {
+    backgroundColor: dashboard.primaryContainer,
+    borderColor: dashboard.primaryContainer,
   },
-  hintTitleRow: {
+  journeyLabel: {
+    color: palette.slate[400],
+    fontSize: 10,
+    fontWeight: "500",
+    lineHeight: 12,
+    textAlign: "center",
+  },
+  journeyLabelActive: {
+    color: dashboard.primary,
+    fontWeight: "600",
+  },
+  journeyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 7,
+    position: "relative",
+  },
+  journeyStep: {
     alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
+    gap: 8,
+    width: "20%",
   },
-  metricGrid: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  metricLabelRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  metricTile: {
-    flex: 1,
-    gap: spacing.sm,
-  },
-  metricValueRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
+  journeyTrack: {
+    backgroundColor: dashboard.surfaceContainerHigh,
+    height: 2,
+    left: 11,
+    position: "absolute",
+    right: 11,
+    top: 11,
   },
   phoneFrame: {
     alignSelf: "center",
-    backgroundColor: detailColors.surface,
+    backgroundColor: dashboard.surface,
     flex: 1,
     overflow: "hidden",
     width: "100%",
   },
   primaryButton: {
-    backgroundColor: detailColors.primary,
-    borderColor: detailColors.primary,
-    borderRadius: radius.full,
-    height: 52,
-  },
-  promptSection: {
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    textAlign: "center",
+    borderRadius: 14,
+    flex: 1,
   },
   promptText: {
-    textAlign: "center",
+    color: dashboard.onSurfaceVariant,
+    fontFamily: fonts.serifRegular,
+    fontSize: 15.5,
+    lineHeight: 24,
   },
   root: {
-    backgroundColor: detailColors.surface,
+    backgroundColor: dashboard.surface,
     flex: 1,
-  },
-  rubricCard: {
-    backgroundColor: detailColors.surfaceLowest,
-    borderColor: detailColors.outlineVariant,
-    borderCurve: "continuous",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    ...detailShadow,
-  },
-  rubricCopy: {
-    flex: 1,
-    gap: spacing.xs,
-    paddingRight: spacing.md,
-  },
-  rubricDescription: {
-    flexShrink: 1,
-  },
-  rubricDivider: {
-    borderBottomColor: colors.dashboard.outlineFaint,
-    borderBottomWidth: 1,
-  },
-  rubricRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: spacing.lg,
-  },
-  rubricSection: {
-    gap: spacing.lg,
   },
   scrollContent: {
-    paddingBottom: 144,
-  },
-  sectionTitle: {
-    fontWeight: "800",
-  },
-  skillCopy: {
-    flex: 1,
-    gap: spacing.xs,
-    justifyContent: "center",
-    minHeight: 40,
-  },
-  skillIcon: {
-    alignItems: "center",
-    backgroundColor: detailColors.surfaceContainer,
-    borderRadius: radius.full,
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
-  skillTile: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.lg,
+    paddingBottom: 168,
   },
   stateContent: {
     alignSelf: "center",
@@ -663,16 +687,39 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   stateFrame: {
-    backgroundColor: detailColors.surface,
+    backgroundColor: dashboard.surface,
     flex: 1,
   },
-  tile: {
-    backgroundColor: detailColors.surfaceLowest,
-    borderColor: detailColors.outlineVariant,
-    borderCurve: "continuous",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.lg,
-    ...detailShadow,
+  submitLink: {
+    alignItems: "center",
+    borderRadius: radius.sm,
+    padding: 6,
+  },
+  submitLinkPressed: {
+    opacity: 0.7,
+  },
+  submitLinkText: {
+    color: dashboard.outline,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
+  titleRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  titleText: {
+    flex: 1,
+  },
+  typeEyebrow: {
+    color: dashboard.secondary,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.4,
+    lineHeight: 14,
+    marginBottom: 9,
+    textTransform: "uppercase",
   },
 });

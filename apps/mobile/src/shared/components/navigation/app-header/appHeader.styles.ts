@@ -1,6 +1,6 @@
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
-import { colors, layout, palette, radius, shadows, spacing } from "@/design/tokens";
+import { colors, fonts, layout, palette, radius, shadows, spacing } from "@/design/tokens";
 
 import { APP_HEADER_AVATAR_SIZE, APP_HEADER_BORDER_WIDTH, APP_HEADER_PROGRESS_HEIGHT } from "./appHeader.constants";
 import type { AppHeaderColorScheme, AppHeaderResolvedColors, AppHeaderVariant } from "./appHeader.types";
@@ -223,12 +223,8 @@ export const styles = StyleSheet.create({
   titleText: {
     alignSelf: "stretch",
     flexShrink: 1,
-    fontFamily: Platform.select({
-      android: "sans-serif-condensed",
-      ios: "AvenirNextCondensed-DemiBold",
-      default: undefined,
-    }),
-    fontWeight: "400",
+    fontFamily: fonts.serif,
+    fontWeight: "500",
     letterSpacing: 0,
   },
   subtitleText: {

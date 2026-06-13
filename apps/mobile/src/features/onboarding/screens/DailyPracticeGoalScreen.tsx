@@ -45,20 +45,20 @@ type DailyPracticeThemeValues = {
 const DAILY_PRACTICE_SCREEN_ID = "onboarding.dailyPracticeGoal";
 
 const DAILY_PRACTICE_THEME_DEFAULTS: DailyPracticeThemeValues = {
-  accentColor: "#1D4ED8",
+  accentColor: "#34593F",
   bodyScale: 1,
-  iconColor: "#1D4ED8",
+  iconColor: "#34593F",
   iconScale: 1,
-  iconSurfaceColor: "#DBEAFE",
-  mutedTextColor: "#475569",
+  iconSurfaceColor: "#DFF0E3",
+  mutedTextColor: "#6B6258",
   optionCardRadius: 18,
   optionGap: 12,
   optionSurfaceColor: "#FFFFFF",
-  progressTrackColor: "#D7E3F8",
-  screenBackgroundColor: "#F4F8FF",
-  selectedOptionColor: "#EAF2FF",
+  progressTrackColor: "#E9E3DA",
+  screenBackgroundColor: "#F6F3EE",
+  selectedOptionColor: "#EEF2EC",
   summarySurfaceColor: "#FFFFFF",
-  textColor: "#0F172A",
+  textColor: "#2C2825",
   titleScale: 1,
 };
 
@@ -261,7 +261,7 @@ function getReadableControlColor(hexColor: string) {
   const normalized = hexColor.replace("#", "");
 
   if (normalized.length !== 6) {
-    return "#0F172A";
+    return "#2C2825";
   }
 
   const red = Number.parseInt(normalized.slice(0, 2), 16);
@@ -269,7 +269,7 @@ function getReadableControlColor(hexColor: string) {
   const blue = Number.parseInt(normalized.slice(4, 6), 16);
   const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
 
-  return luminance > 0.56 ? "#0F172A" : "#FFFFFF";
+  return luminance > 0.56 ? "#2C2825" : "#FFFFFF";
 }
 
 export function DailyPracticeGoalScreen() {
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     minHeight: 68,
     paddingHorizontal: spacing.xs,
     paddingVertical: 8,
-    shadowColor: "#0F172A",
+    shadowColor: "#2C2825",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
-    shadowColor: "#0F172A",
+    shadowColor: "#2C2825",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 20,

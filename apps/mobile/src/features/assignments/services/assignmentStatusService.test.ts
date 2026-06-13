@@ -5,6 +5,8 @@ import {
   getAssignmentHistoryCounts,
   getAssignmentHistoryTabForStatus,
   getNextStatusOnStart,
+  sortAssignmentsForHistory,
+  getStatusCta,
 } from "./assignmentStatusService";
 
 const baseAssignment: AssignmentRecord = {
@@ -73,11 +75,42 @@ describe("assignmentStatusService", () => {
     expect(filterAssignmentsByTab(assignments, "drafts").map((assignment) => assignment.id)).toEqual(["draft"]);
   });
 
+  it("orders the history list feedback-ready first and completed last", () => {
+    const assignments = [
+      assignmentWithStatus("completed", "done"),
+      assignmentWithStatus("submitted", "waiting"),
+      assignmentWithStatus("in_progress", "draft-a"),
+      assignmentWithStatus("feedback_ready", "feedback"),
+      assignmentWithStatus("revision_in_progress", "draft-b"),
+      assignmentWithStatus("not_started", "fresh"),
+    ];
+
+    expect(sortAssignmentsForHistory(assignments).map((assignment) => assignment.id)).toEqual([
+      "feedback",
+      "draft-a",
+      "draft-b",
+      "fresh",
+      "waiting",
+      "done",
+    ]);
+    expect(assignments[0]?.id).toBe("done");
+  });
+
   it("allows valid start transitions only", () => {
     expect(getNextStatusOnStart("not_started")).toBe("in_progress");
     expect(getNextStatusOnStart("feedback_ready")).toBe("revision_in_progress");
     expect(getNextStatusOnStart("submitted")).toBeNull();
     expect(getNextStatusOnStart("completed")).toBeNull();
+  });
+
+  it("maps each status to its next-step call to action", () => {
+    expect(getStatusCta("not_started")).toBe("startWriting");
+    expect(getStatusCta("in_progress")).toBe("continueDraft");
+    expect(getStatusCta("submitted")).toBe("viewSubmission");
+    expect(getStatusCta("reviewing")).toBe("viewSubmission");
+    expect(getStatusCta("feedback_ready")).toBe("reviewFeedback");
+    expect(getStatusCta("revision_in_progress")).toBe("continueRevising");
+    expect(getStatusCta("completed")).toBe("viewFeedback");
   });
 
   it("requires draft or canvas work before submission", () => {

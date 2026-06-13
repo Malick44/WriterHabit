@@ -66,6 +66,27 @@ export function filterAssignmentsByTab(
   return assignments.filter((assignment) => getAssignmentHistoryTabForStatus(assignment.status) === selectedTab);
 }
 
+/**
+ * Habit Loop list ordering: feedback-ready assignments lead as the positive
+ * next opportunity, active drafts follow, and completed work settles to the
+ * bottom. Ties keep the API's order (it already sorts by recency).
+ */
+const statusListPriority: Record<AssignmentStatus, number> = {
+  completed: 4,
+  feedback_ready: 0,
+  in_progress: 1,
+  not_started: 2,
+  reviewing: 3,
+  revision_in_progress: 1,
+  submitted: 3,
+};
+
+export function sortAssignmentsForHistory(assignments: AssignmentRecord[]): AssignmentRecord[] {
+  return [...assignments].sort(
+    (a, b) => statusListPriority[a.status] - statusListPriority[b.status],
+  );
+}
+
 export function getAssignmentHistoryCounts(assignments: AssignmentRecord[]): Record<AssignmentHistoryTab, number> {
   return assignments.reduce<Record<AssignmentHistoryTab, number>>(
     (counts, assignment) => {
@@ -116,6 +137,33 @@ export function canSubmitAssignment(assignment: AssignmentRecord): boolean {
     assignment.draft &&
       (assignment.draft.wordCount > 0 || assignment.draft.canvasPageCount > 0),
   );
+}
+
+export type AssignmentStatusCta =
+  | "startWriting"
+  | "continueDraft"
+  | "viewSubmission"
+  | "reviewFeedback"
+  | "continueRevising"
+  | "viewFeedback";
+
+/** Next-step call to action shown on list cards, mirroring the Habit Loop design. */
+export function getStatusCta(status: AssignmentStatus): AssignmentStatusCta {
+  switch (status) {
+    case "not_started":
+      return "startWriting";
+    case "in_progress":
+      return "continueDraft";
+    case "submitted":
+    case "reviewing":
+      return "viewSubmission";
+    case "feedback_ready":
+      return "reviewFeedback";
+    case "revision_in_progress":
+      return "continueRevising";
+    case "completed":
+      return "viewFeedback";
+  }
 }
 
 export function getStatusTone(status: AssignmentStatus): "neutral" | "info" | "success" | "warning" {

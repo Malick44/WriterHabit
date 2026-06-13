@@ -46,7 +46,7 @@ describe("AppHeader", () => {
     const titleStyle = StyleSheet.flatten(rendered.getByTestId(APP_HEADER_TEST_IDS.title).props.style);
     expect(titleStyle.textAlign).toBe("center");
     expect(titleStyle.fontSize).toBe(18);
-    expect(titleStyle.fontWeight).toBe("700");
+    expect(titleStyle.fontWeight).toBe("500");
     expect(titleStyle.letterSpacing).toBe(0);
     expect(rendered.getByText("Daily assignments, draft status, and coaching next steps.")).toBeTruthy();
     await fireEvent.press(rendered.getByText("View"));

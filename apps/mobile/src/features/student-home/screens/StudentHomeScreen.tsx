@@ -26,9 +26,9 @@ import {
   useRegisterTunableComponents,
   useRegisterTunableScreen,
 } from "@/devtools/theme-tuner";
-import { palette } from "@/design/tokens";
+import { palette, type GradeBand } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, ProgressBar, StatusState } from "@/shared/components/feedback";
 import {
   AppHeader,
   BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
@@ -41,6 +41,7 @@ import {
   type AccessibilitySettings,
 } from "@/shared/utils/accessibility";
 
+import { MomentumCardsRow, StreakHeroCard } from "../components";
 import { useStudentHomeData } from "../hooks/useStudentHomeData";
 import {
   homeColors,
@@ -53,6 +54,7 @@ import {
 } from "../themeTuning";
 import type {
   StudentHomeAssignment,
+  StudentHomeCoachAction,
   StudentHomeDraft,
   StudentHomeFeedback,
   StudentHomeNavigationTarget,
@@ -261,6 +263,23 @@ export function StudentHomeScreen() {
     });
   }, [navigateToTarget, viewModel]);
 
+  const handleOpenAllAssignments = useCallback(() => {
+    navigateToTarget({ kind: "assignmentHistory" });
+  }, [navigateToTarget]);
+
+  const handleStartPractice = useCallback(() => {
+    navigateToTarget({ kind: "canvasTemplates" });
+  }, [navigateToTarget]);
+
+  const handleOpenTask = useCallback(() => {
+    if (viewModel?.continueDraft) {
+      handleContinueDraft();
+      return;
+    }
+
+    handleOpenTodayAssignment();
+  }, [handleContinueDraft, handleOpenTodayAssignment, viewModel]);
+
   const handleOpenSettings = useCallback(() => {
     router.push(routes.studentSettings);
   }, [router]);
@@ -360,66 +379,76 @@ export function StudentHomeScreen() {
               ) : null}
 
               {isTablet ? (
-                <View style={styles.tabletDashboardGrid}>
-                  <View style={styles.tabletPrimaryColumn}>
-                    {viewModel.todayAssignment ? (
-                      <DashboardSection titleKey="studentHome.todayAssignment.sectionLabel">
-                        <TodayAssignmentCard
-                          assignment={viewModel.todayAssignment}
-                          isTablet={isTablet}
-                          onPress={handleOpenTodayAssignment}
-                        />
-                      </DashboardSection>
-                    ) : null}
+                <>
+                  <StreakHeroCard
+                    streak={viewModel.streak}
+                    weeklySessionsCompleted={viewModel.weeklyWriting.sessionsCompleted}
+                  />
 
-                    {viewModel.continueDraft ? (
-                      <DashboardSection titleKey="studentHome.continueDraft.title">
-                        <ContinueDraftCard
-                          draft={viewModel.continueDraft}
-                          isTablet={isTablet}
-                          onPress={handleContinueDraft}
-                        />
-                      </DashboardSection>
-                    ) : null}
+                  <View style={styles.tabletDashboardGrid}>
+                    <View style={styles.tabletPrimaryColumn}>
+                      {viewModel.todayAssignment ? (
+                        <DashboardSection titleKey="studentHome.todayAssignment.sectionLabel">
+                          <TodayAssignmentCard
+                            assignment={viewModel.todayAssignment}
+                            isTablet={isTablet}
+                            onPress={handleOpenTodayAssignment}
+                          />
+                        </DashboardSection>
+                      ) : null}
 
-                    <RecentFeedbackSection
-                      feedback={viewModel.recentFeedback[0] ?? null}
-                      isTablet={isTablet}
-                      onPress={handleReviewFeedback}
-                    />
+                      {viewModel.continueDraft ? (
+                        <DashboardSection titleKey="studentHome.continueDraft.title">
+                          <ContinueDraftCard
+                            draft={viewModel.continueDraft}
+                            isTablet={isTablet}
+                            onPress={handleContinueDraft}
+                          />
+                        </DashboardSection>
+                      ) : null}
+
+                      <RecentFeedbackSection
+                        feedback={viewModel.recentFeedback[0] ?? null}
+                        isTablet={isTablet}
+                        onPress={handleReviewFeedback}
+                      />
+                    </View>
+
+                    <View style={styles.tabletSecondaryColumn}>
+                      <WeeklyProgressSummary isTablet={isTablet} viewModel={viewModel} />
+                      <SkillProgressCard
+                        isTablet={isTablet}
+                        onViewAll={handleViewProgress}
+                        skills={viewModel.skillProgress}
+                      />
+                    </View>
                   </View>
-
-                  <View style={styles.tabletSecondaryColumn}>
-                    <WeeklyProgressSummary isTablet={isTablet} viewModel={viewModel} />
-                    <SkillProgressCard
-                      isTablet={isTablet}
-                      onViewAll={handleViewProgress}
-                      skills={viewModel.skillProgress}
-                    />
-                  </View>
-                </View>
+                </>
               ) : (
                 <>
-                  {viewModel.todayAssignment ? (
-                    <DashboardSection titleKey="studentHome.todayAssignment.sectionLabel">
-                      <TodayAssignmentCard
-                        assignment={viewModel.todayAssignment}
-                        onPress={handleOpenTodayAssignment}
-                      />
-                    </DashboardSection>
-                  ) : null}
+                  <Greeting name={viewModel.studentFirstName} />
 
-                  <WeeklyProgressSummary viewModel={viewModel} />
+                  <StreakHeroCard
+                    streak={viewModel.streak}
+                    weeklySessionsCompleted={viewModel.weeklyWriting.sessionsCompleted}
+                  />
+
+                  <MomentumCardsRow
+                    onOpenAllAssignments={handleOpenAllAssignments}
+                    onOpenFeedback={handleReviewFeedback}
+                    onOpenPractice={handleStartPractice}
+                    onOpenTask={handleOpenTask}
+                    viewModel={viewModel}
+                  />
+
+                  <CoachChipsCard
+                    actions={viewModel.coachActions}
+                    onActionPress={(action) => navigateToTarget(action.target)}
+                  />
+
+                  <WeeklyWritingCard gradeBand={state.gradeBand} viewModel={viewModel} />
 
                   <SkillProgressCard onViewAll={handleViewProgress} skills={viewModel.skillProgress} />
-
-                  {viewModel.continueDraft ? (
-                    <DashboardSection titleKey="studentHome.continueDraft.title">
-                      <ContinueDraftCard draft={viewModel.continueDraft} onPress={handleContinueDraft} />
-                    </DashboardSection>
-                  ) : null}
-
-                  <RecentFeedbackSection feedback={viewModel.recentFeedback[0] ?? null} onPress={handleReviewFeedback} />
                 </>
               )}
             </>
@@ -427,6 +456,139 @@ export function StudentHomeScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function Greeting({ name }: { name: string }) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const highContrastText = getHighContrastTextStyles(settings);
+
+  return (
+    <Text
+      accessibilityRole="header"
+      numberOfLines={1}
+      selectable
+      style={[getAccessibleTextStyle(styles.greeting, settings), highContrastText.body]}
+    >
+      {t("studentHome.greeting", { name })}
+    </Text>
+  );
+}
+
+function CoachChipsCard({
+  actions,
+  onActionPress,
+}: {
+  actions: StudentHomeCoachAction[];
+  onActionPress: (action: StudentHomeCoachAction) => void;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
+
+  return (
+    <View
+      accessibilityLabel={t("studentHome.coach.accessibility")}
+      style={[styles.card, styles.coachCard, tunedCardStyle(tuned, "regular")]}
+      testID="student-home-coach"
+    >
+      <View style={styles.coachHeaderRow}>
+        <View style={styles.coachIconBubble}>
+          <Ionicons name="sparkles" size={16} color={homeColors.secondary} />
+        </View>
+        <Text
+          numberOfLines={1}
+          selectable
+          style={[getAccessibleTextStyle(styles.coachTitle, settings), highContrastText.body]}
+        >
+          {t("studentHome.coach.title")}
+        </Text>
+      </View>
+      <View style={styles.coachChips}>
+        {actions.map((action) => (
+          <Pressable
+            accessibilityHint={t("studentHome.coach.actionHint")}
+            accessibilityLabel={t(action.accessibilityLabelKey)}
+            accessibilityRole="button"
+            key={action.id}
+            onPress={() => onActionPress(action)}
+            style={({ pressed }) => [styles.coachChip, pressed ? styles.pressed : null]}
+          >
+            <Text
+              numberOfLines={1}
+              selectable={false}
+              style={[getAccessibleTextStyle(styles.coachChipText, settings), highContrastText.body]}
+            >
+              {t(action.labelKey)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text
+        selectable
+        style={[getAccessibleTextStyle(styles.coachSafetyNote, settings), highContrastText.muted]}
+      >
+        {t("aiCoach.safetyReminder")}
+      </Text>
+    </View>
+  );
+}
+
+function WeeklyWritingCard({
+  gradeBand,
+  viewModel,
+}: {
+  gradeBand: GradeBand;
+  viewModel: StudentHomeViewModel;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
+  const description = viewModel.gradeAdaptation.showWeeklySessionCount
+    ? t("studentHome.practice.weeklyDescriptionWithSessions", {
+        count: viewModel.weeklyWriting.sessionsCompleted,
+      })
+    : t("studentHome.practice.weeklyDescription");
+
+  return (
+    <View
+      style={[styles.card, styles.weeklyCard, tunedCardStyle(tuned, "regular")]}
+      testID="student-home-weekly-minutes"
+    >
+      <View style={styles.weeklyHeaderRow}>
+        <Text
+          numberOfLines={1}
+          selectable
+          style={[getAccessibleTextStyle(styles.sectionTitle, settings), highContrastText.muted]}
+        >
+          {t("studentHome.practice.weeklyTitle")}
+        </Text>
+        <Text
+          numberOfLines={1}
+          selectable
+          style={[getAccessibleTextStyle(styles.weeklyValue, settings), highContrastText.body]}
+        >
+          {t("studentHome.practice.weeklyValue", {
+            completed: viewModel.weeklyWriting.minutesCompleted,
+            goal: viewModel.weeklyWriting.minutesGoal,
+          })}
+        </Text>
+      </View>
+      <ProgressBar
+        gradeBand={gradeBand}
+        label={t("studentHome.practice.weeklyProgressAccessibility")}
+        value={viewModel.weeklyProgressValue}
+      />
+      <Text
+        selectable
+        style={[getAccessibleTextStyle(styles.weeklyDescription, settings), highContrastText.muted]}
+      >
+        {description}
+      </Text>
+    </View>
   );
 }
 
@@ -1026,6 +1188,56 @@ const styles = StyleSheet.create({
     opacity: 0.82,
     transform: [{ scale: 0.995 }],
   },
+  coachCard: {
+    gap: homeSpacing.md,
+    padding: homeSpacing.lg,
+  },
+  coachChip: {
+    backgroundColor: homeColors.surfaceContainerLow,
+    borderColor: homeColors.outlineVariant,
+    borderRadius: homeRadius.xl,
+    borderWidth: 1,
+    minHeight: 40,
+    justifyContent: "center",
+    paddingHorizontal: 13,
+    paddingVertical: homeSpacing.sm,
+  },
+  coachChipText: {
+    color: homeColors.onSurface,
+    fontSize: 12.5,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
+  coachChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: homeSpacing.sm,
+  },
+  coachHeaderRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: homeSpacing.sm,
+  },
+  coachIconBubble: {
+    alignItems: "center",
+    backgroundColor: homeColors.secondaryContainerSoft,
+    borderRadius: homeRadius.lg,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
+  },
+  coachSafetyNote: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  coachTitle: {
+    color: homeColors.onSurface,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 20,
+  },
   content: {
     alignSelf: "center",
     gap: homeSpacing.section,
@@ -1109,6 +1321,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "400",
     lineHeight: 18,
+  },
+  greeting: {
+    color: homeColors.onSurface,
+    fontSize: 22,
+    fontWeight: "600",
+    lineHeight: 28,
   },
   inlineMeta: {
     alignItems: "center",
@@ -1301,5 +1519,27 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 24,
     minWidth: 280,
+  },
+  weeklyCard: {
+    gap: homeSpacing.md,
+    padding: homeSpacing.lg,
+  },
+  weeklyDescription: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  weeklyHeaderRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: homeSpacing.md,
+    justifyContent: "space-between",
+  },
+  weeklyValue: {
+    color: homeColors.primary,
+    fontSize: 14,
+    fontVariant: ["tabular-nums"],
+    fontWeight: "600",
+    lineHeight: 20,
   },
 });

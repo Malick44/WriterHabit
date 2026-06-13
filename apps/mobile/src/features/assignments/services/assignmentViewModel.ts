@@ -5,6 +5,7 @@ import {
   getAssignmentGradeAdaptation,
   getAssignmentHistoryCounts,
   getNextStatusOnStart,
+  sortAssignmentsForHistory,
 } from "./assignmentStatusService";
 import type {
   AssignmentDetailResponse,
@@ -23,7 +24,7 @@ export function buildAssignmentHistoryViewModel({
   response,
   selectedTab,
 }: BuildAssignmentHistoryViewModelInput): AssignmentHistoryViewModel {
-  const assignments = filterAssignmentsByTab(response.assignments, selectedTab);
+  const assignments = sortAssignmentsForHistory(filterAssignmentsByTab(response.assignments, selectedTab));
 
   return {
     assignments,

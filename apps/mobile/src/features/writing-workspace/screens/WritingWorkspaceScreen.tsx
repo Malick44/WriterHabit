@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import {
   I18nManager,
-  KeyboardAvoidingView,
-  Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,8 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors, layout, radius, spacing, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
+import { colors, fonts, layout, palette, radius, spacing, typography } from "@/design/tokens";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
@@ -24,11 +24,114 @@ import { getAccessibleTextStyle, getAccessibleColors, useAccessibilityContext } 
 import { CanvasAttachmentPreview } from "../components/CanvasAttachmentPreview";
 import { CoachEntryPanel } from "../components/CoachEntryPanel";
 import { AutosaveStatusBadge } from "../components/AutosaveStatusBadge";
+import { WorkspaceSubmitPanel } from "../components/WorkspaceSubmitPanel";
 import { useWritingWorkspace } from "../hooks/useWritingWorkspace";
 import { useWritingWorkspaceUiStore } from "../stores/writingWorkspaceUiStore";
 
+const dashboard = colors.dashboard;
+
 function getParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+type WorkspaceStage = "understand" | "draft" | "revise" | "submit";
+
+const stageOrder: { id: WorkspaceStage; labelKey: TranslationKey }[] = [
+  { id: "understand", labelKey: "writingWorkspace.sections.prompt" },
+  { id: "draft", labelKey: "writingWorkspace.sections.draft" },
+  { id: "revise", labelKey: "writingWorkspace.sections.rubric" },
+  { id: "submit", labelKey: "writingWorkspace.sections.submit" },
+];
+
+function StageTabs({
+  activeStage,
+  onSelect,
+}: {
+  activeStage: WorkspaceStage;
+  onSelect: (stage: WorkspaceStage) => void;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+
+  return (
+    <View style={styles.stageTabs} testID="writing-workspace-stage-tabs">
+      {stageOrder.map((stage, index) => {
+        const isActive = stage.id === activeStage;
+
+        return (
+          <Pressable
+            accessibilityLabel={t("writingWorkspace.stages.tabAccessibility", { stage: t(stage.labelKey) })}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
+            key={stage.id}
+            onPress={() => onSelect(stage.id)}
+            style={[styles.stageTab, isActive ? styles.stageTabActive : null]}
+            testID={`workspace-stage-tab-${stage.id}`}
+          >
+            <Text
+              selectable={false}
+              style={[
+                getAccessibleTextStyle(styles.stageTabIndex, settings),
+                isActive ? styles.stageTabTextActive : null,
+              ]}
+            >
+              {index + 1}
+            </Text>
+            <Text
+              selectable={false}
+              style={[
+                getAccessibleTextStyle(styles.stageTabLabel, settings),
+                isActive ? styles.stageTabTextActive : null,
+              ]}
+            >
+              {t(stage.labelKey)}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function CoachChip({
+  icon = "sparkles",
+  label,
+  onPress,
+}: {
+  icon?: "sparkles" | "pencil";
+  label: string;
+  onPress: () => void;
+}) {
+  const { settings } = useAccessibilityContext();
+
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.coachChip, pressed ? styles.pressed : null]}
+    >
+      <Ionicons color={dashboard.secondary} name={icon} size={14} />
+      <Text selectable={false} style={getAccessibleTextStyle(styles.coachChipText, settings)}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function StageCta({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }) {
+  return (
+    <Button
+      accessibilityLabel={label}
+      fullWidth
+      label={label}
+      onPress={onPress}
+      size="md"
+      style={styles.stageCta}
+      testID={testID}
+      variant="primary"
+    />
+  );
 }
 
 export function WritingWorkspaceScreen() {
@@ -42,9 +145,24 @@ export function WritingWorkspaceScreen() {
   const openPanel = useWritingWorkspaceUiStore((store) => store.openPanel);
   const closePanel = useWritingWorkspaceUiStore((store) => store.closePanel);
   const [isSavingNow, setIsSavingNow] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<WorkspaceStage | null>(null);
+  const [checkedRubricIds, setCheckedRubricIds] = useState<readonly string[]>([]);
   const { settings } = useAccessibilityContext();
-  const primaryColor = colors.action.primary.background;
-  const accentColor = colors.gradeBand[state.gradeBand].accent;
+  const accessibleColors = getAccessibleColors(settings);
+  const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
+
+  const assignment = successState?.viewModel.assignment ?? null;
+  const hasDraftText = (successState?.viewModel.text.trim().length ?? 0) > 0;
+  const stage = selectedStage ?? (hasDraftText ? "draft" : "understand");
+  const stageIndex = stageOrder.findIndex((entry) => entry.id === stage);
+  const rubric = assignment?.rubric ?? [];
+  const checkedCount = rubric.filter((item) => checkedRubricIds.includes(item.id)).length;
+
+  const toggleRubricItem = (id: string) => {
+    setCheckedRubricIds((current) =>
+      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id],
+    );
+  };
 
   const saveNow = async () => {
     if (state.status !== "success") {
@@ -68,70 +186,24 @@ export function WritingWorkspaceScreen() {
     }
   };
 
-  const type = state.status === "success" ? typography.gradeBands[state.gradeBand] : typography.gradeBands.middle;
-  const accessibleColors = getAccessibleColors(settings);
+  const openCanvas = () => {
+    const targetAssignmentId = assignment?.id ?? assignmentId;
+    const attachment = successState?.viewModel.draft?.canvasAttachment;
 
-  // Rubric completions computation
-  const assignment = successState?.viewModel.assignment ?? null;
-  const rubricTotal = assignment?.rubric?.length ?? 0;
-  const rubricMetrics = successState?.viewModel.metrics ?? null;
-  const completedRubricCount = useMemo(() => {
-    if (!rubricMetrics) return 0;
-    let completed = 0;
-    if (rubricTotal > 0 && rubricMetrics.wordCount >= 10) completed++;
-    if (rubricTotal > 1 && rubricMetrics.sentenceCount >= 2) completed++;
-    if (rubricTotal > 2 && rubricMetrics.paragraphCount >= 1) completed++;
-    if (rubricTotal > 3 && rubricMetrics.wordCount >= 40) completed++;
-    return Math.min(completed, rubricTotal);
-  }, [rubricMetrics, rubricTotal]);
+    if (attachment) {
+      router.push(getCanvasDocumentRoute(attachment.canvasId, targetAssignmentId));
+      return;
+    }
 
-  const stickyFooter = successState && successState.viewModel.assignment ? (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View
-        style={[
-          styles.footer,
-          {
-            backgroundColor: accessibleColors.surface,
-            borderTopColor: accessibleColors.border,
-          },
-        ]}
-      >
-        <Button
-          accessibilityLabel={t("writingWorkspace.saveDraft")}
-          disabled={isSavingNow}
-          gradeBand={state.gradeBand}
-          label={t("writingWorkspace.saveDraft")}
-          loading={isSavingNow}
-          onPress={() => {
-            void saveNow();
-          }}
-          style={styles.footerButton}
-          variant="secondary"
-        />
-
-        <Button
-          accessibilityLabel={t("writingWorkspace.submit.confirmCta")}
-          disabled={!successState.viewModel.canSubmit}
-          gradeBand={state.gradeBand}
-          label={t("writingWorkspace.submit.confirmCta")}
-          loading={successState.submitStatus === "loading"}
-          onPress={() => {
-            void submitDraft();
-          }}
-          style={styles.footerButton}
-          variant="primary"
-        />
-      </View>
-    </KeyboardAvoidingView>
-  ) : null;
+    router.push(getCanvasTemplatePickerRoute(targetAssignmentId));
+  };
 
   return (
     <Screen
-      backgroundColor={colors.gradeBand[state.gradeBand].background}
+      backgroundColor={dashboard.background}
       gradeBand={state.gradeBand}
       keyboardAvoiding
       testID="writing-workspace-screen"
-      footer={stickyFooter}
     >
       {state.status === "loading" ? (
         <LoadingState
@@ -167,32 +239,51 @@ export function WritingWorkspaceScreen() {
         />
       ) : null}
 
-      {successState && successState.viewModel.assignment ? (
-        <Stack gap="lg">
-          {/* Custom Task Header */}
+      {successState && assignment ? (
+        <Stack gap="md">
           <View style={styles.header}>
             <TouchableOpacity
               accessibilityLabel={t("common.back")}
               accessibilityRole="button"
               onPress={() => router.back()}
-              style={[styles.headerIconContainer, { backgroundColor: accessibleColors.surface }]}
+              style={styles.headerIconContainer}
             >
-              <Ionicons name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"} size={24} color={primaryColor} />
+              <Ionicons
+                color={accessibleColors.text}
+                name={I18nManager.isRTL ? "chevron-forward" : "chevron-back"}
+                size={20}
+              />
             </TouchableOpacity>
 
-            <Text
-              accessibilityRole="header"
-              style={[
-                getAccessibleTextStyle(type.heading, settings),
-                styles.headerTitle,
-                { color: accessibleColors.text },
-              ]}
-            >
-              {t("writingWorkspace.headerTitle")}
-            </Text>
+            <View style={styles.headerTitleBlock}>
+              <Text
+                accessibilityRole="header"
+                numberOfLines={1}
+                style={[getAccessibleTextStyle(styles.headerTitle, settings), { color: accessibleColors.text }]}
+              >
+                {assignment.title}
+              </Text>
+              <AutosaveStatusBadge gradeBand={state.gradeBand} status={successState.viewModel.autosaveStatus} />
+            </View>
 
-            <AutosaveStatusBadge gradeBand={state.gradeBand} status={successState.viewModel.autosaveStatus} />
+            <TouchableOpacity
+              accessibilityLabel={t("writingWorkspace.aiCoachButton")}
+              accessibilityRole="button"
+              onPress={() => openPanel("coach")}
+              style={styles.headerCoachButton}
+              testID="writing-workspace-coach-button"
+            >
+              <Ionicons color={dashboard.primary} name="sparkles" size={18} />
+            </TouchableOpacity>
+
+            <View style={styles.wordChip}>
+              <Text selectable={false} style={getAccessibleTextStyle(styles.wordChipText, settings)}>
+                {t("writingWorkspace.metrics.words", { count: successState.viewModel.metrics.wordCount })}
+              </Text>
+            </View>
           </View>
+
+          <StageTabs activeStage={stage} onSelect={setSelectedStage} />
 
           {successState.viewModel.isOffline ? (
             <OfflineBanner
@@ -221,161 +312,226 @@ export function WritingWorkspaceScreen() {
             />
           ) : null}
 
-          {/* Prompt Card */}
-          <View
-            style={[
-              styles.promptCard,
-              {
-                backgroundColor: accessibleColors.surface,
-                borderColor: accessibleColors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                getAccessibleTextStyle(type.caption, settings),
-                styles.promptLabel,
-                { color: accentColor },
-              ]}
-            >
-              {t("writingWorkspace.prompt.title")}
-            </Text>
-            <Text
-              style={[
-                getAccessibleTextStyle(type.bodyStrong, settings),
-                styles.promptText,
-                { color: accessibleColors.text },
-              ]}
-            >
-              {successState.viewModel.assignment.prompt}
-            </Text>
-          </View>
-
-          {/* Writing Textarea Area */}
-          <View style={styles.editorContainer}>
-            <TextInput
-              accessibilityHint={t("writingWorkspace.editor.inputHint")}
-              accessibilityLabel={t("writingWorkspace.editor.inputAccessibility")}
-              multiline
-              onChangeText={successState.setText}
-              placeholder={t("writingWorkspace.editor.placeholder")}
-              placeholderTextColor={colors.text.muted}
-              scrollEnabled
-              style={[
-                getAccessibleTextStyle(type.body, settings),
-                styles.textInput,
-                {
-                  backgroundColor: accessibleColors.surface,
-                  borderColor: accessibleColors.border,
-                  color: accessibleColors.text,
-                  minHeight: Math.max(300, successState.viewModel.gradeAdaptation.editorMinHeight),
-                },
-              ]}
-              testID="writing-workspace-draft-input"
-              value={successState.viewModel.text}
-            />
-
-            {/* Editor Actions & Word Count */}
-            <View style={[styles.editorActions, { borderTopColor: accessibleColors.border }]}>
-              <Text
-                selectable
-                style={[
-                  getAccessibleTextStyle(type.caption, settings),
-                  { color: accessibleColors.mutedText },
-                ]}
-              >
-                {t("writingWorkspace.metrics.words", { count: successState.viewModel.metrics.wordCount })}
-              </Text>
-
-              <TouchableOpacity
-                accessibilityLabel={t("writingWorkspace.aiCoachButton")}
-                accessibilityRole="button"
-                style={[styles.coachButton, { backgroundColor: accessibleColors.surface, borderColor: accessibleColors.border }]}
-                onPress={() => openPanel("coach")}
-              >
-                <Ionicons name="sparkles-outline" size={18} color={primaryColor} />
-                <Text
-                  style={[
-                    getAccessibleTextStyle(type.bodyStrong, settings),
-                    { color: primaryColor },
-                  ]}
-                >
-                  {t("writingWorkspace.aiCoachButton")}
+          {stage === "understand" ? (
+            <Stack gap="md">
+              <View style={styles.card} testID="writing-workspace-prompt">
+                <Text selectable style={getAccessibleTextStyle(styles.cardEyebrow, settings)}>
+                  {t("writingWorkspace.stages.promptEyebrow")}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <Text selectable style={getAccessibleTextStyle(styles.promptText, settings)}>
+                  {assignment.prompt}
+                </Text>
+                <View style={styles.chipRow}>
+                  {assignment.skillFocus[0] ? (
+                    <View style={[styles.metaChip, styles.metaChipGreen]}>
+                      <Text selectable style={getAccessibleTextStyle(styles.metaChipGreenText, settings)}>
+                        {t("writingWorkspace.stages.skillChip", {
+                          skill: t(`assignments.skills.${assignment.skillFocus[0]}`),
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {assignment.rubric[0] ? (
+                    <View style={styles.metaChip}>
+                      <Text selectable style={getAccessibleTextStyle(styles.metaChipText, settings)}>
+                        {t("writingWorkspace.stages.rubricChip", { rubric: assignment.rubric[0].label })}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
 
-          {/* Rubric Checklist Overview */}
-          <View
-            style={[
-              styles.rubricCard,
-              {
-                backgroundColor: accessibleColors.surface,
-                borderColor: accessibleColors.border,
-              },
-            ]}
-          >
-            <View style={styles.rubricHeader}>
-              <Text
-                style={[
-                  getAccessibleTextStyle(type.bodyStrong, settings),
-                  { color: accessibleColors.text },
-                ]}
-              >
-                {t("writingWorkspace.rubric.title")}
-              </Text>
-              <Text
-                style={[
-                  getAccessibleTextStyle(type.bodySmall, settings),
-                  { color: accessibleColors.mutedText },
-                ]}
-              >
-                {t("writingWorkspace.rubric.progress", { completed: completedRubricCount, total: rubricTotal })}
-              </Text>
-            </View>
+              <View style={styles.chipRow}>
+                <CoachChip label={t("writingWorkspace.brainstorm")} onPress={() => openPanel("coach")} />
+                <CoachChip icon="pencil" label={t("writingWorkspace.stages.sketchOnCanvas")} onPress={openCanvas} />
+              </View>
 
-            <View
-              accessibilityLabel={t("writingWorkspace.rubric.progress", { completed: completedRubricCount, total: rubricTotal })}
-              accessibilityRole="progressbar"
-              accessibilityValue={{ max: rubricTotal, min: 0, now: completedRubricCount }}
-              style={styles.progressBar}
-            >
-              {Array.from({ length: rubricTotal }).map((_, idx) => (
-                <View
-                  key={idx}
+              <CanvasAttachmentPreview
+                attachment={successState.viewModel.draft?.canvasAttachment ?? null}
+                gradeBand={state.gradeBand}
+                onOpenCanvas={openCanvas}
+              />
+
+              <StageCta
+                label={t("writingWorkspace.stages.startDrafting")}
+                onPress={() => setSelectedStage("draft")}
+                testID="workspace-cta-start-drafting"
+              />
+            </Stack>
+          ) : null}
+
+          {stage === "draft" ? (
+            <Stack gap="md">
+              <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                  <Text selectable style={[getAccessibleTextStyle(styles.cardEyebrow, settings), styles.cardEyebrowGreen]}>
+                    {t("writingWorkspace.stages.draftEyebrow")}
+                  </Text>
+                  <Text selectable style={getAccessibleTextStyle(styles.cardHeaderMeta, settings)}>
+                    {t("writingWorkspace.stages.stepLabel", { step: stageIndex + 1 })}
+                  </Text>
+                </View>
+                <TextInput
+                  accessibilityHint={t("writingWorkspace.editor.inputHint")}
+                  accessibilityLabel={t("writingWorkspace.editor.inputAccessibility")}
+                  multiline
+                  onChangeText={successState.setText}
+                  placeholder={t("writingWorkspace.editor.placeholder")}
+                  placeholderTextColor={colors.text.muted}
+                  scrollEnabled
                   style={[
-                    styles.progressBarSegment,
+                    getAccessibleTextStyle(styles.editorInput, settings),
                     {
-                      backgroundColor: idx < completedRubricCount ? colors.feedback.success.background : accessibleColors.border,
-                      borderColor: idx < completedRubricCount ? colors.feedback.success.border : accessibleColors.border,
+                      color: accessibleColors.text,
+                      minHeight: Math.max(260, successState.viewModel.gradeAdaptation.editorMinHeight),
                     },
-                    idx === 0 && styles.progressBarSegmentFirst,
-                    idx === rubricTotal - 1 && styles.progressBarSegmentLast,
                   ]}
+                  testID="writing-workspace-draft-input"
+                  value={successState.viewModel.text}
                 />
-              ))}
-            </View>
-          </View>
+              </View>
 
-          {/* Canvas Attachment Preview */}
-          <CanvasAttachmentPreview
-            attachment={successState.viewModel.draft?.canvasAttachment ?? null}
-            gradeBand={state.gradeBand}
-            onOpenCanvas={() => {
-              const targetAssignmentId = successState.viewModel.assignment?.id ?? assignmentId;
-              const attachment = successState.viewModel.draft?.canvasAttachment;
+              <View style={styles.coachBar}>
+                <View style={styles.coachBarIcon}>
+                  <Ionicons color={dashboard.secondary} name="sparkles" size={14} />
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.coachBarChips}>
+                    <CoachChip label={t("writingWorkspace.askForHint")} onPress={() => openPanel("coach")} />
+                    <CoachChip label={t("writingWorkspace.brainstorm")} onPress={() => openPanel("coach")} />
+                    <CoachChip label={t("writingWorkspace.revise")} onPress={() => openPanel("coach")} />
+                  </View>
+                </ScrollView>
+              </View>
 
-              if (attachment) {
-                router.push(getCanvasDocumentRoute(attachment.canvasId, targetAssignmentId));
-                return;
-              }
+              <StageCta
+                label={t("writingWorkspace.stages.nextRevise")}
+                onPress={() => setSelectedStage("revise")}
+                testID="workspace-cta-next-revise"
+              />
+            </Stack>
+          ) : null}
 
-              router.push(getCanvasTemplatePickerRoute(targetAssignmentId));
-            }}
-          />
+          {stage === "revise" ? (
+            <Stack gap="md">
+              <View style={styles.card} testID="writing-workspace-revise-checklist">
+                <View style={styles.cardHeaderRow}>
+                  <Text selectable style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
+                    {t("writingWorkspace.stages.reviseTitle")}
+                  </Text>
+                  <Text selectable style={getAccessibleTextStyle(styles.reviseCount, settings)}>
+                    {t("writingWorkspace.stages.reviseProgress", { count: checkedCount, total: rubric.length })}
+                  </Text>
+                </View>
+                <Text selectable style={getAccessibleTextStyle(styles.cardSubtitle, settings)}>
+                  {t("writingWorkspace.stages.reviseSubtitle")}
+                </Text>
+                <View
+                  accessibilityRole="progressbar"
+                  accessibilityValue={{ max: rubric.length, min: 0, now: checkedCount }}
+                  style={styles.reviseTrack}
+                >
+                  <View
+                    style={[
+                      styles.reviseFill,
+                      { width: rubric.length > 0 ? `${(checkedCount / rubric.length) * 100}%` : "0%" },
+                    ]}
+                  />
+                </View>
+                {rubric.map((item) => {
+                  const isChecked = checkedRubricIds.includes(item.id);
 
-          {/* AI Coach Overlay/Drawer */}
+                  return (
+                    <Pressable
+                      accessibilityLabel={t("writingWorkspace.stages.reviseToggleAccessibility", { label: item.label })}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isChecked }}
+                      key={item.id}
+                      onPress={() => toggleRubricItem(item.id)}
+                      style={styles.reviseRow}
+                    >
+                      <View style={[styles.reviseCheck, isChecked ? styles.reviseCheckDone : null]}>
+                        {isChecked ? <Ionicons color={dashboard.onPrimary} name="checkmark" size={15} /> : null}
+                      </View>
+                      <Text
+                        selectable
+                        style={[getAccessibleTextStyle(styles.reviseLabel, settings), styles.reviseLabelFlex]}
+                      >
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.chipRow}>
+                <CoachChip label={t("writingWorkspace.revise")} onPress={() => openPanel("coach")} />
+              </View>
+
+              <StageCta
+                label={t("writingWorkspace.stages.nextSubmit")}
+                onPress={() => setSelectedStage("submit")}
+                testID="workspace-cta-next-submit"
+              />
+            </Stack>
+          ) : null}
+
+          {stage === "submit" ? (
+            <Stack gap="md">
+              <View style={styles.card} testID="writing-workspace-submit-summary">
+                <View style={styles.cardHeaderRow}>
+                  <Text selectable style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
+                    {t("writingWorkspace.stages.submitSummaryTitle")}
+                  </Text>
+                  <AutosaveStatusBadge gradeBand={state.gradeBand} status={successState.viewModel.autosaveStatus} />
+                </View>
+                <View style={styles.chipRow}>
+                  <View style={styles.metaChip}>
+                    <Text selectable style={getAccessibleTextStyle(styles.metaChipText, settings)}>
+                      {t("writingWorkspace.metrics.words", { count: successState.viewModel.metrics.wordCount })}
+                    </Text>
+                  </View>
+                  <View style={styles.metaChip}>
+                    <Text selectable style={getAccessibleTextStyle(styles.metaChipText, settings)}>
+                      {t("writingWorkspace.metrics.paragraphs", {
+                        count: successState.viewModel.metrics.paragraphCount,
+                      })}
+                    </Text>
+                  </View>
+                  <View style={styles.metaChip}>
+                    <Text selectable style={getAccessibleTextStyle(styles.metaChipText, settings)}>
+                      {t("writingWorkspace.stages.submitChecklistChip", {
+                        count: checkedCount,
+                        total: rubric.length,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.submitNoteRow}>
+                <Ionicons color={dashboard.secondary} name="checkmark-circle-outline" size={16} />
+                <Text selectable style={[getAccessibleTextStyle(styles.submitNote, settings), styles.reviseLabelFlex]}>
+                  {t("writingWorkspace.stages.submitNote")}
+                </Text>
+              </View>
+
+              <WorkspaceSubmitPanel
+                canSubmit={successState.viewModel.canSubmit}
+                gradeBand={state.gradeBand}
+                metrics={successState.viewModel.metrics}
+                onSave={() => {
+                  void saveNow();
+                }}
+                onSubmit={() => {
+                  void submitDraft();
+                }}
+                submitError={successState.viewModel.submitError}
+                submitStatus={successState.submitStatus}
+              />
+            </Stack>
+          ) : null}
+
           {activePanel === "coach" ? (
             <CoachEntryPanel
               assignment={successState.viewModel.assignment}
@@ -396,116 +552,288 @@ export function WritingWorkspaceScreen() {
   );
 }
 
+const cardShadow = {
+  elevation: 2,
+  shadowColor: dashboard.onSurface,
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+} as const;
+
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderCurve: "continuous",
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 17,
+    ...cardShadow,
+  },
+  cardEyebrow: {
+    color: dashboard.outline,
+    fontSize: 10.5,
+    fontWeight: "700",
+    letterSpacing: 1.1,
+    lineHeight: 14,
+    marginBottom: 9,
+    textTransform: "uppercase",
+  },
+  cardEyebrowGreen: {
+    color: dashboard.secondary,
+    marginBottom: 0,
+  },
+  cardHeaderRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 13,
+  },
+  cardHeaderMeta: {
+    color: dashboard.outline,
+    fontSize: 11.5,
+    fontWeight: "500",
+    lineHeight: 15,
+  },
+  cardSubtitle: {
+    color: dashboard.outline,
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  coachBar: {
+    alignItems: "center",
+    backgroundColor: dashboard.surfaceContainerLow,
+    borderColor: dashboard.surfaceContainerHighest,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  coachBarChips: {
+    flexDirection: "row",
+    gap: 7,
+  },
+  coachBarIcon: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderRadius: 8,
+    height: 26,
+    justifyContent: "center",
+    width: 26,
+  },
+  coachChip: {
+    alignItems: "center",
+    backgroundColor: dashboard.surfaceContainerLow,
+    borderColor: dashboard.surfaceDim,
+    borderRadius: 13,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 7,
+    minHeight: layout.touchTarget - 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  coachChipText: {
+    color: colors.coach.accent,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
+  editorInput: {
+    fontFamily: fonts.serifRegular,
+    fontSize: 15.5,
+    lineHeight: 25,
+    textAlignVertical: "top",
+  },
   header: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: spacing.sm,
+    gap: 11,
+    paddingBottom: spacing.xs,
     paddingTop: spacing.xs,
     width: "100%",
   },
+  headerCoachButton: {
+    alignItems: "center",
+    backgroundColor: dashboard.primarySubtle,
+    borderColor: dashboard.primaryFixedBorder,
+    borderRadius: 11,
+    borderWidth: 1,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
+  },
   headerIconContainer: {
     alignItems: "center",
-    borderRadius: radius.full,
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.surfaceContainerHighest,
+    borderRadius: 11,
+    borderWidth: 1,
+    height: 38,
     justifyContent: "center",
-    minHeight: layout.touchTarget,
-    minWidth: layout.touchTarget,
+    width: 38,
   },
   headerTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 17,
+    fontWeight: "500",
+    lineHeight: 21,
+  },
+  headerTitleBlock: {
     flex: 1,
-    fontWeight: "bold",
-    textAlign: "center",
+    gap: 3,
+    minWidth: 0,
   },
-  promptCard: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.lg,
+  metaChip: {
+    backgroundColor: dashboard.surfaceContainer,
+    borderRadius: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
   },
-  promptLabel: {
+  metaChipGreen: {
+    backgroundColor: dashboard.primarySubtle,
+  },
+  metaChipGreenText: {
+    color: dashboard.secondary,
+    fontSize: 11,
     fontWeight: "600",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    lineHeight: 14,
+  },
+  metaChipText: {
+    color: dashboard.onSurfaceVariant,
+    fontSize: 11.5,
+    fontWeight: "600",
+    lineHeight: 14,
+  },
+  pressed: {
+    opacity: 0.75,
   },
   promptText: {
-    fontWeight: "500",
+    color: colors.text.secondary,
+    fontFamily: fonts.serifRegular,
+    fontSize: 15,
+    lineHeight: 23,
+    marginBottom: 13,
   },
-  editorContainer: {
-    flexDirection: "column",
-    width: "100%",
-  },
-  textInput: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    textAlignVertical: "top",
-  },
-  editorActions: {
+  reviseCheck: {
     alignItems: "center",
-    borderBottomLeftRadius: radius.lg,
-    borderBottomRightRadius: radius.lg,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderTopWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.surfaceDim,
+    borderRadius: 7,
+    borderWidth: 2,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
   },
-  coachButton: {
-    alignItems: "center",
-    borderRadius: radius.full,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.xs,
-    minHeight: layout.touchTarget,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+  reviseCheckDone: {
+    backgroundColor: colors.feedback.success.icon,
+    borderColor: colors.feedback.success.icon,
   },
-  rubricCard: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
+  reviseCount: {
+    color: palette.teal[500],
+    fontSize: 11.5,
+    fontWeight: "700",
+    lineHeight: 15,
   },
-  rubricHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  progressBar: {
-    flexDirection: "row",
-    gap: 4,
-    height: 8,
-    width: "100%",
-  },
-  progressBarSegment: {
-    flex: 1,
+  reviseFill: {
+    backgroundColor: palette.teal[500],
+    borderRadius: 4,
     height: "100%",
   },
-  progressBarSegmentFirst: {
-    borderBottomLeftRadius: radius.full,
-    borderTopLeftRadius: radius.full,
+  reviseLabel: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 19,
   },
-  progressBarSegmentLast: {
-    borderBottomRightRadius: radius.full,
-    borderTopRightRadius: radius.full,
-  },
-  footer: {
-    alignItems: "center",
-    borderTopWidth: 1,
-    flexDirection: "row",
-    gap: spacing.md,
-    padding: spacing.lg,
-    width: "100%",
-  },
-  footerButton: {
-    borderRadius: radius.full,
+  reviseLabelFlex: {
     flex: 1,
   },
+  reviseRow: {
+    alignItems: "center",
+    borderTopColor: dashboard.surfaceContainer,
+    borderTopWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    paddingVertical: 13,
+  },
+  reviseTrack: {
+    backgroundColor: palette.teal[50],
+    borderRadius: 4,
+    height: 6,
+    marginBottom: 8,
+    overflow: "hidden",
+  },
+  stageCta: {
+    borderRadius: 15,
+  },
+  stageTab: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.surfaceContainerHighest,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: "row",
+    gap: 5,
+    justifyContent: "center",
+    minHeight: 36,
+    paddingHorizontal: 6,
+  },
+  stageTabActive: {
+    backgroundColor: dashboard.primary,
+    borderColor: dashboard.primary,
+  },
+  stageTabIndex: {
+    color: dashboard.outline,
+    fontSize: 10,
+    fontWeight: "700",
+    lineHeight: 13,
+    opacity: 0.7,
+  },
+  stageTabLabel: {
+    color: dashboard.onSurfaceVariant,
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 15,
+  },
+  stageTabTextActive: {
+    color: dashboard.onPrimary,
+  },
+  stageTabs: {
+    flexDirection: "row",
+    gap: 6,
+    width: "100%",
+  },
+  submitNote: {
+    color: colors.text.muted,
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  submitNoteRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 4,
+  },
+  wordChip: {
+    backgroundColor: dashboard.surfaceContainer,
+    borderRadius: radius.full,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+  },
+  wordChipText: {
+    color: colors.text.secondary,
+    fontSize: 11.5,
+    fontWeight: "600",
+    lineHeight: 14,
+  },
 });
-

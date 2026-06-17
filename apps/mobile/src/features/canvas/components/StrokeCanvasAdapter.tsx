@@ -24,6 +24,47 @@ interface StrokeCanvasAdapterProps {
   onEndStroke: () => void;
   onExtendStroke: (point: CanvasPoint) => void;
   style?: StyleProp<ViewStyle>;
+  /** Render subtle ruled guide lines across the surface, independent of the
+   * document template. Used by the minimal handwriting canvas. */
+  showLines?: boolean;
+  /** Explicit surface height. When set, the surface grows to this height so a
+   * height control can expand the writing area downward (inside a scroll view). */
+  surfaceHeight?: number;
+  /** Hide the template guides and built-in prompts so the host screen owns the
+   * surface chrome (used by the redesigned handwriting canvas). */
+  minimal?: boolean;
+  /** Empty-state prompt copy shown in minimal mode when no strokes exist. */
+  emptyTitle?: string;
+  emptyHelper?: string;
+}
+
+/** Spacing between ruled guide lines, in points. */
+const RULED_LINE_GAP_PX = 36;
+/** Very subtle light blue-gray, kept faint so lines aid alignment without
+ * looking like a notebook template. */
+const RULED_LINE_COLOR = "rgba(148, 163, 184, 0.3)";
+
+function RuledLines({ height, inset }: { height: number; inset: number }) {
+  const usableHeight = Math.max(0, height - inset * 2);
+  const count = Math.max(0, Math.floor(usableHeight / RULED_LINE_GAP_PX));
+
+  return (
+    <View
+      pointerEvents="none"
+      style={{ bottom: inset, left: inset, position: "absolute", right: inset, top: inset }}
+    >
+      {Array.from({ length: count }).map((_, index) => (
+        <View
+          key={index}
+          style={{
+            borderBottomColor: RULED_LINE_COLOR,
+            borderBottomWidth: 1,
+            height: RULED_LINE_GAP_PX,
+          }}
+        />
+      ))}
+    </View>
+  );
 }
 
 function TemplateGuides({ template }: { template: CanvasTemplate }) {
@@ -163,12 +204,18 @@ export function StrokeCanvasAdapter({
   onEndStroke,
   onExtendStroke,
   style,
+  showLines = false,
+  surfaceHeight,
+  minimal = false,
+  emptyTitle,
+  emptyHelper,
 }: StrokeCanvasAdapterProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
-  const [layout, setLayout] = useState({ height: gradeAdaptation.surfaceMinHeight, width: 0 });
+  const effectiveMinHeight = surfaceHeight ?? gradeAdaptation.surfaceMinHeight;
+  const [layout, setLayout] = useState({ height: effectiveMinHeight, width: 0 });
   const layoutRef = useRef(layout);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const isStrokeActiveRef = useRef(false);
@@ -264,10 +311,11 @@ export function StrokeCanvasAdapter({
           borderCurve: "continuous",
           borderRadius: radius.xl,
           borderWidth: 1,
-          minHeight: gradeAdaptation.surfaceMinHeight,
+          minHeight: effectiveMinHeight,
           overflow: "hidden",
           ...shadows.card,
         },
+        surfaceHeight != null ? { height: surfaceHeight } : null,
         style,
       ]}
     >
@@ -284,14 +332,51 @@ export function StrokeCanvasAdapter({
           }}
           style={{
             flex: 1,
-            minHeight: gradeAdaptation.surfaceMinHeight,
+            minHeight: effectiveMinHeight,
             padding: spacing.lg,
             position: "relative",
           }}
         >
-          <TemplateGuides template={document.template} />
+          {showLines ? <RuledLines height={layout.height} inset={spacing.lg} /> : null}
 
-          {document.strokes.length === 0 &&
+          {minimal ? null : <TemplateGuides template={document.template} />}
+
+          {minimal && document.strokes.length === 0 ? (
+            <View
+              pointerEvents="none"
+              style={{
+                alignItems: "center",
+                bottom: spacing.lg,
+                justifyContent: "center",
+                left: spacing.lg,
+                position: "absolute",
+                right: spacing.lg,
+                top: spacing.lg,
+              }}
+            >
+              <Text
+                selectable={false}
+                style={[
+                  getAccessibleTextStyle(type.bodyStrong, settings),
+                  { color: colors.text.secondary, marginBottom: spacing.xs, textAlign: "center" },
+                ]}
+              >
+                {emptyTitle ?? t("canvas.handwriting.surface.emptyTitle")}
+              </Text>
+              <Text
+                selectable={false}
+                style={[
+                  getAccessibleTextStyle(type.bodySmall, settings),
+                  { color: colors.text.muted, textAlign: "center" },
+                ]}
+              >
+                {emptyHelper ?? t("canvas.handwriting.surface.emptyHelper")}
+              </Text>
+            </View>
+          ) : null}
+
+          {!minimal &&
+          document.strokes.length === 0 &&
           document.template !== "lined_paper" &&
           document.template !== "handwriting_practice" ? (
             <View
@@ -329,23 +414,25 @@ export function StrokeCanvasAdapter({
               ))
             : null}
 
-          <View
-            pointerEvents="none"
-            style={{ alignItems: "center", bottom: spacing.md, left: spacing.lg, position: "absolute", right: spacing.lg }}
-          >
+          {minimal ? null : (
             <View
-              style={{
-                backgroundColor: colors.background.subtle,
-                borderRadius: radius.full,
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.xs,
-              }}
+              pointerEvents="none"
+              style={{ alignItems: "center", bottom: spacing.md, left: spacing.lg, position: "absolute", right: spacing.lg }}
             >
-              <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
-                {t("canvas.surface.drawPrompt")}
-              </Text>
+              <View
+                style={{
+                  backgroundColor: colors.background.subtle,
+                  borderRadius: radius.full,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.xs,
+                }}
+              >
+                <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
+                  {t("canvas.surface.drawPrompt")}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
       </GestureDetector>
     </View>

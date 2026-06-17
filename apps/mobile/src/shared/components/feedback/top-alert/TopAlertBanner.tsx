@@ -1,123 +1,148 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccessibilityInfo,
-  ActivityIndicator,
-  I18nManager,
+  Animated,
+  Easing,
   Pressable,
+  StyleProp,
   StyleSheet,
   Text,
-  useWindowDimensions,
+  TextStyle,
   View,
+  ViewStyle,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  Easing,
-  cancelAnimation,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { duration, layout, radius, spacing, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
-import {
-  getAccessibleHitSlop,
-  getAccessibleTextStyle,
-  getMinimumTouchTarget,
-  getMotionDuration,
-  useAccessibilityContext,
-} from "@/shared/utils/accessibility";
+export type TopAlertBannerPalette = {
+  surface: string;
+  text: string;
+  textMuted: string;
+  accent: string;
+  border: string;
+  shadow?: string;
+  iconBackground?: string;
+  progressTrack?: string;
+  progressFill?: string;
+  actionBackground?: string;
+  actionText?: string;
+  dismissText?: string;
+};
 
-import {
-  TOP_ALERT_DEFAULT_AUTO_DISMISS_MS,
-  TOP_ALERT_SWIPE_DISMISS_DISTANCE,
-  TOP_ALERT_SWIPE_DISMISS_VELOCITY,
-  TOP_ALERT_TEST_IDS,
-} from "./topAlert.constants";
-import { getTopAlertVariantStyle } from "./topAlert.styles";
-import type { TopAlertDismissReason, TopAlertEntry } from "./topAlert.types";
+export type TopAlertBannerTypography = {
+  title?: StyleProp<TextStyle>;
+  message?: StyleProp<TextStyle>;
+  meta?: StyleProp<TextStyle>;
+  action?: StyleProp<TextStyle>;
+  dismiss?: StyleProp<TextStyle>;
+};
 
-interface TopAlertBannerProps {
-  alert: TopAlertEntry;
-  onDismiss: (id: string, reason: TopAlertDismissReason) => void;
-}
+export type TopAlertBannerMetrics = {
+  topOffset?: number;
+  horizontalInset?: number;
+  borderRadius?: number;
+  contentPaddingHorizontal?: number;
+  contentPaddingVertical?: number;
+  gap?: number;
+  iconSize?: number;
+  actionRadius?: number;
+  progressHeight?: number;
+  slideDistance?: number;
+  zIndex?: number;
+};
 
-export const TopAlertBanner = memo(function TopAlertBanner({ alert, onDismiss }: TopAlertBannerProps) {
-  const { t } = useI18n();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const { settings } = useAccessibilityContext();
-  const translateY = useSharedValue(-96);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.98);
-  const dragY = useSharedValue(0);
-  const [isPaused, setPaused] = useState(false);
+export type TopAlertBannerAction = {
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+  disabled?: boolean;
+  testID?: string;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+};
+
+export type TopAlertBannerProps = {
+  visible: boolean;
+  palette: TopAlertBannerPalette;
+  title: string;
+  message?: string;
+  meta?: string;
+  icon?: React.ReactNode;
+  progress?: number | null;
+  primaryAction?: TopAlertBannerAction;
+  secondaryAction?: TopAlertBannerAction;
+  onDismiss?: () => void;
+  onHidden?: () => void;
+  autoDismissMs?: number;
+  dismissContent?: React.ReactNode;
+  dismissAccessibilityLabel?: string;
+  dismissTestID?: string;
+  typography?: TopAlertBannerTypography;
+  metrics?: TopAlertBannerMetrics;
+  containerStyle?: StyleProp<ViewStyle>;
+  cardStyle?: StyleProp<ViewStyle>;
+  testID?: string;
+};
+
+const DEFAULT_METRICS: Required<TopAlertBannerMetrics> = {
+  topOffset: 0,
+  horizontalInset: 16,
+  borderRadius: 22,
+  contentPaddingHorizontal: 14,
+  contentPaddingVertical: 12,
+  gap: 10,
+  iconSize: 34,
+  actionRadius: 999,
+  progressHeight: 3,
+  slideDistance: 120,
+  zIndex: 10000,
+};
+
+const normalizeProgress = (value: number | null | undefined): number | null => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const normalized = value > 1 ? value / 100 : value;
+  return Math.max(0, Math.min(1, normalized));
+};
+
+export function TopAlertBanner({
+  visible,
+  palette,
+  title,
+  message,
+  meta,
+  icon,
+  progress,
+  primaryAction,
+  secondaryAction,
+  onDismiss,
+  onHidden,
+  autoDismissMs,
+  dismissContent,
+  dismissAccessibilityLabel,
+  dismissTestID,
+  typography,
+  metrics,
+  containerStyle,
+  cardStyle,
+  testID,
+}: TopAlertBannerProps) {
+  const resolvedMetrics = useMemo(
+    () => ({ ...DEFAULT_METRICS, ...(metrics ?? {}) }),
+    [metrics],
+  );
+  const [shouldRender, setShouldRender] = useState(visible);
+  const renderedRef = useRef(visible);
+
+  // Adjust during render (instead of in an effect) so the banner mounts immediately when it becomes visible.
+  if (visible && !shouldRender) {
+    setShouldRender(true);
+  }
+  const [translateY] = useState(() => new Animated.Value(visible ? 0 : -1));
+  const [opacity] = useState(() => new Animated.Value(visible ? 1 : 0));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dismissedRef = useRef(false);
-  const type = typography.gradeBands.middle;
-  const variantStyle = useMemo(
-    () => getTopAlertVariantStyle(alert.type, alert.colorScheme ?? "light"),
-    [alert.colorScheme, alert.type],
-  );
-  const title = alert.titleKey ? t(alert.titleKey, alert.titleParams) : undefined;
-  const description = alert.descriptionKey ? t(alert.descriptionKey, alert.descriptionParams) : undefined;
-  const actionLabel = alert.actionLabelKey ? t(alert.actionLabelKey, alert.actionLabelParams) : undefined;
-  const accessibilityLabel = alert.accessibilityLabelKey
-    ? t(alert.accessibilityLabelKey, alert.accessibilityLabelParams)
-    : [title, description].filter(Boolean).join(", ");
-  const actionAccessibilityLabel = alert.actionAccessibilityLabelKey ? t(alert.actionAccessibilityLabelKey) : actionLabel;
-  const actionAccessibilityHint = alert.actionAccessibilityHintKey ? t(alert.actionAccessibilityHintKey) : undefined;
-  const closeAccessibilityLabel = t(alert.closeAccessibilityLabelKey ?? "alerts.dismiss");
-  const closeAccessibilityHint = t(alert.closeAccessibilityHintKey ?? "alerts.dismissHint");
-  const motionDuration = getMotionDuration(settings, duration.md);
-  const minTouchTarget = getMinimumTouchTarget(settings);
-  const isCompact = alert.variant === "compact";
-  const maxWidth = Math.min(layout.maxReadableWidth, width - spacing.lg * 2);
-  const autoDismissMs =
-    alert.autoDismissMs === null
-      ? null
-      : alert.autoDismissMs ?? (alert.type === "loading" || alert.type === "offline" ? null : TOP_ALERT_DEFAULT_AUTO_DISMISS_MS);
+  const frameRef = useRef<number | null>(null);
 
-  const dismiss = useCallback(
-    (reason: TopAlertDismissReason) => {
-      if (dismissedRef.current) {
-        return;
-      }
-
-      dismissedRef.current = true;
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-
-      translateY.value = withTiming(
-        -120,
-        {
-          duration: motionDuration,
-          easing: Easing.in(Easing.cubic),
-        },
-        (finished) => {
-          if (finished) {
-            runOnJS(onDismiss)(alert.id, reason);
-          }
-        },
-      );
-      opacity.value = withTiming(0, { duration: motionDuration });
-      scale.value = withTiming(0.98, { duration: motionDuration });
-    },
-    [alert.id, motionDuration, onDismiss, opacity, scale, translateY],
-  );
-
-  const resumeAutoDismiss = useCallback(() => {
-    setPaused(false);
-  }, []);
-
-  const pauseAutoDismiss = useCallback(() => {
-    setPaused(true);
+  const clearAutoDismissTimer = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -125,309 +150,381 @@ export const TopAlertBanner = memo(function TopAlertBanner({ alert, onDismiss }:
   }, []);
 
   useEffect(() => {
-    dismissedRef.current = false;
-    dragY.value = 0;
-    translateY.value = withSpring(0, {
-      damping: 22,
-      mass: 0.86,
-      stiffness: 220,
-    });
-    opacity.value = withTiming(1, {
-      duration: motionDuration,
-      easing: Easing.out(Easing.cubic),
-    });
-    scale.value = withSpring(1, {
-      damping: 22,
-      mass: 0.86,
-      stiffness: 220,
-    });
-
-    if (accessibilityLabel) {
-      AccessibilityInfo.announceForAccessibility(accessibilityLabel);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      cancelAnimation(translateY);
-      cancelAnimation(opacity);
-      cancelAnimation(scale);
-      cancelAnimation(dragY);
-    };
-  }, [accessibilityLabel, alert.id, dragY, motionDuration, opacity, scale, translateY]);
+    renderedRef.current = shouldRender;
+  }, [shouldRender]);
 
   useEffect(() => {
-    if (!autoDismissMs || isPaused || dismissedRef.current) {
-      return;
+    let animation: Animated.CompositeAnimation | null = null;
+
+    if (visible) {
+      renderedRef.current = true;
+
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+
+      frameRef.current = requestAnimationFrame(() => {
+        translateY.stopAnimation();
+        opacity.stopAnimation();
+        animation = Animated.parallel([
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 76,
+            friction: 12,
+          }),
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: 180,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ]);
+        animation.start();
+      });
+
+      return () => {
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
+        animation?.stop();
+      };
     }
 
-    timerRef.current = setTimeout(() => {
-      dismiss("auto");
-    }, autoDismissMs);
+    clearAutoDismissTimer();
+
+    if (!renderedRef.current) {
+      return undefined;
+    }
+
+    translateY.stopAnimation();
+    opacity.stopAnimation();
+    animation = Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: -1,
+        duration: 180,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 140,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]);
+
+    animation.start(({ finished }) => {
+      if (!finished) {
+        return;
+      }
+      renderedRef.current = false;
+      setShouldRender(false);
+      onHidden?.();
+    });
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      animation?.stop();
     };
-  }, [autoDismissMs, dismiss, isPaused]);
+  }, [clearAutoDismissTimer, onHidden, opacity, translateY, visible]);
 
-  const handleActionPress = useCallback(() => {
-    void Promise.resolve(alert.onActionPress?.()).finally(() => {
-      dismiss("action");
-    });
-  }, [alert, dismiss]);
+  useEffect(() => {
+    clearAutoDismissTimer();
 
-  const handleTap = useCallback(() => {
-    if (alert.tapToDismiss) {
-      dismiss("tap");
+    if (!visible || !autoDismissMs || !onDismiss) {
+      return undefined;
     }
-  }, [alert.tapToDismiss, dismiss]);
 
-  const finishSwipeDismiss = useCallback(() => {
-    dismiss("swipe");
-  }, [dismiss]);
+    timerRef.current = setTimeout(onDismiss, autoDismissMs);
 
-  const panGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetY([-8, 999])
-        .failOffsetX([-24, 24])
-        .onBegin(() => {
-          runOnJS(pauseAutoDismiss)();
-        })
-        .onUpdate((event) => {
-          dragY.value = Math.min(0, event.translationY);
-        })
-        .onEnd((event) => {
-          const shouldDismiss =
-            dragY.value < TOP_ALERT_SWIPE_DISMISS_DISTANCE || event.velocityY < TOP_ALERT_SWIPE_DISMISS_VELOCITY;
+    return clearAutoDismissTimer;
+  }, [autoDismissMs, clearAutoDismissTimer, onDismiss, visible]);
 
-          if (shouldDismiss) {
-            translateY.value = withTiming(-120, { duration: motionDuration }, (finished) => {
-              if (finished) {
-                runOnJS(finishSwipeDismiss)();
-              }
-            });
-            opacity.value = withTiming(0, { duration: motionDuration });
-            return;
-          }
+  useEffect(() => {
+    return () => {
+      clearAutoDismissTimer();
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+      translateY.stopAnimation();
+      opacity.stopAnimation();
+    };
+  }, [clearAutoDismissTimer, opacity, translateY]);
 
-          dragY.value = withSpring(0, { damping: 20, stiffness: 220 });
-          runOnJS(resumeAutoDismiss)();
-        })
-        .onFinalize(() => {
-          runOnJS(resumeAutoDismiss)();
-        }),
-    [dragY, finishSwipeDismiss, motionDuration, opacity, pauseAutoDismiss, resumeAutoDismiss, translateY],
-  );
+  const progressValue = normalizeProgress(progress);
+  const animatedTranslateY = translateY.interpolate({
+    inputRange: [-1, 0],
+    outputRange: [-resolvedMetrics.slideDistance, 0],
+  });
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value + dragY.value },
-      { scale: scale.value },
-    ],
-  }));
+  const renderAction = (action: TopAlertBannerAction | undefined, kind: "primary" | "secondary") => {
+    if (!action) {
+      return null;
+    }
 
-  const iconName = alert.iconName ?? variantStyle.icon;
-  const showIcon = alert.showIcon ?? true;
+    const isPrimary = kind === "primary";
+    return (
+      <Pressable
+        accessibilityLabel={action.accessibilityLabel ?? action.label}
+        accessibilityRole="button"
+        disabled={action.disabled}
+        onPress={action.onPress}
+        style={({ pressed }) => [
+          styles.actionButton,
+          {
+            borderColor: palette.border,
+            borderRadius: resolvedMetrics.actionRadius,
+            backgroundColor: isPrimary
+              ? (palette.actionBackground ?? palette.accent)
+              : palette.surface,
+            opacity: action.disabled ? 0.55 : pressed ? 0.78 : 1,
+          },
+          action.style,
+        ]}
+        testID={action.testID}
+      >
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.actionText,
+            { color: isPrimary ? (palette.actionText ?? palette.surface) : palette.text },
+            typography?.action,
+            action.textStyle,
+          ]}
+        >
+          {action.label}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View
-        accessibilityLabel={accessibilityLabel}
+    <Animated.View
+      pointerEvents="box-none"
+      style={[
+        styles.container,
+        {
+          top: resolvedMetrics.topOffset,
+          left: resolvedMetrics.horizontalInset,
+          right: resolvedMetrics.horizontalInset,
+          zIndex: resolvedMetrics.zIndex,
+          opacity,
+          transform: [{ translateY: animatedTranslateY }],
+        },
+        containerStyle,
+      ]}
+      testID={testID}
+    >
+      <View
         accessibilityLiveRegion="polite"
         accessibilityRole="alert"
-        importantForAccessibility="yes"
         style={[
-          styles.overlay,
+          styles.card,
           {
-            paddingTop: Math.max(insets.top, spacing.md),
+            backgroundColor: palette.surface,
+            borderColor: palette.border,
+            borderRadius: resolvedMetrics.borderRadius,
+            paddingHorizontal: resolvedMetrics.contentPaddingHorizontal,
+            paddingVertical: resolvedMetrics.contentPaddingVertical,
+            shadowColor: palette.shadow ?? palette.border,
           },
-          animatedStyle,
+          cardStyle,
         ]}
-        testID={TOP_ALERT_TEST_IDS.banner}
       >
-        <Pressable
-          accessibilityRole={alert.tapToDismiss ? "button" : undefined}
-          onPress={handleTap}
-          onPressIn={pauseAutoDismiss}
-          onPressOut={resumeAutoDismiss}
-          style={[
-            styles.banner,
-            isCompact ? styles.bannerCompact : styles.bannerExpanded,
-            {
-              backgroundColor: variantStyle.background,
-              borderColor: variantStyle.border,
-              flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
-              maxWidth,
-            },
-            alert.style,
-          ]}
-          testID={TOP_ALERT_TEST_IDS.surface}
-        >
-          {showIcon ? (
-            <View style={[styles.iconFrame, { backgroundColor: variantStyle.iconBackground }]}>
-              {alert.type === "loading" ? (
-                <ActivityIndicator color={variantStyle.foreground} size="small" />
-              ) : (
-                <Ionicons color={variantStyle.foreground} name={iconName} size={20} />
-              )}
+        <View style={[styles.row, { gap: resolvedMetrics.gap }]}>
+          {icon ? (
+            <View
+              style={[
+                styles.iconShell,
+                {
+                  width: resolvedMetrics.iconSize,
+                  height: resolvedMetrics.iconSize,
+                  borderRadius: resolvedMetrics.iconSize / 2,
+                  backgroundColor: palette.iconBackground ?? palette.surface,
+                },
+              ]}
+            >
+              {icon}
             </View>
           ) : null}
 
-          <View style={styles.textGroup}>
-            {title ? (
+          <View style={styles.textColumn}>
+            {meta ? (
               <Text
-                numberOfLines={isCompact ? 1 : 2}
-                style={[
-                  getAccessibleTextStyle(type.bodyStrong, settings),
-                  styles.title,
-                  {
-                    color: variantStyle.foreground,
-                    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
-                  },
-                ]}
+                numberOfLines={1}
+                style={[styles.meta, { color: palette.accent }, typography?.meta]}
               >
-                {title}
+                {meta}
               </Text>
             ) : null}
-            {description && !isCompact ? (
+            <Text
+              numberOfLines={1}
+              style={[styles.title, { color: palette.text }, typography?.title]}
+            >
+              {title}
+            </Text>
+            {message ? (
               <Text
-                numberOfLines={3}
-                style={[
-                  getAccessibleTextStyle(type.bodySmall, settings),
-                  styles.description,
-                  {
-                    color: variantStyle.mutedForeground,
-                    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
-                  },
-                ]}
+                numberOfLines={2}
+                style={[styles.message, { color: palette.textMuted }, typography?.message]}
               >
-                {description}
+                {message}
               </Text>
             ) : null}
           </View>
 
-          {actionLabel ? (
-            <Pressable
-              accessibilityHint={actionAccessibilityHint}
-              accessibilityLabel={actionAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={getAccessibleHitSlop(settings)}
-              onPress={handleActionPress}
-              style={({ pressed }) => [
-                styles.actionButton,
-                {
-                  backgroundColor: pressed ? variantStyle.pressed : variantStyle.actionBackground,
-                  borderColor: variantStyle.actionBorder,
-                  minHeight: minTouchTarget,
-                },
-              ]}
-              testID={TOP_ALERT_TEST_IDS.action}
-            >
-              <Text
-                numberOfLines={2}
-                style={[
-                  getAccessibleTextStyle(type.button, settings),
-                  styles.actionText,
-                  { color: variantStyle.actionForeground },
+          <View style={styles.actions}>
+            {renderAction(secondaryAction, "secondary")}
+            {renderAction(primaryAction, "primary")}
+            {onDismiss ? (
+              <Pressable
+                accessibilityLabel={dismissAccessibilityLabel}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={onDismiss}
+                style={({ pressed }) => [
+                  styles.dismissButton,
+                  { opacity: pressed ? 0.6 : 1 },
                 ]}
+                testID={dismissTestID}
               >
-                {actionLabel}
-              </Text>
-            </Pressable>
-          ) : null}
+                {dismissContent ?? (
+                  <View style={styles.dismissGlyph}>
+                    <View
+                      style={[
+                        styles.dismissLine,
+                        {
+                          backgroundColor: palette.dismissText ?? palette.textMuted,
+                          transform: [{ rotate: "45deg" }],
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.dismissLine,
+                        {
+                          backgroundColor: palette.dismissText ?? palette.textMuted,
+                          transform: [{ rotate: "-45deg" }],
+                        },
+                      ]}
+                    />
+                  </View>
+                )}
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
 
-          {alert.showCloseButton === false ? null : (
-            <Pressable
-              accessibilityHint={closeAccessibilityHint}
-              accessibilityLabel={closeAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={getAccessibleHitSlop(settings)}
-              onPress={() => dismiss("close")}
-              style={({ pressed }) => [
-                styles.closeButton,
+        {progressValue !== null ? (
+          <View
+            style={[
+              styles.progressTrack,
+              {
+                height: resolvedMetrics.progressHeight,
+                borderRadius: resolvedMetrics.progressHeight / 2,
+                backgroundColor: palette.progressTrack ?? palette.border,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.progressFill,
                 {
-                  backgroundColor: pressed ? variantStyle.pressed : "transparent",
-                  minHeight: minTouchTarget,
-                  minWidth: minTouchTarget,
+                  width: `${progressValue * 100}%`,
+                  borderRadius: resolvedMetrics.progressHeight / 2,
+                  backgroundColor: palette.progressFill ?? palette.accent,
                 },
               ]}
-              testID={TOP_ALERT_TEST_IDS.close}
-            >
-              <Ionicons color={variantStyle.foreground} name="close" size={18} />
-            </Pressable>
-          )}
-        </Pressable>
-      </Animated.View>
-    </GestureDetector>
+            />
+          </View>
+        ) : null}
+      </View>
+    </Animated.View>
   );
-});
+}
 
 const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: "center",
-    borderRadius: radius.full,
-    borderWidth: 1,
-    flexShrink: 0,
-    justifyContent: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+  container: {
+    position: "absolute",
   },
-  actionText: {
-    flexShrink: 1,
-    textAlign: "center",
-  },
-  banner: {
-    alignItems: "center",
-    alignSelf: "center",
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    gap: spacing.sm,
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.16,
+    shadowRadius: 28,
+    elevation: 12,
     overflow: "hidden",
   },
-  bannerCompact: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  bannerExpanded: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  closeButton: {
+  row: {
     alignItems: "center",
-    borderRadius: radius.full,
+    flexDirection: "row",
+  },
+  iconShell: {
+    alignItems: "center",
+    flexShrink: 0,
     justifyContent: "center",
   },
-  description: {
-    flexShrink: 1,
-  },
-  iconFrame: {
-    alignItems: "center",
-    borderRadius: radius.full,
-    height: 36,
-    justifyContent: "center",
-    width: 36,
-  },
-  overlay: {
-    left: spacing.sm,
-    pointerEvents: "box-none",
-    position: "absolute",
-    right: spacing.sm,
-    top: 0,
-    zIndex: 10000,
-  },
-  textGroup: {
+  textColumn: {
     flex: 1,
-    gap: spacing.xxs,
     minWidth: 0,
   },
+  meta: {
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
   title: {
-    flexShrink: 1,
+    includeFontPadding: false,
+  },
+  message: {
+    includeFontPadding: false,
+  },
+  actions: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 0,
+    gap: 6,
+  },
+  actionButton: {
+    alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: "center",
+    maxWidth: 128,
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  actionText: {
+    includeFontPadding: false,
+  },
+  dismissButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
+    minWidth: 32,
+  },
+  dismissGlyph: {
+    alignItems: "center",
+    height: 16,
+    justifyContent: "center",
+    width: 16,
+  },
+  dismissLine: {
+    height: 2,
+    position: "absolute",
+    width: 14,
+  },
+  progressTrack: {
+    marginTop: 10,
+    overflow: "hidden",
+    width: "100%",
+  },
+  progressFill: {
+    height: "100%",
   },
 });
+
+export default TopAlertBanner;

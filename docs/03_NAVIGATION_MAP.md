@@ -196,6 +196,11 @@ Student detail routes are hidden from the tab bar:
 /(student)/write/[assignmentId]
 ```
 
+`/(student)/write/[assignmentId]` accepts an optional `stage` query parameter
+with `understand`, `draft`, `revise`, or `submit`. Assignment detail uses
+`stage=draft` when the student chooses to start or edit a draft so the
+workspace opens directly on the draft editor.
+
 ## Parent Bottom Tabs
 
 ```txt

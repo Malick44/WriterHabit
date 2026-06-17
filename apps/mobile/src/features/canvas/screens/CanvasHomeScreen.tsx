@@ -9,7 +9,7 @@ import { colors, spacing, typography, type GradeBand } from "@/design/tokens";
 import { EntitlementGate } from "@/features/subscriptions";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
-import { EmptyState, ErrorState, LoadingState, OfflineBanner } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, OfflineBanner, useTopAlert } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 import { BOTTOM_MENU_SCROLL_EVENT_THROTTLE, useBottomMenuScrollHandler } from "@/shared/components/navigation";
 
@@ -25,7 +25,17 @@ export function CanvasHomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { session } = useAuthSession();
+  const topAlert = useTopAlert();
   const gradeBand = getFallbackGradeBand(session?.user.gradeLevel);
+
+  const handleCreate = useCallback(() => {
+    topAlert.show({
+      descriptionKey: "canvas.home.subtitle",
+      titleKey: "canvas.home.title",
+      type: "info",
+    });
+    router.push(getCanvasTemplatePickerRoute());
+  }, [router, topAlert]);
 
   const createButton = (
     <Button
@@ -34,7 +44,7 @@ export function CanvasHomeScreen() {
       gradeBand={gradeBand}
       label={t("canvas.home.createCta")}
       leftAccessory={<Ionicons color={colors.action.primary.foreground} name="add" size={20} />}
-      onPress={() => router.push(getCanvasTemplatePickerRoute())}
+      onPress={handleCreate}
       size={gradeBand === "elementary" ? "lg" : "md"}
       testID="canvas-home-create"
     />

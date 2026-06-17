@@ -1,4 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Pressable,
   ScrollView,
@@ -17,10 +22,23 @@ import {
   getWritingWorkspaceRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors, fonts, layout, palette, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  fonts,
+  layout,
+  palette,
+  radius,
+  spacing,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
-import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  StatusState,
+} from "@/shared/components/feedback";
+import { ComposerSurface } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
 import {
   buildAccessibilityLabel,
@@ -28,32 +46,33 @@ import {
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
-import { AssignmentStatusBadge } from "../components";
 import { useAssignmentDetailData } from "../hooks/useAssignments";
 import type { AssignmentRecord, AssignmentStatus } from "../types";
 
 const dashboard = colors.dashboard;
 
-function getParamValue(value: string | string[] | undefined): string | undefined {
+function getParamValue(
+  value: string | string[] | undefined,
+): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-const DetailGradeBandContext = createContext<GradeBand>("middle");
-
 function StateFrame({ children }: { children: ReactNode }) {
   return (
-    <View style={styles.stateFrame}>
-      <AppHeader
-        leftAction={{
-          accessibilityLabelKey: "common.back",
-          type: "back",
-        }}
-        style={styles.header}
-        titleKey="assignments.detail.headerTitle"
-        variant="centered"
-      />
-      <View style={styles.stateContent}>{children}</View>
-    </View>
+    <ComposerSurface>
+      <View style={styles.stateFrame}>
+        <AppHeader
+          leftAction={{
+            accessibilityLabelKey: "common.back",
+            type: "back",
+          }}
+          style={styles.header}
+          titleKey="assignments.detail.headerTitle"
+          variant="centered"
+        />
+        <View style={styles.stateContent}>{children}</View>
+      </View>
+    </ComposerSurface>
   );
 }
 
@@ -72,17 +91,29 @@ function FactRow({
 
   return (
     <View style={[styles.factRow, divider ? styles.factRowDivider : null]}>
-      <Text selectable style={getAccessibleTextStyle(styles.factLabel, settings)}>
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.factLabel, settings)}
+      >
         {label}
       </Text>
       {valueChip ? (
         <View style={styles.factChip}>
-          <Text selectable style={getAccessibleTextStyle(styles.factChipText, settings)}>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.factChipText, settings)}
+          >
             {value}
           </Text>
         </View>
       ) : (
-        <Text selectable style={[getAccessibleTextStyle(styles.factValue, settings), styles.factValueAligned]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(styles.factValue, settings),
+            styles.factValueAligned,
+          ]}
+        >
           {value}
         </Text>
       )}
@@ -92,7 +123,13 @@ function FactRow({
 
 type JourneyStage = "draft" | "submitted" | "feedback" | "revised" | "complete";
 
-const journeyStages: JourneyStage[] = ["draft", "submitted", "feedback", "revised", "complete"];
+const journeyStages: JourneyStage[] = [
+  "draft",
+  "submitted",
+  "feedback",
+  "revised",
+  "complete",
+];
 
 function getJourneyStageIndex(status: AssignmentStatus): number {
   switch (status) {
@@ -125,7 +162,10 @@ function StatusJourney({ status }: { status: AssignmentStatus }) {
       style={styles.journeyCard}
       testID="assignment-detail-journey"
     >
-      <Text selectable style={getAccessibleTextStyle(styles.cardEyebrow, settings)}>
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+      >
         {t("assignments.detail.statusSectionTitle")}
       </Text>
       <View style={styles.journeyRow}>
@@ -144,7 +184,13 @@ function StatusJourney({ status }: { status: AssignmentStatus }) {
                 ]}
               >
                 {isCurrent ? <View style={styles.journeyDotCore} /> : null}
-                {isDone ? <Ionicons color={dashboard.onPrimary} name="checkmark" size={13} /> : null}
+                {isDone ? (
+                  <Ionicons
+                    color={dashboard.onPrimary}
+                    name="checkmark"
+                    size={13}
+                  />
+                ) : null}
               </View>
               <Text
                 selectable={false}
@@ -163,6 +209,155 @@ function StatusJourney({ status }: { status: AssignmentStatus }) {
   );
 }
 
+function WorkOptionTile({
+  accessibilityLabel,
+  description,
+  disabled = false,
+  icon,
+  label,
+  onPress,
+}: {
+  accessibilityLabel: string;
+  description: string;
+  disabled?: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  const { settings } = useAccessibilityContext();
+
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.workOptionTile,
+        pressed ? styles.workOptionTilePressed : null,
+        disabled ? styles.workOptionTileDisabled : null,
+      ]}
+    >
+      <View style={styles.workOptionIcon}>
+        <Ionicons color={dashboard.primary} name={icon} size={18} />
+      </View>
+      <View style={styles.workOptionText}>
+        <Text
+          selectable={false}
+          style={getAccessibleTextStyle(styles.workOptionLabel, settings)}
+        >
+          {label}
+        </Text>
+        <Text
+          selectable={false}
+          style={getAccessibleTextStyle(
+            styles.workOptionDescription,
+            settings,
+          )}
+        >
+          {description}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function FloatingWorkMenu({
+  assignment,
+  canStartCanvas,
+  canStartWriting,
+  canUploadWork,
+  expanded,
+  onEditDraft,
+  onOpenCanvas,
+  onToggle,
+  onUploadWork,
+}: {
+  assignment: AssignmentRecord;
+  canStartCanvas: boolean;
+  canStartWriting: boolean;
+  canUploadWork: boolean;
+  expanded: boolean;
+  onEditDraft: () => void;
+  onOpenCanvas: () => void;
+  onToggle: () => void;
+  onUploadWork: () => void;
+}) {
+  const { t } = useI18n();
+
+  const runAction = (action: () => void) => {
+    onToggle();
+    action();
+  };
+
+  return (
+    <View
+      accessibilityLabel={t("assignments.detail.inputMenuAccessibility")}
+      pointerEvents="box-none"
+      style={styles.floatingMenu}
+      testID="assignment-detail-input-menu"
+    >
+      {expanded ? (
+        <View style={styles.floatingOptions}>
+          <WorkOptionTile
+            accessibilityLabel={t("assignments.detail.editDraftAccessibility")}
+            description={t("assignments.detail.editDraftDescription")}
+            disabled={!canStartWriting}
+            icon="create-outline"
+            label={
+              assignment.draft
+                ? t("assignments.detail.editDraftCta")
+                : t("assignments.detail.startDraftCta")
+            }
+            onPress={() => runAction(onEditDraft)}
+          />
+          <WorkOptionTile
+            accessibilityLabel={t(
+              "assignments.detail.uploadWorkAccessibility",
+            )}
+            description={t("assignments.detail.uploadWorkDescription")}
+            disabled={!canUploadWork}
+            icon="cloud-upload-outline"
+            label={t("assignments.detail.uploadWorkCta")}
+            onPress={() => runAction(onUploadWork)}
+          />
+          <WorkOptionTile
+            accessibilityLabel={t(
+              "assignments.detail.startCanvasAccessibility",
+            )}
+            description={t("assignments.detail.canvasWorkDescription")}
+            disabled={!canStartCanvas}
+            icon="brush-outline"
+            label={t("assignments.detail.useCanvasCta")}
+            onPress={() => runAction(onOpenCanvas)}
+          />
+        </View>
+      ) : null}
+      <Pressable
+        accessibilityLabel={
+          expanded
+            ? t("assignments.detail.inputMenuCloseAccessibility")
+            : t("assignments.detail.inputMenuOpenAccessibility")
+        }
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={onToggle}
+        style={({ pressed }) => [
+          styles.floatingMenuButton,
+          pressed ? styles.floatingMenuButtonPressed : null,
+        ]}
+      >
+        <Ionicons
+          color={dashboard.onPrimary}
+          name={expanded ? "close" : "add"}
+          size={28}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
 function AssignmentContent({
   assignment,
   isOffline,
@@ -174,13 +369,9 @@ function AssignmentContent({
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
-  const gradeBand = useContext(DetailGradeBandContext);
-  const type = typography.gradeBands[gradeBand];
-  const skillFocus = assignment.skillFocus.map((skill) => t(`assignments.skills.${skill}`)).join(", ");
-  const gradeRange =
-    assignment.gradeLevelMin === assignment.gradeLevelMax
-      ? `${assignment.gradeLevelMin}`
-      : `${assignment.gradeLevelMin}–${assignment.gradeLevelMax}`;
+  const skillFocus = assignment.skillFocus
+    .map((skill) => t(`assignments.skills.${skill}`))
+    .join(", ");
   const rubricFocus = assignment.rubric[0]?.label;
 
   return (
@@ -213,35 +404,25 @@ function AssignmentContent({
             />
           ) : null}
 
-          <View>
-            <Text selectable style={getAccessibleTextStyle(styles.typeEyebrow, settings)}>
-              {t("assignments.detail.typeEyebrow", {
-                type: t(`assignments.types.${assignment.assignmentType}`),
-                grade: gradeRange,
-              })}
-            </Text>
-            <View style={styles.titleRow}>
-              <Text
-                selectable
-                style={[getAccessibleTextStyle(type.heading, settings), styles.titleText]}
-                testID="assignment-detail-title"
-              >
-                {assignment.title}
-              </Text>
-              <AssignmentStatusBadge gradeBand={gradeBand} status={assignment.status} />
-            </View>
-          </View>
-
           <View
-            accessibilityLabel={buildAccessibilityLabel([t("assignments.detail.promptAccessibility"), assignment.prompt])}
+            accessibilityLabel={buildAccessibilityLabel([
+              t("assignments.detail.promptAccessibility"),
+              assignment.prompt,
+            ])}
             accessible
             style={styles.card}
             testID="assignment-detail-prompt"
           >
-            <Text selectable style={getAccessibleTextStyle(styles.cardEyebrow, settings)}>
+            <Text
+              selectable
+              style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+            >
               {t("assignments.detail.promptTitle")}
             </Text>
-            <Text selectable style={getAccessibleTextStyle(styles.promptText, settings)}>
+            <Text
+              selectable
+              style={getAccessibleTextStyle(styles.promptText, settings)}
+            >
               {assignment.prompt}
             </Text>
           </View>
@@ -252,18 +433,32 @@ function AssignmentContent({
             style={[styles.card, styles.factsCard]}
             testID="assignment-detail-facts"
           >
-            <FactRow label={t("assignments.detail.skillFocusLabel")} value={skillFocus || t("assignments.detail.generalWriting")} />
-            {rubricFocus ? <FactRow label={t("assignments.detail.rubricFocusLabel")} value={rubricFocus} /> : null}
+            <FactRow
+              label={t("assignments.detail.skillFocusLabel")}
+              value={skillFocus || t("assignments.detail.generalWriting")}
+            />
+            {rubricFocus ? (
+              <FactRow
+                label={t("assignments.detail.rubricFocusLabel")}
+                value={rubricFocus}
+              />
+            ) : null}
             <FactRow
               label={t("assignments.detail.estimatedTimeLabel")}
-              value={t("assignments.detail.estimatedTime", { count: assignment.estimatedMinutes })}
+              value={t("assignments.detail.estimatedTime", {
+                count: assignment.estimatedMinutes,
+              })}
             />
             <FactRow
               label={t("assignments.detail.difficultyLabel")}
               value={t(`assignments.difficulty.${assignment.difficulty}`)}
               valueChip
             />
-            <FactRow divider={false} label={t("assignments.detail.dueDateLabel")} value={assignment.dueLabel} />
+            <FactRow
+              divider={false}
+              label={t("assignments.detail.dueDateLabel")}
+              value={assignment.dueLabel}
+            />
           </View>
 
           <StatusJourney status={assignment.status} />
@@ -272,7 +467,13 @@ function AssignmentContent({
             <View style={styles.coachIcon}>
               <Ionicons color={dashboard.secondary} name="sparkles" size={16} />
             </View>
-            <Text selectable style={[getAccessibleTextStyle(styles.coachText, settings), styles.coachTextFlex]}>
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(styles.coachText, settings),
+                styles.coachTextFlex,
+              ]}
+            >
               {t("assignments.detail.coachNote")}
             </Text>
           </View>
@@ -289,9 +490,13 @@ export function AssignmentDetailScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ assignmentId?: string | string[] }>();
-  const assignmentId = useMemo(() => getParamValue(params.assignmentId), [params.assignmentId]);
+  const assignmentId = useMemo(
+    () => getParamValue(params.assignmentId),
+    [params.assignmentId],
+  );
   const state = useAssignmentDetailData(assignmentId);
   const contentWidth = Math.min(width, 480);
+  const [inputMenuExpanded, setInputMenuExpanded] = useState(false);
 
   const startWriting = useCallback(async () => {
     if (state.status !== "success" || !state.viewModel.assignment) {
@@ -301,7 +506,7 @@ export function AssignmentDetailScreen() {
     const startedAssignment = await state.startAssignment();
 
     if (startedAssignment) {
-      router.push(getWritingWorkspaceRoute(startedAssignment.id));
+      router.push(getWritingWorkspaceRoute(startedAssignment.id, "draft"));
     }
   }, [router, state]);
 
@@ -319,6 +524,24 @@ export function AssignmentDetailScreen() {
     }
 
     router.push(getCanvasTemplatePickerRoute(state.viewModel.assignment.id));
+  }, [router, state]);
+
+  const openUploadWork = useCallback(async () => {
+    if (state.status !== "success" || !state.viewModel.assignment) {
+      return;
+    }
+
+    if (state.viewModel.assignment.status === "not_started") {
+      const startedAssignment = await state.startAssignment();
+
+      if (startedAssignment) {
+        router.push(getAssignmentSubmissionRoute(startedAssignment.id));
+      }
+
+      return;
+    }
+
+    router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
   const handlePrimaryPress = useCallback(() => {
@@ -388,74 +611,121 @@ export function AssignmentDetailScreen() {
       : t("assignments.continueDraft");
 
   return (
-    <View style={styles.root}>
-      <View style={[styles.phoneFrame, { maxWidth: contentWidth }]}>
-        {assignment ? (
-          <DetailGradeBandContext.Provider value={state.gradeBand}>
+    <ComposerSurface>
+      <View style={styles.root}>
+        <View style={[styles.phoneFrame, { maxWidth: contentWidth }]}>
+          {assignment ? (
             <AssignmentContent
               assignment={assignment}
               isOffline={state.viewModel.isOffline}
               onRefresh={state.refetch}
             />
-          </DetailGradeBandContext.Provider>
-        ) : null}
-      </View>
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.footerFrame,
-          {
-            maxWidth: contentWidth,
-            paddingBottom: Math.max(insets.bottom, spacing.lg),
-          },
-        ]}
-      >
-        <View style={styles.bottomBarSurface}>
-          <View style={styles.bottomButtonRow}>
-            <Button
-              accessibilityHint={
-                state.viewModel.canSubmit ? t("assignments.submit.hint") : t("assignments.detail.startWritingHint")
-              }
-              accessibilityLabel={
-                state.viewModel.canSubmit
-                  ? t("assignments.submit.ctaAccessibility")
-                  : t("assignments.detail.startWritingAccessibility")
-              }
-              disabled={!state.viewModel.canStartWriting && !state.viewModel.canSubmit}
-              label={primaryLabel}
-              loading={state.startStatus === "loading"}
-              onPress={handlePrimaryPress}
-              size="md"
-              style={styles.primaryButton}
-              variant="primary"
-            />
-            {state.viewModel.canStartCanvas ? (
-              <Button
-                accessibilityHint={t("assignments.detail.startCanvasHint")}
-                accessibilityLabel={t("assignments.detail.startCanvasAccessibility")}
-                label={t("assignments.detail.useCanvasCta")}
-                onPress={openCanvas}
-                size="md"
-                style={styles.canvasButton}
-                variant="secondary"
-              />
-            ) : null}
-          </View>
-          {!state.viewModel.canSubmit && state.viewModel.assignment?.draft ? (
-            <Pressable
-              accessibilityLabel={t("assignments.detail.submitLinkAccessibility")}
-              accessibilityRole="button"
-              onPress={openSubmit}
-              style={({ pressed }) => [styles.submitLink, pressed ? styles.submitLinkPressed : null]}
-            >
-              <Text selectable={false} style={getAccessibleTextStyle(styles.submitLinkText, settings)}>
-                {t("assignments.detail.submitLinkCta")}
-              </Text>
-            </Pressable>
           ) : null}
         </View>
+        {assignment ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.floatingMenuFrame,
+              {
+                bottom: Math.max(insets.bottom, spacing.lg) + 118,
+                right: Math.max((width - contentWidth) / 2 + 20, 20),
+              },
+            ]}
+          >
+            <FloatingWorkMenu
+              assignment={assignment}
+              canStartCanvas={state.viewModel.canStartCanvas}
+              canStartWriting={state.viewModel.canStartWriting}
+              canUploadWork={
+                state.viewModel.canStartWriting || state.viewModel.canSubmit
+              }
+              expanded={inputMenuExpanded}
+              onEditDraft={() => {
+                void startWriting();
+              }}
+              onOpenCanvas={openCanvas}
+              onToggle={() => setInputMenuExpanded((value) => !value)}
+              onUploadWork={() => {
+                void openUploadWork();
+              }}
+            />
+          </View>
+        ) : null}
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.footerFrame,
+            {
+              maxWidth: contentWidth,
+              paddingBottom: Math.max(insets.bottom, spacing.lg),
+            },
+          ]}
+        >
+          <View style={styles.bottomBarSurface}>
+            <View style={styles.bottomButtonRow}>
+              <Button
+                accessibilityHint={
+                  state.viewModel.canSubmit
+                    ? t("assignments.submit.hint")
+                    : t("assignments.detail.startWritingHint")
+                }
+                accessibilityLabel={
+                  state.viewModel.canSubmit
+                    ? t("assignments.submit.ctaAccessibility")
+                    : t("assignments.detail.startWritingAccessibility")
+                }
+                disabled={
+                  !state.viewModel.canStartWriting && !state.viewModel.canSubmit
+                }
+                label={primaryLabel}
+                loading={state.startStatus === "loading"}
+                onPress={handlePrimaryPress}
+                size="md"
+                style={styles.primaryButton}
+                variant="primary"
+              />
+              {state.viewModel.canStartCanvas ? (
+                <Button
+                  accessibilityHint={t("assignments.detail.startCanvasHint")}
+                  accessibilityLabel={t(
+                    "assignments.detail.startCanvasAccessibility",
+                  )}
+                  label={t("assignments.detail.useCanvasCta")}
+                  onPress={openCanvas}
+                  size="md"
+                  style={styles.canvasButton}
+                  variant="secondary"
+                />
+              ) : null}
+            </View>
+            {!state.viewModel.canSubmit && state.viewModel.assignment?.draft ? (
+              <Pressable
+                accessibilityLabel={t(
+                  "assignments.detail.submitLinkAccessibility",
+                )}
+                accessibilityRole="button"
+                onPress={openSubmit}
+                style={({ pressed }) => [
+                  styles.submitLink,
+                  pressed ? styles.submitLinkPressed : null,
+                ]}
+              >
+                <Text
+                  selectable={false}
+                  style={getAccessibleTextStyle(
+                    styles.submitLinkText,
+                    settings,
+                  )}
+                >
+                  {t("assignments.detail.submitLinkCta")}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
       </View>
-    </View>
+    </ComposerSurface>
   );
 }
 
@@ -584,12 +854,37 @@ const styles = StyleSheet.create({
     right: 0,
     width: "100%",
   },
+  floatingMenu: {
+    alignItems: "flex-end",
+  },
+  floatingMenuButton: {
+    alignItems: "center",
+    backgroundColor: dashboard.primary,
+    borderColor: dashboard.primary,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    height: 60,
+    justifyContent: "center",
+    width: 60,
+    ...cardShadow,
+  },
+  floatingMenuButtonPressed: {
+    opacity: 0.82,
+  },
+  floatingMenuFrame: {
+    position: "absolute",
+    zIndex: 20,
+  },
+  floatingOptions: {
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    width: 286,
+  },
   header: {
     backgroundColor: dashboard.backgroundOverlay,
     borderBottomWidth: 0,
     paddingBottom: spacing.sm,
     paddingHorizontal: 20,
-    paddingTop: spacing.sm,
   },
   journeyCard: {
     backgroundColor: dashboard.card,
@@ -672,7 +967,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   root: {
-    backgroundColor: dashboard.surface,
+    backgroundColor: "transparent",
     flex: 1,
   },
   scrollContent: {
@@ -687,7 +982,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   stateFrame: {
-    backgroundColor: dashboard.surface,
+    backgroundColor: "transparent",
     flex: 1,
   },
   submitLink: {
@@ -704,22 +999,49 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 17,
   },
-  titleRow: {
-    alignItems: "flex-start",
+  workOptionDescription: {
+    color: dashboard.onSurfaceVariant,
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  workOptionIcon: {
+    alignItems: "center",
+    backgroundColor: dashboard.primarySubtle,
+    borderColor: dashboard.primaryFixedBorder,
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  workOptionLabel: {
+    color: dashboard.onSurface,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 17,
+  },
+  workOptionText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  workOptionTile: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: "row",
     gap: 12,
-    justifyContent: "space-between",
+    minHeight: 58,
+    padding: 12,
+    width: "100%",
+    ...cardShadow,
   },
-  titleText: {
-    flex: 1,
+  workOptionTileDisabled: {
+    opacity: 0.45,
   },
-  typeEyebrow: {
-    color: dashboard.secondary,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.4,
-    lineHeight: 14,
-    marginBottom: 9,
-    textTransform: "uppercase",
+  workOptionTilePressed: {
+    opacity: 0.78,
   },
 });

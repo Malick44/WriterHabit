@@ -29,6 +29,14 @@
         "defaultChannel": "WriterHabit-reminders"
       }
     ],
+    [
+      "expo-image-picker",
+      {
+        "photosPermission": "WriterHabit needs photo access so you can upload a picture of your writing as an assignment.",
+        "cameraPermission": "WriterHabit needs camera access so you can take a photo of your writing to submit."
+      }
+    ],
+    "expo-document-picker",
     "expo-router"
   ],
   "ios": {

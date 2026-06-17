@@ -6,7 +6,7 @@ import { studentHomeTokenDefaults, useStudentHomeTokenOverrides } from "@/featur
 import { useI18n } from "@/i18n";
 import { BottomMenuProvider, RoleBottomMenu } from "@/shared/components/navigation";
 
-const studentVisibleRouteNames = ["home", "assignments/history", "canvas/index"] as const;
+const studentVisibleRouteNames = ["home", "practice", "assignments/history", "canvas/index"] as const;
 
 export default function StudentLayout() {
   const { t } = useI18n();
@@ -41,16 +41,12 @@ export default function StudentLayout() {
               switch (route.name) {
                 case "home":
                   return <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />;
+                case "practice":
+                  return <Ionicons name={focused ? "book" : "book-outline"} size={size + 1} color={color} />;
                 case "assignments/history":
-                  return (
-                    <Ionicons
-                      name={focused ? "document-text" : "document-text-outline"}
-                      size={size + 1}
-                      color={color}
-                    />
-                  );
-                case "canvas/index":
                   return <Ionicons name={focused ? "library" : "library-outline"} size={size + 1} color={color} />;
+                case "canvas/index":
+                  return <Ionicons name={focused ? "brush" : "brush-outline"} size={size + 1} color={color} />;
                 case "progress/index":
                   return (
                     <Ionicons
@@ -75,32 +71,33 @@ export default function StudentLayout() {
             }}
           />
           <Tabs.Screen
-            name="assignments/history"
+            name="practice"
             options={{
-              title: t("navigation.tabs.student.assignments"),
-              tabBarAccessibilityLabel: t("navigation.tabs.student.assignmentsAccessibility"),
+              title: t("navigation.tabs.student.practice"),
+              tabBarAccessibilityLabel: t("navigation.tabs.student.practiceAccessibility"),
             }}
           />
           <Tabs.Screen
-            name="canvas/index"
+            name="assignments/history"
             options={{
               title: t("navigation.tabs.student.library"),
               tabBarAccessibilityLabel: t("navigation.tabs.student.libraryAccessibility"),
             }}
           />
           <Tabs.Screen
-            name="progress/index"
+            name="canvas/index"
             options={{
-              title: t("navigation.tabs.student.progress"),
-              tabBarAccessibilityLabel: t("navigation.tabs.student.progressAccessibility"),
+              title: t("navigation.tabs.student.canvas"),
+              tabBarAccessibilityLabel: t("navigation.tabs.student.canvasAccessibility"),
             }}
           />
+          <Tabs.Screen name="practice-task" options={{ href: null }} />
+          <Tabs.Screen name="practice-session" options={{ href: null }} />
+          <Tabs.Screen name="messages" options={{ href: null, title: t("navigation.tabs.student.messages") }} />
+          <Tabs.Screen name="profile" options={{ href: null, title: t("navigation.tabs.student.profile") }} />
           <Tabs.Screen
-            name="profile"
-            options={{
-              title: t("navigation.tabs.student.profile"),
-              tabBarAccessibilityLabel: t("navigation.tabs.student.profileAccessibility"),
-            }}
+            name="progress/index"
+            options={{ href: null, title: t("navigation.tabs.student.progress") }}
           />
           <Tabs.Screen name="assignments/[assignmentId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
           <Tabs.Screen name="assignments/submit" options={{ href: null }} />

@@ -1,32 +1,82 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
-import { colors, spacing } from "@/design/tokens";
+import { routes } from "@/core/navigation/routeNames";
+import { spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
-import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  OfflineBanner,
+} from "@/shared/components/feedback";
+import { ComposerSurface, Screen, Stack } from "@/shared/components/layout";
 import {
   AppHeader,
   BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
   useBottomMenuScrollHandler,
 } from "@/shared/components/navigation";
 
-import { AssignmentHistoryTabs, AssignmentListCard } from "../components";
+import {
+  AssignmentFilterChips,
+  AssignmentSummaryCard,
+  type AssignmentListFilter,
+} from "../components";
 import { useAssignmentHistoryData } from "../hooks/useAssignments";
-import type { AssignmentHistoryTab, AssignmentRecord } from "../types";
+import type { AssignmentRecord, AssignmentStatus } from "../types";
+
+function matchesFilter(
+  status: AssignmentStatus,
+  filter: AssignmentListFilter,
+): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "active":
+      return (
+        status === "not_started" ||
+        status === "in_progress" ||
+        status === "revision_in_progress" ||
+        status === "submitted" ||
+        status === "reviewing"
+      );
+    case "feedback":
+      return status === "feedback_ready";
+    case "completed":
+      return status === "completed";
+  }
+}
 
 export function AssignmentHistoryScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const [selectedTab, setSelectedTab] = useState<AssignmentHistoryTab>("all");
-  const state = useAssignmentHistoryData(selectedTab);
+  const [selectedFilter, setSelectedFilter] =
+    useState<AssignmentListFilter>("all");
+  const state = useAssignmentHistoryData("all");
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
+  const handleStartPractice = useCallback(() => {
+    router.navigate(routes.studentPractice);
+  }, [router]);
+
+  const assignments =
+    state.status === "success" || state.status === "empty"
+      ? state.viewModel.assignments
+      : null;
+  const filteredAssignments = useMemo(
+    () =>
+      assignments
+        ? assignments.filter((assignment) =>
+            matchesFilter(assignment.status, selectedFilter),
+          )
+        : [],
+    [assignments, selectedFilter],
+  );
 
   const renderAssignment = useCallback(
     ({ item }: { item: AssignmentRecord }) => (
-      <AssignmentListCard
+      <AssignmentSummaryCard
         assignment={item}
         gradeBand={state.gradeBand}
         onPress={() => router.push(getAssignmentDetailRoute(item.id))}
@@ -36,126 +86,117 @@ export function AssignmentHistoryScreen() {
   );
 
   return (
-    <Screen
-      backgroundColor={colors.gradeBand[state.gradeBand].background}
-      gradeBand={state.gradeBand}
-      scroll={false}
-      testID="assignment-history-screen"
-    >
-      <AppHeader
+    <ComposerSurface>
+      <Screen
+        backgroundColor="transparent"
         gradeBand={state.gradeBand}
-        showSafeArea={false}
-        style={styles.header}
-        subtitleKey="assignments.history.subtitle"
-        titleKey="assignments.history.title"
-        variant="transparent"
-      />
-
-      {state.status === "loading" ? (
-        <LoadingState
-          accessibilityLabel={t("assignments.history.loadingAccessibility")}
-          description={t("assignments.history.loadingDescription")}
+        scroll={false}
+        testID="assignment-history-screen"
+      >
+        <AppHeader
           gradeBand={state.gradeBand}
-          label={t("assignments.history.loadingTitle")}
-          testID="assignment-history-loading"
+          leftAction={{
+            accessibilityLabelKey: "assignments.history.backAccessibility",
+            type: "back",
+          }}
+          showSafeArea={false}
+          style={styles.header}
+          titleKey="assignments.history.title"
+          variant="transparent"
         />
-      ) : null}
 
-      {state.status === "error" ? (
-        <ErrorState
-          actionLabel={t("common.retry")}
-          accessibilityLabel={t("assignments.history.errorAccessibility")}
-          description={t("assignments.history.errorDescription")}
-          gradeBand={state.gradeBand}
-          onActionPress={state.refetch}
-          testID="assignment-history-error"
-          title={t("assignments.history.errorTitle")}
-        />
-      ) : null}
+        {state.status === "loading" ? (
+          <LoadingState
+            accessibilityLabel={t("assignments.history.loadingAccessibility")}
+            description={t("assignments.history.loadingDescription")}
+            gradeBand={state.gradeBand}
+            label={t("assignments.history.loadingTitle")}
+            testID="assignment-history-loading"
+          />
+        ) : null}
 
-      {state.status === "empty" || state.status === "success" ? (
-        <FlatList
-          data={state.viewModel.assignments}
-          keyExtractor={(assignment) => assignment.id}
-          renderItem={renderAssignment}
-          ItemSeparatorComponent={ItemSeparator}
-          contentContainerStyle={styles.listContent}
-          onScroll={handleBottomMenuScroll}
-          scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Stack gap="lg" style={styles.listHeader}>
-              {state.viewModel.isOffline ? (
-                <OfflineBanner
-                  actionLabel={t("assignments.history.offlineAction")}
-                  accessibilityLabel={t("assignments.history.offlineAccessibility")}
-                  description={t("assignments.history.offlineDescription")}
+        {state.status === "error" ? (
+          <ErrorState
+            actionLabel={t("common.retry")}
+            accessibilityLabel={t("assignments.history.errorAccessibility")}
+            description={t("assignments.history.errorDescription")}
+            gradeBand={state.gradeBand}
+            onActionPress={state.refetch}
+            testID="assignment-history-error"
+            title={t("assignments.history.errorTitle")}
+          />
+        ) : null}
+
+        {state.status === "empty" || state.status === "success" ? (
+          <FlatList
+            data={filteredAssignments}
+            keyExtractor={(assignment) => assignment.id}
+            renderItem={renderAssignment}
+            ItemSeparatorComponent={ItemSeparator}
+            contentContainerStyle={styles.listContent}
+            onScroll={handleBottomMenuScroll}
+            scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <Stack gap="lg" style={styles.listHeader}>
+                {state.viewModel.isOffline ? (
+                  <OfflineBanner
+                    actionLabel={t("assignments.history.offlineAction")}
+                    accessibilityLabel={t(
+                      "assignments.history.offlineAccessibility",
+                    )}
+                    description={t("assignments.history.offlineDescription")}
+                    gradeBand={state.gradeBand}
+                    isRetrying={state.isRefreshing}
+                    onRetry={state.refetch}
+                    title={t("assignments.history.offlineTitle")}
+                  />
+                ) : null}
+
+                <AssignmentFilterChips
                   gradeBand={state.gradeBand}
-                  isRetrying={state.isRefreshing}
-                  onRetry={state.refetch}
-                  title={t("assignments.history.offlineTitle")}
+                  onSelect={setSelectedFilter}
+                  selected={selectedFilter}
                 />
-              ) : null}
-
-              <AssignmentHistoryTabs
-                counts={state.viewModel.counts}
+              </Stack>
+            }
+            ListEmptyComponent={
+              <EmptyState
+                actionLabel={
+                  selectedFilter === "all"
+                    ? t("assignments.history.emptyActionLabel")
+                    : undefined
+                }
+                accessibilityLabel={t("assignments.history.emptyAccessibility")}
+                description={
+                  selectedFilter === "all"
+                    ? t("assignments.history.emptyDescription")
+                    : t("assignments.history.emptyTabDescription", {
+                        tab: t(`assignments.history.filters.${selectedFilter}`),
+                      })
+                }
                 gradeBand={state.gradeBand}
-                onSelectTab={setSelectedTab}
-                selectedTab={selectedTab}
+                onActionPress={
+                  selectedFilter === "all" ? handleStartPractice : undefined
+                }
+                title={
+                  selectedFilter === "all"
+                    ? t("assignments.history.emptyTitle")
+                    : t("assignments.history.emptyTabTitle", {
+                        tab: t(`assignments.history.filters.${selectedFilter}`),
+                      })
+                }
               />
-
-              <PageSection
-                gradeBand={state.gradeBand}
-                subtitle={t("assignments.history.listSubtitle")}
-                title={t("assignments.history.listTitle")}
-              >
-                {null}
-              </PageSection>
-            </Stack>
-          }
-          ListEmptyComponent={
-            <EmptyState
-              actionLabel={selectedTab === "all" ? t("common.retry") : undefined}
-              accessibilityLabel={t("assignments.history.emptyAccessibility")}
-              description={
-                selectedTab === "all"
-                  ? t("assignments.history.emptyDescription")
-                  : t("assignments.history.emptyTabDescription", {
-                      tab: t(`assignments.history.tabs.${selectedTab}`),
-                    })
-              }
-              gradeBand={state.gradeBand}
-              onActionPress={selectedTab === "all" ? state.refetch : undefined}
-              title={
-                selectedTab === "all"
-                  ? t("assignments.history.emptyTitle")
-                  : t("assignments.history.emptyTabTitle", {
-                      tab: t(`assignments.history.tabs.${selectedTab}`),
-                    })
-              }
-            />
-          }
-          ListFooterComponent={
-            state.viewModel.assignments.length > 0 ? (
-              <View style={styles.listFooter}>
-                <StatusState
-                  accessibilityLabel={t("assignments.history.paginationAccessibility")}
-                  description={t("assignments.history.paginationDescription")}
-                  gradeBand={state.gradeBand}
-                  title={t("assignments.history.paginationTitle")}
-                  tone="neutral"
-                />
-              </View>
-            ) : null
-          }
-        />
-      ) : null}
-    </Screen>
+            }
+          />
+        ) : null}
+      </Screen>
+    </ComposerSurface>
   );
 }
 
 function ItemSeparator() {
-  return <View style={styles.itemSeparator} />;
+  return <View style={styles.separator} />;
 }
 
 const styles = StyleSheet.create({
@@ -165,16 +206,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: 0,
   },
-  itemSeparator: {
-    height: spacing.md,
-  },
   listContent: {
-    paddingBottom: spacing.xl,
-  },
-  listFooter: {
-    paddingTop: spacing.md,
+    paddingBottom: 120,
   },
   listHeader: {
     paddingBottom: spacing.md,
+  },
+  separator: {
+    height: spacing.md,
   },
 });

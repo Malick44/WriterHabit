@@ -28,7 +28,14 @@ import {
 } from "@/devtools/theme-tuner";
 import { palette, type GradeBand } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, ProgressBar, StatusState } from "@/shared/components/feedback";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  ProgressBar,
+  StatusState,
+} from "@/shared/components/feedback";
+import { ComposerSurface } from "@/shared/components/layout";
 import {
   AppHeader,
   BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
@@ -75,7 +82,10 @@ type WeeklyStat = {
 
 const FEEDBACK_REWARD_POINTS = 12;
 const RING_SEGMENT_COUNT = 24;
-const RING_SEGMENTS = Array.from({ length: RING_SEGMENT_COUNT }, (_, index) => index);
+const RING_SEGMENTS = Array.from(
+  { length: RING_SEGMENT_COUNT },
+  (_, index) => index,
+);
 const TABLET_BREAKPOINT = 768;
 
 const skillLabelKeys = {
@@ -108,7 +118,10 @@ const skillProgressColors = [
   homeColors.tertiaryFixedDim,
 ] as const;
 
-function getSkillLabel(t: TFunction, skill: StudentHomeAssignment["skillFocus"][number]) {
+function getSkillLabel(
+  t: TFunction,
+  skill: StudentHomeAssignment["skillFocus"][number],
+) {
   return t(skillLabelKeys[skill]);
 }
 
@@ -116,7 +129,10 @@ function getProgressSkillLabel(t: TFunction, skill: StudentHomeSkillProgress) {
   return t(skillLabelKeys[skill.skill]);
 }
 
-function getAssignmentStatusLabel(t: TFunction, assignment: StudentHomeAssignment) {
+function getAssignmentStatusLabel(
+  t: TFunction,
+  assignment: StudentHomeAssignment,
+) {
   return t(assignmentStatusLabelKeys[assignment.status]);
 }
 
@@ -145,12 +161,17 @@ function tunedCardStyle(
   });
 }
 
-function tunedTextStyle(color?: string, fontSize?: number, lineHeight?: number): TextStyle | null {
+function tunedTextStyle(
+  color?: string,
+  fontSize?: number,
+  lineHeight?: number,
+): TextStyle | null {
   return overrideStyle<TextStyle>({
     color,
     fontSize,
     lineHeight:
-      lineHeight ?? (fontSize === undefined ? undefined : Math.round(fontSize * 1.4)),
+      lineHeight ??
+      (fontSize === undefined ? undefined : Math.round(fontSize * 1.4)),
   });
 }
 
@@ -289,173 +310,207 @@ export function StudentHomeScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView edges={["top"]} style={[styles.safeArea, tunedScreenBackground]}>
-      <AppHeader
-        gradeBand={state.gradeBand}
-        leftAction={{ type: "none" }}
-        titleKey="common.dashboard"
-        rightActions={[
-          {
-            accessibilityLabelKey: "studentHome.header.notificationsAccessibility",
-            icon: "notifications-outline",
-            onPress: handleOpenNotifications,
-            type: "icon",
-          },
-          {
-            accessibilityLabelKey: "studentHome.header.settingsAccessibility",
-            icon: "settings-outline",
-            onPress: handleOpenSettings,
-            type: "icon",
-          },
+    <ComposerSurface>
+      <SafeAreaView
+        edges={["top"]}
+        style={[
+          styles.safeArea,
+          tunedScreenBackground,
+          styles.transparentSurface,
         ]}
-        colorOverrides={tunedHeaderColors}
-        contentStyle={isTablet ? styles.appHeaderContentTablet : undefined}
-        showSafeArea={false}
-        style={[styles.appHeader, isTablet ? styles.appHeaderTablet : null, tunedScreenBackground]}
-        variant="compact"
-      />
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, isTablet ? styles.scrollContentTablet : null]}
-        contentInsetAdjustmentBehavior="automatic"
-        onScroll={handleBottomMenuScroll}
-        scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
-        showsVerticalScrollIndicator={false}
-        testID="student-home-screen"
       >
-        <View
-          style={[
-            styles.content,
-            isTablet ? styles.contentTablet : null,
-            overrideStyle<ViewStyle>({ gap: tuned["spacing.section"] }),
+        <AppHeader
+          gradeBand={state.gradeBand}
+          leftAction={{ type: "none" }}
+          titleKey="common.dashboard"
+          rightActions={[
+            {
+              accessibilityLabelKey:
+                "studentHome.header.notificationsAccessibility",
+              icon: "notifications-outline",
+              onPress: handleOpenNotifications,
+              type: "icon",
+            },
+            {
+              accessibilityLabelKey: "studentHome.header.settingsAccessibility",
+              icon: "settings-outline",
+              onPress: handleOpenSettings,
+              type: "icon",
+            },
           ]}
+          colorOverrides={tunedHeaderColors}
+          contentStyle={isTablet ? styles.appHeaderContentTablet : undefined}
+          showSafeArea={false}
+          style={[
+            styles.appHeader,
+            isTablet ? styles.appHeaderTablet : null,
+            tunedScreenBackground,
+          ]}
+          variant="compact"
+        />
+
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            isTablet ? styles.scrollContentTablet : null,
+          ]}
+          contentInsetAdjustmentBehavior="automatic"
+          onScroll={handleBottomMenuScroll}
+          scrollEventThrottle={BOTTOM_MENU_SCROLL_EVENT_THROTTLE}
+          showsVerticalScrollIndicator={false}
+          testID="student-home-screen"
         >
-          {state.status === "loading" ? (
-            <LoadingState
-              accessibilityLabel={t("studentHome.loading.accessibility")}
-              description={t("studentHome.loading.description")}
-              gradeBand={state.gradeBand}
-              label={t("studentHome.loading.title")}
-              testID="student-home-loading"
-            />
-          ) : null}
+          <View
+            style={[
+              styles.content,
+              isTablet ? styles.contentTablet : null,
+              overrideStyle<ViewStyle>({ gap: tuned["spacing.section"] }),
+            ]}
+          >
+            {state.status === "loading" ? (
+              <LoadingState
+                accessibilityLabel={t("studentHome.loading.accessibility")}
+                description={t("studentHome.loading.description")}
+                gradeBand={state.gradeBand}
+                label={t("studentHome.loading.title")}
+                testID="student-home-loading"
+              />
+            ) : null}
 
-          {state.status === "error" ? (
-            <ErrorState
-              actionLabel={t("common.retry")}
-              accessibilityLabel={t("studentHome.error.accessibility")}
-              description={t("studentHome.error.description")}
-              gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
-              testID="student-home-error"
-              title={t("studentHome.error.title")}
-            />
-          ) : null}
+            {state.status === "error" ? (
+              <ErrorState
+                actionLabel={t("common.retry")}
+                accessibilityLabel={t("studentHome.error.accessibility")}
+                description={t("studentHome.error.description")}
+                gradeBand={state.gradeBand}
+                onActionPress={state.refetch}
+                testID="student-home-error"
+                title={t("studentHome.error.title")}
+              />
+            ) : null}
 
-          {state.status === "empty" ? (
-            <EmptyState
-              actionLabel={t("studentHome.empty.action")}
-              accessibilityLabel={t("studentHome.empty.accessibility")}
-              description={t("studentHome.empty.description")}
-              gradeBand={state.gradeBand}
-              onActionPress={() => navigateToTarget({ kind: "assignmentHistory" })}
-              testID="student-home-empty"
-              title={t("studentHome.empty.title")}
-            />
-          ) : null}
+            {state.status === "empty" ? (
+              <EmptyState
+                actionLabel={t("studentHome.empty.action")}
+                accessibilityLabel={t("studentHome.empty.accessibility")}
+                description={t("studentHome.empty.description")}
+                gradeBand={state.gradeBand}
+                onActionPress={() =>
+                  navigateToTarget({ kind: "assignmentHistory" })
+                }
+                testID="student-home-empty"
+                title={t("studentHome.empty.title")}
+              />
+            ) : null}
 
-          {viewModel ? (
-            <>
-              {viewModel.isOffline ? (
-                <StatusState
-                  actionLabel={t("studentHome.offline.action")}
-                  accessibilityLabel={t("studentHome.offline.accessibility")}
-                  description={t("studentHome.offline.description")}
-                  gradeBand={state.gradeBand}
-                  onActionPress={state.refetch}
-                  title={t("studentHome.offline.title")}
-                  tone="warning"
-                />
-              ) : null}
-
-              {isTablet ? (
-                <>
-                  <StreakHeroCard
-                    streak={viewModel.streak}
-                    weeklySessionsCompleted={viewModel.weeklyWriting.sessionsCompleted}
+            {viewModel ? (
+              <>
+                {viewModel.isOffline ? (
+                  <StatusState
+                    actionLabel={t("studentHome.offline.action")}
+                    accessibilityLabel={t("studentHome.offline.accessibility")}
+                    description={t("studentHome.offline.description")}
+                    gradeBand={state.gradeBand}
+                    onActionPress={state.refetch}
+                    title={t("studentHome.offline.title")}
+                    tone="warning"
                   />
+                ) : null}
 
-                  <View style={styles.tabletDashboardGrid}>
-                    <View style={styles.tabletPrimaryColumn}>
-                      {viewModel.todayAssignment ? (
-                        <DashboardSection titleKey="studentHome.todayAssignment.sectionLabel">
-                          <TodayAssignmentCard
-                            assignment={viewModel.todayAssignment}
-                            isTablet={isTablet}
-                            onPress={handleOpenTodayAssignment}
-                          />
-                        </DashboardSection>
-                      ) : null}
+                {isTablet ? (
+                  <>
+                    <StreakHeroCard
+                      streak={viewModel.streak}
+                      weeklySessionsCompleted={
+                        viewModel.weeklyWriting.sessionsCompleted
+                      }
+                    />
 
-                      {viewModel.continueDraft ? (
-                        <DashboardSection titleKey="studentHome.continueDraft.title">
-                          <ContinueDraftCard
-                            draft={viewModel.continueDraft}
-                            isTablet={isTablet}
-                            onPress={handleContinueDraft}
-                          />
-                        </DashboardSection>
-                      ) : null}
+                    <View style={styles.tabletDashboardGrid}>
+                      <View style={styles.tabletPrimaryColumn}>
+                        {viewModel.todayAssignment ? (
+                          <DashboardSection titleKey="studentHome.todayAssignment.sectionLabel">
+                            <TodayAssignmentCard
+                              assignment={viewModel.todayAssignment}
+                              isTablet={isTablet}
+                              onPress={handleOpenTodayAssignment}
+                            />
+                          </DashboardSection>
+                        ) : null}
 
-                      <RecentFeedbackSection
-                        feedback={viewModel.recentFeedback[0] ?? null}
-                        isTablet={isTablet}
-                        onPress={handleReviewFeedback}
-                      />
+                        {viewModel.continueDraft ? (
+                          <DashboardSection titleKey="studentHome.continueDraft.title">
+                            <ContinueDraftCard
+                              draft={viewModel.continueDraft}
+                              isTablet={isTablet}
+                              onPress={handleContinueDraft}
+                            />
+                          </DashboardSection>
+                        ) : null}
+
+                        <RecentFeedbackSection
+                          feedback={viewModel.recentFeedback[0] ?? null}
+                          isTablet={isTablet}
+                          onPress={handleReviewFeedback}
+                        />
+                      </View>
+
+                      <View style={styles.tabletSecondaryColumn}>
+                        <WeeklyProgressSummary
+                          isTablet={isTablet}
+                          viewModel={viewModel}
+                        />
+                        <SkillProgressCard
+                          isTablet={isTablet}
+                          onViewAll={handleViewProgress}
+                          skills={viewModel.skillProgress}
+                        />
+                      </View>
                     </View>
+                  </>
+                ) : (
+                  <>
+                    <Greeting name={viewModel.studentFirstName} />
 
-                    <View style={styles.tabletSecondaryColumn}>
-                      <WeeklyProgressSummary isTablet={isTablet} viewModel={viewModel} />
-                      <SkillProgressCard
-                        isTablet={isTablet}
-                        onViewAll={handleViewProgress}
-                        skills={viewModel.skillProgress}
-                      />
-                    </View>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Greeting name={viewModel.studentFirstName} />
+                    <StreakHeroCard
+                      streak={viewModel.streak}
+                      weeklySessionsCompleted={
+                        viewModel.weeklyWriting.sessionsCompleted
+                      }
+                    />
 
-                  <StreakHeroCard
-                    streak={viewModel.streak}
-                    weeklySessionsCompleted={viewModel.weeklyWriting.sessionsCompleted}
-                  />
+                    <MomentumCardsRow
+                      onOpenAllAssignments={handleOpenAllAssignments}
+                      onOpenFeedback={handleReviewFeedback}
+                      onOpenPractice={handleStartPractice}
+                      onOpenTask={handleOpenTask}
+                      viewModel={viewModel}
+                    />
 
-                  <MomentumCardsRow
-                    onOpenAllAssignments={handleOpenAllAssignments}
-                    onOpenFeedback={handleReviewFeedback}
-                    onOpenPractice={handleStartPractice}
-                    onOpenTask={handleOpenTask}
-                    viewModel={viewModel}
-                  />
+                    <CoachChipsCard
+                      actions={viewModel.coachActions}
+                      onActionPress={(action) =>
+                        navigateToTarget(action.target)
+                      }
+                    />
 
-                  <CoachChipsCard
-                    actions={viewModel.coachActions}
-                    onActionPress={(action) => navigateToTarget(action.target)}
-                  />
+                    <WeeklyWritingCard
+                      gradeBand={state.gradeBand}
+                      viewModel={viewModel}
+                    />
 
-                  <WeeklyWritingCard gradeBand={state.gradeBand} viewModel={viewModel} />
-
-                  <SkillProgressCard onViewAll={handleViewProgress} skills={viewModel.skillProgress} />
-                </>
-              )}
-            </>
-          ) : null}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+                    <SkillProgressCard
+                      onViewAll={handleViewProgress}
+                      skills={viewModel.skillProgress}
+                    />
+                  </>
+                )}
+              </>
+            ) : null}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ComposerSurface>
   );
 }
 
@@ -469,7 +524,10 @@ function Greeting({ name }: { name: string }) {
       accessibilityRole="header"
       numberOfLines={1}
       selectable
-      style={[getAccessibleTextStyle(styles.greeting, settings), highContrastText.body]}
+      style={[
+        getAccessibleTextStyle(styles.greeting, settings),
+        highContrastText.body,
+      ]}
     >
       {t("studentHome.greeting", { name })}
     </Text>
@@ -501,7 +559,10 @@ function CoachChipsCard({
         <Text
           numberOfLines={1}
           selectable
-          style={[getAccessibleTextStyle(styles.coachTitle, settings), highContrastText.body]}
+          style={[
+            getAccessibleTextStyle(styles.coachTitle, settings),
+            highContrastText.body,
+          ]}
         >
           {t("studentHome.coach.title")}
         </Text>
@@ -514,12 +575,18 @@ function CoachChipsCard({
             accessibilityRole="button"
             key={action.id}
             onPress={() => onActionPress(action)}
-            style={({ pressed }) => [styles.coachChip, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [
+              styles.coachChip,
+              pressed ? styles.pressed : null,
+            ]}
           >
             <Text
               numberOfLines={1}
               selectable={false}
-              style={[getAccessibleTextStyle(styles.coachChipText, settings), highContrastText.body]}
+              style={[
+                getAccessibleTextStyle(styles.coachChipText, settings),
+                highContrastText.body,
+              ]}
             >
               {t(action.labelKey)}
             </Text>
@@ -528,7 +595,10 @@ function CoachChipsCard({
       </View>
       <Text
         selectable
-        style={[getAccessibleTextStyle(styles.coachSafetyNote, settings), highContrastText.muted]}
+        style={[
+          getAccessibleTextStyle(styles.coachSafetyNote, settings),
+          highContrastText.muted,
+        ]}
       >
         {t("aiCoach.safetyReminder")}
       </Text>
@@ -562,14 +632,20 @@ function WeeklyWritingCard({
         <Text
           numberOfLines={1}
           selectable
-          style={[getAccessibleTextStyle(styles.sectionTitle, settings), highContrastText.muted]}
+          style={[
+            getAccessibleTextStyle(styles.sectionTitle, settings),
+            highContrastText.muted,
+          ]}
         >
           {t("studentHome.practice.weeklyTitle")}
         </Text>
         <Text
           numberOfLines={1}
           selectable
-          style={[getAccessibleTextStyle(styles.weeklyValue, settings), highContrastText.body]}
+          style={[
+            getAccessibleTextStyle(styles.weeklyValue, settings),
+            highContrastText.body,
+          ]}
         >
           {t("studentHome.practice.weeklyValue", {
             completed: viewModel.weeklyWriting.minutesCompleted,
@@ -584,7 +660,10 @@ function WeeklyWritingCard({
       />
       <Text
         selectable
-        style={[getAccessibleTextStyle(styles.weeklyDescription, settings), highContrastText.muted]}
+        style={[
+          getAccessibleTextStyle(styles.weeklyDescription, settings),
+          highContrastText.muted,
+        ]}
       >
         {description}
       </Text>
@@ -652,7 +731,10 @@ function SectionHeaderWithAction({
         accessibilityRole="button"
         hitSlop={8}
         onPress={onPress}
-        style={({ pressed }) => [styles.seeAllButton, pressed ? styles.pressed : null]}
+        style={({ pressed }) => [
+          styles.seeAllButton,
+          pressed ? styles.pressed : null,
+        ]}
       >
         <Text
           numberOfLines={1}
@@ -684,7 +766,9 @@ function TodayAssignmentCard({
   const highContrastText = getHighContrastTextStyles(settings);
   const primarySkill = assignment.skillFocus[0];
   const statusLabel = getAssignmentStatusLabel(t, assignment);
-  const skillLabel = primarySkill ? getSkillLabel(t, primarySkill) : t("common.unavailable");
+  const skillLabel = primarySkill
+    ? getSkillLabel(t, primarySkill)
+    : t("common.unavailable");
 
   return (
     <Pressable
@@ -707,7 +791,11 @@ function TodayAssignmentCard({
             numberOfLines={3}
             style={[
               getAccessibleTextStyle(styles.assignmentTitle, settings),
-              tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
+              tunedTextStyle(
+                tuned["colors.buttonPrimary"],
+                tuned["typography.titleSize"],
+                tuned["typography.titleLineHeight"],
+              ),
               highContrastText.body,
             ]}
           >
@@ -724,7 +812,11 @@ function TodayAssignmentCard({
             {skillLabel}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant} />
+        <Ionicons
+          name="chevron-forward"
+          size={24}
+          color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant}
+        />
       </View>
 
       <View style={styles.assignmentMetaRow}>
@@ -753,7 +845,10 @@ function TodayAssignmentCard({
           />
           <Text
             numberOfLines={1}
-            style={[getAccessibleTextStyle(styles.metaTextMuted, settings), highContrastText.muted]}
+            style={[
+              getAccessibleTextStyle(styles.metaTextMuted, settings),
+              highContrastText.muted,
+            ]}
           >
             {statusLabel}
           </Text>
@@ -779,15 +874,20 @@ function WeeklyProgressSummary({
       icon: "flame",
       key: "streak",
       label: t("studentHome.weeklySummary.streakLabel"),
-      value: t("studentHome.weeklySummary.dayCount", { count: viewModel.streak.currentDays }),
+      value: t("studentHome.weeklySummary.dayCount", {
+        count: viewModel.streak.currentDays,
+      }),
     },
     {
       accentColor: tuned["colors.buttonPrimary"] ?? homeColors.primary,
-      backgroundColor: tuned["colors.accentCyan"] ?? homeColors.surfaceContainerHigh,
+      backgroundColor:
+        tuned["colors.accentCyan"] ?? homeColors.surfaceContainerHigh,
       icon: "timer",
       key: "time",
       label: t("studentHome.weeklySummary.timeLabel"),
-      value: t("common.minutes", { count: viewModel.weeklyWriting.minutesCompleted }),
+      value: t("common.minutes", {
+        count: viewModel.weeklyWriting.minutesCompleted,
+      }),
     },
   ];
 
@@ -824,7 +924,12 @@ function WeeklyStatCard({
       accessibilityLabel={`${stat.value}, ${stat.label}`}
       style={[styles.statCard, isTablet ? styles.statCardTablet : null]}
     >
-      <View style={[styles.statIconBubble, { backgroundColor: stat.backgroundColor }]}>
+      <View
+        style={[
+          styles.statIconBubble,
+          { backgroundColor: stat.backgroundColor },
+        ]}
+      >
         <Ionicons name={stat.icon} size={23} color={stat.accentColor} />
       </View>
       <View style={styles.statCopy}>
@@ -834,7 +939,11 @@ function WeeklyStatCard({
           numberOfLines={1}
           style={[
             getAccessibleTextStyle(styles.statValue, settings),
-            tunedTextStyle(tuned["colors.buttonPrimary"], tuned["typography.titleSize"], tuned["typography.titleLineHeight"]),
+            tunedTextStyle(
+              tuned["colors.buttonPrimary"],
+              tuned["typography.titleSize"],
+              tuned["typography.titleLineHeight"],
+            ),
             highContrastText.body,
           ]}
         >
@@ -886,7 +995,12 @@ function SkillProgressCard({
       <View
         accessible
         accessibilityLabel={t("studentHome.skills.accessibility")}
-        style={[styles.card, styles.skillsCard, isTablet ? styles.skillsCardTablet : null, tunedCardStyle(tuned, "regular")]}
+        style={[
+          styles.card,
+          styles.skillsCard,
+          isTablet ? styles.skillsCardTablet : null,
+          tunedCardStyle(tuned, "regular"),
+        ]}
       >
         {skills.length > 0 ? (
           skills.map((skill, index) => (
@@ -898,7 +1012,12 @@ function SkillProgressCard({
             />
           ))
         ) : (
-          <Text style={[getAccessibleTextStyle(styles.emptyInlineText, settings), highContrastText.muted]}>
+          <Text
+            style={[
+              getAccessibleTextStyle(styles.emptyInlineText, settings),
+              highContrastText.muted,
+            ]}
+          >
             {t("studentHome.skills.previewSubtitle")}
           </Text>
         )}
@@ -920,7 +1039,9 @@ function SkillProgressRing({
   const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
   const highContrastText = getHighContrastTextStyles(settings);
-  const activeSegments = Math.round((Math.min(100, Math.max(0, score)) / 100) * RING_SEGMENT_COUNT);
+  const activeSegments = Math.round(
+    (Math.min(100, Math.max(0, score)) / 100) * RING_SEGMENT_COUNT,
+  );
 
   return (
     <View style={styles.skillRingItem}>
@@ -936,8 +1057,12 @@ function SkillProgressRing({
             style={[
               styles.ringSegment,
               {
-                backgroundColor: segment < activeSegments ? color : homeColors.surfaceVariant,
-                transform: [{ rotate: `${segment * (360 / RING_SEGMENT_COUNT)}deg` }, { translateY: -24 }],
+                backgroundColor:
+                  segment < activeSegments ? color : homeColors.surfaceVariant,
+                transform: [
+                  { rotate: `${segment * (360 / RING_SEGMENT_COUNT)}deg` },
+                  { translateY: -24 },
+                ],
               },
             ]}
           />
@@ -945,7 +1070,9 @@ function SkillProgressRing({
         <View
           style={[
             styles.ringCenter,
-            overrideStyle<ViewStyle>({ backgroundColor: tuned["colors.cardBackground"] }),
+            overrideStyle<ViewStyle>({
+              backgroundColor: tuned["colors.cardBackground"],
+            }),
           ]}
         >
           {/* The ring center is a fixed 38px circle, so text scaling must stay
@@ -955,7 +1082,11 @@ function SkillProgressRing({
             maxFontSizeMultiplier={1}
             minimumFontScale={0.6}
             numberOfLines={1}
-            style={[styles.ringText, tunedTextStyle(tuned["colors.buttonPrimary"]), highContrastText.body]}
+            style={[
+              styles.ringText,
+              tunedTextStyle(tuned["colors.buttonPrimary"]),
+              highContrastText.body,
+            ]}
           >
             {t("studentHome.skills.percent", { count: score })}
           </Text>
@@ -1007,7 +1138,14 @@ function ContinueDraftCard({
       ]}
       testID="student-home-continue-draft"
     >
-      <View style={[styles.draftIcon, overrideStyle<ViewStyle>({ backgroundColor: tuned["colors.accentCyan"] })]}>
+      <View
+        style={[
+          styles.draftIcon,
+          overrideStyle<ViewStyle>({
+            backgroundColor: tuned["colors.accentCyan"],
+          }),
+        ]}
+      >
         <Ionicons name="document-text-outline" size={24} color={primaryColor} />
       </View>
       <View style={styles.draftCopy}>
@@ -1034,7 +1172,11 @@ function ContinueDraftCard({
       </View>
       <View style={styles.draftActions}>
         <Ionicons name="create-outline" size={20} color={primaryColor} />
-        <Ionicons name="chevron-forward" size={22} color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant} />
+        <Ionicons
+          name="chevron-forward"
+          size={22}
+          color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant}
+        />
       </View>
     </Pressable>
   );
@@ -1056,7 +1198,11 @@ function RecentFeedbackSection({
         onPress={onPress}
         titleKey="studentHome.feedback.title"
       />
-      <RecentFeedbackCard feedback={feedback} isTablet={isTablet} onPress={onPress} />
+      <RecentFeedbackCard
+        feedback={feedback}
+        isTablet={isTablet}
+        onPress={onPress}
+      />
     </View>
   );
 }
@@ -1074,7 +1220,8 @@ function RecentFeedbackCard({
   const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
   const highContrastText = getHighContrastTextStyles(settings);
-  const feedbackCopy = feedback?.strength ?? t("studentHome.feedback.emptyDescription");
+  const feedbackCopy =
+    feedback?.strength ?? t("studentHome.feedback.emptyDescription");
 
   return (
     <Pressable
@@ -1092,12 +1239,20 @@ function RecentFeedbackCard({
       testID="student-home-feedback"
     >
       <View style={styles.feedbackCopy}>
-        <Ionicons name="checkmark-circle" size={21} color={tuned["colors.progressGreen"] ?? homeColors.secondary} />
+        <Ionicons
+          name="checkmark-circle"
+          size={21}
+          color={tuned["colors.progressGreen"] ?? homeColors.secondary}
+        />
         <Text
           numberOfLines={2}
           style={[
             getAccessibleTextStyle(styles.feedbackText, settings),
-            tunedTextStyle(tuned["colors.textPrimary"], tuned["typography.bodySize"], tuned["typography.bodyLineHeight"]),
+            tunedTextStyle(
+              tuned["colors.textPrimary"],
+              tuned["typography.bodySize"],
+              tuned["typography.bodyLineHeight"],
+            ),
             highContrastText.body,
           ]}
         >
@@ -1108,9 +1263,14 @@ function RecentFeedbackCard({
         <View style={styles.rewardChip}>
           <Text
             numberOfLines={1}
-            style={[getAccessibleTextStyle(styles.rewardText, settings), highContrastText.body]}
+            style={[
+              getAccessibleTextStyle(styles.rewardText, settings),
+              highContrastText.body,
+            ]}
           >
-            {t("studentHome.feedback.points", { count: FEEDBACK_REWARD_POINTS })}
+            {t("studentHome.feedback.points", {
+              count: FEEDBACK_REWARD_POINTS,
+            })}
           </Text>
         </View>
       ) : null}
@@ -1395,6 +1555,9 @@ const styles = StyleSheet.create({
   safeArea: {
     backgroundColor: homeColors.background,
     flex: 1,
+  },
+  transparentSurface: {
+    backgroundColor: "transparent",
   },
   scrollContent: {
     paddingBottom: 132,

@@ -25,6 +25,28 @@ export type CanvasTemplate = z.infer<typeof canvasTemplateSchema>;
 export const canvasSyncStatusSchema = z.enum(["local_only", "saving", "saved", "sync_failed"]);
 export type CanvasSyncStatus = z.infer<typeof canvasSyncStatusSchema>;
 
+/** Where the floating tool banner lives. Bottom/top render horizontally,
+ * left/right render vertically. */
+export const canvasBannerPositionSchema = z.enum(["bottom", "top", "left", "right"]);
+export type CanvasBannerPosition = z.infer<typeof canvasBannerPositionSchema>;
+
+/** Canvas height presets. Higher levels grow the writing surface downward
+ * (the surface scrolls past the viewport). */
+export const CANVAS_HEIGHT_LEVELS = ["short", "medium", "long", "extraLong"] as const;
+export type CanvasHeightLevel = (typeof CANVAS_HEIGHT_LEVELS)[number];
+
+/** Available viewport-height multipliers for each canvas height preset. */
+export const CANVAS_HEIGHT_MULTIPLIERS: Record<CanvasHeightLevel, number> = {
+  short: 0.72,
+  medium: 1,
+  long: 1.7,
+  extraLong: 2.5,
+};
+
+/** Pen width bounds for the dual-purpose pen size slider. */
+export const MIN_PEN_WIDTH = 2;
+export const MAX_PEN_WIDTH = 12;
+
 export const canvasScenarioSchema = z.enum(["success", "empty", "error", "offline", "sync_failed"]);
 export type CanvasScenario = z.infer<typeof canvasScenarioSchema>;
 

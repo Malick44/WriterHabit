@@ -4,7 +4,13 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { SuccessState, StatusState } from "@/shared/components/feedback";
 import { Stack } from "@/shared/components/layout";
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   buildAccessibilityLabel,
@@ -13,7 +19,10 @@ import {
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
-import type { AssignmentDetailViewModel, AssignmentSubmissionResponse } from "../types";
+import type {
+  AssignmentDetailViewModel,
+  AssignmentSubmissionResponse,
+} from "../types";
 
 interface SubmissionChecklistProps {
   gradeBand: GradeBand;
@@ -22,6 +31,7 @@ interface SubmissionChecklistProps {
   submitResult: AssignmentSubmissionResponse | null;
   submitStatus: "idle" | "loading" | "error" | "success";
   viewModel: AssignmentDetailViewModel;
+  attachmentCount?: number;
 }
 
 export function SubmissionChecklist({
@@ -31,12 +41,17 @@ export function SubmissionChecklist({
   submitResult,
   submitStatus,
   viewModel,
+  attachmentCount = 0,
 }: SubmissionChecklistProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const assignment = viewModel.assignment;
+  // A photo or file of the student's work is a valid submission on its own, so
+  // attachments can satisfy the submit gate even without typed/canvas work.
+  const hasAttachments = attachmentCount > 0;
+  const canSubmit = viewModel.canSubmit || hasAttachments;
 
   if (!assignment) {
     return null;
@@ -57,13 +72,22 @@ export function SubmissionChecklist({
 
   return (
     <Card
-      accessibilityLabel={buildAccessibilityLabel([t("assignments.submit.accessibility"), assignment.title])}
+      accessibilityLabel={buildAccessibilityLabel([
+        t("assignments.submit.accessibility"),
+        assignment.title,
+      ])}
       gradeBand={gradeBand}
       testID="assignment-submission-checklist"
       title={t("assignments.submit.title")}
     >
       <Stack gap="md">
-        <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.mutedText }]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.body, settings),
+            { color: accessibleColors.mutedText },
+          ]}
+        >
           {t("assignments.submit.description")}
         </Text>
 
@@ -80,8 +104,12 @@ export function SubmissionChecklist({
               <View
                 style={{
                   alignItems: "center",
-                  backgroundColor: viewModel.canSubmit ? colors.feedback.success.background : colors.feedback.neutral.background,
-                  borderColor: viewModel.canSubmit ? colors.feedback.success.border : colors.border.default,
+                  backgroundColor: viewModel.canSubmit
+                    ? colors.feedback.success.background
+                    : colors.feedback.neutral.background,
+                  borderColor: viewModel.canSubmit
+                    ? colors.feedback.success.border
+                    : colors.border.default,
                   borderRadius: radius.full,
                   borderWidth: 1,
                   height: gradeBand === "elementary" ? 30 : 26,
@@ -93,7 +121,11 @@ export function SubmissionChecklist({
                   selectable
                   style={[
                     getAccessibleTextStyle(type.caption, settings),
-                    { color: viewModel.canSubmit ? colors.text.success : colors.text.muted },
+                    {
+                      color: viewModel.canSubmit
+                        ? colors.text.success
+                        : colors.text.muted,
+                    },
                   ]}
                 >
                   {viewModel.canSubmit
@@ -102,13 +134,22 @@ export function SubmissionChecklist({
                 </Text>
               </View>
               <Stack gap="xs" style={{ flex: 1 }}>
-                <Text selectable style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
+                <Text
+                  selectable
+                  style={[
+                    getAccessibleTextStyle(type.bodyStrong, settings),
+                    { color: accessibleColors.text },
+                  ]}
+                >
                   {criterion.label}
                 </Text>
                 {viewModel.gradeAdaptation.showDetailedRubric ? (
                   <Text
                     selectable
-                    style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}
+                    style={[
+                      getAccessibleTextStyle(type.bodySmall, settings),
+                      { color: accessibleColors.mutedText },
+                    ]}
                   >
                     {criterion.description}
                   </Text>
@@ -118,7 +159,21 @@ export function SubmissionChecklist({
           ))}
         </Stack>
 
-        {!viewModel.canSubmit ? (
+        {hasAttachments ? (
+          <StatusState
+            accessibilityLabel={t(
+              "assignments.attachments.attachedStatusTitle",
+            )}
+            description={t("assignments.attachments.attachedStatusDescription")}
+            gradeBand={gradeBand}
+            title={t("assignments.attachments.countLabel", {
+              count: attachmentCount,
+            })}
+            tone="success"
+          />
+        ) : null}
+
+        {!canSubmit ? (
           <StatusState
             accessibilityLabel={t("assignments.submit.notReadyAccessibility")}
             description={t("assignments.submit.notReadyDescription")}
@@ -139,9 +194,13 @@ export function SubmissionChecklist({
         ) : null}
 
         <Button
-          accessibilityHint={viewModel.canSubmit ? t("assignments.submit.confirmHint") : t("assignments.submit.disabledHint")}
+          accessibilityHint={
+            canSubmit
+              ? t("assignments.submit.confirmHint")
+              : t("assignments.submit.disabledHint")
+          }
           accessibilityLabel={t("assignments.submit.confirmAccessibility")}
-          disabled={!viewModel.canSubmit}
+          disabled={!canSubmit}
           gradeBand={gradeBand}
           label={t("assignments.submit.confirmCta")}
           loading={submitStatus === "loading"}

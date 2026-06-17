@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   I18nManager,
   Pressable,
@@ -42,6 +42,14 @@ const stageOrder: { id: WorkspaceStage; labelKey: TranslationKey }[] = [
   { id: "revise", labelKey: "writingWorkspace.sections.rubric" },
   { id: "submit", labelKey: "writingWorkspace.sections.submit" },
 ];
+
+function getWorkspaceStageParam(value: string | string[] | undefined): WorkspaceStage | null {
+  const stage = getParamValue(value);
+
+  return stage === "understand" || stage === "draft" || stage === "revise" || stage === "submit"
+    ? stage
+    : null;
+}
 
 function StageTabs({
   activeStage,
@@ -137,15 +145,16 @@ function StageCta({ label, onPress, testID }: { label: string; onPress: () => vo
 export function WritingWorkspaceScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const params = useLocalSearchParams<{ assignmentId?: string | string[] }>();
+  const params = useLocalSearchParams<{ assignmentId?: string | string[]; stage?: string | string[] }>();
   const assignmentId = useMemo(() => getParamValue(params.assignmentId), [params.assignmentId]);
+  const routeStage = useMemo(() => getWorkspaceStageParam(params.stage), [params.stage]);
   const state = useWritingWorkspace(assignmentId);
   const successState = state.status === "success" ? state : null;
   const activePanel = useWritingWorkspaceUiStore((store) => store.activePanel);
   const openPanel = useWritingWorkspaceUiStore((store) => store.openPanel);
   const closePanel = useWritingWorkspaceUiStore((store) => store.closePanel);
   const [isSavingNow, setIsSavingNow] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<WorkspaceStage | null>(null);
+  const [selectedStage, setSelectedStage] = useState<WorkspaceStage | null>(routeStage);
   const [checkedRubricIds, setCheckedRubricIds] = useState<readonly string[]>([]);
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
@@ -157,6 +166,12 @@ export function WritingWorkspaceScreen() {
   const stageIndex = stageOrder.findIndex((entry) => entry.id === stage);
   const rubric = assignment?.rubric ?? [];
   const checkedCount = rubric.filter((item) => checkedRubricIds.includes(item.id)).length;
+
+  useEffect(() => {
+    if (routeStage) {
+      setSelectedStage(routeStage);
+    }
+  }, [routeStage]);
 
   const toggleRubricItem = (id: string) => {
     setCheckedRubricIds((current) =>
@@ -201,6 +216,7 @@ export function WritingWorkspaceScreen() {
   return (
     <Screen
       backgroundColor={dashboard.background}
+      contentPaddingTop={spacing.md}
       gradeBand={state.gradeBand}
       keyboardAvoiding
       testID="writing-workspace-screen"
@@ -261,9 +277,8 @@ export function WritingWorkspaceScreen() {
                 numberOfLines={1}
                 style={[getAccessibleTextStyle(styles.headerTitle, settings), { color: accessibleColors.text }]}
               >
-                {assignment.title}
+                {t("writingWorkspace.headerTitle")}
               </Text>
-              <AutosaveStatusBadge gradeBand={state.gradeBand} status={successState.viewModel.autosaveStatus} />
             </View>
 
             <TouchableOpacity
@@ -275,15 +290,18 @@ export function WritingWorkspaceScreen() {
             >
               <Ionicons color={dashboard.primary} name="sparkles" size={18} />
             </TouchableOpacity>
+          </View>
 
+          <StageTabs activeStage={stage} onSelect={setSelectedStage} />
+
+          <View style={styles.draftStatusRow}>
+            <AutosaveStatusBadge gradeBand={state.gradeBand} status={successState.viewModel.autosaveStatus} />
             <View style={styles.wordChip}>
               <Text selectable={false} style={getAccessibleTextStyle(styles.wordChipText, settings)}>
                 {t("writingWorkspace.metrics.words", { count: successState.viewModel.metrics.wordCount })}
               </Text>
             </View>
           </View>
-
-          <StageTabs activeStage={stage} onSelect={setSelectedStage} />
 
           {successState.viewModel.isOffline ? (
             <OfflineBanner
@@ -647,6 +665,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 17,
   },
+  draftStatusRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    justifyContent: "space-between",
+    width: "100%",
+  },
   editorInput: {
     fontFamily: fonts.serifRegular,
     fontSize: 15.5,
@@ -688,8 +714,8 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   headerTitleBlock: {
+    alignItems: "center",
     flex: 1,
-    gap: 3,
     minWidth: 0,
   },
   metaChip: {

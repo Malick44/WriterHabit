@@ -12,6 +12,8 @@ export const routes = {
   onboardingDailyPracticeGoal: "/(onboarding)/daily-practice-goal" as Href,
   onboardingPlanSummary: "/(onboarding)/plan-summary" as Href,
   studentHome: "/(student)/home" as Href,
+  studentPractice: "/(student)/practice" as Href,
+  studentMessages: "/(student)/messages" as Href,
   studentAssignmentsHistory: "/(student)/assignments/history" as Href,
   studentAssignmentSubmission: "/(student)/assignments/submit" as Href,
   studentCanvasHome: "/(student)/canvas" as Href,
@@ -44,6 +46,7 @@ export type AppRoute = (typeof routes)[AppRouteName];
 
 export const studentTabRoutes = [
   routes.studentHome,
+  routes.studentPractice,
   routes.studentAssignmentsHistory,
   routes.studentCanvasHome,
 ] as const;

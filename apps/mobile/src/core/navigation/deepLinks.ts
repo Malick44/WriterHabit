@@ -26,6 +26,7 @@ export const deepLinkRoutes = {
 } as const;
 
 export type DeepLinkRouteName = keyof typeof deepLinkRoutes;
+export type WritingWorkspaceStageParam = "understand" | "draft" | "revise" | "submit";
 
 export function getAssignmentDetailRoute(assignmentId: string): Href {
   return {
@@ -34,10 +35,13 @@ export function getAssignmentDetailRoute(assignmentId: string): Href {
   };
 }
 
-export function getWritingWorkspaceRoute(assignmentId: string): Href {
+export function getWritingWorkspaceRoute(
+  assignmentId: string,
+  stage?: WritingWorkspaceStageParam,
+): Href {
   return {
     pathname: "/(student)/write/[assignmentId]",
-    params: { assignmentId },
+    params: stage ? { assignmentId, stage } : { assignmentId },
   };
 }
 
@@ -63,6 +67,20 @@ export function getCanvasTemplatePickerRoute(assignmentId?: string): Href {
   return {
     pathname: "/(student)/canvas/templates",
     params: { assignmentId },
+  };
+}
+
+export function getPracticeTaskRoute(skillId: string): Href {
+  return {
+    pathname: "/(student)/practice-task",
+    params: { skillId },
+  };
+}
+
+export function getPracticeSessionRoute(skillId: string, taskId: string): Href {
+  return {
+    pathname: "/(student)/practice-session",
+    params: { skillId, taskId },
   };
 }
 

@@ -358,6 +358,36 @@ function createSubmittedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
   };
 }
 
+function createNotStartedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
+  return {
+    assignedLabel: "Today",
+    assignmentType: gradeLevel <= 5 ? "creative_writing" : gradeLevel <= 8 ? "paragraph_writing" : "essay_writing",
+    difficulty: gradeLevel <= 5 ? "easy" : "moderate",
+    draft: null,
+    dueLabel: "Due in 3 days",
+    estimatedMinutes: gradeLevel <= 5 ? 10 : 20,
+    gradeLevelMax: gradeLevel <= 5 ? 5 : gradeLevel <= 8 ? 8 : 12,
+    gradeLevelMin: gradeLevel <= 5 ? 1 : gradeLevel <= 8 ? 6 : 9,
+    id: "not-started-narrative",
+    instructions: [
+      "Read the prompt and picture your idea.",
+      "Plan a beginning, middle, and ending before you draft.",
+    ],
+    prompt:
+      gradeLevel <= 5
+        ? "Write a short story about a character who finds something surprising on the way to school."
+        : "Write a narrative about a moment that changed how a character sees the world.",
+    rubric: [
+      { description: "The writing has a clear beginning, middle, and ending.", id: "structure", label: "Structure" },
+      { description: "Details help the reader picture the story.", id: "details", label: "Details" },
+    ],
+    rubricId: "rubric-not-started-narrative",
+    skillFocus: gradeLevel <= 5 ? ["creativity", "organization"] : ["organization", "clarity"],
+    status: "not_started",
+    title: gradeLevel <= 5 ? "My Surprising Morning" : "A Moment That Changed Me",
+  };
+}
+
 function createAssignments(input: AssignmentRequestInput, scenario: AssignmentScenario): AssignmentRecord[] {
   const gradeLevel = getGradeLevel(input);
 
@@ -367,6 +397,7 @@ function createAssignments(input: AssignmentRequestInput, scenario: AssignmentSc
 
   return [
     createCurrentAssignment(gradeLevel, scenario),
+    createNotStartedAssignment(gradeLevel),
     createReviewedAssignment(gradeLevel),
     createSubmittedAssignment(gradeLevel),
   ];

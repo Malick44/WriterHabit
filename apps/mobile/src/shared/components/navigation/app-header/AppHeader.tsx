@@ -58,6 +58,15 @@ export const AppHeader = memo(function AppHeader({
     }),
     [headerColors.background, headerColors.border, safeAreaTop, variantStyle.topPadding],
   );
+  // When the header owns the safe area (showSafeArea), re-apply the top padding AFTER
+  // `style` so a caller-supplied paddingTop can never clobber the status-bar inset
+  // (the cause of headers rendering under the status bar). When the caller opts out
+  // (showSafeArea={false}), it provides the inset itself (e.g. via <Screen>), so its
+  // paddingTop override is left to win.
+  const topPaddingStyle = useMemo(
+    () => (showSafeArea ? { paddingTop: variantStyle.topPadding + safeAreaTop } : null),
+    [safeAreaTop, showSafeArea, variantStyle.topPadding],
+  );
 
   return (
     <View
@@ -67,6 +76,7 @@ export const AppHeader = memo(function AppHeader({
         sticky ? styles.rootSticky : null,
         rootDynamicStyle,
         style,
+        topPaddingStyle,
       ]}
       testID={testID}
     >

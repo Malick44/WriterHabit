@@ -5,8 +5,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -14,13 +12,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
-import { colors, layout, radius, shadows, spacing, typography } from "@/design/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
 import { useProgressDashboard } from "@/features/progress/hooks/useProgress";
-import { useI18n, type TranslationKey } from "@/i18n";
-import { Button } from "@/shared/components/buttons";
-import { Card } from "@/shared/components/cards";
-import { useTopAlert } from "@/shared/components/feedback/top-alert";
-import { PageSection } from "@/shared/components/layout";
+import { useSubscriptions } from "@/features/subscriptions/hooks/useSubscriptions";
+import { useI18n } from "@/i18n";
 import { AppHeader } from "@/shared/components/navigation";
 import {
   getAccessibleTextStyle,
@@ -31,335 +26,118 @@ import {
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
 const profileColors = {
+  accent: colors.dashboard.tertiaryText,
+  accentTrack: colors.dashboard.tertiaryContainer,
   background: colors.dashboard.background,
-  error: colors.dashboard.error,
-  errorContainer: colors.dashboard.errorContainer,
-  glass: colors.dashboard.glass,
-  onErrorContainer: colors.dashboard.onErrorContainer,
-  onPrimaryContainer: colors.dashboard.onPrimaryContainer,
-  onSecondary: colors.dashboard.onSecondary,
-  onSecondaryContainer: colors.dashboard.onSecondaryContainer,
+  card: colors.dashboard.card,
+  connected: colors.dashboard.secondary,
+  divider: colors.dashboard.surfaceContainer,
+  gradePillBg: colors.dashboard.primaryContainer,
+  gradePillText: colors.dashboard.primary,
+  iconBg: colors.dashboard.surfaceContainerLow,
+  muted: colors.dashboard.onSurfaceVariant,
   onSurface: colors.dashboard.onSurface,
-  onSurfaceVariant: colors.dashboard.onSurfaceVariant,
-  outline: colors.dashboard.outline,
-  outlineVariant: colors.dashboard.outlineVariant,
+  outline: colors.dashboard.outlineVariant,
+  planPillBg: colors.dashboard.tertiaryContainer,
+  planPillText: colors.dashboard.tertiaryText,
   primary: colors.dashboard.primary,
-  primaryContainer: colors.dashboard.primaryContainer,
-  secondary: colors.dashboard.secondary,
-  secondaryContainer: colors.dashboard.secondaryContainer,
-  surfaceContainerHigh: colors.dashboard.surfaceContainerHigh,
-  surfaceContainerHighest: colors.dashboard.surfaceContainerHighest,
-  surfaceContainerLow: colors.dashboard.surfaceContainerLow,
-  surfaceLowest: colors.dashboard.surfaceLowest,
+  statValue: colors.dashboard.onSurface,
 } as const;
 
-const achievements = [
-  {
-    backgroundColor: profileColors.secondaryContainer,
-    foregroundColor: profileColors.onSecondaryContainer,
-    icon: "ribbon-outline",
-    labelKey: "profileSettings.profile.achievements.earlyBird",
-  },
-  {
-    backgroundColor: profileColors.primaryContainer,
-    foregroundColor: profileColors.onPrimaryContainer,
-    icon: "reader-outline",
-    labelKey: "profileSettings.profile.achievements.words1k",
-  },
-  {
-    backgroundColor: profileColors.surfaceContainerHighest,
-    foregroundColor: profileColors.outline,
-    icon: "medal-outline",
-    labelKey: "profileSettings.profile.achievements.topTen",
-  },
-  {
-    backgroundColor: profileColors.surfaceContainerHighest,
-    foregroundColor: profileColors.outline,
-    icon: "sparkles-outline",
-    labelKey: "profileSettings.profile.achievements.perfectScore",
-  },
-] as const satisfies readonly {
-  backgroundColor: string;
-  foregroundColor: string;
-  icon: IconName;
-  labelKey: TranslationKey;
-}[];
+// UI-first gamification data mirroring the profile design; wire to real
+// services (XP/points/badges) when they exist.
+const MOCK_PROFILE = {
+  level: 4,
+  xpToNext: 260,
+  levelProgress: 0.74,
+  points: 1240,
+  badgesEarned: 5,
+  badgesInReach: 3,
+} as const;
 
-const accountRows = [
-  {
-    icon: "person-outline",
-    labelKey: "profileSettings.profile.account.editProfile",
-    route: routes.studentEditProfile,
-  },
-  {
-    icon: "flag-outline",
-    labelKey: "profileSettings.profile.account.manageGoals",
-    route: routes.studentWritingGoals,
-  },
-  {
-    icon: "notifications-outline",
-    labelKey: "profileSettings.profile.account.notifications",
-    route: routes.studentNotificationSettings,
-  },
-] as const satisfies readonly { icon: IconName; labelKey: TranslationKey; route: AppRoute }[];
+const type = typography.gradeBands.middle;
 
-const supportRows = [
-  {
-    icon: "help-circle-outline",
-    labelKey: "profileSettings.profile.support.helpCenter",
-  },
-  {
-    icon: "information-circle-outline",
-    labelKey: "profileSettings.profile.support.about",
-  },
-] as const satisfies readonly { icon: IconName; labelKey: TranslationKey }[];
-
-function SectionCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return (
-    <Card contentStyle={styles.cardContent} style={[styles.glassCard, style]}>
-      {children}
-    </Card>
-  );
-}
-
-function ProfileStat({
-  accessibilityLabel,
-  color,
-  divider,
-  icon,
-  label,
-  value,
-}: {
-  accessibilityLabel: string;
-  color: string;
-  divider?: boolean;
-  icon: IconName;
-  label: string;
-  value: string;
-}) {
+function ProfileStatTile({ value, label, color }: { value: string; label: string; color: string }) {
   const { settings } = useAccessibilityContext();
 
   return (
-    <View
-      accessibilityLabel={accessibilityLabel}
-      accessible
-      style={[styles.statItem, divider ? styles.statDivider : null]}
-    >
-      <Ionicons color={color} name={icon} size={24} />
-      <Text
-        numberOfLines={1}
-        selectable
-        style={[
-          getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
-          styles.centerText,
-          { color: profileColors.onSurfaceVariant },
-        ]}
-      >
-        {label}
-      </Text>
-      <Text
-        numberOfLines={1}
-        selectable
-        style={[
-          getAccessibleTextStyle(typography.gradeBands.middle.title, settings),
-          styles.centerText,
-          { color },
-        ]}
-      >
-        {value}
-      </Text>
+    <View style={styles.statTile}>
+      <Text style={[getAccessibleTextStyle(type.heading, settings), styles.statValue, { color }]}>{value}</Text>
+      <Text style={[getAccessibleTextStyle(type.caption, settings), styles.statLabel]}>{label}</Text>
     </View>
   );
 }
 
-function AchievementBadge({
-  backgroundColor,
-  foregroundColor,
+function ProfileRow({
   icon,
-  label,
-}: {
-  backgroundColor: string;
-  foregroundColor: string;
-  icon: IconName;
-  label: string;
-}) {
-  const { settings } = useAccessibilityContext();
-
-  return (
-    <View accessibilityLabel={label} accessible style={styles.achievementItem}>
-      <View style={[styles.achievementIcon, { backgroundColor }]}>
-        <Ionicons color={foregroundColor} name={icon} size={24} />
-      </View>
-      <Text
-        numberOfLines={2}
-        selectable
-        style={[
-          getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
-          styles.achievementLabel,
-          { color: profileColors.onSurface },
-        ]}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-function ProfileListRow({
-  icon,
+  iconColor,
+  iconBg,
   label,
   onPress,
   rightAccessory,
+  divider = true,
 }: {
   icon: IconName;
+  iconColor: string;
+  iconBg: string;
   label: string;
   onPress?: () => void;
   rightAccessory?: ReactNode;
+  divider?: boolean;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const minTouchTarget = getMinimumTouchTarget(settings);
 
-  if (!onPress) {
-    return (
-      <View
-        accessibilityLabel={rightAccessory ? undefined : label}
-        accessible={!rightAccessory}
-        style={[styles.listRow, { minHeight: minTouchTarget + spacing.md }]}
-      >
-        <View style={styles.listRowLabel}>
-          <Ionicons color={profileColors.primary} name={icon} size={24} />
-          <Text
-            numberOfLines={2}
-            selectable
-            style={[
-              getAccessibleTextStyle(typography.gradeBands.middle.label, settings),
-              styles.rowText,
-              { color: profileColors.onSurface },
-            ]}
-          >
-            {label}
-          </Text>
-        </View>
-        {rightAccessory}
-      </View>
-    );
-  }
-
   return (
     <Pressable
-      accessibilityHint={t("profileSettings.profile.rowHint")}
+      accessibilityHint={onPress ? t("profileSettings.profile.rowHint") : undefined}
       accessibilityLabel={label}
-      accessibilityRole="button"
-      hitSlop={layout.hitSlop}
+      accessibilityRole={onPress ? "button" : undefined}
+      disabled={!onPress}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.listRow,
-        { minHeight: minTouchTarget + spacing.md },
-        pressed ? styles.listRowPressed : null,
+        styles.row,
+        { minHeight: minTouchTarget },
+        divider ? styles.rowDivider : null,
+        pressed && onPress ? styles.rowPressed : null,
       ]}
     >
-      <View style={styles.listRowLabel}>
-        <Ionicons color={profileColors.primary} name={icon} size={24} />
-        <Text
-          numberOfLines={2}
-          selectable
-          style={[
-            getAccessibleTextStyle(typography.gradeBands.middle.label, settings),
-            styles.rowText,
-            { color: profileColors.onSurface },
-          ]}
-        >
-          {label}
-        </Text>
+      <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
+        <Ionicons color={iconColor} name={icon} size={16} />
       </View>
-      {rightAccessory ?? <Ionicons color={profileColors.outlineVariant} name="chevron-forward" size={22} />}
+      <Text style={[getAccessibleTextStyle(type.label, settings), styles.rowLabel]}>{label}</Text>
+      {rightAccessory}
+      {onPress ? <Ionicons color={profileColors.outline} name="chevron-forward" size={18} /> : null}
     </Pressable>
   );
 }
 
 export function StudentProfileScreen() {
-  const { session, signOut } = useAuthSession();
+  const { session } = useAuthSession();
   const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { settings } = useAccessibilityContext();
-  const topAlert = useTopAlert();
   const progressState = useProgressDashboard();
   const progressViewModel =
     progressState.status === "success" || progressState.status === "empty" ? progressState.viewModel : null;
+  const subscriptionsState = useSubscriptions();
+  const isPremium = subscriptionsState.status === "success" && subscriptionsState.viewModel.isPremium;
+
   const profileName = session?.user.displayName ?? t("profileSettings.profile.defaultName");
   const profileGrade = session?.user.gradeLevel ?? 5;
   const profileInitial = profileName.trim().slice(0, 1).toUpperCase() || "A";
-  const showUnavailableAlert = useCallback(() => {
-    topAlert.show({
-      descriptionKey: "profileSettings.settings.unavailableDescription",
-      titleKey: "profileSettings.settings.unavailableTitle",
-      type: "info",
-    });
-  }, [topAlert]);
-  const handleOpenSettings = useCallback(() => {
-    router.push(routes.studentSettings);
-  }, [router]);
-  const handleOpenRoute = useCallback(
-    (route: AppRoute) => {
-      router.push(route);
-    },
-    [router],
-  );
-  const handleLogOut = useCallback(() => {
-    void signOut().then(() => {
-      router.replace(routes.authWelcome);
-    });
-  }, [router, signOut]);
+  const streakDays = progressViewModel?.streak.currentDays ?? 7;
+  const completed = progressViewModel?.totals.assignmentsCompleted ?? 12;
 
-  const stats = progressViewModel
-    ? ([
-      {
-        accessibilityLabel: t("profileSettings.profile.stats.assignmentsAccessibility", {
-          value: progressViewModel.totals.assignmentsCompleted,
-        }),
-        color: profileColors.primary,
-        icon: "document-text-outline",
-        label: t("profileSettings.profile.stats.assignments"),
-        value: String(progressViewModel.totals.assignmentsCompleted),
-      },
-      {
-        accessibilityLabel: t("profileSettings.profile.stats.wordsAccessibility", {
-          value: progressViewModel.totals.wordsWritten,
-        }),
-        color: profileColors.primary,
-        icon: "create-outline",
-        label: t("profileSettings.profile.stats.words"),
-        value: progressViewModel.totals.wordsWritten.toLocaleString("en-US"),
-      },
-      {
-        accessibilityLabel: t("profileSettings.profile.stats.streakAccessibility", {
-          value: progressViewModel.streak.currentDays,
-        }),
-        color: profileColors.secondary,
-        icon: "flame",
-        label: t("profileSettings.profile.stats.streak"),
-        value: t("profileSettings.profile.stats.streakValue", {
-          count: progressViewModel.streak.currentDays,
-        }),
-      },
-    ] as const satisfies readonly {
-      accessibilityLabel: string;
-      color: string;
-      icon: IconName;
-      label: string;
-      value: string;
-    }[])
-    : null;
+  const handleOpenSettings = useCallback(() => router.push(routes.studentSettings), [router]);
+  const handleOpenRoute = useCallback((route: AppRoute) => router.push(route), [router]);
+  const handleOpenPlus = useCallback(() => router.push(routes.paywall), [router]);
 
   return (
     <View style={styles.root}>
       <AppHeader
-        leftAction={{
-          accessibilityLabelKey: "profileSettings.profile.headerBackAccessibility",
-          type: "back",
-        }}
         rightActions={[
           {
             accessibilityLabelKey: "profileSettings.profile.headerSettingsAccessibility",
@@ -373,164 +151,168 @@ export function StudentProfileScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: Math.max(insets.bottom + 112, 136),
-          },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 112, 136) }]}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
         testID="student-profile-screen"
       >
         <View style={styles.content}>
-          <View style={styles.profileHero}>
-            <View style={styles.avatarWrap}>
-              <View
-                accessibilityLabel={t("profileSettings.profile.avatarAccessibility", { name: profileName })}
-                accessible
-                style={styles.avatarFrame}
-              >
-                <View style={styles.avatarFallback}>
-                  <Text
-                    style={[
-                      getAccessibleTextStyle(typography.gradeBands.middle.heading, settings),
-                      { color: profileColors.primary },
-                    ]}
-                  >
-                    {profileInitial}
-                  </Text>
-                </View>
-              </View>
-              <View
-                accessibilityLabel={t("profileSettings.profile.verifiedAccessibility")}
-                accessible
-                style={styles.verifiedBadge}
-              >
-                <Ionicons color={profileColors.onSecondary} name="checkmark-circle" size={18} />
-              </View>
+          <View style={styles.hero}>
+            <View
+              accessibilityLabel={t("profileSettings.profile.avatarAccessibility", { name: profileName })}
+              accessible
+              style={styles.avatar}
+            >
+              <Text style={[getAccessibleTextStyle(type.heading, settings), { color: profileColors.primary }]}>
+                {profileInitial}
+              </Text>
             </View>
-
-            <View style={styles.profileIdentity}>
+            <View style={styles.heroIdentity}>
               <Text
                 accessibilityRole="header"
-                selectable
-                style={[
-                  getAccessibleTextStyle(typography.gradeBands.middle.heading, settings),
-                  styles.profileName,
-                ]}
+                style={[getAccessibleTextStyle(type.title, settings), styles.heroName]}
               >
                 {profileName}
               </Text>
-              <View style={styles.gradePill}>
-                <Text
-                  numberOfLines={1}
-                  selectable
-                  style={[
-                    getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
-                    styles.gradePillText,
-                  ]}
-                >
-                  {t("profileSettings.profile.gradeBadge", { grade: profileGrade })}
-                </Text>
+              <View style={styles.pillRow}>
+                <View style={[styles.pill, { backgroundColor: profileColors.gradePillBg }]}>
+                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.gradePillText]}>
+                    {t("profileSettings.profile.gradePillShort", { grade: profileGrade })}
+                  </Text>
+                </View>
+                <View style={[styles.pill, { backgroundColor: profileColors.planPillBg }]}>
+                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.planPillText]}>
+                    {isPremium ? t("profileSettings.profile.planPlus") : t("profileSettings.profile.planFree")}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
 
-          {stats ? (
-            <SectionCard>
-              <View style={styles.statsGrid}>
-                {stats.map((stat, index) => (
-                  <ProfileStat
-                    accessibilityLabel={stat.accessibilityLabel}
-                    color={stat.color}
-                    divider={index === 1}
-                    icon={stat.icon}
-                    key={stat.label}
-                    label={stat.label}
-                    value={stat.value}
-                  />
-                ))}
+          <View
+            accessibilityLabel={t("profileSettings.profile.level.accessibility", {
+              level: MOCK_PROFILE.level,
+              xp: MOCK_PROFILE.xpToNext,
+              next: MOCK_PROFILE.level + 1,
+            })}
+            accessible
+            style={styles.card}
+          >
+            <View style={styles.levelRow}>
+              <Text style={[getAccessibleTextStyle(type.label, settings), styles.levelTitle]}>
+                {t("profileSettings.profile.level.title", {
+                  level: MOCK_PROFILE.level,
+                  name: t("profileSettings.profile.level.name"),
+                })}
+              </Text>
+              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.levelXp]}>
+                {t("profileSettings.profile.level.xpToNext", {
+                  xp: MOCK_PROFILE.xpToNext,
+                  next: MOCK_PROFILE.level + 1,
+                })}
+              </Text>
+            </View>
+            <View style={styles.levelTrack}>
+              <View style={[styles.levelFill, { width: `${Math.round(MOCK_PROFILE.levelProgress * 100)}%` }]} />
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <ProfileStatTile
+              color={profileColors.primary}
+              label={t("profileSettings.profile.stats.streak")}
+              value={String(streakDays)}
+            />
+            <ProfileStatTile
+              color={profileColors.accent}
+              label={t("profileSettings.profile.stats.points")}
+              value={MOCK_PROFILE.points.toLocaleString("en-US")}
+            />
+            <ProfileStatTile
+              color={profileColors.statValue}
+              label={t("profileSettings.profile.stats.completed")}
+              value={String(completed)}
+            />
+          </View>
+
+          <Pressable
+            accessibilityHint={t("profileSettings.profile.rowHint")}
+            accessibilityLabel={t("profileSettings.profile.badgeShelf.accessibility", {
+              earned: MOCK_PROFILE.badgesEarned,
+              inReach: MOCK_PROFILE.badgesInReach,
+            })}
+            accessibilityRole="button"
+            onPress={() => handleOpenRoute(routes.studentProgressBadges)}
+            style={({ pressed }) => [styles.card, styles.badgeCard, pressed ? styles.rowPressed : null]}
+          >
+            <View style={styles.badgeIcons}>
+              <View style={[styles.badgeIcon, { backgroundColor: profileColors.accentTrack }]}>
+                <Ionicons color={profileColors.accent} name="ribbon" size={16} />
               </View>
-            </SectionCard>
-          ) : null}
-
-          <PageSection style={styles.section} title={t("profileSettings.profile.achievementsTitle")}>
-            <View style={styles.achievementsGrid}>
-              {achievements.map((achievement) => (
-                <AchievementBadge
-                  backgroundColor={achievement.backgroundColor}
-                  foregroundColor={achievement.foregroundColor}
-                  icon={achievement.icon}
-                  key={achievement.labelKey}
-                  label={t(achievement.labelKey)}
-                />
-              ))}
+              <View style={[styles.badgeIcon, { backgroundColor: profileColors.accentTrack }]}>
+                <Ionicons color={profileColors.accent} name="create" size={16} />
+              </View>
+              <View style={[styles.badgeIcon, styles.badgeIconEmpty]} />
             </View>
-          </PageSection>
-
-          <PageSection style={styles.section} title={t("profileSettings.profile.accountTitle")}>
-            <View style={styles.listStack}>
-              {accountRows.map((row) => (
-                <ProfileListRow
-                  icon={row.icon}
-                  key={row.labelKey}
-                  label={t(row.labelKey)}
-                  onPress={() => handleOpenRoute(row.route)}
-                />
-              ))}
+            <View style={styles.badgeText}>
+              <Text style={[getAccessibleTextStyle(type.label, settings), styles.badgeTitle]}>
+                {t("profileSettings.profile.badgeShelf.title")}
+              </Text>
+              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.badgeSummary]}>
+                {t("profileSettings.profile.badgeShelf.summary", {
+                  earned: MOCK_PROFILE.badgesEarned,
+                  inReach: MOCK_PROFILE.badgesInReach,
+                })}
+              </Text>
             </View>
-          </PageSection>
+            <Ionicons color={profileColors.outline} name="chevron-forward" size={18} />
+          </Pressable>
 
-          <PageSection style={styles.section} title={t("profileSettings.profile.preferencesTitle")}>
-            <View style={styles.listStack}>
-              <ProfileListRow
-                icon="language-outline"
-                label={t("profileSettings.profile.preferences.appLanguage")}
-                onPress={() => handleOpenRoute(routes.studentLanguageSettings)}
-                rightAccessory={
-                  <View style={styles.languageValue}>
-                    <Text
-                      numberOfLines={1}
-                      selectable
-                      style={[
-                        getAccessibleTextStyle(typography.gradeBands.middle.caption, settings),
-                        { color: profileColors.onSurfaceVariant },
-                      ]}
-                    >
-                      {t("profileSettings.profile.preferences.english")}
-                    </Text>
-                    <Ionicons color={profileColors.outlineVariant} name="chevron-forward" size={22} />
-                  </View>
-                }
-              />
-            </View>
-          </PageSection>
+          <View style={[styles.card, styles.rowsCard]}>
+            <ProfileRow
+              icon="trending-up"
+              iconBg={colors.dashboard.secondaryContainer}
+              iconColor={profileColors.connected}
+              label={t("profileSettings.profile.rows.myProgress")}
+              onPress={() => handleOpenRoute(routes.studentProgress)}
+            />
+            <ProfileRow
+              icon="time-outline"
+              iconBg={profileColors.gradePillBg}
+              iconColor={profileColors.primary}
+              label={t("profileSettings.profile.rows.dailyGoal")}
+              onPress={() => handleOpenRoute(routes.studentWritingGoals)}
+              rightAccessory={
+                <Text style={[getAccessibleTextStyle(type.caption, settings), styles.rowValue]}>
+                  {t("profileSettings.profile.rows.dailyGoalValue")}
+                </Text>
+              }
+            />
+            <ProfileRow
+              divider={false}
+              icon="people-outline"
+              iconBg={profileColors.accentTrack}
+              iconColor={profileColors.accent}
+              label={t("profileSettings.profile.rows.linkedParent")}
+              rightAccessory={
+                <View style={styles.connectedBadge}>
+                  <View style={styles.connectedDot} />
+                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.connectedText]}>
+                    {t("profileSettings.profile.rows.linkedParentConnected")}
+                  </Text>
+                </View>
+              }
+            />
+          </View>
 
-          <PageSection style={styles.section} title={t("profileSettings.profile.supportTitle")}>
-            <View style={styles.listStack}>
-              {supportRows.map((row) => (
-                <ProfileListRow
-                  icon={row.icon}
-                  key={row.labelKey}
-                  label={t(row.labelKey)}
-                  onPress={showUnavailableAlert}
-                />
-              ))}
-            </View>
-          </PageSection>
-
-          <View style={styles.logoutSection}>
-            <Button
-              accessibilityLabel={t("profileSettings.profile.logoutAccessibility")}
-              fullWidth
-              label={t("profileSettings.profile.logout")}
-              leftAccessory={<Ionicons color={profileColors.onErrorContainer} name="log-out-outline" size={22} />}
-              onPress={handleLogOut}
-              size="md"
-              style={styles.logoutButton}
-              textStyle={styles.logoutText}
-              variant="danger"
+          <View style={[styles.card, styles.rowsCard]}>
+            <ProfileRow
+              divider={false}
+              icon="sparkles"
+              iconBg={profileColors.planPillBg}
+              iconColor={profileColors.accent}
+              label={t("profileSettings.profile.rows.plus")}
+              onPress={handleOpenPlus}
             />
           </View>
         </View>
@@ -540,175 +322,200 @@ export function StudentProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  achievementIcon: {
+  avatar: {
     alignItems: "center",
+    backgroundColor: profileColors.gradePillBg,
+    borderColor: profileColors.outline,
     borderRadius: radius.full,
-    height: 48,
+    borderWidth: 1,
+    height: 68,
     justifyContent: "center",
-    width: 48,
+    width: 68,
   },
-  achievementItem: {
+  badgeCard: {
     alignItems: "center",
-    flex: 1,
-    gap: spacing.sm,
-    minWidth: 0,
-  },
-  achievementLabel: {
-    minHeight: 36,
-    textAlign: "center",
-  },
-  achievementsGrid: {
     flexDirection: "row",
-    gap: spacing.lg,
-  },
-  avatarFallback: {
-    alignItems: "center",
-    backgroundColor: profileColors.surfaceContainerLow,
-    height: "100%",
-    justifyContent: "center",
-    width: "100%",
-  },
-  avatarFrame: {
-    borderColor: profileColors.surfaceContainerHighest,
-    borderCurve: "continuous",
-    borderRadius: radius.full,
-    borderWidth: 4,
-    height: 96,
-    overflow: "hidden",
-    width: 96,
-    ...shadows.card,
-  },
-  avatarWrap: {
-    position: "relative",
-  },
-  cardContent: {
     gap: spacing.md,
   },
-  centerText: {
-    textAlign: "center",
+  badgeIcon: {
+    alignItems: "center",
+    borderRadius: radius.lg,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  badgeIconEmpty: {
+    backgroundColor: profileColors.iconBg,
+    borderColor: profileColors.outline,
+    borderStyle: "dashed",
+    borderWidth: 1.5,
+  },
+  badgeIcons: {
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  badgeSummary: {
+    color: profileColors.muted,
+    marginTop: 2,
+  },
+  badgeText: {
+    flex: 1,
+  },
+  badgeTitle: {
+    color: profileColors.onSurface,
+    fontWeight: "600",
+  },
+  card: {
+    backgroundColor: profileColors.card,
+    borderColor: profileColors.outline,
+    borderCurve: "continuous",
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  connectedBadge: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  connectedDot: {
+    backgroundColor: profileColors.connected,
+    borderRadius: radius.full,
+    height: 7,
+    width: 7,
+  },
+  connectedText: {
+    color: profileColors.connected,
+    fontWeight: "600",
   },
   content: {
     alignSelf: "center",
-    gap: spacing.xxl,
-    maxWidth: layout.maxContentWidth,
+    gap: spacing.md,
+    maxWidth: 480,
     width: "100%",
   },
-  glassCard: {
-    backgroundColor: profileColors.glass,
-    borderColor: profileColors.outlineVariant,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadows.raised,
-  },
-  gradePill: {
-    alignSelf: "center",
-    backgroundColor: profileColors.primaryContainer,
-    borderRadius: radius.full,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
   gradePillText: {
-    color: profileColors.onPrimaryContainer,
-    fontWeight: "700",
+    color: profileColors.gradePillText,
+    fontWeight: "600",
   },
   header: {
     backgroundColor: profileColors.background,
     borderBottomWidth: 0,
-    ...shadows.raised,
   },
-  languageValue: {
+  hero: {
     alignItems: "center",
-    flexDirection: "row",
-    flexShrink: 0,
-    gap: spacing.sm,
-  },
-  listRow: {
-    alignItems: "center",
-    backgroundColor: profileColors.surfaceLowest,
-    borderColor: profileColors.outlineVariant,
-    borderCurve: "continuous",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: spacing.lg,
-  },
-  listRowLabel: {
-    alignItems: "center",
-    flex: 1,
     flexDirection: "row",
     gap: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  heroIdentity: {
+    flex: 1,
     minWidth: 0,
   },
-  listRowPressed: {
-    backgroundColor: profileColors.surfaceContainerLow,
-  },
-  listStack: {
-    gap: spacing.sm,
-  },
-  logoutButton: {
-    backgroundColor: profileColors.errorContainer,
-    borderColor: profileColors.error,
-    borderRadius: radius.lg,
-  },
-  logoutSection: {
-    paddingTop: spacing.lg,
-  },
-  logoutText: {
-    color: profileColors.onErrorContainer,
-  },
-  profileHero: {
-    alignItems: "center",
-    gap: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  profileIdentity: {
-    alignItems: "center",
-  },
-  profileName: {
+  heroName: {
     color: profileColors.onSurface,
-    textAlign: "center",
+  },
+  levelFill: {
+    backgroundColor: profileColors.accent,
+    borderRadius: radius.sm,
+    height: "100%",
+  },
+  levelRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
+  levelTitle: {
+    color: profileColors.onSurface,
+    fontWeight: "600",
+  },
+  levelTrack: {
+    backgroundColor: profileColors.accentTrack,
+    borderRadius: radius.sm,
+    height: 7,
+    overflow: "hidden",
+  },
+  levelXp: {
+    color: profileColors.muted,
+    fontWeight: "600",
+  },
+  pill: {
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  pillRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  planPillText: {
+    color: profileColors.planPillText,
+    fontWeight: "600",
   },
   root: {
     backgroundColor: profileColors.background,
     flex: 1,
   },
-  rowText: {
+  row: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  rowDivider: {
+    borderBottomColor: profileColors.divider,
+    borderBottomWidth: 1,
+  },
+  rowIcon: {
+    alignItems: "center",
+    borderRadius: radius.md,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
+  },
+  rowLabel: {
+    color: profileColors.onSurface,
     flex: 1,
+  },
+  rowPressed: {
+    opacity: 0.7,
+  },
+  rowValue: {
+    color: profileColors.muted,
+  },
+  rowsCard: {
+    paddingVertical: spacing.xs,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: spacing.sm,
   },
-  section: {
-    gap: spacing.lg,
+  statLabel: {
+    color: profileColors.muted,
+    letterSpacing: 0.5,
+    marginTop: spacing.xs,
+    textAlign: "center",
+    textTransform: "uppercase",
   },
-  statDivider: {
-    borderColor: profileColors.outlineVariant,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-  },
-  statItem: {
+  statTile: {
     alignItems: "center",
+    backgroundColor: profileColors.card,
+    borderColor: profileColors.outline,
+    borderCurve: "continuous",
+    borderRadius: radius.lg,
+    borderWidth: 1,
     flex: 1,
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    ...shadows.card,
   },
-  statsGrid: {
+  statsRow: {
     flexDirection: "row",
+    gap: spacing.sm,
   },
-  verifiedBadge: {
-    alignItems: "center",
-    backgroundColor: profileColors.secondary,
-    borderColor: profileColors.surfaceLowest,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    bottom: 0,
-    height: 28,
-    justifyContent: "center",
-    position: "absolute",
-    right: 0,
-    width: 28,
+  statValue: {
+    textAlign: "center",
   },
 });

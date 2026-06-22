@@ -17,7 +17,7 @@ import {
   getParentStudentReportRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors } from "@/design/tokens";
+import { colors, palette } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import {
@@ -927,7 +927,7 @@ function EncouragementBand({
 
 const cardShadow = {
   elevation: 2,
-  shadowColor: "#000000",
+  shadowColor: palette.black,
   shadowOffset: { width: 0, height: 6 },
   shadowOpacity: 0.05,
   shadowRadius: 14,

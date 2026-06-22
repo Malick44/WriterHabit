@@ -20,7 +20,7 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, palette } from "@/design/tokens";
+import { colors, palette, withAlpha } from "@/design/tokens";
 import {
   getAccessibleColors,
   getAccessibleHitSlop,
@@ -174,7 +174,7 @@ export function AuthScreenFrame({
           <View style={styles.card}>
             <View style={styles.hero}>
               <LinearGradient
-                colors={[authScreenColors.primarySubtle, "rgba(255, 255, 255, 0)"]}
+                colors={[authScreenColors.primarySubtle, withAlpha(palette.white, 0)]}
                 pointerEvents="none"
                 style={StyleSheet.absoluteFill}
               />

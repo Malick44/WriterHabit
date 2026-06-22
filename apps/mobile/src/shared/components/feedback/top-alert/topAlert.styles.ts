@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import type { Ionicons } from "@expo/vector-icons";
 
-import { colors, palette } from "@/design/tokens";
+import { colors, palette, withAlpha } from "@/design/tokens";
 import type { TopAlertColorScheme, TopAlertType } from "./topAlert.types";
 
 export interface TopAlertVariantStyle {
@@ -23,15 +23,15 @@ export function getTopAlertVariantStyle(
 ): TopAlertVariantStyle {
   const dark = colorScheme === "dark";
   const neutralDark = {
-    actionBackground: "rgba(255, 255, 255, 0.1)",
-    actionBorder: "rgba(255, 255, 255, 0.18)",
+    actionBackground: withAlpha(palette.white, 0.1),
+    actionBorder: withAlpha(palette.white, 0.18),
     actionForeground: colors.text.inverse,
     background: colors.background.inverse,
     border: palette.slate[700],
     foreground: colors.text.inverse,
-    iconBackground: "rgba(255, 255, 255, 0.12)",
+    iconBackground: withAlpha(palette.white, 0.12),
     mutedForeground: palette.slate[200],
-    pressed: "rgba(255, 255, 255, 0.12)",
+    pressed: withAlpha(palette.white, 0.12),
   };
   const neutralLight = {
     actionBackground: colors.background.surface,
@@ -54,7 +54,7 @@ export function getTopAlertVariantStyle(
         border: colors.feedback.success.border,
         foreground: dark ? colors.text.inverse : colors.feedback.success.text,
         icon: "checkmark-circle",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.green[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.green[100],
       };
     case "error":
       return {
@@ -63,7 +63,7 @@ export function getTopAlertVariantStyle(
         border: colors.feedback.error.border,
         foreground: dark ? colors.text.inverse : colors.feedback.error.text,
         icon: "alert-circle",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.red[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.red[100],
       };
     case "warning":
       return {
@@ -72,7 +72,7 @@ export function getTopAlertVariantStyle(
         border: colors.feedback.warning.border,
         foreground: dark ? colors.text.inverse : colors.feedback.warning.text,
         icon: "warning",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.amber[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.amber[100],
       };
     case "info":
       return {
@@ -81,7 +81,7 @@ export function getTopAlertVariantStyle(
         border: colors.feedback.info.border,
         foreground: dark ? colors.text.inverse : colors.feedback.info.text,
         icon: "information-circle",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.blue[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.blue[100],
       };
     case "offline":
       return {
@@ -90,7 +90,7 @@ export function getTopAlertVariantStyle(
         border: colors.border.warning,
         foreground: dark ? colors.text.inverse : colors.text.primary,
         icon: "cloud-offline",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.amber[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.amber[100],
       };
     case "loading":
       return {
@@ -99,7 +99,7 @@ export function getTopAlertVariantStyle(
         border: colors.feedback.info.border,
         foreground: dark ? colors.text.inverse : colors.feedback.info.text,
         icon: "sync",
-        iconBackground: dark ? "rgba(255, 255, 255, 0.16)" : palette.blue[100],
+        iconBackground: dark ? withAlpha(palette.white, 0.16) : palette.blue[100],
       };
     case "neutral":
       return {

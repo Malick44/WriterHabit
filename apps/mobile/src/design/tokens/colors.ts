@@ -93,6 +93,9 @@ const rgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+/** Public alias for deriving alpha overlays from a palette hex in components. */
+export const withAlpha = rgba;
+
 export const colors = {
   background: {
     app: "#F6F3EE",

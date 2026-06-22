@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { colors } from "@/design/tokens";
+import { colors, palette, withAlpha } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   dayDot: {
     alignItems: "center",
     backgroundColor: dashboard.glassFaint,
-    borderColor: "rgba(255, 255, 255, 0.16)",
+    borderColor: withAlpha(palette.white, 0.16),
     borderRadius: 13,
     borderWidth: 1.5,
     height: 26,
@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   dayLabelRest: {
-    color: "rgba(255, 255, 255, 0.45)",
+    color: withAlpha(palette.white, 0.45),
   },
   dayLabelToday: {
     color: dashboard.primaryFixed,
   },
   decorCircle: {
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    backgroundColor: withAlpha(palette.white, 0.06),
     borderRadius: 70,
     height: 140,
     position: "absolute",

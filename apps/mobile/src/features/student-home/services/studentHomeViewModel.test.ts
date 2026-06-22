@@ -86,6 +86,11 @@ describe("studentHomeViewModel", () => {
       "aiCoach.revisionHelpCta",
     ]);
     expect(viewModel.coachActions.every((action) => action.target.kind === "write")).toBe(true);
+    expect(
+      viewModel.coachActions.every(
+        (action) => action.target.kind === "write" && action.target.stage === "draft",
+      ),
+    ).toBe(true);
   });
 
   it("marks an empty dashboard when there is no actionable student activity", () => {

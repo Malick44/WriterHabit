@@ -236,7 +236,7 @@ export function StudentHomeScreen() {
           router.push(getStudentReviewRoute(target.submissionId));
           return;
         case "write":
-          router.push(getWritingWorkspaceRoute(target.assignmentId));
+          router.push(getWritingWorkspaceRoute(target.assignmentId, target.stage));
           return;
       }
     },
@@ -267,6 +267,7 @@ export function StudentHomeScreen() {
     navigateToTarget({
       assignmentId: viewModel.continueDraft.assignmentId,
       kind: "write",
+      stage: "draft",
     });
   }, [navigateToTarget, viewModel]);
 

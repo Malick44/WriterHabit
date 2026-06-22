@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { getTeacherClassProgressRoute, getTeacherSubmissionReviewRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors } from "@/design/tokens";
+import { colors, palette } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
@@ -933,7 +933,7 @@ function AiInsightCard({
 
 const cardShadow = {
   elevation: 2,
-  shadowColor: "#000000",
+  shadowColor: palette.black,
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.05,
   shadowRadius: 12,

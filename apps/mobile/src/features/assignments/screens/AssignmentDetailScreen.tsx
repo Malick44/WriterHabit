@@ -20,17 +20,17 @@ import {
   getAssignmentSubmissionRoute,
   getCanvasTemplatePickerRoute,
   getWritingWorkspaceRoute,
+  type WritingWorkspaceStageParam,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import {
   colors,
   fonts,
   layout,
-  palette,
   radius,
   spacing,
 } from "@/design/tokens";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import {
   EmptyState,
@@ -121,90 +121,137 @@ function FactRow({
   );
 }
 
-type JourneyStage = "draft" | "submitted" | "feedback" | "revised" | "complete";
+type AssignmentWorkStage = "understand" | "draft" | "revise" | "submit";
 
-const journeyStages: JourneyStage[] = [
-  "draft",
-  "submitted",
-  "feedback",
-  "revised",
-  "complete",
+const assignmentWorkStages: {
+  id: AssignmentWorkStage;
+  labelKey: TranslationKey;
+}[] = [
+  { id: "understand", labelKey: "writingWorkspace.sections.prompt" },
+  { id: "draft", labelKey: "writingWorkspace.sections.draft" },
+  { id: "revise", labelKey: "writingWorkspace.sections.rubric" },
+  { id: "submit", labelKey: "writingWorkspace.sections.submit" },
 ];
 
-function getJourneyStageIndex(status: AssignmentStatus): number {
+function getAssignmentWorkStageIndex(status: AssignmentStatus): number {
   switch (status) {
     case "not_started":
-    case "in_progress":
       return 0;
-    case "submitted":
-    case "reviewing":
+    case "in_progress":
       return 1;
     case "feedback_ready":
-      return 2;
     case "revision_in_progress":
-      return 3;
+      return 2;
+    case "submitted":
+    case "reviewing":
     case "completed":
-      return 4;
+      return 3;
   }
 }
 
-function StatusJourney({ status }: { status: AssignmentStatus }) {
+function isAssignmentWorkStageEnabled({
+  assignment,
+  canStartWriting,
+  canSubmit,
+  stage,
+}: {
+  assignment: AssignmentRecord;
+  canStartWriting: boolean;
+  canSubmit: boolean;
+  stage: AssignmentWorkStage;
+}) {
+  switch (stage) {
+    case "understand":
+      return true;
+    case "draft":
+      return canStartWriting;
+    case "revise":
+      return canStartWriting && Boolean(assignment.draft);
+    case "submit":
+      return canSubmit;
+  }
+}
+
+function AssignmentStageTabs({
+  assignment,
+  canStartWriting,
+  canSubmit,
+  onSelectStage,
+}: {
+  assignment: AssignmentRecord;
+  canStartWriting: boolean;
+  canSubmit: boolean;
+  onSelectStage: (stage: AssignmentWorkStage) => void;
+}) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
-  const currentIndex = getJourneyStageIndex(status);
+  const currentIndex = getAssignmentWorkStageIndex(assignment.status);
 
   return (
     <View
-      accessibilityLabel={t("assignments.detail.statusJourneyAccessibility", {
-        current: t(`assignments.detail.journey.${journeyStages[currentIndex]}`),
-      })}
-      accessible
-      style={styles.journeyCard}
-      testID="assignment-detail-journey"
+      style={styles.assignmentStageTabs}
+      testID="assignment-detail-stage-tabs"
     >
-      <Text
-        selectable
-        style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
-      >
-        {t("assignments.detail.statusSectionTitle")}
-      </Text>
-      <View style={styles.journeyRow}>
-        <View style={styles.journeyTrack} />
-        {journeyStages.map((stage, index) => {
-          const isCurrent = index === currentIndex;
-          const isDone = index < currentIndex;
+      {assignmentWorkStages.map((stage, index) => {
+        const isCurrent = index === currentIndex;
+        const isDone = index < currentIndex;
+        const isEnabled = isAssignmentWorkStageEnabled({
+          assignment,
+          canStartWriting,
+          canSubmit,
+          stage: stage.id,
+        });
 
-          return (
-            <View key={stage} style={styles.journeyStep}>
-              <View
-                style={[
-                  styles.journeyDot,
-                  isCurrent ? styles.journeyDotCurrent : null,
-                  isDone ? styles.journeyDotDone : null,
-                ]}
-              >
-                {isCurrent ? <View style={styles.journeyDotCore} /> : null}
-                {isDone ? (
-                  <Ionicons
-                    color={dashboard.onPrimary}
-                    name="checkmark"
-                    size={13}
-                  />
-                ) : null}
-              </View>
+        return (
+          <Pressable
+            accessibilityLabel={t("writingWorkspace.stages.tabAccessibility", {
+              stage: t(stage.labelKey),
+            })}
+            accessibilityRole="tab"
+            accessibilityState={{ disabled: !isEnabled, selected: isCurrent }}
+            disabled={!isEnabled}
+            key={stage.id}
+            onPress={() => onSelectStage(stage.id)}
+            style={({ pressed }) => [
+              styles.assignmentStageTab,
+              isCurrent ? styles.assignmentStageTabActive : null,
+              isDone ? styles.assignmentStageTabDone : null,
+              !isEnabled ? styles.assignmentStageTabDisabled : null,
+              pressed ? styles.assignmentStageTabPressed : null,
+            ]}
+            testID={`assignment-detail-stage-tab-${stage.id}`}
+          >
+            {isDone ? (
+              <Ionicons
+                color={dashboard.secondary}
+                name="checkmark"
+                size={15}
+              />
+            ) : (
               <Text
                 selectable={false}
                 style={[
-                  getAccessibleTextStyle(styles.journeyLabel, settings),
-                  isCurrent || isDone ? styles.journeyLabelActive : null,
+                  getAccessibleTextStyle(styles.assignmentStageStep, settings),
+                  isCurrent ? styles.assignmentStageTextActive : null,
                 ]}
               >
-                {t(`assignments.detail.journey.${stage}`)}
+                {index + 1}
               </Text>
-            </View>
-          );
-        })}
-      </View>
+            )}
+            <Text
+              numberOfLines={1}
+              selectable={false}
+              style={[
+                getAccessibleTextStyle(styles.assignmentStageLabel, settings),
+                isCurrent ? styles.assignmentStageTextActive : null,
+                isDone ? styles.assignmentStageTextDone : null,
+              ]}
+            >
+              {t(stage.labelKey)}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -360,12 +407,18 @@ function FloatingWorkMenu({
 
 function AssignmentContent({
   assignment,
+  canStartWriting,
+  canSubmit,
   isOffline,
   onRefresh,
+  onSelectStage,
 }: {
   assignment: AssignmentRecord;
+  canStartWriting: boolean;
+  canSubmit: boolean;
   isOffline: boolean;
   onRefresh: () => void;
+  onSelectStage: (stage: AssignmentWorkStage) => void;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
@@ -403,6 +456,13 @@ function AssignmentContent({
               tone="warning"
             />
           ) : null}
+
+          <AssignmentStageTabs
+            assignment={assignment}
+            canStartWriting={canStartWriting}
+            canSubmit={canSubmit}
+            onSelectStage={onSelectStage}
+          />
 
           <View
             accessibilityLabel={buildAccessibilityLabel([
@@ -461,8 +521,6 @@ function AssignmentContent({
             />
           </View>
 
-          <StatusJourney status={assignment.status} />
-
           <View style={styles.coachBanner}>
             <View style={styles.coachIcon}>
               <Ionicons color={dashboard.secondary} name="sparkles" size={16} />
@@ -498,7 +556,7 @@ export function AssignmentDetailScreen() {
   const contentWidth = Math.min(width, 480);
   const [inputMenuExpanded, setInputMenuExpanded] = useState(false);
 
-  const startWriting = useCallback(async () => {
+  const startWriting = useCallback(async (stage: WritingWorkspaceStageParam = "draft") => {
     if (state.status !== "success" || !state.viewModel.assignment) {
       return;
     }
@@ -506,7 +564,7 @@ export function AssignmentDetailScreen() {
     const startedAssignment = await state.startAssignment();
 
     if (startedAssignment) {
-      router.push(getWritingWorkspaceRoute(startedAssignment.id, "draft"));
+      router.push(getWritingWorkspaceRoute(startedAssignment.id, stage));
     }
   }, [router, state]);
 
@@ -543,6 +601,25 @@ export function AssignmentDetailScreen() {
 
     router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
   }, [router, state]);
+
+  const handleStageSelect = useCallback(
+    (stage: AssignmentWorkStage) => {
+      if (stage === "understand") {
+        return;
+      }
+
+      if (stage === "submit") {
+        if (state.status === "success" && state.viewModel.canSubmit) {
+          openSubmit();
+        }
+
+        return;
+      }
+
+      void startWriting(stage);
+    },
+    [openSubmit, startWriting, state],
+  );
 
   const handlePrimaryPress = useCallback(() => {
     if (state.status !== "success") {
@@ -617,8 +694,11 @@ export function AssignmentDetailScreen() {
           {assignment ? (
             <AssignmentContent
               assignment={assignment}
+              canStartWriting={state.viewModel.canStartWriting}
+              canSubmit={state.viewModel.canSubmit}
               isOffline={state.viewModel.isOffline}
               onRefresh={state.refetch}
+              onSelectStage={handleStageSelect}
             />
           ) : null}
         </View>
@@ -886,68 +966,59 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     paddingHorizontal: 20,
   },
-  journeyCard: {
+  assignmentStageLabel: {
+    color: dashboard.onSurfaceVariant,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 15,
+    textAlign: "center",
+  },
+  assignmentStageStep: {
+    color: dashboard.outline,
+    fontSize: 11,
+    fontWeight: "800",
+    lineHeight: 14,
+    textAlign: "center",
+  },
+  assignmentStageTab: {
+    alignItems: "center",
     backgroundColor: dashboard.card,
     borderColor: dashboard.outlineVariant,
     borderCurve: "continuous",
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 17,
+    flex: 1,
+    gap: 3,
+    justifyContent: "center",
+    minHeight: 56,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
     ...cardShadow,
   },
-  journeyDot: {
-    alignItems: "center",
-    backgroundColor: dashboard.card,
-    borderColor: dashboard.surfaceDim,
-    borderRadius: 12,
-    borderWidth: 2,
-    height: 24,
-    justifyContent: "center",
-    width: 24,
-  },
-  journeyDotCore: {
-    backgroundColor: dashboard.onPrimary,
-    borderRadius: 4,
-    height: 8,
-    width: 8,
-  },
-  journeyDotCurrent: {
+  assignmentStageTabActive: {
     backgroundColor: dashboard.primary,
     borderColor: dashboard.primary,
   },
-  journeyDotDone: {
-    backgroundColor: dashboard.primaryContainer,
-    borderColor: dashboard.primaryContainer,
+  assignmentStageTabDisabled: {
+    opacity: 0.5,
   },
-  journeyLabel: {
-    color: palette.slate[400],
-    fontSize: 10,
-    fontWeight: "500",
-    lineHeight: 12,
-    textAlign: "center",
+  assignmentStageTabDone: {
+    backgroundColor: dashboard.primarySubtle,
+    borderColor: dashboard.primaryFixedBorder,
   },
-  journeyLabelActive: {
-    color: dashboard.primary,
-    fontWeight: "600",
+  assignmentStageTabPressed: {
+    opacity: 0.78,
   },
-  journeyRow: {
+  assignmentStageTabs: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 7,
-    position: "relative",
-  },
-  journeyStep: {
-    alignItems: "center",
     gap: 8,
-    width: "20%",
+    width: "100%",
   },
-  journeyTrack: {
-    backgroundColor: dashboard.surfaceContainerHigh,
-    height: 2,
-    left: 11,
-    position: "absolute",
-    right: 11,
-    top: 11,
+  assignmentStageTextActive: {
+    color: dashboard.onPrimary,
+  },
+  assignmentStageTextDone: {
+    color: dashboard.secondary,
   },
   phoneFrame: {
     alignSelf: "center",

@@ -19,6 +19,7 @@ import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState } from "@/shared/components/feedback";
 import { Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 import { getAccessibleTextStyle, getAccessibleColors, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { CanvasAttachmentPreview } from "../components/CanvasAttachmentPreview";
@@ -221,6 +222,20 @@ export function WritingWorkspaceScreen() {
       keyboardAvoiding
       testID="writing-workspace-screen"
     >
+      {state.status !== "success" ? (
+        <AppHeader
+          gradeBand={state.gradeBand}
+          leftAction={{
+            accessibilityLabelKey: "common.back",
+            type: "back",
+          }}
+          showSafeArea={false}
+          style={styles.stateHeader}
+          titleKey="writingWorkspace.headerTitle"
+          variant="centered"
+        />
+      ) : null}
+
       {state.status === "loading" ? (
         <LoadingState
           accessibilityLabel={t("writingWorkspace.loading.accessibility")}
@@ -800,6 +815,13 @@ const styles = StyleSheet.create({
   },
   stageCta: {
     borderRadius: 15,
+  },
+  stateHeader: {
+    backgroundColor: "transparent",
+    borderBottomWidth: 0,
+    paddingBottom: spacing.xs,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   stageTab: {
     alignItems: "center",

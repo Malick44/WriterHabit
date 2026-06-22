@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { routes } from "@/core/navigation/routeNames";
-import { getGradeBandForGrade, radius, spacing, typography } from "@/design/tokens";
+import { getGradeBandForGrade, palette, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { LoadingState, ProgressBar } from "@/shared/components/feedback";
 import { getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -45,20 +45,20 @@ type DailyPracticeThemeValues = {
 const DAILY_PRACTICE_SCREEN_ID = "onboarding.dailyPracticeGoal";
 
 const DAILY_PRACTICE_THEME_DEFAULTS: DailyPracticeThemeValues = {
-  accentColor: "#34593F",
+  accentColor: palette.blue[700],
   bodyScale: 1,
-  iconColor: "#34593F",
+  iconColor: palette.blue[700],
   iconScale: 1,
-  iconSurfaceColor: "#DFF0E3",
-  mutedTextColor: "#6B6258",
+  iconSurfaceColor: palette.blue[100],
+  mutedTextColor: palette.slate[600],
   optionCardRadius: 18,
   optionGap: 12,
-  optionSurfaceColor: "#FFFFFF",
-  progressTrackColor: "#E9E3DA",
-  screenBackgroundColor: "#F6F3EE",
-  selectedOptionColor: "#EEF2EC",
-  summarySurfaceColor: "#FFFFFF",
-  textColor: "#2C2825",
+  optionSurfaceColor: palette.white,
+  progressTrackColor: palette.slate[200],
+  screenBackgroundColor: palette.paper[50],
+  selectedOptionColor: palette.blue[50],
+  summarySurfaceColor: palette.white,
+  textColor: palette.slate[900],
   titleScale: 1,
 };
 
@@ -261,7 +261,7 @@ function getReadableControlColor(hexColor: string) {
   const normalized = hexColor.replace("#", "");
 
   if (normalized.length !== 6) {
-    return "#2C2825";
+    return palette.slate[900];
   }
 
   const red = Number.parseInt(normalized.slice(0, 2), 16);
@@ -269,7 +269,7 @@ function getReadableControlColor(hexColor: string) {
   const blue = Number.parseInt(normalized.slice(4, 6), 16);
   const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
 
-  return luminance > 0.56 ? "#2C2825" : "#FFFFFF";
+  return luminance > 0.56 ? palette.slate[900] : palette.white;
 }
 
 export function DailyPracticeGoalScreen() {
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     minHeight: 68,
     paddingHorizontal: spacing.xs,
     paddingVertical: 8,
-    shadowColor: "#2C2825",
+    shadowColor: palette.slate[900],
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
-    shadowColor: "#2C2825",
+    shadowColor: palette.slate[900],
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 20,

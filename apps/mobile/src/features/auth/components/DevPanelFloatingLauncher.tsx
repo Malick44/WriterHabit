@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AuthSession, DemoUserId, NavigableUserRole } from "@/core/auth/authTypes";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { getLaunchRoute, getPostLoginRoute } from "@/core/navigation/roleRouter";
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { colors, palette, radius, spacing, typography } from "@/design/tokens";
 import { onboardingPreviewTargets, prepareOnboardingPreview } from "@/features/onboarding";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
@@ -398,7 +398,7 @@ export function DevPanelFloatingLauncher() {
         ]}
         testID="dev-panel-floating-button"
       >
-        <Ionicons name="construct" size={24} color="#FFFFFF" />
+        <Ionicons name="construct" size={24} color={palette.white} />
         <Text style={styles.floatingText}>{t("auth.demoUsers.floatingLabel")}</Text>
       </Pressable>
 
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   floatingText: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 15,
     fontWeight: "700",
   },

@@ -3,6 +3,7 @@ import { translate } from "@/i18n";
 
 import type {
   StudentHomeApiResponse,
+  StudentHomeAssignment,
   StudentHomeCoachAction,
   StudentHomeGradeAdaptation,
   StudentHomeNavigationTarget,
@@ -53,13 +54,38 @@ export function getStudentHomeGradeAdaptation(gradeBand: GradeBand): StudentHome
   }
 }
 
+function getWorkspaceStageForAssignment(
+  assignment: StudentHomeAssignment,
+): StudentHomeNavigationTarget | null {
+  switch (assignment.status) {
+    case "in_progress":
+      return { assignmentId: assignment.id, kind: "write", stage: "draft" };
+    case "feedback_ready":
+    case "revision_in_progress":
+      return { assignmentId: assignment.id, kind: "write", stage: "revise" };
+    case "submitted":
+      return { assignmentId: assignment.id, kind: "write", stage: "submit" };
+    case "not_started":
+      return null;
+  }
+}
+
 function getPrimaryWritingTarget(dashboard: StudentHomeApiResponse): StudentHomeNavigationTarget {
   if (dashboard.continueDraft) {
-    return { assignmentId: dashboard.continueDraft.assignmentId, kind: "write" };
+    return {
+      assignmentId: dashboard.continueDraft.assignmentId,
+      kind: "write",
+      stage: "draft",
+    };
   }
 
   if (dashboard.todayAssignment) {
-    return { assignmentId: dashboard.todayAssignment.id, kind: "write" };
+    return (
+      getWorkspaceStageForAssignment(dashboard.todayAssignment) ?? {
+        assignmentId: dashboard.todayAssignment.id,
+        kind: "write",
+      }
+    );
   }
 
   return { kind: "assignmentHistory" };

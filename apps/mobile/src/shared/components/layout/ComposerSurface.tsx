@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { colors } from "@/design/tokens";
+import { colors, palette, withAlpha } from "@/design/tokens";
 
 export type ComposerSurfaceGradient = [string, string, string];
 
@@ -22,9 +22,9 @@ export type ComposerSurfacePalette = {
 export const composerSurfacePalette: ComposerSurfacePalette = {
   background: colors.dashboard.background,
   border: colors.dashboard.outlineVariant,
-  gradient: ["#FBF9F5", "#EFECE4", "#E3DFD5"],
-  orbPrimary: "rgba(52, 89, 63, 0.06)",
-  orbSecondary: "rgba(138, 106, 44, 0.06)",
+  gradient: [palette.slate[50], palette.paper[100], palette.paper[500]],
+  orbPrimary: withAlpha(palette.blue[700], 0.06),
+  orbSecondary: withAlpha(palette.amber[700], 0.06),
   shadow: colors.dashboard.outline,
 };
 

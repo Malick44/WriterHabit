@@ -1,6 +1,7 @@
 import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
 import { z } from "zod";
 
+import type { WritingWorkspaceStageParam } from "@/core/navigation/deepLinks";
 import type { GradeBand } from "@/design/tokens";
 import type { TranslationKey } from "@/i18n";
 
@@ -140,7 +141,7 @@ export type StudentHomeNavigationTarget =
   | { kind: "canvasTemplates" }
   | { kind: "progress" }
   | { kind: "review"; submissionId: string }
-  | { kind: "write"; assignmentId: string };
+  | { kind: "write"; assignmentId: string; stage?: WritingWorkspaceStageParam };
 
 export type StudentHomeCoachActionId = "hint" | "brainstorm" | "sentence_check" | "revision_help";
 

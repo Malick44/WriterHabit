@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getStudentReviewSummaryRoute } from "@/core/navigation/deepLinks";
-import { colors, layout, radius, spacing, typography } from "@/design/tokens";
+import { colors, layout, palette, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, OfflineBanner } from "@/shared/components/feedback";
 import { Screen } from "@/shared/components/layout";
@@ -30,7 +30,7 @@ export function AiReviewLoadingScreen() {
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[state.gradeBand];
-  const textColor = settings.highContrast ? accessibleColors.text : "#ffffff";
+  const textColor = settings.highContrast ? accessibleColors.text : palette.white;
   const mutedTextColor = settings.highContrast ? accessibleColors.mutedText : colors.dashboard.onPrimaryContainer;
 
   // Animation values: lazy state keeps the instances stable across renders
@@ -188,7 +188,7 @@ export function AiReviewLoadingScreen() {
                 },
               ]}
             />
-            <View style={[styles.avatarCircle, { borderColor: "#ffffff", backgroundColor: colors.dashboard.inverseSurfaceHigh }]}>
+            <View style={[styles.avatarCircle, { borderColor: palette.white, backgroundColor: colors.dashboard.inverseSurfaceHigh }]}>
               <Image
                 accessible={false}
                 source={require("../../../../assets/generated/empty-states/ai-coach-avatar.png")}

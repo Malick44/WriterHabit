@@ -33,7 +33,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, duration, layout, radius, spacing, typography } from "@/design/tokens";
+import { colors, duration, layout, palette, radius, spacing, typography, withAlpha } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import {
@@ -183,7 +183,7 @@ export const Modal = memo(function Modal({
         ? {
             border: colors.border.strong,
             mutedText: colors.border.strong,
-            pressed: "rgba(255, 255, 255, 0.12)",
+            pressed: withAlpha(palette.white, 0.12),
             surface: colors.background.inverse,
             text: colors.text.inverse,
           }

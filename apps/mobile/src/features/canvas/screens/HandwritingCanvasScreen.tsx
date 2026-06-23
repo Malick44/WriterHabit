@@ -3,7 +3,7 @@ import { Dimensions, Pressable, ScrollView, StyleSheet, View, type ViewStyle } f
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getCanvasTemplatePickerRoute, getWritingWorkspaceRoute } from "@/core/navigation/deepLinks";
+import { getAssignmentDetailRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
 import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState, SuccessState } from "@/shared/components/feedback";
@@ -167,7 +167,7 @@ export function HandwritingCanvasScreen() {
                 accessibilityLabel={t("canvas.workspace.attachSuccessAccessibility")}
                 description={t("canvas.workspace.attachSuccessDescription")}
                 gradeBand={state.gradeBand}
-                onActionPress={assignmentId ? () => router.push(getWritingWorkspaceRoute(assignmentId)) : undefined}
+                onActionPress={assignmentId ? () => router.push(getAssignmentDetailRoute(assignmentId)) : undefined}
                 title={t("canvas.workspace.attachSuccessTitle")}
               />
             ) : null}

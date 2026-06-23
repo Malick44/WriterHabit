@@ -19,8 +19,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getAssignmentSubmissionRoute,
   getCanvasTemplatePickerRoute,
-  getWritingWorkspaceRoute,
-  type WritingWorkspaceStageParam,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import {
@@ -311,22 +309,16 @@ function WorkOptionTile({
 }
 
 function FloatingWorkMenu({
-  assignment,
   canStartCanvas,
-  canStartWriting,
   canUploadWork,
   expanded,
-  onEditDraft,
   onOpenCanvas,
   onToggle,
   onUploadWork,
 }: {
-  assignment: AssignmentRecord;
   canStartCanvas: boolean;
-  canStartWriting: boolean;
   canUploadWork: boolean;
   expanded: boolean;
-  onEditDraft: () => void;
   onOpenCanvas: () => void;
   onToggle: () => void;
   onUploadWork: () => void;
@@ -347,18 +339,6 @@ function FloatingWorkMenu({
     >
       {expanded ? (
         <View style={styles.floatingOptions}>
-          <WorkOptionTile
-            accessibilityLabel={t("assignments.detail.editDraftAccessibility")}
-            description={t("assignments.detail.editDraftDescription")}
-            disabled={!canStartWriting}
-            icon="create-outline"
-            label={
-              assignment.draft
-                ? t("assignments.detail.editDraftCta")
-                : t("assignments.detail.startDraftCta")
-            }
-            onPress={() => runAction(onEditDraft)}
-          />
           <WorkOptionTile
             accessibilityLabel={t(
               "assignments.detail.uploadWorkAccessibility",
@@ -556,18 +536,6 @@ export function AssignmentDetailScreen() {
   const contentWidth = Math.min(width, 480);
   const [inputMenuExpanded, setInputMenuExpanded] = useState(false);
 
-  const startWriting = useCallback(async (stage: WritingWorkspaceStageParam = "draft") => {
-    if (state.status !== "success" || !state.viewModel.assignment) {
-      return;
-    }
-
-    const startedAssignment = await state.startAssignment();
-
-    if (startedAssignment) {
-      router.push(getWritingWorkspaceRoute(startedAssignment.id, stage));
-    }
-  }, [router, state]);
-
   const openSubmit = useCallback(() => {
     if (state.status !== "success" || !state.viewModel.assignment) {
       return;
@@ -576,8 +544,20 @@ export function AssignmentDetailScreen() {
     router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
-  const openCanvas = useCallback(() => {
+  // Students do their work by handwriting on the canvas; starting from a
+  // not-started assignment also flips it to in-progress so the draft tracks.
+  const openCanvas = useCallback(async () => {
     if (state.status !== "success" || !state.viewModel.assignment) {
+      return;
+    }
+
+    if (state.viewModel.assignment.status === "not_started") {
+      const startedAssignment = await state.startAssignment();
+
+      if (startedAssignment) {
+        router.push(getCanvasTemplatePickerRoute(startedAssignment.id));
+      }
+
       return;
     }
 
@@ -616,9 +596,9 @@ export function AssignmentDetailScreen() {
         return;
       }
 
-      void startWriting(stage);
+      void openCanvas();
     },
-    [openSubmit, startWriting, state],
+    [openCanvas, openSubmit, state],
   );
 
   const handlePrimaryPress = useCallback(() => {
@@ -631,8 +611,8 @@ export function AssignmentDetailScreen() {
       return;
     }
 
-    void startWriting();
-  }, [openSubmit, startWriting, state]);
+    void openCanvas();
+  }, [openCanvas, openSubmit, state]);
 
   if (state.status === "loading") {
     return (
@@ -683,9 +663,7 @@ export function AssignmentDetailScreen() {
   const assignment = state.viewModel.assignment;
   const primaryLabel = state.viewModel.canSubmit
     ? t("assignments.submit.reviewCta")
-    : assignment?.status === "not_started"
-      ? t("assignments.detail.startWritingCta")
-      : t("assignments.continueDraft");
+    : t("assignments.detail.useCanvasCta");
 
   return (
     <ComposerSurface>
@@ -714,17 +692,14 @@ export function AssignmentDetailScreen() {
             ]}
           >
             <FloatingWorkMenu
-              assignment={assignment}
               canStartCanvas={state.viewModel.canStartCanvas}
-              canStartWriting={state.viewModel.canStartWriting}
               canUploadWork={
                 state.viewModel.canStartWriting || state.viewModel.canSubmit
               }
               expanded={inputMenuExpanded}
-              onEditDraft={() => {
-                void startWriting();
+              onOpenCanvas={() => {
+                void openCanvas();
               }}
-              onOpenCanvas={openCanvas}
               onToggle={() => setInputMenuExpanded((value) => !value)}
               onUploadWork={() => {
                 void openUploadWork();
@@ -748,15 +723,15 @@ export function AssignmentDetailScreen() {
                 accessibilityHint={
                   state.viewModel.canSubmit
                     ? t("assignments.submit.hint")
-                    : t("assignments.detail.startWritingHint")
+                    : t("assignments.detail.startCanvasHint")
                 }
                 accessibilityLabel={
                   state.viewModel.canSubmit
                     ? t("assignments.submit.ctaAccessibility")
-                    : t("assignments.detail.startWritingAccessibility")
+                    : t("assignments.detail.startCanvasAccessibility")
                 }
                 disabled={
-                  !state.viewModel.canStartWriting && !state.viewModel.canSubmit
+                  !state.viewModel.canStartCanvas && !state.viewModel.canSubmit
                 }
                 label={primaryLabel}
                 loading={state.startStatus === "loading"}
@@ -765,14 +740,18 @@ export function AssignmentDetailScreen() {
                 style={styles.primaryButton}
                 variant="primary"
               />
-              {state.viewModel.canStartCanvas ? (
+              {!state.viewModel.canSubmit && state.viewModel.canStartWriting ? (
                 <Button
-                  accessibilityHint={t("assignments.detail.startCanvasHint")}
-                  accessibilityLabel={t(
-                    "assignments.detail.startCanvasAccessibility",
+                  accessibilityHint={t(
+                    "assignments.detail.uploadWorkAccessibility",
                   )}
-                  label={t("assignments.detail.useCanvasCta")}
-                  onPress={openCanvas}
+                  accessibilityLabel={t(
+                    "assignments.detail.uploadWorkAccessibility",
+                  )}
+                  label={t("assignments.detail.uploadWorkCta")}
+                  onPress={() => {
+                    void openUploadWork();
+                  }}
                   size="md"
                   style={styles.canvasButton}
                   variant="secondary"

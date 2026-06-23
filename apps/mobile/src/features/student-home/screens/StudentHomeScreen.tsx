@@ -17,7 +17,6 @@ import {
   getAssignmentDetailRoute,
   getCanvasTemplatePickerRoute,
   getStudentReviewRoute,
-  getWritingWorkspaceRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import {
@@ -236,7 +235,9 @@ export function StudentHomeScreen() {
           router.push(getStudentReviewRoute(target.submissionId));
           return;
         case "write":
-          router.push(getWritingWorkspaceRoute(target.assignmentId, target.stage));
+          // Writing work happens by handwriting on the canvas, so the "write"
+          // target opens the canvas templates for the assignment.
+          router.push(getCanvasTemplatePickerRoute(target.assignmentId));
           return;
       }
     },

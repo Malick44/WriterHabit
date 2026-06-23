@@ -1,10 +1,13 @@
 import { useCallback } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
+import { AssignmentAttachmentUploader } from "@/features/assignments/components";
+import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState } from "@/shared/components/feedback";
@@ -17,6 +20,8 @@ import {
 
 import { getPracticeTask } from "../data/practiceCatalog";
 import { usePracticeSession } from "../hooks/usePracticeSession";
+
+const PRACTICE_GRADE_BAND = "middle" as const;
 
 const dashboard = colors.dashboard;
 const type = typography.gradeBands.middle;
@@ -40,9 +45,14 @@ export function PracticeSessionScreen() {
     getParamValue(params.taskId),
   );
   const session = usePracticeSession();
+  const attachments = useAssignmentAttachments();
 
   const handleBackToPractice = useCallback(() => {
     router.navigate(routes.studentPractice);
+  }, [router]);
+
+  const handleUseCanvas = useCallback(() => {
+    router.push(getCanvasTemplatePickerRoute());
   }, [router]);
 
   if (!entry) {
@@ -195,19 +205,51 @@ export function PracticeSessionScreen() {
                 {task.sourceText}
               </Text>
 
-              <TextInput
-                accessibilityLabel={t("dailyPractice.inputAccessibility")}
-                multiline
-                onChangeText={session.setAnswer}
-                placeholder={t("dailyPractice.inputPlaceholder")}
-                placeholderTextColor={dashboard.onSurfaceVariant}
-                style={[
-                  getAccessibleTextStyle(type.body, settings),
-                  styles.input,
-                ]}
-                textAlignVertical="top"
-                value={session.answer}
-              />
+              <View style={styles.workSection}>
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.bodyStrong, settings),
+                    styles.workTitle,
+                  ]}
+                >
+                  {t("dailyPractice.workTitle")}
+                </Text>
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.caption, settings),
+                    styles.workSubtitle,
+                  ]}
+                >
+                  {t("dailyPractice.workSubtitle")}
+                </Text>
+
+                <Button
+                  accessibilityLabel={t("dailyPractice.useCanvasAccessibility")}
+                  fullWidth
+                  label={t("dailyPractice.useCanvasCta")}
+                  onPress={handleUseCanvas}
+                  size="md"
+                  variant="secondary"
+                />
+
+                <AssignmentAttachmentUploader
+                  attachments={attachments.attachments}
+                  error={attachments.error}
+                  gradeBand={PRACTICE_GRADE_BAND}
+                  isPicking={attachments.isPicking}
+                  onPickFile={() => {
+                    void attachments.pickFile();
+                  }}
+                  onPickPhoto={() => {
+                    void attachments.pickPhoto();
+                  }}
+                  onRemove={attachments.remove}
+                  onRetryExtraction={attachments.retryExtraction}
+                  onTakePhoto={() => {
+                    void attachments.takePhoto();
+                  }}
+                />
+              </View>
 
               <Button
                 accessibilityLabel={t("dailyPractice.completeAccessibility")}
@@ -287,16 +329,16 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderBottomWidth: 0,
   },
-  input: {
-    borderColor: dashboard.outlineVariant,
-    borderRadius: radius.lg,
-    borderStyle: "dashed",
-    borderWidth: 1.5,
-    color: dashboard.onSurface,
-    minHeight: 96,
-    padding: spacing.md,
-  },
   instruction: {
+    color: dashboard.onSurface,
+  },
+  workSection: {
+    gap: spacing.md,
+  },
+  workSubtitle: {
+    color: dashboard.onSurfaceVariant,
+  },
+  workTitle: {
     color: dashboard.onSurface,
   },
   notFound: {

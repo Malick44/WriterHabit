@@ -4,6 +4,7 @@ import { View } from "react-native";
 import type { CanvasStroke } from "../types";
 
 interface CanvasStrokePathProps {
+  pageHeight?: number;
   stroke: CanvasStroke;
   surfaceHeight: number;
   surfaceWidth: number;
@@ -16,6 +17,7 @@ interface CanvasStrokePathProps {
  * re-render while the active stroke grows.
  */
 export const CanvasStrokePath = memo(function CanvasStrokePath({
+  pageHeight,
   stroke,
   surfaceHeight,
   surfaceWidth,
@@ -27,6 +29,7 @@ export const CanvasStrokePath = memo(function CanvasStrokePath({
   }
 
   const opacity = stroke.opacity ?? 1;
+  const yScale = pageHeight ?? surfaceHeight;
 
   if (stroke.points.length === 1) {
     return (
@@ -39,7 +42,7 @@ export const CanvasStrokePath = memo(function CanvasStrokePath({
           left: firstPoint.x * surfaceWidth - stroke.width / 2,
           opacity,
           position: "absolute",
-          top: firstPoint.y * surfaceHeight - stroke.width / 2,
+          top: firstPoint.y * yScale - stroke.width / 2,
           width: stroke.width,
         }}
       />
@@ -56,9 +59,9 @@ export const CanvasStrokePath = memo(function CanvasStrokePath({
         }
 
         const startX = previous.x * surfaceWidth;
-        const startY = previous.y * surfaceHeight;
+        const startY = previous.y * yScale;
         const deltaX = point.x * surfaceWidth - startX;
-        const deltaY = point.y * surfaceHeight - startY;
+        const deltaY = point.y * yScale - startY;
         const length = Math.hypot(deltaX, deltaY);
         const angle = Math.atan2(deltaY, deltaX);
 

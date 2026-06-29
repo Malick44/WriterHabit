@@ -92,6 +92,10 @@ export function PracticeHomeScreen() {
     <ComposerSurface>
       <SafeAreaView edges={["top"]} style={styles.safeArea}>
         <AppHeader
+          leftAction={{
+            accessibilityLabelKey: "dailyPractice.backAccessibility",
+            type: "back",
+          }}
           showSafeArea={false}
           style={styles.header}
           titleKey="dailyPractice.home.title"

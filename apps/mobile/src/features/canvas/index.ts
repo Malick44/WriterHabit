@@ -2,7 +2,7 @@ export * from "./api/canvasApi";
 export * from "./components";
 export * from "./hooks/useCanvas";
 export * from "./screens/CanvasHomeScreen";
-export * from "./screens/CanvasTemplatePickerScreen";
+export * from "./screens/CanvasCreateScreen";
 export * from "./screens/HandwritingCanvasScreen";
 export * from "./screens/CanvasAttachmentScreen";
 export * from "./services/canvasDocumentService";

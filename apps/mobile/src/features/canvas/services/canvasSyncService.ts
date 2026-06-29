@@ -5,7 +5,9 @@ import { apiClient } from "@/core/api/apiClient";
 import {
   INITIAL_CANVAS_CLIENT_VERSION,
   canvasDocumentSchema,
+  canvasDocumentSummarySchema,
   canvasScenarioSchema,
+  canvasStrokeSchema,
   type CanvasDetailResponse,
   type CanvasDocument,
   type CanvasListResponse,
@@ -27,13 +29,23 @@ export const canvasSignedUploadPlaceholderSchema = z.object({
 });
 
 export const canvasBackendMetadataSchema = z.object({
-  attachedAt: z.string().datetime().nullable(),
+  assignmentId: z.string().nullable().optional(),
+  attachedAt: z.string().datetime().nullable().optional(),
   canvasDocumentId: z.string().min(1),
   clientVersion: z.number().int().nonnegative(),
-  previewImageUrl: z.string().nullable(),
+  createdAt: z.string().datetime().optional(),
+  exportStatus: z.enum(["not_requested", "queued", "ready", "failed"]).optional(),
+  previewImageUrl: z.string().nullable().optional(),
+  recognizedText: z.string().nullable().optional(),
   serverVersion: z.number().int().nonnegative(),
-  storageObjectPath: z.string().min(1),
-  syncedAt: z.string().datetime(),
+  storageObjectPath: z.string().min(1).nullable(),
+  strokeCount: z.number().int().nonnegative().optional(),
+  strokes: z.array(canvasStrokeSchema).optional(),
+  syncStatus: z.enum(["local_only", "saving", "saved", "sync_failed"]).optional(),
+  syncedAt: z.string().datetime().optional(),
+  template: z.string().optional(),
+  title: z.string().optional(),
+  updatedAt: z.string().datetime().optional(),
 });
 
 export const canvasExportPlaceholderSchema = z.object({
@@ -50,6 +62,39 @@ export type CanvasBackendSyncStatus = "backend_disabled" | "offline" | "synced" 
 export type CanvasSignedUploadPlaceholder = z.infer<typeof canvasSignedUploadPlaceholderSchema>;
 export type CanvasBackendMetadata = z.infer<typeof canvasBackendMetadataSchema>;
 export type CanvasExportPlaceholder = z.infer<typeof canvasExportPlaceholderSchema>;
+
+const canvasBackendSummarySchema = z.object({
+  assignmentId: z.string().nullable(),
+  canvasDocumentId: z.string().min(1),
+  isAttached: z.boolean(),
+  strokeCount: z.number().int().nonnegative(),
+  syncStatus: z.enum(["local_only", "saving", "saved", "sync_failed"]),
+  template: z.enum([
+    "blank_page",
+    "lined_paper",
+    "storyboard",
+    "mind_map",
+    "essay_plan",
+    "vocabulary_web",
+    "handwriting_practice",
+    "annotate_passage",
+  ]),
+  title: z.string().min(1),
+  updatedAt: z.string().datetime(),
+});
+
+const canvasBackendListSchema = z.object({
+  items: z.array(canvasBackendSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+const canvasBackendAttachSchema = z.object({
+  assignmentId: z.string().nullable(),
+  attachedAt: z.string().datetime(),
+  canvasDocumentId: z.string().min(1),
+  clientVersion: z.number().int().nonnegative(),
+  syncStatus: z.literal("saved"),
+});
 
 export interface CanvasSyncSaveInput {
   document: CanvasDocument;
@@ -97,6 +142,48 @@ function getClientVersion(document: CanvasDocument): number {
 
 function getCanvasObjectPath(document: CanvasDocument): string {
   return `students/${document.studentId}/canvas/${document.id}/v${getClientVersion(document)}.json`;
+}
+
+function mapBackendDocumentToCanvasDocument(input: {
+  document: CanvasBackendMetadata;
+  fallback?: CanvasDocument | null;
+  studentId: string;
+}): CanvasDocument {
+  const fallback = input.fallback;
+
+  return canvasDocumentSchema.parse({
+    assignmentId: input.document.assignmentId ?? fallback?.assignmentId,
+    attachedAt: input.document.attachedAt ?? fallback?.attachedAt,
+    clientVersion: input.document.clientVersion,
+    createdAt: input.document.createdAt ?? fallback?.createdAt ?? new Date().toISOString(),
+    exportStatus: input.document.exportStatus ?? fallback?.exportStatus ?? "not_requested",
+    id: input.document.canvasDocumentId,
+    lastSyncedAt: input.document.syncedAt ?? input.document.updatedAt ?? new Date().toISOString(),
+    previewImageUrl: input.document.previewImageUrl ?? fallback?.previewImageUrl,
+    recognizedText: input.document.recognizedText ?? fallback?.recognizedText,
+    serverVersion: input.document.serverVersion,
+    studentId: input.studentId,
+    storageObjectPath: input.document.storageObjectPath ?? fallback?.storageObjectPath,
+    strokes: input.document.strokes ?? fallback?.strokes ?? [],
+    syncStatus: input.document.syncStatus ?? "saved",
+    template: input.document.template ?? fallback?.template ?? "blank_page",
+    title: input.document.title ?? fallback?.title ?? "Canvas draft",
+    updatedAt: input.document.updatedAt ?? input.document.syncedAt ?? fallback?.updatedAt ?? new Date().toISOString(),
+  });
+}
+
+function mapBackendSummaryToCanvasSummary(summary: z.infer<typeof canvasBackendSummarySchema>) {
+  return canvasDocumentSummarySchema.parse({
+    assignmentId: summary.assignmentId ?? undefined,
+    id: summary.canvasDocumentId,
+    isAttached: summary.isAttached,
+    strokeCount: summary.strokeCount,
+    syncStatus: summary.syncStatus,
+    template: summary.template,
+    title: summary.title,
+    updatedAt: summary.updatedAt,
+    updatedLabel: "Saved recently",
+  });
 }
 
 function estimateStrokePayloadSize(document: CanvasDocument): number {
@@ -184,6 +271,7 @@ async function upsertBackendMetadata(
       previewImageUrl: document.previewImageUrl ?? null,
       storageObjectPath: signedUpload.objectPath,
       strokeCount: document.strokes.length,
+      strokes: document.strokes,
       studentId: document.studentId,
       template: document.template,
       title: document.title,
@@ -205,7 +293,7 @@ async function attachBackendCanvas(document: CanvasDocument, assignmentId: strin
       clientVersion: getClientVersion(document),
       studentId: document.studentId,
     },
-    { schema: z.undefined() },
+    { schema: canvasBackendAttachSchema },
   );
 }
 
@@ -228,7 +316,7 @@ async function requestPreviewExportPlaceholder(document: CanvasDocument): Promis
 }
 
 async function markSyncFailed(localDocument: CanvasDocument): Promise<CanvasDocument> {
-  return canvasPersistenceService.saveDocument(
+  return canvasPersistenceService.saveLocalDocument(
     {
       ...localDocument,
       syncStatus: "sync_failed",
@@ -242,14 +330,14 @@ async function persistSyncedDocument(input: {
   exportPlaceholder: CanvasExportPlaceholder;
   metadata: CanvasBackendMetadata;
 }): Promise<CanvasDocument> {
-  return canvasPersistenceService.saveDocument(
+  return canvasPersistenceService.saveLocalDocument(
     canvasDocumentSchema.parse({
       ...input.document,
       exportStatus: input.exportPlaceholder.status === "failed" ? "failed" : input.exportPlaceholder.status,
       lastSyncedAt: input.metadata.syncedAt,
       previewImageUrl: input.exportPlaceholder.previewImageUrl ?? input.document.previewImageUrl,
       serverVersion: input.metadata.serverVersion,
-      storageObjectPath: input.metadata.storageObjectPath,
+      storageObjectPath: input.metadata.storageObjectPath ?? input.document.storageObjectPath,
       syncStatus: "saved",
     }),
     { touchUpdatedAt: false },
@@ -312,7 +400,7 @@ export function createCanvasAutosaveScheduler(input: {
 
 async function saveCanvasLocalFirst(input: CanvasSyncSaveInput): Promise<CanvasSyncSaveResult> {
   const scenario = readCanvasScenario();
-  const localDocument = await canvasPersistenceService.saveDocument({
+  const localDocument = await canvasPersistenceService.saveLocalDocument({
     ...input.document,
     studentId: input.studentId,
     syncStatus: "local_only",
@@ -348,7 +436,7 @@ async function saveCanvasLocalFirst(input: CanvasSyncSaveInput): Promise<CanvasS
 
     const exportPlaceholder = await requestPreviewExportPlaceholder({
       ...localDocument,
-      storageObjectPath: metadata.storageObjectPath,
+      storageObjectPath: metadata.storageObjectPath ?? localDocument.storageObjectPath,
     });
     const syncedDocument = await persistSyncedDocument({
       document: localDocument,
@@ -402,7 +490,26 @@ export const canvasSyncService = {
       throw new Error("Canvas detail mock error");
     }
 
-    const document = await canvasPersistenceService.getDocument(input.studentId, input.canvasId);
+    const localDocument = await canvasPersistenceService.getDocument(input.studentId, input.canvasId);
+    let document = localDocument;
+
+    if (isBackendSyncEnabled()) {
+      try {
+        const backendDocument = await apiClient.get(`/canvas-documents/${input.canvasId}`, {
+          schema: canvasBackendMetadataSchema,
+        });
+        document = await canvasPersistenceService.saveLocalDocument(
+          mapBackendDocumentToCanvasDocument({
+            document: backendDocument,
+            fallback: localDocument,
+            studentId: input.studentId,
+          }),
+          { touchUpdatedAt: false },
+        );
+      } catch {
+        document = localDocument;
+      }
+    }
 
     return {
       connectionStatus: getCanvasConnectionStatus(scenario),
@@ -419,7 +526,23 @@ export const canvasSyncService = {
       throw new Error("Canvas list mock error");
     }
 
-    const documents = scenario === "empty" ? [] : await canvasPersistenceService.getDocuments(input.studentId);
+    let documents = scenario === "empty" ? [] : await canvasPersistenceService.getDocuments(input.studentId);
+
+    if (scenario !== "empty" && isBackendSyncEnabled()) {
+      try {
+        const backendList = await apiClient.get(`/students/${encodeURIComponent(input.studentId)}/canvas-documents`, {
+          schema: canvasBackendListSchema,
+        });
+        const backendSummaries = backendList.items.map(mapBackendSummaryToCanvasSummary);
+        documents = [
+          ...backendSummaries,
+          ...documents.filter((document) => !backendSummaries.some((summary) => summary.id === document.id)),
+        ].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+      } catch {
+        // Keep the local list. Draft safety is more important than surfacing a
+        // transient server read failure while the student is trying to write.
+      }
+    }
 
     return {
       connectionStatus: getCanvasConnectionStatus(scenario),

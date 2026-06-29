@@ -49,7 +49,8 @@ describe("canvasSyncService", () => {
     process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC = originalBackendSync;
   });
 
-  it("saves locally first and records backend placeholder metadata by default", async () => {
+  it("saves locally first and records backend placeholder metadata when backend sync is disabled", async () => {
+    process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC = "false";
     const document = createCanvasDocument({
       studentId: "student-1",
       template: "essay_plan",

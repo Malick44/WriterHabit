@@ -42,7 +42,9 @@ export function CanvasToolButton({
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const hitSlop = getAccessibleHitSlop(settings);
-  const target = Math.max(getMinimumTouchTarget(settings), gradeBand === "elementary" ? 48 : 44);
+  const minimumTarget = getMinimumTouchTarget(settings);
+  const useFullTarget = settings.textSize !== "default" || settings.simplifiedUi;
+  const visualTarget = useFullTarget ? minimumTarget : gradeBand === "elementary" ? 34 : 30;
   const iconColor = active ? colors.action.primary.foreground : accessibleColors.text;
 
   return (
@@ -55,7 +57,7 @@ export function CanvasToolButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { height: target, width: target },
+        { height: visualTarget, width: visualTarget },
         active
           ? { backgroundColor: settings.highContrast ? accessibleColors.actionBackground : colors.action.primary.background }
           : pressed
@@ -65,7 +67,7 @@ export function CanvasToolButton({
       ]}
       testID={testID}
     >
-      {children ?? <Ionicons color={iconColor} name={icon} size={20} />}
+      {children ?? <Ionicons color={iconColor} name={icon} size={14} />}
       {active ? <View accessible={false} style={styles.activeDot} pointerEvents="none" /> : null}
     </Pressable>
   );
@@ -75,10 +77,10 @@ const styles = StyleSheet.create({
   activeDot: {
     backgroundColor: colors.action.primary.foreground,
     borderRadius: radius.full,
-    bottom: 6,
-    height: 3,
+    bottom: 4,
+    height: 2,
     position: "absolute",
-    width: 14,
+    width: 10,
   },
   button: {
     alignItems: "center",

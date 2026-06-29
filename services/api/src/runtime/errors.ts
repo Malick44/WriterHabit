@@ -146,6 +146,12 @@ const errorCatalog = {
     retryable: false,
     statusCode: 400,
   },
+  "validation.invalid_canvas_attachment": {
+    fallbackMessage: "One attached canvas page could not be verified. Reopen the draft and try again.",
+    messageKey: "errors.validation.invalidCanvasAttachment",
+    retryable: false,
+    statusCode: 422,
+  },
   "webhook.invalid_signature": {
     fallbackMessage: "Webhook authorization could not be verified.",
     messageKey: "errors.webhook.invalidSignature",

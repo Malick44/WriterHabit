@@ -554,19 +554,21 @@ feedback_ready | revision_in_progress -> completed via backend revision completi
 
 The mobile canvas stores compact stroke documents locally and saves locally
 before any backend attempt. `apps/mobile/src/features/canvas/services/canvasSyncService.ts`
-now scaffolds backend sync with deterministic signed upload and export
-placeholders by default. It only calls these planned API routes when
-`EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`; the API runtime now
-registers these routes, but they return `501 feature.disabled` until signed
-object storage, metadata persistence, and authorization checks are implemented.
+now syncs canvas documents through the backend by default. Set
+`EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=false` only for local
+placeholder/offline testing. The API runtime persists canvas metadata and stroke
+JSON through service-role database routes, validates student ownership, and
+keeps local-first mobile fallback behavior for offline or failed syncs.
 
 Backend canvas storage splits editable payloads from metadata:
 
-- Stroke JSON is uploaded through a signed URL and referenced by object path.
+- Stroke JSON is persisted in `canvas_document_contents` and referenced by
+  `canvas_documents`.
 - Metadata endpoints store template, title, stroke count, client/server version,
   assignment attachment, preview/export state, and sync timestamps.
-- Export and recognition endpoints queue placeholder jobs until runtime workers
-  exist.
+- Export queues a placeholder status until runtime workers exist. Delete,
+  create-by-student collection POST, and recognition remain fail-closed
+  placeholder routes.
 
 ```txt
 GET    /students/:studentId/canvas-documents
@@ -607,8 +609,7 @@ interface CanvasStroke {
 }
 
 interface CanvasDocumentMetadataResponse {
-  id: string;
-  studentId: string;
+  canvasDocumentId: string;
   assignmentId: string | null;
   template: CanvasTemplate;
   title: string;
@@ -621,28 +622,32 @@ interface CanvasDocumentMetadataResponse {
   serverVersion: number;
   storageObjectPath: string | null;
   exportStatus: "not_requested" | "queued" | "ready" | "failed";
-  lastSyncedAt: string | null;
+  syncedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 interface CanvasDocumentResponse extends CanvasDocumentMetadataResponse {
-  strokes?: CanvasStroke[];
+  strokes: CanvasStroke[];
 }
 
-interface UpsertCanvasMetadataRequest {
+interface UpsertCanvasDocumentRequest {
+  assignmentId?: string | null;
+  studentId: string;
   title: string;
   template: CanvasTemplate;
   strokeCount: number;
+  strokes: CanvasStroke[];
   clientVersion: number;
-  storageObjectPath: string;
+  storageObjectPath?: string | null;
   previewImageUrl?: string | null;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 interface AttachCanvasRequest {
   assignmentId: string;
   clientVersion: number;
+  studentId: string;
 }
 
 interface SignedUploadUrlRequest {

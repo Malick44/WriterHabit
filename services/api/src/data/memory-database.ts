@@ -6,6 +6,7 @@ import type {
   ApplyEntitlementProviderEventResult,
   AssignmentRecord,
   BadgeRecord,
+  CanvasDocumentRecord,
   ClassRecord,
   ClassRosterStudentRecord,
   CreateSubmissionInput,
@@ -40,6 +41,7 @@ import type {
   SubmissionRevisionRecord,
   TeacherProfileRecord,
   TransitionReviewJobInput,
+  UpsertCanvasDocumentInput,
   UpsertEntitlementInput,
   WeeklyReviewRecord,
 } from "./types";
@@ -77,6 +79,7 @@ export interface MemoryDatabaseSeed {
   activityDays?: StudentActivityDayRecord[];
   assignments?: AssignmentRecord[];
   badges?: BadgeRecord[];
+  canvasDocuments?: CanvasDocumentRecord[];
   classStudents?: MemoryClassStudent[];
   classes?: ClassRecord[];
   drafts?: DraftRecord[];
@@ -116,6 +119,7 @@ export class MemoryDatabase implements Database {
   readonly activityDays: StudentActivityDayRecord[];
   readonly assignments: AssignmentRecord[];
   readonly badges: BadgeRecord[];
+  readonly canvasDocuments: CanvasDocumentRecord[];
   readonly classStudents: MemoryClassStudent[];
   readonly classes: ClassRecord[];
   readonly drafts: DraftRecord[];
@@ -145,6 +149,7 @@ export class MemoryDatabase implements Database {
     this.activityDays = [...(seed.activityDays ?? [])];
     this.assignments = [...(seed.assignments ?? [])];
     this.badges = [...(seed.badges ?? [])];
+    this.canvasDocuments = seed.canvasDocuments?.map((record) => this.copyCanvasDocument(record)) ?? [];
     this.classStudents = [...(seed.classStudents ?? [])];
     this.classes = [...(seed.classes ?? [])];
     this.drafts = [...(seed.drafts ?? [])];
@@ -172,6 +177,15 @@ export class MemoryDatabase implements Database {
     const profile = this.studentProfiles.find((record) => record.id === studentProfileId);
     const user = profile ? this.users.find((record) => record.id === profile.userId) : undefined;
     return user?.displayName ?? "Student";
+  }
+
+  private copyCanvasDocument(record: CanvasDocumentRecord): CanvasDocumentRecord {
+    return {
+      ...record,
+      strokes: record.strokes.map((stroke) =>
+        typeof stroke === "object" && stroke !== null ? JSON.parse(JSON.stringify(stroke)) : stroke,
+      ),
+    };
   }
 
   private activeClassIdsOwnedByTeacherUser(teacherUserId: string): string[] {
@@ -568,6 +582,77 @@ export class MemoryDatabase implements Database {
     );
 
     return revision ? { ...revision } : null;
+  }
+
+  async getCanvasDocumentById(canvasDocumentId: string): Promise<CanvasDocumentRecord | null> {
+    const record = this.canvasDocuments.find((candidate) => candidate.id === canvasDocumentId);
+    return record ? this.copyCanvasDocument(record) : null;
+  }
+
+  async listCanvasDocumentsByIds(canvasDocumentIds: readonly string[]): Promise<CanvasDocumentRecord[]> {
+    const idSet = new Set(canvasDocumentIds);
+    return this.canvasDocuments
+      .filter((candidate) => idSet.has(candidate.id))
+      .map((record) => this.copyCanvasDocument(record));
+  }
+
+  async listCanvasDocumentsForStudent(studentProfileId: string, limit: number): Promise<CanvasDocumentRecord[]> {
+    return this.canvasDocuments
+      .filter((record) => record.studentProfileId === studentProfileId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .slice(0, limit)
+      .map((record) => this.copyCanvasDocument(record));
+  }
+
+  async upsertCanvasDocument(input: UpsertCanvasDocumentInput): Promise<CanvasDocumentRecord> {
+    const timestamp = nowIso();
+    const existing = this.canvasDocuments.find((record) => record.id === input.id);
+
+    if (existing) {
+      existing.assignmentId = input.assignmentId ?? null;
+      existing.clientVersion = input.clientVersion;
+      existing.objectPath = input.objectPath ?? null;
+      existing.previewImagePath = input.previewImagePath ?? null;
+      existing.serverVersion = Math.max(existing.serverVersion, input.clientVersion);
+      existing.studentAssignmentId = input.studentAssignmentId ?? null;
+      existing.studentProfileId = input.studentProfileId;
+      existing.strokeCount = input.strokes.length;
+      existing.strokes = input.strokes.map((stroke) =>
+        typeof stroke === "object" && stroke !== null ? JSON.parse(JSON.stringify(stroke)) : stroke,
+      );
+      existing.syncStatus = input.syncStatus ?? "saved";
+      existing.template = input.template;
+      existing.title = input.title;
+      existing.updatedAt = timestamp;
+      return this.copyCanvasDocument(existing);
+    }
+
+    const record: CanvasDocumentRecord = {
+      assignmentId: input.assignmentId ?? null,
+      attachedAt: input.assignmentId ? timestamp : null,
+      clientVersion: input.clientVersion,
+      createdAt: timestamp,
+      exportStatus: "not_requested",
+      id: input.id,
+      objectPath: input.objectPath ?? null,
+      previewImagePath: input.previewImagePath ?? null,
+      recognizedText: null,
+      recognitionStatus: "not_requested",
+      serverVersion: input.clientVersion,
+      studentAssignmentId: input.studentAssignmentId ?? null,
+      studentProfileId: input.studentProfileId,
+      strokeCount: input.strokes.length,
+      strokes: input.strokes.map((stroke) =>
+        typeof stroke === "object" && stroke !== null ? JSON.parse(JSON.stringify(stroke)) : stroke,
+      ),
+      syncStatus: input.syncStatus ?? "saved",
+      template: input.template,
+      title: input.title,
+      updatedAt: timestamp,
+    };
+
+    this.canvasDocuments.push(record);
+    return this.copyCanvasDocument(record);
   }
 
   async getClassById(classId: string): Promise<ClassRecord | null> {

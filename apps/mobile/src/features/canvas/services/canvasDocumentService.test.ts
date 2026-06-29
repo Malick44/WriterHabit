@@ -111,6 +111,31 @@ describe("canvasDocumentService", () => {
     expect(stroke.tool).toBe("pen");
   });
 
+  it("preserves page-relative y positions beyond the first page", () => {
+    const document = createCanvasDocument({
+      studentId: "student-1",
+      template: "blank_page",
+      timestamp: "2026-06-09T09:00:00.000Z",
+    });
+    const stroke = createCanvasStroke({
+      color: "#0F172A",
+      point: { x: 0.4, y: 1.25 },
+      timestamp: "2026-06-09T09:00:00.000Z",
+      tool: "pen",
+      width: 4,
+    });
+    const withStroke = addCanvasStroke(document, stroke);
+    const appended = appendPointToCanvasStroke(withStroke, stroke.id, { x: 0.5, y: 1.35 });
+
+    expect(stroke.points[0]).toMatchObject({ x: 0.4, y: 1.25 });
+
+    if (appended.status !== "appended") {
+      throw new Error("expected appended result");
+    }
+
+    expect(appended.document.strokes[0]?.points.at(-1)).toMatchObject({ x: 0.5, y: 1.35 });
+  });
+
   it("appends sampled drag points to the active stroke without touching other strokes", () => {
     const document = createCanvasDocument({
       studentId: "student-1",

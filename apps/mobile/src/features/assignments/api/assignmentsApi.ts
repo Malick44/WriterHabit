@@ -39,10 +39,17 @@ interface AssignmentSubmitRequestInput extends AssignmentDetailRequestInput {
   typedText?: string;
 }
 
+interface AssignmentDraftSaveRequestInput extends AssignmentDetailRequestInput {
+  autosaveVersion: number;
+  canvasDocumentIds: string[];
+  text: string;
+}
+
 const backendDraftResponseSchema = z.object({
   autosaveVersion: z.number().int().min(1),
   canvasDocumentIds: z.array(z.string().min(1)),
   text: z.string(),
+  updatedAt: z.string().datetime().optional(),
 });
 
 const backendSubmissionResponseSchema = z.object({
@@ -416,6 +423,46 @@ function createHistoryResponse(input: AssignmentRequestInput, scenario: Assignme
 }
 
 export const assignmentsApi = {
+  async getBackendDraft(input: AssignmentDetailRequestInput): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
+    const detail = await this.getAssignmentDetail(input);
+    const studentAssignmentId = detail.assignment?.studentAssignmentId;
+
+    if (!detail.assignment || !studentAssignmentId) {
+      return null;
+    }
+
+    try {
+      return await apiClient.get(`/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`, {
+        schema: backendDraftResponseSchema,
+      });
+    } catch {
+      return null;
+    }
+  },
+
+  async saveBackendDraft(input: AssignmentDraftSaveRequestInput): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
+    const detail = await this.getAssignmentDetail(input);
+    const studentAssignmentId = detail.assignment?.studentAssignmentId;
+
+    if (!detail.assignment || !studentAssignmentId) {
+      return null;
+    }
+
+    try {
+      return await apiClient.put(
+        `/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`,
+        {
+          autosaveVersion: input.autosaveVersion,
+          canvasDocumentIds: input.canvasDocumentIds,
+          text: input.text,
+        },
+        { schema: backendDraftResponseSchema },
+      );
+    } catch {
+      return null;
+    }
+  },
+
   async getAssignments(input: AssignmentRequestInput): Promise<AssignmentHistoryResponse> {
     const scenario = readScenario();
 

@@ -138,7 +138,7 @@ export type StudentHomeApiResponse = z.infer<typeof studentHomeApiResponseSchema
 export type StudentHomeNavigationTarget =
   | { kind: "assignmentDetail"; assignmentId: string }
   | { kind: "assignmentHistory" }
-  | { kind: "canvasTemplates" }
+  | { kind: "canvasCreate" }
   | { kind: "progress" }
   | { kind: "review"; submissionId: string }
   | { kind: "write"; assignmentId: string; stage?: WritingWorkspaceStageParam };

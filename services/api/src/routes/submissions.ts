@@ -49,6 +49,41 @@ const createRevisionBodySchema = z.strictObject({
   revisionTaskId: z.string().min(1).max(128),
 });
 
+async function assertCanvasDocumentsBelongToStudentAssignment(input: {
+  assignmentId: string;
+  canvasDocumentIds: string[];
+  database: Database;
+  studentProfileId: string;
+}): Promise<void> {
+  if (input.canvasDocumentIds.length === 0) {
+    return;
+  }
+
+  const uniqueCanvasDocumentIds = [...new Set(input.canvasDocumentIds)];
+  const documents = await input.database.listCanvasDocumentsByIds(uniqueCanvasDocumentIds);
+  const documentsById = new Map(documents.map((document) => [document.id, document]));
+  const missingCanvasDocumentIds = uniqueCanvasDocumentIds.filter((id) => !documentsById.has(id));
+  const invalidCanvasDocumentIds = uniqueCanvasDocumentIds.filter((id) => {
+    const document = documentsById.get(id);
+
+    return (
+      !document ||
+      document.studentProfileId !== input.studentProfileId ||
+      (document.assignmentId !== null && document.assignmentId !== input.assignmentId)
+    );
+  });
+
+  if (missingCanvasDocumentIds.length > 0 || invalidCanvasDocumentIds.length > 0) {
+    throw new ApiHttpError({
+      code: "validation.invalid_canvas_attachment",
+      details: {
+        invalidCanvasDocumentIds,
+        missingCanvasDocumentIds,
+      },
+    });
+  }
+}
+
 export async function registerSubmissionRoutes(
   app: FastifyInstance,
   authenticate: preHandlerHookHandler,
@@ -89,6 +124,13 @@ export async function registerSubmissionRoutes(
         },
       });
     }
+
+    await assertCanvasDocumentsBelongToStudentAssignment({
+      assignmentId: studentAssignment.assignmentId,
+      canvasDocumentIds: body.canvasDocumentIds,
+      database,
+      studentProfileId: profile.id,
+    });
 
     const stats = computeTextStats(body.text);
     const draft = await database.saveDraft({
@@ -174,6 +216,13 @@ export async function registerSubmissionRoutes(
       }
 
       assertAssignmentTransition(studentAssignment.status, "submit_work");
+
+      await assertCanvasDocumentsBelongToStudentAssignment({
+        assignmentId: studentAssignment.assignmentId,
+        canvasDocumentIds: body.canvasDocumentIds,
+        database,
+        studentProfileId: profile.id,
+      });
 
       const stats = computeTextStats(typedText);
       const revisionNumber = (await database.getMaxSubmissionRevisionNumber(studentAssignment.id)) + 1;

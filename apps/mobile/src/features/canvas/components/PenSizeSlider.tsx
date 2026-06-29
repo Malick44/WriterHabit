@@ -13,8 +13,8 @@ import {
 import { useCanvasToolStore } from "../stores/canvasToolStore";
 import { MAX_PEN_WIDTH, MIN_PEN_WIDTH } from "../types";
 
-const TRACK_WIDTH = 104;
-const KNOB_SIZE = 26;
+const TRACK_WIDTH = 58;
+const KNOB_SIZE = 18;
 const LONG_PRESS_MS = 160;
 
 interface PenSizeSliderProps {
@@ -38,6 +38,7 @@ export function PenSizeSlider({ colorPickerOpen, gradeBand, onToggleColorPicker 
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
+  const showVisibleHint = settings.textSize !== "default" || settings.simplifiedUi;
   const width = useCanvasToolStore((store) => store.width);
   const color = useCanvasToolStore((store) => store.color);
   const setWidth = useCanvasToolStore((store) => store.setWidth);
@@ -134,9 +135,11 @@ export function PenSizeSlider({ colorPickerOpen, gradeBand, onToggleColorPicker 
         </View>
       </GestureDetector>
 
-      <Text selectable={false} style={[getAccessibleTextStyle(type.caption, settings), styles.hint]} numberOfLines={1}>
-        {t("canvas.handwriting.penSize.hint")}
-      </Text>
+      {showVisibleHint ? (
+        <Text selectable={false} style={[getAccessibleTextStyle(type.caption, settings), styles.hint]} numberOfLines={1}>
+          {t("canvas.handwriting.penSize.hint")}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -144,7 +147,7 @@ export function PenSizeSlider({ colorPickerOpen, gradeBand, onToggleColorPicker 
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    gap: 3,
+    gap: 2,
   },
   hint: {
     color: colors.text.muted,
@@ -155,11 +158,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.background.surface,
     borderRadius: radius.full,
-    borderWidth: 2,
+    borderWidth: 1.25,
     height: KNOB_SIZE,
     justifyContent: "center",
     position: "absolute",
-    top: 9,
+    top: 6,
     width: KNOB_SIZE,
     ...shadows.raised,
   },
@@ -188,18 +191,18 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   touchArea: {
-    height: KNOB_SIZE + 18,
+    height: KNOB_SIZE + 10,
     position: "relative",
     width: TRACK_WIDTH,
   },
   track: {
     backgroundColor: colors.background.subtle,
     borderRadius: radius.full,
-    height: 6,
+    height: 3,
     left: 0,
     position: "absolute",
     right: 0,
-    top: 19,
+    top: 13,
   },
   trackFill: {
     backgroundColor: colors.action.primary.background,

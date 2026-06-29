@@ -92,7 +92,15 @@ Current primitives include:
 - Feedback: `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`, `StatusState`, `OfflineBanner`, `RetryButton`, `ProgressBar`
 - Top alerts: `TopAlertBanner`, `TopAlertProvider`, `useTopAlert`, `showTopAlert`, `hideTopAlert`
 - Modals: `Modal`, `BottomSheetModal`, `ModalProvider`, `useModal`, `modalManager`
-- Navigation: `AppHeader`
+- Navigation: `AppHeader`, `RoleBottomMenu`
+
+`GlassSurface` in `apps/mobile/src/shared/components/layout/GlassSurface.tsx`
+is the shared Liquid Glass wrapper. It uses `expo-glass-effect` on iOS when
+Liquid Glass is available, respects the iOS reduce-transparency setting, and
+falls back to a normal React Native `View` on unsupported platforms or older
+native binaries. Feature code should compose this shared wrapper instead of
+importing `expo-glass-effect` directly. Current adoption is limited to the
+shared role-aware bottom navigation surface.
 
 Shared components accept user-facing labels and messages as props so feature screens can source copy from `apps/mobile/src/shared/i18n/`.
 

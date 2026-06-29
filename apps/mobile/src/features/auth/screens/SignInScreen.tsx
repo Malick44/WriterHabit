@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
+import { sessionService } from "@/core/auth/sessionService";
 import { routes } from "@/core/navigation/routeNames";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { StatusState } from "@/shared/components/feedback";
@@ -34,10 +35,25 @@ export function SignInScreen() {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
-  const { clearError, errorCode, isBusy, signInWithEmailLink } = useAuth();
+  const { clearError, errorCode, isBusy, signInWithApple, signInWithEmailLink } = useAuth();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | undefined>();
   const [loginLinkSent, setLoginLinkSent] = useState(false);
+  const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void sessionService.isAppleSignInAvailable().then((available) => {
+      if (isMounted) {
+        setIsAppleSignInAvailable(available);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const showSocialUnavailableAlert = (provider: AuthSocialProvider) => {
     topAlert.show({
@@ -65,6 +81,16 @@ export function SignInScreen() {
     if (!actionResult.errorCode) {
       setLoginLinkSent(true);
     }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (!isAppleSignInAvailable) {
+      showSocialUnavailableAlert("apple");
+      return;
+    }
+
+    clearError();
+    await signInWithApple();
   };
 
   return (
@@ -107,7 +133,7 @@ export function SignInScreen() {
           disabled={isBusy}
           label={t("auth.signIn.appleCta")}
           onPress={() => {
-            showSocialUnavailableAlert("apple");
+            void handleAppleSignIn();
           }}
           provider="apple"
         />

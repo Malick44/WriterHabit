@@ -218,7 +218,10 @@ export function StudentProgressScreen() {
       <AppHeader
         contentStyle={isTablet ? styles.headerContentTablet : undefined}
         gradeBand={state.gradeBand}
-        leftAction={{ type: "none" }}
+        leftAction={{
+          accessibilityLabelKey: "common.back",
+          type: "back",
+        }}
         rightActions={[
           {
             accessibilityLabelKey: "progress.dashboard.header.notificationsAccessibility",

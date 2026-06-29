@@ -13,9 +13,9 @@ function clampWidth(width: number): number {
   return Math.min(MAX_PEN_WIDTH, Math.max(MIN_PEN_WIDTH, Math.round(width)));
 }
 
-function stepHeightLevel(current: CanvasHeightLevel, delta: 1 | -1): CanvasHeightLevel {
+function stepHeightLevel(current: CanvasHeightLevel): CanvasHeightLevel {
   const index = CANVAS_HEIGHT_LEVELS.indexOf(current);
-  const nextIndex = Math.min(CANVAS_HEIGHT_LEVELS.length - 1, Math.max(0, index + delta));
+  const nextIndex = Math.min(CANVAS_HEIGHT_LEVELS.length - 1, Math.max(0, index + 1));
   return CANVAS_HEIGHT_LEVELS[nextIndex];
 }
 
@@ -28,7 +28,7 @@ interface CanvasToolState {
   width: number;
   /** Whether ruled guide lines are visible on the surface. */
   showLines: boolean;
-  /** Current canvas height preset. */
+  /** Current fixed-height page-count preset. */
   heightLevel: CanvasHeightLevel;
   /** Where the floating tool banner is anchored. */
   bannerPosition: CanvasBannerPosition;
@@ -40,7 +40,6 @@ interface CanvasToolState {
   toggleLines: () => void;
   setHeightLevel: (level: CanvasHeightLevel) => void;
   increaseHeight: () => void;
-  decreaseHeight: () => void;
   setBannerPosition: (position: CanvasBannerPosition) => void;
   setBannerHidden: (hidden: boolean) => void;
   toggleBanner: () => void;
@@ -51,7 +50,7 @@ export const useCanvasToolStore = create<CanvasToolState>((set) => ({
   color: "#0F172A",
   width: 5,
   showLines: false,
-  heightLevel: "medium",
+  heightLevel: "short",
   bannerPosition: "bottom",
   bannerHidden: false,
   setTool: (selectedTool) => set({ selectedTool }),
@@ -59,8 +58,7 @@ export const useCanvasToolStore = create<CanvasToolState>((set) => ({
   setWidth: (width) => set({ width: clampWidth(width) }),
   toggleLines: () => set((state) => ({ showLines: !state.showLines })),
   setHeightLevel: (heightLevel) => set({ heightLevel }),
-  increaseHeight: () => set((state) => ({ heightLevel: stepHeightLevel(state.heightLevel, 1) })),
-  decreaseHeight: () => set((state) => ({ heightLevel: stepHeightLevel(state.heightLevel, -1) })),
+  increaseHeight: () => set((state) => ({ heightLevel: stepHeightLevel(state.heightLevel) })),
   setBannerPosition: (bannerPosition) => set({ bannerPosition }),
   setBannerHidden: (bannerHidden) => set({ bannerHidden }),
   toggleBanner: () => set((state) => ({ bannerHidden: !state.bannerHidden })),

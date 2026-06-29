@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
+import { getCanvasDocumentRoute, getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { colors, shadows, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
@@ -89,7 +89,7 @@ export function CanvasAttachmentScreen() {
           accessibilityLabel={t("canvas.attachment.emptyAccessibility")}
           description={t("canvas.attachment.emptyDescription")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.push(getCanvasTemplatePickerRoute())}
+          onActionPress={() => router.push(getCanvasCreateRoute())}
           title={t("canvas.emptyTitle")}
         />
       ) : null}

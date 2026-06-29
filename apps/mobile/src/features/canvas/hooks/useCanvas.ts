@@ -31,7 +31,13 @@ import { useCanvasToolStore } from "../stores/canvasToolStore";
 
 export type CanvasHomeDataState =
   | { gradeBand: GradeBand; refetch: () => void; status: "loading" }
-  | { gradeBand: GradeBand; refetch: () => void; status: "error" }
+  | {
+      gradeBand: GradeBand;
+      isRefreshing: boolean;
+      refetch: () => void;
+      status: "error";
+      viewModel: CanvasHomeViewModel | null;
+    }
   | { gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void; status: "empty"; viewModel: CanvasHomeViewModel }
   | { gradeBand: GradeBand; isRefreshing: boolean; refetch: () => void; status: "success"; viewModel: CanvasHomeViewModel };
 
@@ -128,8 +134,24 @@ export function useCanvasHomeData(): CanvasHomeDataState {
     return { gradeBand: fallbackGradeBand, refetch, status: "loading" };
   }
 
-  if (query.isError || !viewModel) {
-    return { gradeBand: fallbackGradeBand, refetch, status: "error" };
+  if (query.isError) {
+    return {
+      gradeBand: viewModel?.gradeAdaptation.band ?? fallbackGradeBand,
+      isRefreshing: query.isFetching,
+      refetch,
+      status: "error",
+      viewModel,
+    };
+  }
+
+  if (!viewModel) {
+    return {
+      gradeBand: fallbackGradeBand,
+      isRefreshing: query.isFetching,
+      refetch,
+      status: "error",
+      viewModel: null,
+    };
   }
 
   if (viewModel.isEmpty) {

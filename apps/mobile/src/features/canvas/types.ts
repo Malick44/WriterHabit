@@ -30,17 +30,17 @@ export type CanvasSyncStatus = z.infer<typeof canvasSyncStatusSchema>;
 export const canvasBannerPositionSchema = z.enum(["bottom", "top", "left", "right"]);
 export type CanvasBannerPosition = z.infer<typeof canvasBannerPositionSchema>;
 
-/** Canvas height presets. Higher levels grow the writing surface downward
- * (the surface scrolls past the viewport). */
+/** Canvas page-count presets. Each added page keeps the same fixed height so
+ * existing handwriting is not rescaled when the document grows. */
 export const CANVAS_HEIGHT_LEVELS = ["short", "medium", "long", "extraLong"] as const;
 export type CanvasHeightLevel = (typeof CANVAS_HEIGHT_LEVELS)[number];
 
-/** Available viewport-height multipliers for each canvas height preset. */
-export const CANVAS_HEIGHT_MULTIPLIERS: Record<CanvasHeightLevel, number> = {
-  short: 0.72,
-  medium: 1,
-  long: 1.7,
-  extraLong: 2.5,
+/** Available fixed-height page counts for each canvas growth preset. */
+export const CANVAS_PAGE_COUNTS: Record<CanvasHeightLevel, number> = {
+  short: 1,
+  medium: 2,
+  long: 3,
+  extraLong: 4,
 };
 
 /** Pen width bounds for the dual-purpose pen size slider. */

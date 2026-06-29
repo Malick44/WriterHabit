@@ -14,7 +14,7 @@ import type {
   MockSessionScenario,
 } from "./authTypes";
 import { getDefaultDemoUserForRole, getDemoUserById, type DemoUserProfile } from "./demoUsers";
-import { sessionService } from "./sessionService";
+import { isAppleSignInCancellation, sessionService } from "./sessionService";
 
 type AuthStoreState = {
   status: "hydrating" | "ready";
@@ -27,6 +27,7 @@ type AuthStoreActions = {
   hydrateSession: () => Promise<void>;
   signInWithEmail: (input: AuthSignInInput) => Promise<AuthActionResult>;
   signInWithEmailLink: (input: AuthLoginLinkInput) => Promise<AuthActionResult>;
+  signInWithApple: () => Promise<AuthActionResult>;
   signUpWithEmail: (input: AuthSignUpInput) => Promise<AuthActionResult>;
   signInWithDemoUser: (demoUserId: DemoUserId) => Promise<AuthActionResult>;
   signInWithMockRole: (role: MockSessionRole, options?: { onboardingComplete?: boolean }) => Promise<AuthActionResult>;
@@ -160,6 +161,27 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       });
       return result;
     } catch {
+      set({ errorCode: "sign_in_failed", operationStatus: "idle", session: null, status: "ready" });
+      return { errorCode: "sign_in_failed", session: null };
+    }
+  },
+  signInWithApple: async () => {
+    set({ errorCode: null, operationStatus: "loading" });
+    try {
+      const result = await sessionService.signInWithApple();
+      set({
+        errorCode: null,
+        operationStatus: "idle",
+        session: result.session,
+        status: "ready",
+      });
+      return result;
+    } catch (error) {
+      if (isAppleSignInCancellation(error)) {
+        set({ errorCode: null, operationStatus: "idle", status: "ready" });
+        return { cancelled: true, session: null };
+      }
+
       set({ errorCode: "sign_in_failed", operationStatus: "idle", session: null, status: "ready" });
       return { errorCode: "sign_in_failed", session: null };
     }

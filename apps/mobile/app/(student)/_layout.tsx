@@ -102,7 +102,7 @@ export default function StudentLayout() {
           <Tabs.Screen name="assignments/[assignmentId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
           <Tabs.Screen name="assignments/submit" options={{ href: null }} />
           <Tabs.Screen name="canvas/[canvasId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
-          <Tabs.Screen name="canvas/templates" options={{ href: null }} />
+          <Tabs.Screen name="canvas/create" options={{ href: null }} />
           <Tabs.Screen name="progress/badges" options={{ href: null }} />
           <Tabs.Screen name="progress/skills/[skillId]" options={{ href: null }} />
           <Tabs.Screen name="progress/weekly-review" options={{ href: null }} />

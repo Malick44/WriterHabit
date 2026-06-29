@@ -6,7 +6,7 @@ import { colors, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
-import { EmptyState, ErrorState, LoadingState , ProgressBar } from "@/shared/components/feedback";
+import { EmptyState, ErrorState, LoadingState, ProgressBar } from "@/shared/components/feedback";
 import { Inline, PageSection, Screen, Stack } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
 import {
@@ -49,10 +49,9 @@ export function SkillDetailScreen() {
         }}
         showSafeArea={false}
         style={styles.header}
-        subtitleKey="progress.skillDetail.subtitle"
         titleKey={headerTitleKey}
         titleParams={headerTitleParams}
-        variant="transparent"
+        variant="compact"
       />
 
       {state.status === "loading" ? (
@@ -230,6 +229,7 @@ export function SkillDetailScreen() {
 
 const styles = StyleSheet.create({
   header: {
+    backgroundColor: "transparent",
     borderBottomWidth: 0,
     paddingBottom: 0,
     paddingHorizontal: 0,

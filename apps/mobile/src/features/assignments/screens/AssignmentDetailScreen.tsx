@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   getAssignmentSubmissionRoute,
-  getCanvasTemplatePickerRoute,
+  getCanvasCreateRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import {
@@ -555,13 +555,13 @@ export function AssignmentDetailScreen() {
       const startedAssignment = await state.startAssignment();
 
       if (startedAssignment) {
-        router.push(getCanvasTemplatePickerRoute(startedAssignment.id));
+        router.push(getCanvasCreateRoute(startedAssignment.id));
       }
 
       return;
     }
 
-    router.push(getCanvasTemplatePickerRoute(state.viewModel.assignment.id));
+    router.push(getCanvasCreateRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
   const openUploadWork = useCallback(async () => {

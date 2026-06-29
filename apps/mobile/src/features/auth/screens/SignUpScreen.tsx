@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { ZodError, ZodIssue } from "zod";
 
+import { sessionService } from "@/core/auth/sessionService";
 import { routes } from "@/core/navigation/routeNames";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { StatusState } from "@/shared/components/feedback";
@@ -57,13 +58,28 @@ export function SignUpScreen() {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
-  const { clearError, errorCode, isBusy, signUpWithEmail } = useAuth();
+  const { clearError, errorCode, isBusy, signInWithApple, signUpWithEmail } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [requiresEmailConfirmation, setRequiresEmailConfirmation] = useState(false);
+  const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void sessionService.isAppleSignInAvailable().then((available) => {
+      if (isMounted) {
+        setIsAppleSignInAvailable(available);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const clearFieldError = (field: SignUpFieldKey) => {
     setFieldErrors((current) => ({ ...current, [field]: undefined }));
@@ -98,6 +114,16 @@ export function SignUpScreen() {
     setFieldErrors({});
     const actionResult = await signUpWithEmail(toSignUpInput(result.data));
     setRequiresEmailConfirmation(Boolean(actionResult.requiresEmailConfirmation));
+  };
+
+  const handleAppleSignIn = async () => {
+    if (!isAppleSignInAvailable) {
+      showSocialUnavailableAlert("apple");
+      return;
+    }
+
+    clearError();
+    await signInWithApple();
   };
 
   return (
@@ -154,7 +180,7 @@ export function SignUpScreen() {
               disabled={isBusy}
               label={t("auth.signUp.appleCta")}
               onPress={() => {
-                showSocialUnavailableAlert("apple");
+                void handleAppleSignIn();
               }}
               provider="apple"
             />

@@ -4,7 +4,7 @@ import type { GradeBand } from "@/design/tokens";
 
 import { useCanvasToolStore } from "../stores/canvasToolStore";
 import {
-  CANVAS_HEIGHT_MULTIPLIERS,
+  CANVAS_PAGE_COUNTS,
   type CanvasDocument,
   type CanvasGradeAdaptation,
   type CanvasPoint,
@@ -24,9 +24,9 @@ interface CanvasSurfaceProps {
 
 /**
  * Calm, paper-like writing surface for the handwriting canvas. Reflects the
- * student's ruled-lines and canvas-height preferences and delegates the stroke
- * engine to {@link StrokeCanvasAdapter}. Render inside a scroll view so taller
- * height presets can expand the surface downward.
+ * student's ruled-lines and page-count preference and delegates the stroke
+ * engine to {@link StrokeCanvasAdapter}. Render inside a scroll view so added
+ * fixed-height pages can stack downward without rescaling existing strokes.
  */
 export function CanvasSurface({
   document,
@@ -39,7 +39,8 @@ export function CanvasSurface({
 }: CanvasSurfaceProps) {
   const showLines = useCanvasToolStore((store) => store.showLines);
   const heightLevel = useCanvasToolStore((store) => store.heightLevel);
-  const surfaceHeight = Math.round(Math.max(320, viewportHeight) * CANVAS_HEIGHT_MULTIPLIERS[heightLevel]);
+  const pageHeight = Math.round(Math.max(320, viewportHeight));
+  const surfaceHeight = pageHeight * CANVAS_PAGE_COUNTS[heightLevel];
 
   return (
     <StrokeCanvasAdapter
@@ -52,6 +53,7 @@ export function CanvasSurface({
       onExtendStroke={onExtendStroke}
       showLines={showLines}
       style={styles.surface}
+      pageHeight={pageHeight}
       surfaceHeight={surfaceHeight}
     />
   );

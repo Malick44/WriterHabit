@@ -1,4 +1,6 @@
 import type { Session as SupabaseSession, User as SupabaseUser } from "@supabase/supabase-js";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 
@@ -8,6 +10,23 @@ jest.mock("expo-linking", () => ({
   createURL: jest.fn(() => "writerhabit://"),
 }));
 
+jest.mock("expo-apple-authentication", () => ({
+  AppleAuthenticationScope: {
+    EMAIL: "EMAIL",
+    FULL_NAME: "FULL_NAME",
+  },
+  isAvailableAsync: jest.fn(),
+  signInAsync: jest.fn(),
+}));
+
+jest.mock("expo-crypto", () => ({
+  CryptoDigestAlgorithm: {
+    SHA256: "SHA-256",
+  },
+  digestStringAsync: jest.fn(),
+  getRandomBytesAsync: jest.fn(),
+}));
+
 jest.mock("@/core/supabase/supabaseClient", () => ({
   supabase: {
     auth: {
@@ -15,6 +34,7 @@ jest.mock("@/core/supabase/supabaseClient", () => ({
       getSession: jest.fn(),
       onAuthStateChange: jest.fn(),
       setSession: jest.fn(),
+      signInWithIdToken: jest.fn(),
       signInWithOtp: jest.fn(),
       signInWithPassword: jest.fn(),
       signOut: jest.fn(),
@@ -48,11 +68,26 @@ type GetSessionResult = {
 
 type SupabaseAuthMock = {
   getSession: jest.MockedFunction<() => Promise<GetSessionResult>>;
+  signInWithIdToken: jest.MockedFunction<(input: unknown) => Promise<SignUpResult>>;
   signUp: jest.MockedFunction<(input: unknown) => Promise<SignUpResult>>;
   updateUser: jest.MockedFunction<(input: unknown) => Promise<UpdateUserResult>>;
 };
 
 const authMock = supabase.auth as unknown as SupabaseAuthMock;
+const appleAuthMock = AppleAuthentication as unknown as {
+  isAvailableAsync: jest.MockedFunction<() => Promise<boolean>>;
+  signInAsync: jest.MockedFunction<(input: unknown) => Promise<{
+    fullName: {
+      familyName: string | null;
+      givenName: string | null;
+    } | null;
+    identityToken: string | null;
+  }>>;
+};
+const cryptoMock = Crypto as unknown as {
+  digestStringAsync: jest.MockedFunction<(algorithm: unknown, value: string) => Promise<string>>;
+  getRandomBytesAsync: jest.MockedFunction<(length: number) => Promise<Uint8Array>>;
+};
 
 function createSupabaseUser(input: {
   appMetadata?: Record<string, unknown>;
@@ -213,5 +248,68 @@ describe("sessionService role metadata writes", () => {
       writing_goals: ["write_essays"],
     });
     expect(updateInput?.data).not.toHaveProperty("role");
+  });
+
+  it("exchanges Apple identity tokens without writing role or entitlement metadata", async () => {
+    const session = createSupabaseSession({
+      userMetadata: {
+        display_name: "Mira Appleseed",
+      },
+    });
+    appleAuthMock.isAvailableAsync.mockResolvedValueOnce(true);
+    appleAuthMock.signInAsync.mockResolvedValueOnce({
+      fullName: {
+        familyName: "Appleseed",
+        givenName: "Mira",
+      },
+      identityToken: "apple-identity-token",
+    });
+    cryptoMock.getRandomBytesAsync.mockResolvedValueOnce(new Uint8Array(Array.from({ length: 32 }, (_, index) => index)));
+    cryptoMock.digestStringAsync.mockResolvedValueOnce("hashed-nonce");
+    authMock.signInWithIdToken.mockResolvedValueOnce({
+      data: {
+        session,
+        user: session.user,
+      },
+      error: null,
+    });
+    authMock.updateUser.mockResolvedValueOnce({
+      data: {
+        user: session.user,
+      },
+      error: null,
+    });
+    authMock.getSession.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+      error: null,
+    });
+
+    await sessionService.signInWithApple();
+
+    expect(appleAuthMock.signInAsync).toHaveBeenCalledWith({
+      nonce: "hashed-nonce",
+      requestedScopes: ["FULL_NAME", "EMAIL"],
+    });
+    expect(authMock.signInWithIdToken).toHaveBeenCalledWith({
+      nonce: "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+      provider: "apple",
+      token: "apple-identity-token",
+    });
+    const updateInput = authMock.updateUser.mock.calls[0]?.[0] as
+      | {
+          data: Record<string, unknown>;
+        }
+      | undefined;
+    expect(updateInput?.data).toMatchObject({
+      display_name: "Mira Appleseed",
+      family_name: "Appleseed",
+      full_name: "Mira Appleseed",
+      given_name: "Mira",
+    });
+    expect(updateInput?.data).not.toHaveProperty("role");
+    expect(updateInput?.data).not.toHaveProperty("subscription_status");
+    expect(updateInput?.data).not.toHaveProperty("entitlement");
   });
 });

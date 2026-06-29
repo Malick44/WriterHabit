@@ -76,5 +76,6 @@ export type AuthOnboardingCompletionInput = {
 export type AuthActionResult = {
   session: AuthSession | null;
   requiresEmailConfirmation?: boolean;
+  cancelled?: boolean;
   errorCode?: AuthErrorCode;
 };

@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, shadows, spacing, typography, type GradeBand } from "@/design/tokens";
@@ -16,17 +15,13 @@ import { CANVAS_HEIGHT_LEVELS } from "../types";
 
 interface CanvasHeightControlProps {
   gradeBand: GradeBand;
-  /** True when strokes sit near the bottom of the current page, so shrinking
-   * should ask for confirmation first. */
-  hasBottomContent: boolean;
 }
 
 /**
- * Compact height stepper: minus / current level / plus. Increasing grows the
- * writing surface downward. Shrinking with writing near the bottom shows a
- * calm warning and requires a confirming second tap before it shrinks.
+ * Compact page control. Adds fixed-height pages below the current page so
+ * existing handwriting keeps its shape and position.
  */
-export function CanvasHeightControl({ gradeBand, hasBottomContent }: CanvasHeightControlProps) {
+export function CanvasHeightControl({ gradeBand }: CanvasHeightControlProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
@@ -34,31 +29,13 @@ export function CanvasHeightControl({ gradeBand, hasBottomContent }: CanvasHeigh
   const type = typography.gradeBands[gradeBand];
   const heightLevel = useCanvasToolStore((store) => store.heightLevel);
   const increaseHeight = useCanvasToolStore((store) => store.increaseHeight);
-  const decreaseHeight = useCanvasToolStore((store) => store.decreaseHeight);
-  const [warningVisible, setWarningVisible] = useState(false);
 
   const levelIndex = CANVAS_HEIGHT_LEVELS.indexOf(heightLevel);
-  const canDecrease = levelIndex > 0;
   const canIncrease = levelIndex < CANVAS_HEIGHT_LEVELS.length - 1;
+  const pageCount = levelIndex + 1;
 
   const handleIncrease = () => {
-    setWarningVisible(false);
     increaseHeight();
-  };
-
-  const handleDecrease = () => {
-    if (!canDecrease) {
-      return;
-    }
-
-    if (hasBottomContent && !warningVisible) {
-      // First tap surfaces the calm warning; a confirming tap then shrinks.
-      setWarningVisible(true);
-      return;
-    }
-
-    setWarningVisible(false);
-    decreaseHeight();
   };
 
   return (
@@ -72,22 +49,9 @@ export function CanvasHeightControl({ gradeBand, hasBottomContent }: CanvasHeigh
       </Text>
 
       <View style={styles.stepper}>
-        <Pressable
-          accessibilityLabel={t("canvas.handwriting.height.decrease")}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canDecrease }}
-          disabled={!canDecrease}
-          hitSlop={hitSlop}
-          onPress={handleDecrease}
-          style={({ pressed }) => [styles.stepButton, !canDecrease ? styles.disabled : null, pressed ? styles.pressed : null]}
-          testID="canvas-height-decrease"
-        >
-          <Ionicons color={accessibleColors.text} name="remove" size={20} />
-        </Pressable>
-
         <View style={styles.levelLabel}>
           <Text selectable={false} style={[getAccessibleTextStyle(type.label, settings), { color: accessibleColors.text }]}>
-            {t(`canvas.handwriting.height.levels.${heightLevel}`)}
+            {t("canvas.handwriting.height.pageCount", { count: pageCount })}
           </Text>
         </View>
 
@@ -104,15 +68,6 @@ export function CanvasHeightControl({ gradeBand, hasBottomContent }: CanvasHeigh
           <Ionicons color={accessibleColors.text} name="add" size={20} />
         </Pressable>
       </View>
-
-      {warningVisible ? (
-        <View style={styles.warning}>
-          <Ionicons color={colors.feedback.warning.icon} name="information-circle-outline" size={15} />
-          <Text selectable={false} style={[getAccessibleTextStyle(type.caption, settings), styles.warningText]}>
-            {t("canvas.handwriting.height.shrinkWarning")}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -122,7 +77,6 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   levelLabel: {
-    alignItems: "center",
     flex: 1,
     paddingHorizontal: spacing.sm,
   },
@@ -133,7 +87,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 1,
     gap: spacing.sm,
-    minWidth: 200,
+    minWidth: 180,
     padding: spacing.md,
     ...shadows.floating,
   },
@@ -155,17 +109,5 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text.secondary,
     fontWeight: "700",
-  },
-  warning: {
-    alignItems: "flex-start",
-    backgroundColor: colors.feedback.warning.background,
-    borderRadius: radius.md,
-    flexDirection: "row",
-    gap: spacing.xs,
-    padding: spacing.sm,
-  },
-  warningText: {
-    color: colors.feedback.warning.text,
-    flex: 1,
   },
 });

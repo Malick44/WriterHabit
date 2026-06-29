@@ -80,7 +80,7 @@ export function CanvasHeader({
               selectable={false}
               style={[getAccessibleTextStyle(type.caption, settings), styles.pageIndicator]}
             >
-              {t("canvas.handwriting.pageIndicator", { current: 1, total: pageCount })}
+              {t("canvas.handwriting.pageIndicator", { total: pageCount })}
             </Text>
           ) : null}
         </View>

@@ -7,6 +7,7 @@ import type {
   ApplyEntitlementProviderEventResult,
   AssignmentRecord,
   BadgeRecord,
+  CanvasDocumentRecord,
   ClassRecord,
   ClassRosterStudentRecord,
   CreateSubmissionInput,
@@ -40,6 +41,7 @@ import type {
   SubmissionRevisionRecord,
   TeacherProfileRecord,
   TransitionReviewJobInput,
+  UpsertCanvasDocumentInput,
   UpsertEntitlementInput,
   WeeklyReviewRecord,
 } from "./types";
@@ -114,6 +116,9 @@ const studentAssignmentSelect = [
 
 const draftSelect =
   "id, student_assignment_id, student_profile_id, text_content, text_preview, canvas_document_ids, autosave_version, word_count, sentence_count, paragraph_count, revision_number, created_at, updated_at";
+
+const canvasDocumentSelect =
+  "id, student_profile_id, assignment_id, student_assignment_id, template, title, sync_status, client_version, object_path, preview_image_path, recognition_status, attached_at, created_at, updated_at, canvas_document_contents(strokes, recognized_text, stroke_count)";
 
 const submissionSelect =
   "id, student_assignment_id, student_profile_id, status, typed_text_excerpt, word_count, sentence_count, paragraph_count, revision_number, idempotency_key, submitted_at, created_at, updated_at, submission_canvas_documents(canvas_document_id)";
@@ -215,6 +220,38 @@ function mapDraftRow(row: Record<string, unknown>): DraftRecord {
     textPreview: row.text_preview as string,
     updatedAt: row.updated_at as string,
     wordCount: row.word_count as number,
+  };
+}
+
+function mapCanvasDocumentRow(row: Record<string, unknown>): CanvasDocumentRecord {
+  const contentRows = row.canvas_document_contents as
+    | Array<{ recognized_text?: string | null; stroke_count?: number | null; strokes?: unknown[] | null }>
+    | { recognized_text?: string | null; stroke_count?: number | null; strokes?: unknown[] | null }
+    | null
+    | undefined;
+  const content = Array.isArray(contentRows) ? contentRows[0] : contentRows;
+  const strokes = Array.isArray(content?.strokes) ? content.strokes : [];
+
+  return {
+    assignmentId: (row.assignment_id as string | null) ?? null,
+    attachedAt: (row.attached_at as string | null) ?? null,
+    clientVersion: row.client_version as number,
+    createdAt: row.created_at as string,
+    exportStatus: "not_requested",
+    id: row.id as string,
+    objectPath: (row.object_path as string | null) ?? null,
+    previewImagePath: (row.preview_image_path as string | null) ?? null,
+    recognizedText: (content?.recognized_text as string | null) ?? null,
+    recognitionStatus: row.recognition_status as string,
+    serverVersion: row.client_version as number,
+    studentAssignmentId: (row.student_assignment_id as string | null) ?? null,
+    studentProfileId: row.student_profile_id as string,
+    strokeCount: content?.stroke_count ?? strokes.length,
+    strokes,
+    syncStatus: row.sync_status as CanvasDocumentRecord["syncStatus"],
+    template: row.template as CanvasDocumentRecord["template"],
+    title: row.title as string,
+    updatedAt: row.updated_at as string,
   };
 }
 
@@ -883,6 +920,106 @@ export class SupabaseDatabase implements Database {
     }
 
     return data ? mapRevisionRow(data as Record<string, unknown>) : null;
+  }
+
+  async getCanvasDocumentById(canvasDocumentId: string): Promise<CanvasDocumentRecord | null> {
+    const { data, error } = await this.client
+      .from("canvas_documents")
+      .select(canvasDocumentSelect)
+      .eq("id", canvasDocumentId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "canvas_documents.getById");
+    }
+
+    return data ? mapCanvasDocumentRow(data as Record<string, unknown>) : null;
+  }
+
+  async listCanvasDocumentsByIds(canvasDocumentIds: readonly string[]): Promise<CanvasDocumentRecord[]> {
+    if (canvasDocumentIds.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.client
+      .from("canvas_documents")
+      .select(canvasDocumentSelect)
+      .in("id", [...new Set(canvasDocumentIds)])
+      .is("deleted_at", null);
+
+    if (error) {
+      throw toDatabaseError(error, "canvas_documents.listByIds");
+    }
+
+    return (data ?? []).map((row) => mapCanvasDocumentRow(row as Record<string, unknown>));
+  }
+
+  async listCanvasDocumentsForStudent(studentProfileId: string, limit: number): Promise<CanvasDocumentRecord[]> {
+    const { data, error } = await this.client
+      .from("canvas_documents")
+      .select(canvasDocumentSelect)
+      .eq("student_profile_id", studentProfileId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw toDatabaseError(error, "canvas_documents.listForStudent");
+    }
+
+    return (data ?? []).map((row) => mapCanvasDocumentRow(row as Record<string, unknown>));
+  }
+
+  async upsertCanvasDocument(input: UpsertCanvasDocumentInput): Promise<CanvasDocumentRecord> {
+    const { data: document, error: documentError } = await this.client
+      .from("canvas_documents")
+      .upsert(
+        {
+          assignment_id: input.assignmentId ?? null,
+          attached_at: input.assignmentId ? new Date().toISOString() : null,
+          client_version: input.clientVersion,
+          id: input.id,
+          object_path: input.objectPath ?? null,
+          preview_image_path: input.previewImagePath ?? null,
+          student_assignment_id: input.studentAssignmentId ?? null,
+          student_profile_id: input.studentProfileId,
+          sync_status: input.syncStatus ?? "saved",
+          template: input.template,
+          title: input.title,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      )
+      .select("id")
+      .single();
+
+    if (documentError || !document) {
+      throw toDatabaseError(documentError ?? { message: "missing upserted canvas document row" }, "canvas_documents.upsert");
+    }
+
+    const { error: contentError } = await this.client.from("canvas_document_contents").upsert(
+      {
+        canvas_document_id: input.id,
+        stroke_count: input.strokes.length,
+        strokes: input.strokes,
+        student_profile_id: input.studentProfileId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "canvas_document_id" },
+    );
+
+    if (contentError) {
+      throw toDatabaseError(contentError, "canvas_document_contents.upsert");
+    }
+
+    const saved = await this.getCanvasDocumentById(input.id);
+
+    if (!saved) {
+      throw toDatabaseError({ message: "missing saved canvas document row" }, "canvas_documents.upsert");
+    }
+
+    return saved;
   }
 
   async getClassById(classId: string): Promise<ClassRecord | null> {

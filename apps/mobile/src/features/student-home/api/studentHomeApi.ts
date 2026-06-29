@@ -23,6 +23,20 @@ function getGradeLevel(input: GetStudentHomeDashboardInput): GradeLevel {
   return input.gradeLevel ?? 7;
 }
 
+function getDefaultDailyMinutesGoal(gradeLevel: GradeLevel): number {
+  return gradeLevel <= 5 ? 10 : gradeLevel <= 8 ? 15 : 25;
+}
+
+function getDefaultWeeklyMinutesGoal(gradeLevel: GradeLevel): number {
+  return gradeLevel <= 5 ? 50 : gradeLevel <= 8 ? 75 : 125;
+}
+
+function toPositiveInteger(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : fallback;
+}
+
 function createAssignmentForGrade(gradeLevel: GradeLevel): StudentHomeApiResponse["todayAssignment"] {
   if (gradeLevel <= 5) {
     return {
@@ -116,7 +130,7 @@ function createDashboard(input: GetStudentHomeDashboardInput, scenario: StudentH
     continueDraft: isEmpty ? null : createDraftForGrade(gradeLevel),
     dailyPractice: {
       completedToday: practicedToday,
-      minutesGoal: gradeLevel <= 5 ? 10 : gradeLevel <= 8 ? 15 : 25,
+      minutesGoal: getDefaultDailyMinutesGoal(gradeLevel),
       nextPromptLabel: gradeLevel <= 5 ? "Sentence warmup" : gradeLevel <= 8 ? "Paragraph practice" : "Essay focus block",
     },
     generatedAt: new Date().toISOString(),
@@ -194,6 +208,21 @@ function createDashboard(input: GetStudentHomeDashboardInput, scenario: StudentH
   return studentHomeApiResponseSchema.parse(response);
 }
 
+function getDefaultSkillProgress(gradeLevel: GradeLevel) {
+  const defaultSkills: WritingSkill[] =
+    gradeLevel <= 5
+      ? ["sentence_structure", "vocabulary"]
+      : gradeLevel <= 8
+        ? ["organization", "clarity", "revision_quality"]
+        : ["argument_strength", "evidence_usage", "organization"];
+
+  return defaultSkills.map((skill) => ({
+    current_score: 60,
+    previous_score: 55,
+    skill,
+  }));
+}
+
 export const studentHomeApi = {
   async getDashboard(input: GetStudentHomeDashboardInput): Promise<StudentHomeApiResponse> {
     const scenario = readScenario();
@@ -210,8 +239,10 @@ export const studentHomeApi = {
     }
 
     try {
-      // 1. Fetch or create student profile
-      let { data: profile, error: profileErr } = await supabase
+      // Dashboard reads must not create workflow-owned progress rows from the
+      // public mobile client. Missing server rows are represented with local
+      // defaults and can be backfilled by backend workflows.
+      const { data: profile, error: profileErr } = await supabase
         .from("student_profiles")
         .select("*")
         .eq("user_id", session.user.id)
@@ -220,27 +251,14 @@ export const studentHomeApi = {
       if (profileErr) throw profileErr;
 
       if (!profile) {
-        // Create default profile for the user
-        const { data: newProfile, error: insertErr } = await supabase
-          .from("student_profiles")
-          .insert({
-            user_id: session.user.id,
-            grade_level: getGradeLevel(input),
-            writing_goals: ["write_better_sentences"],
-            daily_goal_minutes: 10,
-            writing_level: "getting_started",
-          })
-          .select("*")
-          .single();
-
-        if (insertErr) throw insertErr;
-        profile = newProfile;
+        return createDashboard(input, scenario);
       }
 
       const gradeLevel = profile.grade_level as GradeLevel;
 
-      // 2. Fetch or create progress totals
-      let { data: progress, error: progressErr } = await supabase
+      // 2. Fetch progress totals; use local display defaults when the backend
+      // has not created totals yet.
+      const { data: progress, error: progressErr } = await supabase
         .from("student_progress_totals")
         .select("*")
         .eq("student_profile_id", profile.id)
@@ -248,19 +266,18 @@ export const studentHomeApi = {
 
       if (progressErr) throw progressErr;
 
-      if (!progress) {
-        const { data: newProgress, error: insertErr } = await supabase
-          .from("student_progress_totals")
-          .insert({
-            student_profile_id: profile.id,
-            weekly_minutes_goal: gradeLevel <= 5 ? 50 : gradeLevel <= 8 ? 75 : 125,
-          })
-          .select("*")
-          .single();
-
-        if (insertErr) throw insertErr;
-        progress = newProgress;
-      }
+      const progressTotals = progress ?? {
+        best_streak_days: 0,
+        current_streak_days: 0,
+        minutes_this_week: 0,
+        practiced_today_on: null,
+        weekly_minutes_goal: getDefaultWeeklyMinutesGoal(gradeLevel),
+      };
+      const dailyMinutesGoal = toPositiveInteger(profile.daily_goal_minutes, getDefaultDailyMinutesGoal(gradeLevel));
+      const weeklyMinutesGoal = toPositiveInteger(
+        progressTotals.weekly_minutes_goal,
+        getDefaultWeeklyMinutesGoal(gradeLevel),
+      );
 
       // 3. Fetch skill progress
       let { data: dbSkills, error: skillsErr } = await supabase
@@ -270,70 +287,21 @@ export const studentHomeApi = {
 
       if (skillsErr) throw skillsErr;
 
-      if (!dbSkills || dbSkills.length === 0) {
-        const defaultSkills: WritingSkill[] =
-          gradeLevel <= 5
-            ? ["sentence_structure", "vocabulary"]
-            : gradeLevel <= 8
-              ? ["organization", "clarity", "revision_quality"]
-              : ["argument_strength", "evidence_usage", "organization"];
-
-        const insertRows = defaultSkills.map((skill) => ({
-          student_profile_id: profile.id,
-          skill,
-          current_score: 60,
-          previous_score: 55,
-          level: 1,
-        }));
-
-        const { data: newSkills, error: insertErr } = await supabase
-          .from("student_skill_progress")
-          .insert(insertRows)
-          .select("*");
-
-        if (insertErr) throw insertErr;
-        dbSkills = newSkills;
-      }
+      const skillRows = dbSkills && dbSkills.length > 0 ? dbSkills : getDefaultSkillProgress(gradeLevel);
 
       // 4. Fetch assignments
-      let { data: studentAssignments, error: saErr } = await supabase
+      const { data: studentAssignments, error: saErr } = await supabase
         .from("student_assignments")
         .select("*, assignments(*)")
         .eq("student_profile_id", profile.id);
 
       if (saErr) throw saErr;
 
-      if (!studentAssignments || studentAssignments.length === 0) {
-        // Assign the appropriate catalog assignment
-        let defaultAssignmentId = "00000000-0000-0000-0000-000000000002";
-        if (gradeLevel <= 5) {
-          defaultAssignmentId = "00000000-0000-0000-0000-000000000001";
-        } else if (gradeLevel >= 9) {
-          defaultAssignmentId = "00000000-0000-0000-0000-000000000003";
-        }
-
-        const { error: insertErr } = await supabase
-          .from("student_assignments")
-          .insert({
-            student_profile_id: profile.id,
-            assignment_id: defaultAssignmentId,
-            status: "not_started",
-          });
-
-        if (insertErr) throw insertErr;
-
-        const { data: reFetched, error: reFetchErr } = await supabase
-          .from("student_assignments")
-          .select("*, assignments(*)")
-          .eq("student_profile_id", profile.id);
-
-        if (reFetchErr) throw reFetchErr;
-        studentAssignments = reFetched;
-      }
+      const serverAssignments = studentAssignments ?? [];
 
       // 5. Fetch continue draft
       let continueDraft: StudentHomeApiResponse["continueDraft"] = null;
-      const activeSa = studentAssignments.find((sa) => sa.status === "in_progress");
+      const activeSa = serverAssignments.find((sa) => sa.status === "in_progress") ?? null;
       if (activeSa) {
         const { data: draft } = await supabase
           .from("writing_drafts")
@@ -371,9 +339,9 @@ export const studentHomeApi = {
       }));
 
       // Map response fields
-      const todaySa = studentAssignments.find(
+      const todaySa = serverAssignments.find(
         (sa) => sa.status === "not_started" || sa.status === "in_progress"
-      );
+      ) ?? null;
       const todayAssignment = todaySa
         ? {
           assignmentType: todaySa.assignments.assignment_type,
@@ -389,16 +357,16 @@ export const studentHomeApi = {
           status: todaySa.status,
           title: todaySa.assignments.title_fallback,
         }
-        : null;
+        : createAssignmentForGrade(gradeLevel);
 
-      const practicedToday = progress.practiced_today_on === new Date().toISOString().split("T")[0];
+      const practicedToday = progressTotals.practiced_today_on === new Date().toISOString().split("T")[0];
 
       const dashboardResponse: StudentHomeApiResponse = {
         connectionStatus: "online",
         continueDraft,
         dailyPractice: {
           completedToday: practicedToday,
-          minutesGoal: profile.daily_goal_minutes,
+          minutesGoal: dailyMinutesGoal,
           nextPromptLabel: gradeLevel <= 5 ? "Sentence warmup" : gradeLevel <= 8 ? "Paragraph practice" : "Essay focus block",
         },
         generatedAt: new Date().toISOString(),
@@ -410,32 +378,33 @@ export const studentHomeApi = {
             : gradeLevel <= 8
               ? ["Check that each detail supports the topic sentence."]
               : ["Make sure every evidence sentence is followed by your own analysis."],
-        skillProgress: (dbSkills ?? []).map((s) => ({
+        skillProgress: skillRows.map((s) => ({
           currentScore: Math.round(Number(s.current_score)),
           label: s.skill.charAt(0).toUpperCase() + s.skill.slice(1).replace("_", " "),
           previousScore: Math.round(Number(s.previous_score)),
           skill: s.skill as WritingSkill,
         })),
         streak: {
-          bestDays: progress.best_streak_days,
-          currentDays: progress.current_streak_days,
+          bestDays: progressTotals.best_streak_days,
+          currentDays: progressTotals.current_streak_days,
           nextMilestoneDays: gradeLevel <= 5 ? 5 : 7,
           practicedToday,
         },
         studentId: input.studentId,
         todayAssignment,
         weeklyWriting: {
-          minutesCompleted: progress.minutes_this_week,
-          minutesGoal: progress.weekly_minutes_goal,
+          minutesCompleted: progressTotals.minutes_this_week,
+          minutesGoal: weeklyMinutesGoal,
           sessionsCompleted: practicedToday ? 1 : 0,
         },
       };
 
       return studentHomeApiResponseSchema.parse(dashboardResponse);
     } catch (err) {
-      console.error("Failed to query student dashboard from Supabase, falling back to mock:", err);
+      if ((globalThis as { __DEV__?: boolean }).__DEV__ === true) {
+        console.debug("Using mock student dashboard fallback after Supabase dashboard read failed.", err);
+      }
       return createDashboard(input, scenario);
     }
   },
 };
-

@@ -32,6 +32,43 @@ function getCanvasDocumentKey(studentId: string, canvasId: string) {
   return `canvas-doc.${studentId}.${canvasId}`;
 }
 
+async function readStoredDocument(studentId: string, canvasId: string): Promise<CanvasDocument | null> {
+  const storedDocument = await localJsonStorage.getItem<unknown>(getCanvasDocumentKey(studentId, canvasId), null);
+  const parsed = canvasDocumentSchema.safeParse(storedDocument);
+
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  const recoverable = recoverableCanvasDocumentSchema.safeParse(storedDocument);
+
+  if (!recoverable.success || recoverable.data.studentId !== studentId || recoverable.data.id !== canvasId) {
+    return null;
+  }
+
+  return normalizeCanvasDocument(recoverable.data);
+}
+
+async function saveLocalDocument(
+  document: CanvasDocument,
+  options: { touchUpdatedAt?: boolean } = {},
+): Promise<CanvasDocument> {
+  const nextDocument = normalizeCanvasDocument({
+    ...document,
+    updatedAt: options.touchUpdatedAt === false ? document.updatedAt : new Date().toISOString(),
+  });
+  const summaries = await readIndex(nextDocument.studentId);
+  const nextSummary = getCanvasDocumentSummary(nextDocument);
+
+  await localJsonStorage.setItem(getCanvasDocumentKey(nextDocument.studentId, nextDocument.id), nextDocument);
+  await writeIndex(nextDocument.studentId, [
+    nextSummary,
+    ...summaries.filter((summary) => summary.id !== nextDocument.id),
+  ]);
+
+  return nextDocument;
+}
+
 async function readIndex(studentId: string): Promise<CanvasDocumentSummary[]> {
   const storedIndex = await localJsonStorage.getItem<unknown>(getCanvasIndexKey(studentId), []);
 
@@ -56,26 +93,30 @@ async function writeIndex(studentId: string, summaries: CanvasDocumentSummary[])
   await Promise.all(pruned.map((summary) => localJsonStorage.removeItem(getCanvasDocumentKey(studentId, summary.id))));
 }
 
+async function getLocalAttachedDocument(studentId: string, assignmentId: string): Promise<CanvasDocument | null> {
+  const summaries = await readIndex(studentId);
+  const attachedSummary = summaries.find((summary) => summary.assignmentId === assignmentId);
+
+  if (!attachedSummary) {
+    return null;
+  }
+
+  return readStoredDocument(studentId, attachedSummary.id);
+}
+
 export const canvasPersistenceService = {
   async getDocument(studentId: string, canvasId: string): Promise<CanvasDocument | null> {
+    const localDocument = await readStoredDocument(studentId, canvasId);
+
+    if (localDocument) {
+      return localDocument;
+    }
+
     const { data: authData } = await supabase.auth.getSession();
     const session = authData?.session;
 
     if (!session) {
-      const storedDocument = await localJsonStorage.getItem<unknown>(getCanvasDocumentKey(studentId, canvasId), null);
-      const parsed = canvasDocumentSchema.safeParse(storedDocument);
-
-      if (parsed.success) {
-        return parsed.data;
-      }
-
-      const recoverable = recoverableCanvasDocumentSchema.safeParse(storedDocument);
-
-      if (!recoverable.success || recoverable.data.studentId !== studentId || recoverable.data.id !== canvasId) {
-        return null;
-      }
-
-      return normalizeCanvasDocument(recoverable.data);
+      return null;
     }
 
     try {
@@ -128,20 +169,7 @@ export const canvasPersistenceService = {
       return normalizeCanvasDocument(doc);
     } catch (err) {
       console.error("Failed to fetch canvas document from Supabase, returning local fallback:", err);
-      const storedDocument = await localJsonStorage.getItem<unknown>(getCanvasDocumentKey(studentId, canvasId), null);
-      const parsed = canvasDocumentSchema.safeParse(storedDocument);
-
-      if (parsed.success) {
-        return parsed.data;
-      }
-
-      const recoverable = recoverableCanvasDocumentSchema.safeParse(storedDocument);
-
-      if (!recoverable.success || recoverable.data.studentId !== studentId || recoverable.data.id !== canvasId) {
-        return null;
-      }
-
-      return normalizeCanvasDocument(recoverable.data);
+      return readStoredDocument(studentId, canvasId);
     }
   },
 
@@ -169,9 +197,9 @@ export const canvasPersistenceService = {
         .order("updated_at", { ascending: false })
         .limit(CANVAS_SUMMARY_PAGE_SIZE);
 
-      if (!dbDocs) return [];
+      if (!dbDocs) return readIndex(studentId);
 
-      return dbDocs.map((dbDoc: any) => {
+      const serverSummaries = dbDocs.map((dbDoc: any) => {
         return canvasDocumentSummarySchema.parse({
           assignmentId: dbDoc.assignment_id || undefined,
           id: dbDoc.id,
@@ -184,6 +212,13 @@ export const canvasPersistenceService = {
           updatedLabel: "Saved recently",
         });
       });
+      const serverIds = new Set(serverSummaries.map((summary) => summary.id));
+      const localSummaries = await readIndex(studentId);
+
+      return [
+        ...serverSummaries,
+        ...localSummaries.filter((summary) => !serverIds.has(summary.id)),
+      ].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
     } catch (err) {
       console.error("Failed to fetch canvas list from Supabase, returning local fallback:", err);
       return readIndex(studentId);
@@ -195,14 +230,7 @@ export const canvasPersistenceService = {
     const session = authData?.session;
 
     if (!session) {
-      const summaries = await readIndex(studentId);
-      const attachedSummary = summaries.find((summary) => summary.assignmentId === assignmentId);
-
-      if (!attachedSummary) {
-        return null;
-      }
-
-      return this.getDocument(studentId, attachedSummary.id);
+      return getLocalAttachedDocument(studentId, assignmentId);
     }
 
     try {
@@ -221,19 +249,12 @@ export const canvasPersistenceService = {
         .eq("assignment_id", assignmentId)
         .maybeSingle();
 
-      if (!dbDoc) return null;
+      if (!dbDoc) return getLocalAttachedDocument(studentId, assignmentId);
 
       return this.getDocument(studentId, dbDoc.id);
     } catch (err) {
       console.error("Failed to fetch attached canvas from Supabase, returning local fallback:", err);
-      const summaries = await readIndex(studentId);
-      const attachedSummary = summaries.find((summary) => summary.assignmentId === assignmentId);
-
-      if (!attachedSummary) {
-        return null;
-      }
-
-      return this.getDocument(studentId, attachedSummary.id);
+      return getLocalAttachedDocument(studentId, assignmentId);
     }
   },
 
@@ -288,24 +309,12 @@ export const canvasPersistenceService = {
     document: CanvasDocument,
     options: { touchUpdatedAt?: boolean } = {},
   ): Promise<CanvasDocument> {
-    const nextDocument = normalizeCanvasDocument({
-      ...document,
-      updatedAt: options.touchUpdatedAt === false ? document.updatedAt : new Date().toISOString(),
-    });
+    const nextDocument = await saveLocalDocument(document, options);
 
     const { data: authData } = await supabase.auth.getSession();
     const session = authData?.session;
 
     if (!session) {
-      const summaries = await readIndex(nextDocument.studentId);
-      const nextSummary = getCanvasDocumentSummary(nextDocument);
-
-      await localJsonStorage.setItem(getCanvasDocumentKey(nextDocument.studentId, nextDocument.id), nextDocument);
-      await writeIndex(nextDocument.studentId, [
-        nextSummary,
-        ...summaries.filter((summary) => summary.id !== nextDocument.id),
-      ]);
-
       return nextDocument;
     }
 
@@ -411,16 +420,13 @@ export const canvasPersistenceService = {
       console.error("Failed to save canvas document to Supabase, saving to local json storage:", err);
     }
 
-    // Always keep a local copy for cache/offline support
-    const summaries = await readIndex(nextDocument.studentId);
-    const nextSummary = getCanvasDocumentSummary(nextDocument);
-
-    await localJsonStorage.setItem(getCanvasDocumentKey(nextDocument.studentId, nextDocument.id), nextDocument);
-    await writeIndex(nextDocument.studentId, [
-      nextSummary,
-      ...summaries.filter((summary) => summary.id !== nextDocument.id),
-    ]);
-
     return nextDocument;
+  },
+
+  async saveLocalDocument(
+    document: CanvasDocument,
+    options: { touchUpdatedAt?: boolean } = {},
+  ): Promise<CanvasDocument> {
+    return saveLocalDocument(document, options);
   },
 };

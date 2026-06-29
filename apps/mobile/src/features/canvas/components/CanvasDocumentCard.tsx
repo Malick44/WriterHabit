@@ -92,7 +92,23 @@ export function CanvasDocumentCard({ document, gradeBand, onOpen }: CanvasDocume
         <CanvasSyncStatusBadge gradeBand={gradeBand} status={document.syncStatus} />
       </View>
 
-      <Ionicons color={colors.text.muted} name="chevron-forward" size={20} />
+      <View
+        style={{
+          alignItems: "center",
+          flexDirection: "row",
+          gap: spacing.xs,
+          minHeight: 36,
+          paddingLeft: spacing.sm,
+        }}
+      >
+        <Text
+          selectable
+          style={[getAccessibleTextStyle(type.caption, settings), { color: colors.action.primary.background }]}
+        >
+          {t("canvas.home.openCta")}
+        </Text>
+        <Ionicons color={colors.action.primary.background} name="chevron-forward" size={18} />
+      </View>
     </Pressable>
   );
 }

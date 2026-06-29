@@ -3,6 +3,7 @@ import { translate, type TranslationKey } from "@/i18n";
 
 import {
   INITIAL_CANVAS_CLIENT_VERSION,
+  CANVAS_PAGE_COUNTS,
   MAX_CANVAS_POINTS_PER_STROKE,
   MAX_CANVAS_STROKES,
   MAX_CANVAS_UNDO_STEPS,
@@ -72,7 +73,16 @@ const canvasDefaultTitleKeys: Record<CanvasTemplate, TranslationKey> = {
 };
 
 function createCanvasId() {
-  return `canvas-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (marker) => {
+    const value = Math.floor(Math.random() * 16);
+    const nibble = marker === "x" ? value : (value & 0x3) | 0x8;
+
+    return nibble.toString(16);
+  });
 }
 
 function createStrokeId() {
@@ -80,10 +90,12 @@ function createStrokeId() {
 }
 
 function clampPoint(point: CanvasPoint): CanvasPoint {
+  const maxPageY = Math.max(...Object.values(CANVAS_PAGE_COUNTS));
+
   return {
     pressure: point.pressure,
     x: Math.max(0, Math.min(1, point.x)),
-    y: Math.max(0, Math.min(1, point.y)),
+    y: Math.max(0, Math.min(maxPageY, point.y)),
   };
 }
 

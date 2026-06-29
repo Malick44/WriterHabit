@@ -55,18 +55,21 @@ export const canvasApi = {
       studentId: input.studentId,
       template: input.template,
     });
+    const localDocument = await canvasPersistenceService.saveLocalDocument(document);
 
     if (scenario === "offline") {
-      return canvasPersistenceService.saveDocument(document);
+      return localDocument;
     }
 
-    const result = await canvasSyncService.saveLocalFirst({
-      document,
-      gradeLevel: input.gradeLevel,
-      studentId: input.studentId,
-    });
+    void canvasSyncService
+      .saveLocalFirst({
+        document: localDocument,
+        gradeLevel: input.gradeLevel,
+        studentId: input.studentId,
+      })
+      .catch(() => undefined);
 
-    return result.document;
+    return localDocument;
   },
 
   async getAttachedCanvasSummary(input: CanvasRequestInput & { assignmentId: string }): Promise<CanvasDocumentSummary | null> {

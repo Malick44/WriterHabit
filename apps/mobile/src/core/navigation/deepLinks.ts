@@ -8,7 +8,7 @@ export const deepLinkRoutes = {
   assignmentDetail: "/(student)/assignments/[assignmentId]",
   assignmentSubmission: "/(student)/assignments/submit",
   canvasDocument: "/(student)/canvas/[canvasId]",
-  canvasTemplates: "/(student)/canvas/templates",
+  canvasCreate: "/(student)/canvas/create",
   studentReview: "/(student)/review/[submissionId]",
   studentReviewCompletion: "/(student)/review/[submissionId]/complete",
   studentReviewRevision: "/(student)/review/[submissionId]/revision",
@@ -59,13 +59,13 @@ export function getCanvasDocumentRoute(canvasId: string, assignmentId?: string):
   };
 }
 
-export function getCanvasTemplatePickerRoute(assignmentId?: string): Href {
+export function getCanvasCreateRoute(assignmentId?: string): Href {
   if (!assignmentId) {
-    return "/(student)/canvas/templates";
+    return "/(student)/canvas/create";
   }
 
   return {
-    pathname: "/(student)/canvas/templates",
+    pathname: "/(student)/canvas/create",
     params: { assignmentId },
   };
 }

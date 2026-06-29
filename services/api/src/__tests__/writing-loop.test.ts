@@ -3,7 +3,7 @@ import { SignJWT } from "jose";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { MemoryDatabase } from "../data";
-import type { AssignmentRecord, EntitlementRecord, StudentAssignmentRecord } from "../data/types";
+import type { AssignmentRecord, CanvasDocumentRecord, EntitlementRecord, StudentAssignmentRecord } from "../data/types";
 import type { ApiConfig } from "../runtime/config";
 import { buildServer } from "../server";
 
@@ -103,6 +103,30 @@ function makeStudentAssignment(
     submittedAt: null,
     teacherNoteFallback: null,
     teacherNoteKey: null,
+    updatedAt: "2026-06-10T08:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makeCanvasDocument(overrides: Partial<CanvasDocumentRecord> & { id: string }): CanvasDocumentRecord {
+  return {
+    assignmentId: null,
+    attachedAt: null,
+    clientVersion: 1,
+    createdAt: "2026-06-10T08:00:00.000Z",
+    exportStatus: "not_requested",
+    objectPath: null,
+    previewImagePath: null,
+    recognizedText: null,
+    recognitionStatus: "not_requested",
+    serverVersion: 1,
+    studentAssignmentId: null,
+    studentProfileId: "sp-1",
+    strokeCount: 0,
+    strokes: [],
+    syncStatus: "saved",
+    template: "blank_page",
+    title: "Canvas draft",
     updatedAt: "2026-06-10T08:00:00.000Z",
     ...overrides,
   };
@@ -421,6 +445,127 @@ describe("WriterHabit writing loop API", () => {
   });
 
   describe("draft persistence", () => {
+    it("saves and restores canvas document strokes through the backend", async () => {
+      const canvasDocumentId = "11111111-1111-4111-8111-111111111111";
+      const putResponse = await inject(studentToken, {
+        method: "PUT",
+        payload: {
+          assignmentId: "assignment-1",
+          clientVersion: 2,
+          storageObjectPath: "canvas/11111111-1111-4111-8111-111111111111/stroke-document/v2.json",
+          strokeCount: 1,
+          strokes: [
+            {
+              color: "#111111",
+              createdAt: "2026-06-10T08:01:00.000Z",
+              id: "stroke-1",
+              points: [{ x: 0.1, y: 0.2 }],
+              tool: "pen",
+              width: 4,
+            },
+          ],
+          studentId: "user-student-1",
+          template: "lined_paper",
+          title: "My canvas draft",
+          updatedAt: "2026-06-10T08:02:00.000Z",
+        },
+        url: `/api/v1/canvas-documents/${canvasDocumentId}`,
+      });
+
+      expect(putResponse.statusCode).toBe(200);
+      expect(putResponse.json()).toMatchObject({
+        assignmentId: "assignment-1",
+        canvasDocumentId,
+        clientVersion: 2,
+        serverVersion: 2,
+        strokeCount: 1,
+        syncStatus: "saved",
+        template: "lined_paper",
+        title: "My canvas draft",
+      });
+
+      const getResponse = await inject(studentToken, {
+        method: "GET",
+        url: `/api/v1/canvas-documents/${canvasDocumentId}`,
+      });
+
+      expect(getResponse.statusCode).toBe(200);
+      expect(getResponse.json().strokes).toHaveLength(1);
+      expect(getResponse.json().strokes[0].points[0]).toEqual({ x: 0.1, y: 0.2 });
+
+      const listResponse = await inject(studentToken, {
+        method: "GET",
+        url: "/api/v1/students/user-student-1/canvas-documents",
+      });
+
+      expect(listResponse.statusCode).toBe(200);
+      expect(listResponse.json().items[0]).toMatchObject({
+        assignmentId: "assignment-1",
+        canvasDocumentId,
+        isAttached: true,
+      });
+    });
+
+    it("persists real canvas document ids on backend drafts", async () => {
+      const canvasDocumentId = "22222222-2222-4222-8222-222222222222";
+      database.canvasDocuments.push(
+        makeCanvasDocument({
+          assignmentId: "assignment-1",
+          id: canvasDocumentId,
+          studentAssignmentId: "sa-1",
+        }),
+      );
+
+      const putResponse = await inject(studentToken, {
+        method: "PUT",
+        payload: {
+          autosaveVersion: 1,
+          canvasDocumentIds: [canvasDocumentId],
+          text: "This draft has a canvas page.",
+        },
+        url: "/api/v1/student-assignments/sa-1/draft",
+      });
+
+      expect(putResponse.statusCode).toBe(200);
+      expect(putResponse.json()).toMatchObject({
+        canvasDocumentIds: [canvasDocumentId],
+        canvasPageCount: 1,
+        text: "This draft has a canvas page.",
+      });
+
+      const getResponse = await inject(studentToken, {
+        method: "GET",
+        url: "/api/v1/student-assignments/sa-1/draft",
+      });
+
+      expect(getResponse.statusCode).toBe(200);
+      expect(getResponse.json().canvasDocumentIds).toEqual([canvasDocumentId]);
+    });
+
+    it("rejects draft canvas ids that do not belong to the student assignment", async () => {
+      const foreignCanvasDocumentId = "33333333-3333-4333-8333-333333333333";
+      database.canvasDocuments.push(
+        makeCanvasDocument({
+          assignmentId: "assignment-1",
+          id: foreignCanvasDocumentId,
+          studentProfileId: "sp-2",
+        }),
+      );
+
+      const response = await inject(studentToken, {
+        method: "PUT",
+        payload: {
+          autosaveVersion: 1,
+          canvasDocumentIds: [foreignCanvasDocumentId],
+          text: "This should not save.",
+        },
+        url: "/api/v1/student-assignments/sa-1/draft",
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(response.json().error.code).toBe("validation.invalid_canvas_attachment");
+    });
+
     it("saves, reads, and deletes a typed draft and starts the assignment", async () => {
       const putResponse = await inject(studentToken, {
         method: "PUT",
@@ -542,6 +687,32 @@ describe("WriterHabit writing loop API", () => {
       expect(database.submissionContents.get(body.id)).toBe(
         "My paragraph is student-written text. It has two sentences.",
       );
+    });
+
+    it("rejects submissions that reference another student's canvas document", async () => {
+      const foreignCanvasDocumentId = "44444444-4444-4444-8444-444444444444";
+      database.canvasDocuments.push(
+        makeCanvasDocument({
+          assignmentId: "assignment-2",
+          id: foreignCanvasDocumentId,
+          studentProfileId: "sp-2",
+        }),
+      );
+
+      const response = await inject(studentToken, {
+        method: "POST",
+        payload: {
+          canvasDocumentIds: [foreignCanvasDocumentId],
+          clientDraftVersion: 1,
+          idempotencyKey: "foreign-canvas-submit",
+          typedText: "This typed text is mine, but the canvas id is not.",
+        },
+        url: "/api/v1/student-assignments/sa-2/submissions",
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(response.json().error.code).toBe("validation.invalid_canvas_attachment");
+      expect(database.submissions).toHaveLength(0);
     });
 
     it("returns the existing submission for an idempotent retry", async () => {

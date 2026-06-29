@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   getAssignmentDetailRoute,
-  getCanvasTemplatePickerRoute,
+  getCanvasCreateRoute,
   getStudentReviewRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
@@ -225,8 +225,8 @@ export function StudentHomeScreen() {
         case "assignmentHistory":
           router.push(routes.studentAssignmentsHistory);
           return;
-        case "canvasTemplates":
-          router.push(getCanvasTemplatePickerRoute());
+        case "canvasCreate":
+          router.push(getCanvasCreateRoute());
           return;
         case "progress":
           router.push(routes.studentProgress);
@@ -237,7 +237,7 @@ export function StudentHomeScreen() {
         case "write":
           // Writing work happens by handwriting on the canvas, so the "write"
           // target opens the canvas templates for the assignment.
-          router.push(getCanvasTemplatePickerRoute(target.assignmentId));
+          router.push(getCanvasCreateRoute(target.assignmentId));
           return;
       }
     },
@@ -291,7 +291,7 @@ export function StudentHomeScreen() {
   }, [navigateToTarget]);
 
   const handleStartPractice = useCallback(() => {
-    navigateToTarget({ kind: "canvasTemplates" });
+    navigateToTarget({ kind: "canvasCreate" });
   }, [navigateToTarget]);
 
   const handleOpenTask = useCallback(() => {

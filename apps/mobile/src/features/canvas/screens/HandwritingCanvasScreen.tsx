@@ -1,9 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-import { Dimensions, Pressable, ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Dimensions,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getAssignmentDetailRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
+import { getAssignmentDetailRoute, getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState, SuccessState } from "@/shared/components/feedback";
@@ -20,22 +28,44 @@ import {
 } from "../components";
 import { useCanvasWorkspace } from "../hooks/useCanvas";
 import { useCanvasToolStore } from "../stores/canvasToolStore";
-import { CANVAS_HEIGHT_MULTIPLIERS, type CanvasBannerPosition, type CanvasDocument } from "../types";
+import { CANVAS_HEIGHT_LEVELS, CANVAS_PAGE_COUNTS, type CanvasBannerPosition } from "../types";
 
 const EDGE_TAP_THICKNESS = 18;
 /** Inset that keeps tool popovers clear of the banner's thickness. */
-const POPOVER_BANNER_INSET = 86;
-/** Strokes with a normalized y beyond this sit "near the bottom" of the page. */
-const BOTTOM_CONTENT_THRESHOLD = 0.82;
+const POPOVER_BANNER_INSET = 62;
+const BANNER_EDGE_CENTER_INSET = 42;
+const BANNER_DRAG_THRESHOLD = 8;
 
 type ActivePopover = "color" | "height" | "position" | null;
+type DragOffset = { x: number; y: number };
+type CanvasAreaSize = { height: number; width: number };
 
 function getParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function hasContentNearBottom(document: CanvasDocument | null): boolean {
-  return Boolean(document?.strokes.some((stroke) => stroke.points.some((point) => point.y > BOTTOM_CONTENT_THRESHOLD)));
+function getBannerCenter(position: CanvasBannerPosition, size: CanvasAreaSize): DragOffset {
+  switch (position) {
+    case "top":
+      return { x: size.width / 2, y: BANNER_EDGE_CENTER_INSET };
+    case "bottom":
+      return { x: size.width / 2, y: Math.max(BANNER_EDGE_CENTER_INSET, size.height - BANNER_EDGE_CENTER_INSET) };
+    case "left":
+      return { x: BANNER_EDGE_CENTER_INSET, y: size.height / 2 };
+    case "right":
+      return { x: Math.max(BANNER_EDGE_CENTER_INSET, size.width - BANNER_EDGE_CENTER_INSET), y: size.height / 2 };
+  }
+}
+
+function getNearestBannerPosition(point: DragOffset, size: CanvasAreaSize): CanvasBannerPosition {
+  const distances = [
+    { distance: point.y, position: "top" as const },
+    { distance: Math.max(0, size.height - point.y), position: "bottom" as const },
+    { distance: point.x, position: "left" as const },
+    { distance: Math.max(0, size.width - point.x), position: "right" as const },
+  ];
+
+  return distances.reduce((nearest, candidate) => (candidate.distance < nearest.distance ? candidate : nearest)).position;
 }
 
 export function HandwritingCanvasScreen() {
@@ -51,12 +81,59 @@ export function HandwritingCanvasScreen() {
   const bannerPosition = useCanvasToolStore((store) => store.bannerPosition);
   const heightLevel = useCanvasToolStore((store) => store.heightLevel);
   const toggleBanner = useCanvasToolStore((store) => store.toggleBanner);
+  const setBannerPosition = useCanvasToolStore((store) => store.setBannerPosition);
   const setBannerHidden = useCanvasToolStore((store) => store.setBannerHidden);
 
   const [activePopover, setActivePopover] = useState<ActivePopover>(null);
+  const [bannerDragOffset, setBannerDragOffset] = useState<DragOffset | null>(null);
+  const [canvasAreaSize, setCanvasAreaSize] = useState<CanvasAreaSize>({
+    height: Math.max(360, Dimensions.get("window").height - 160),
+    width: Math.max(320, Dimensions.get("window").width),
+  });
   const [viewportHeight, setViewportHeight] = useState(() => Math.max(360, Dimensions.get("window").height - 160));
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "error">("idle");
   const [attachStatus, setAttachStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const bannerDragPositionRef = useRef(bannerPosition);
+  const canvasAreaSizeRef = useRef(canvasAreaSize);
+  const closePopover = useCallback(() => setActivePopover(null), []);
+
+  useEffect(() => {
+    bannerDragPositionRef.current = bannerPosition;
+  }, [bannerPosition]);
+
+  useEffect(() => {
+    canvasAreaSizeRef.current = canvasAreaSize;
+  }, [canvasAreaSize]);
+
+  const bannerPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_event, gestureState) =>
+          Math.abs(gestureState.dx) > BANNER_DRAG_THRESHOLD || Math.abs(gestureState.dy) > BANNER_DRAG_THRESHOLD,
+        onPanResponderGrant: () => {
+          closePopover();
+          setBannerDragOffset({ x: 0, y: 0 });
+        },
+        onPanResponderMove: (_event, gestureState) => {
+          setBannerDragOffset({ x: gestureState.dx, y: gestureState.dy });
+        },
+        onPanResponderRelease: (_event, gestureState) => {
+          const size = canvasAreaSizeRef.current;
+          const start = getBannerCenter(bannerDragPositionRef.current, size);
+          const end = {
+            x: Math.max(0, Math.min(size.width, start.x + gestureState.dx)),
+            y: Math.max(0, Math.min(size.height, start.y + gestureState.dy)),
+          };
+
+          setBannerDragOffset(null);
+          setBannerPosition(getNearestBannerPosition(end, size));
+        },
+        onPanResponderTerminate: () => {
+          setBannerDragOffset(null);
+        },
+      }),
+    [closePopover, setBannerPosition],
+  );
 
   useEffect(() => {
     if (attachStatus !== "success") {
@@ -78,8 +155,6 @@ export function HandwritingCanvasScreen() {
   const togglePopover = (popover: Exclude<ActivePopover, null>) => {
     setActivePopover((current) => (current === popover ? null : popover));
   };
-
-  const closePopover = () => setActivePopover(null);
 
   const saveNow = async () => {
     if (state.status !== "success") {
@@ -110,8 +185,7 @@ export function HandwritingCanvasScreen() {
 
   if (state.status === "success" && state.viewModel.document) {
     const { document, syncStatus } = state.viewModel;
-    const pageCount = Math.max(1, Math.ceil(CANVAS_HEIGHT_MULTIPLIERS[heightLevel]));
-    const bottomContent = hasContentNearBottom(document);
+    const pageCount = CANVAS_PAGE_COUNTS[heightLevel] ?? CANVAS_PAGE_COUNTS[CANVAS_HEIGHT_LEVELS[0]];
 
     return (
       <View
@@ -175,15 +249,19 @@ export function HandwritingCanvasScreen() {
         ) : null}
 
         <View
-          onLayout={(event) => setViewportHeight(event.nativeEvent.layout.height)}
+          onLayout={(event) => {
+            const { height, width } = event.nativeEvent.layout;
+            setViewportHeight(height);
+            setCanvasAreaSize({ height, width });
+          }}
           style={styles.canvasArea}
         >
           <ScrollView
             contentContainerStyle={[
               styles.canvasScroll,
               {
-                paddingBottom: bannerPosition === "bottom" && !bannerHidden ? 120 : spacing.xl,
-                paddingTop: bannerPosition === "top" && !bannerHidden ? 88 : spacing.lg,
+                paddingBottom: bannerPosition === "bottom" && !bannerHidden ? 88 : spacing.xl,
+                paddingTop: bannerPosition === "top" && !bannerHidden ? 58 : spacing.lg,
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -209,7 +287,15 @@ export function HandwritingCanvasScreen() {
               position={bannerPosition}
             />
           ) : (
-            <View pointerEvents="box-none" style={[styles.bannerLayer, bannerAnchorStyle(bannerPosition, insets)]}>
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.bannerLayer,
+                bannerAnchorStyle(bannerPosition, insets),
+                bannerDragOffset ? { transform: [{ translateX: bannerDragOffset.x }, { translateY: bannerDragOffset.y }] } : null,
+              ]}
+              {...bannerPanResponder.panHandlers}
+            >
               <FloatingToolBanner
                 colorPickerOpen={activePopover === "color"}
                 gradeBand={state.gradeBand}
@@ -235,9 +321,7 @@ export function HandwritingCanvasScreen() {
               />
               <View pointerEvents="box-none" style={[styles.bannerLayer, popoverAnchorStyle(bannerPosition, insets)]}>
                 {activePopover === "color" ? <ColorPickerPopover gradeBand={state.gradeBand} onClose={closePopover} /> : null}
-                {activePopover === "height" ? (
-                  <CanvasHeightControl gradeBand={state.gradeBand} hasBottomContent={bottomContent} />
-                ) : null}
+                {activePopover === "height" ? <CanvasHeightControl gradeBand={state.gradeBand} /> : null}
                 {activePopover === "position" ? (
                   <BannerPositionPicker gradeBand={state.gradeBand} onClose={closePopover} />
                 ) : null}
@@ -290,7 +374,7 @@ export function HandwritingCanvasScreen() {
           accessibilityLabel={t("canvas.workspace.missingAccessibility")}
           description={t("canvas.workspace.missingDescription")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.replace(getCanvasTemplatePickerRoute(assignmentId))}
+          onActionPress={() => router.replace(getCanvasCreateRoute(assignmentId))}
           testID="canvas-workspace-missing"
           title={t("canvas.workspace.missingTitle")}
         />

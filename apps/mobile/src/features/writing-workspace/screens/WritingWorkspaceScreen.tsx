@@ -12,7 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
+import { getCanvasDocumentRoute, getCanvasCreateRoute, getStudentReviewRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import { colors, fonts, layout, palette, radius, spacing, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
@@ -211,7 +211,7 @@ export function WritingWorkspaceScreen() {
       return;
     }
 
-    router.push(getCanvasTemplatePickerRoute(targetAssignmentId));
+    router.push(getCanvasCreateRoute(targetAssignmentId));
   };
 
   return (

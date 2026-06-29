@@ -3,10 +3,9 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { getCanvasDocumentRoute, getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
+import { getCanvasDocumentRoute, getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { colors, spacing, typography, type GradeBand } from "@/design/tokens";
-import { EntitlementGate } from "@/features/subscriptions";
 import { useI18n } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, useTopAlert } from "@/shared/components/feedback";
@@ -34,7 +33,7 @@ export function CanvasHomeScreen() {
       titleKey: "canvas.home.title",
       type: "info",
     });
-    router.push(getCanvasTemplatePickerRoute());
+    router.push(getCanvasCreateRoute());
   }, [router, topAlert]);
 
   const createButton = (
@@ -62,12 +61,7 @@ export function CanvasHomeScreen() {
     >
       <Stack gap="lg" style={styles.archiveShell}>
         {createButton}
-        <EntitlementGate
-          featureId="canvas_archive"
-          onContinueFreePress={() => router.push(getCanvasTemplatePickerRoute())}
-        >
-          <CanvasArchiveList />
-        </EntitlementGate>
+        <CanvasArchiveList />
       </Stack>
     </Screen>
   );
@@ -78,6 +72,8 @@ function CanvasArchiveList() {
   const { t } = useI18n();
   const state = useCanvasHomeData();
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
+  const documents = state.status === "success" || state.status === "error" ? state.viewModel?.documents ?? [] : [];
+  const hasDocuments = documents.length > 0;
 
   const renderDocument = useCallback(
     ({ item }: { item: CanvasDocumentSummary }) => (
@@ -103,15 +99,17 @@ function CanvasArchiveList() {
       ) : null}
 
       {state.status === "error" ? (
-        <ErrorState
-          actionLabel={t("common.retry")}
-          accessibilityLabel={t("canvas.home.errorAccessibility")}
-          description={t("canvas.home.errorDescription")}
-          gradeBand={state.gradeBand}
-          onActionPress={state.refetch}
-          testID="canvas-home-error"
-          title={t("canvas.home.errorTitle")}
-        />
+        hasDocuments ? null : (
+          <ErrorState
+            actionLabel={t("common.retry")}
+            accessibilityLabel={t("canvas.home.errorAccessibility")}
+            description={t("canvas.home.errorDescription")}
+            gradeBand={state.gradeBand}
+            onActionPress={state.refetch}
+            testID="canvas-home-error"
+            title={t("canvas.home.errorTitle")}
+          />
+        )
       ) : null}
 
       {state.status === "empty" ? (
@@ -133,16 +131,16 @@ function CanvasArchiveList() {
             accessibilityLabel={t("canvas.home.emptyAccessibility")}
             description={t("canvas.emptyDescription")}
             gradeBand={state.gradeBand}
-            onActionPress={() => router.push(getCanvasTemplatePickerRoute())}
+            onActionPress={() => router.push(getCanvasCreateRoute())}
             testID="canvas-home-empty"
             title={t("canvas.emptyTitle")}
           />
         </Stack>
       ) : null}
 
-      {state.status === "success" ? (
+      {state.status === "success" || (state.status === "error" && hasDocuments) ? (
         <FlatList
-          data={state.viewModel.documents}
+          data={documents}
           keyExtractor={(document) => document.id}
           renderItem={renderDocument}
           ItemSeparatorComponent={ItemSeparator}
@@ -152,7 +150,19 @@ function CanvasArchiveList() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Stack gap="lg" style={styles.listHeader}>
-              {state.viewModel.isOffline ? (
+              {state.status === "error" ? (
+                <ErrorState
+                  actionLabel={t("common.retry")}
+                  accessibilityLabel={t("canvas.home.errorAccessibility")}
+                  description={t("canvas.home.errorDescription")}
+                  gradeBand={state.gradeBand}
+                  onActionPress={state.refetch}
+                  testID="canvas-home-error-inline"
+                  title={t("canvas.home.errorTitle")}
+                />
+              ) : null}
+
+              {state.viewModel?.isOffline ? (
                 <OfflineBanner
                   actionLabel={t("canvas.home.offlineAction")}
                   accessibilityLabel={t("canvas.home.offlineAccessibility")}

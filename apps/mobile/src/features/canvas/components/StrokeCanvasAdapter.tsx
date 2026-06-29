@@ -28,8 +28,11 @@ interface StrokeCanvasAdapterProps {
    * document template. Used by the minimal handwriting canvas. */
   showLines?: boolean;
   /** Explicit surface height. When set, the surface grows to this height so a
-   * height control can expand the writing area downward (inside a scroll view). */
+   * page control can add fixed-height pages downward (inside a scroll view). */
   surfaceHeight?: number;
+  /** Fixed page height used for y-coordinate scaling. Existing strokes keep
+   * their shape when new pages are appended. */
+  pageHeight?: number;
   /** Hide the template guides and built-in prompts so the host screen owns the
    * surface chrome (used by the redesigned handwriting canvas). */
   minimal?: boolean;
@@ -43,6 +46,31 @@ const RULED_LINE_GAP_PX = 36;
 /** Very subtle light blue-gray, kept faint so lines aid alignment without
  * looking like a notebook template. */
 const RULED_LINE_COLOR = "rgba(148, 163, 184, 0.3)";
+
+function PageDividers({ pageCount, pageHeight }: { pageCount: number; pageHeight: number }) {
+  if (pageCount <= 1) {
+    return null;
+  }
+
+  return (
+    <View pointerEvents="none" style={{ bottom: 0, left: 0, position: "absolute", right: 0, top: 0 }}>
+      {Array.from({ length: pageCount - 1 }).map((_, index) => (
+        <View
+          key={index}
+          style={{
+            borderTopColor: colors.border.default,
+            borderTopWidth: 1,
+            left: 0,
+            opacity: 0.8,
+            position: "absolute",
+            right: 0,
+            top: pageHeight * (index + 1),
+          }}
+        />
+      ))}
+    </View>
+  );
+}
 
 function RuledLines({ height, inset }: { height: number; inset: number }) {
   const usableHeight = Math.max(0, height - inset * 2);
@@ -206,6 +234,7 @@ export function StrokeCanvasAdapter({
   style,
   showLines = false,
   surfaceHeight,
+  pageHeight,
   minimal = false,
   emptyTitle,
   emptyHelper,
@@ -215,6 +244,8 @@ export function StrokeCanvasAdapter({
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands[gradeBand];
   const effectiveMinHeight = surfaceHeight ?? gradeAdaptation.surfaceMinHeight;
+  const effectivePageHeight = pageHeight ?? effectiveMinHeight;
+  const pageCount = Math.max(1, Math.round(effectiveMinHeight / Math.max(1, effectivePageHeight)));
   const [layout, setLayout] = useState({ height: effectiveMinHeight, width: 0 });
   const layoutRef = useRef(layout);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -227,13 +258,13 @@ export function StrokeCanvasAdapter({
   }, []);
 
   const toNormalizedPoint = useCallback((x: number, y: number): CanvasPoint => {
-    const { height, width } = layoutRef.current;
+    const { width } = layoutRef.current;
 
     return {
       x: x / Math.max(1, width),
-      y: y / Math.max(1, height),
+      y: y / Math.max(1, effectivePageHeight),
     };
-  }, []);
+  }, [effectivePageHeight]);
 
   const handleDrawBegin = useCallback(
     (x: number, y: number) => {
@@ -338,6 +369,7 @@ export function StrokeCanvasAdapter({
           }}
         >
           {showLines ? <RuledLines height={layout.height} inset={spacing.lg} /> : null}
+          <PageDividers pageCount={pageCount} pageHeight={effectivePageHeight} />
 
           {minimal ? null : <TemplateGuides template={document.template} />}
 
@@ -407,6 +439,7 @@ export function StrokeCanvasAdapter({
             ? document.strokes.map((stroke) => (
                 <CanvasStrokePath
                   key={stroke.id}
+                  pageHeight={effectivePageHeight}
                   stroke={stroke}
                   surfaceHeight={layout.height}
                   surfaceWidth={layout.width}

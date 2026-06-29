@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { getCanvasTemplatePickerRoute } from "@/core/navigation/deepLinks";
+import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
 import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
 import { AssignmentAttachmentUploader } from "@/features/assignments/components";
@@ -52,7 +52,7 @@ export function PracticeSessionScreen() {
   }, [router]);
 
   const handleUseCanvas = useCallback(() => {
-    router.push(getCanvasTemplatePickerRoute());
+    router.push(getCanvasCreateRoute());
   }, [router]);
 
   if (!entry) {

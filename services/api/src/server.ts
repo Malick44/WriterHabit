@@ -9,6 +9,7 @@ import { loadConfig, type ApiConfig } from "./runtime/config";
 import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
 import { registerAiReviewRoutes } from "./routes/ai-review";
 import { registerAssignmentRoutes } from "./routes/assignments";
+import { implementedCanvasEndpoints, registerCanvasRoutes } from "./routes/canvas";
 import { dashboardImplementedEndpoints } from "./routes/dashboards-shared";
 import { registerHealthRoutes } from "./routes/health";
 import { registerParentRoutes } from "./routes/parents";
@@ -125,6 +126,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
       if (database) {
         await registerAssignmentRoutes(v1, authenticate, database);
+        await registerCanvasRoutes(v1, authenticate, database);
         await registerSubmissionRoutes(v1, authenticate, database);
         await registerAiReviewRoutes(v1, authenticate, database);
         await registerProgressRoutes(v1, authenticate, database);
@@ -140,6 +142,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
                 ...writingLoopImplementedEndpoints,
                 ...dashboardImplementedEndpoints,
                 ...implementedSubscriptionEndpoints,
+                ...implementedCanvasEndpoints,
               ]),
             }
           : {}),

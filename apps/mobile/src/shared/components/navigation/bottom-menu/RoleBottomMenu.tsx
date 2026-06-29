@@ -17,6 +17,7 @@ import Animated, {
 import type { EdgeInsets } from "react-native-safe-area-context";
 
 import { colors, duration, easing, layout, palette, radius, spacing, typography } from "@/design/tokens";
+import { GlassSurface } from "@/shared/components/layout/GlassSurface";
 
 import { useBottomMenu } from "./BottomMenuContext";
 
@@ -164,45 +165,54 @@ export const RoleBottomMenu = memo(function RoleBottomMenu({
         },
       ]}
     >
-      <Animated.View style={[styles.surface, { backgroundColor }, surfaceStyle]}>
-        <View accessibilityRole="tablist" style={styles.items}>
-          {visibleRoutes.map(({ descriptor, index, isHome, route }) => {
-            const focused = state.index === index;
+      <Animated.View style={[surfaceStyle]}>
+        <GlassSurface
+          fallbackStyle={{ backgroundColor }}
+          glassStyle="clear"
+          glassViewStyle={styles.glassSurface}
+          interactive
+          style={styles.surface}
+          tintColor="rgba(255,255,255,0.28)"
+        >
+          <View accessibilityRole="tablist" style={styles.items}>
+            {visibleRoutes.map(({ descriptor, index, isHome, route }) => {
+              const focused = state.index === index;
 
-            return (
-              <RoleBottomMenuItem
-                activeTintColor={activeTintColor}
-                descriptor={descriptor}
-                focused={focused}
-                inactiveTintColor={inactiveTintColor}
-                isCollapsed={isCollapsed}
-                isHome={isHome}
-                key={route.key}
-                onLongPress={() => {
-                  navigation.emit({ target: route.key, type: "tabLongPress" });
-                }}
-                onPress={() => {
-                  if (isHome && isCollapsed) {
-                    expand();
-                    return;
-                  }
+              return (
+                <RoleBottomMenuItem
+                  activeTintColor={activeTintColor}
+                  descriptor={descriptor}
+                  focused={focused}
+                  inactiveTintColor={inactiveTintColor}
+                  isCollapsed={isCollapsed}
+                  isHome={isHome}
+                  key={route.key}
+                  onLongPress={() => {
+                    navigation.emit({ target: route.key, type: "tabLongPress" });
+                  }}
+                  onPress={() => {
+                    if (isHome && isCollapsed) {
+                      expand();
+                      return;
+                    }
 
-                  const event = navigation.emit({
-                    canPreventDefault: true,
-                    target: route.key,
-                    type: "tabPress",
-                  });
+                    const event = navigation.emit({
+                      canPreventDefault: true,
+                      target: route.key,
+                      type: "tabPress",
+                    });
 
-                  if (!isDefaultPrevented(event)) {
-                    navigation.navigate(route.name, route.params);
-                  }
-                }}
-                progress={progress}
-                routeName={route.name}
-              />
-            );
-          })}
-        </View>
+                    if (!isDefaultPrevented(event)) {
+                      navigation.navigate(route.name, route.params);
+                    }
+                  }}
+                  progress={progress}
+                  routeName={route.name}
+                />
+              );
+            })}
+          </View>
+        </GlassSurface>
       </Animated.View>
     </View>
   );
@@ -338,6 +348,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
+  },
+  glassSurface: {
+    backgroundColor: "transparent",
   },
   items: {
     alignItems: "center",

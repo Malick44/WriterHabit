@@ -1,6 +1,9 @@
 import type { Session as SupabaseSession, User as SupabaseUser } from "@supabase/supabase-js";
 import type { GradeLevel } from "@WriterHabit/shared";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
+import { Platform } from "react-native";
 import { z } from "zod";
 
 import { supabase } from "@/core/supabase/supabaseClient";
@@ -18,6 +21,7 @@ import type {
 
 const roleSchema = z.enum(["student", "parent", "teacher", "admin"]);
 const subscriptionSchema = z.enum(["free", "trial", "active", "past_due"]);
+const nonceCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._";
 
 const userMetadataSchema = z.object({
   display_name: z.string().min(1).optional(),
@@ -64,6 +68,31 @@ function getAuthCallbackParams(url: string): URLSearchParams {
 
 function getDisplayName(user: SupabaseUser, metadata: z.infer<typeof userMetadataSchema>): string {
   return metadata.display_name ?? metadata.full_name ?? user.email ?? translate("en", "common.fallbackUserName");
+}
+
+function createNonce(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => nonceCharacters[byte % nonceCharacters.length]).join("");
+}
+
+async function createAppleNoncePair(): Promise<{ rawNonce: string; hashedNonce: string }> {
+  const rawNonce = createNonce(await Crypto.getRandomBytesAsync(32));
+  const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+
+  return { hashedNonce, rawNonce };
+}
+
+function getAppleDisplayName(fullName: AppleAuthentication.AppleAuthenticationFullName | null): string | null {
+  if (!fullName) {
+    return null;
+  }
+
+  const displayName = [fullName.givenName, fullName.familyName].filter(Boolean).join(" ").trim();
+
+  return displayName.length > 0 ? displayName : null;
+}
+
+export function isAppleSignInCancellation(error: unknown): boolean {
+  return isRecord(error) && error.code === "ERR_REQUEST_CANCELED";
 }
 
 export function mapSupabaseSession(session: SupabaseSession | null): AuthSession | null {
@@ -137,6 +166,70 @@ export const sessionService = {
     return {
       session: null,
       requiresEmailConfirmation: true,
+    };
+  },
+
+  async isAppleSignInAvailable(): Promise<boolean> {
+    if (Platform.OS !== "ios") {
+      return false;
+    }
+
+    return AppleAuthentication.isAvailableAsync();
+  },
+
+  async signInWithApple(): Promise<AuthActionResult> {
+    const isAvailable = await this.isAppleSignInAvailable();
+
+    if (!isAvailable) {
+      throw new Error("Apple sign-in is not available on this device.");
+    }
+
+    const { hashedNonce, rawNonce } = await createAppleNoncePair();
+    const credential = await AppleAuthentication.signInAsync({
+      nonce: hashedNonce,
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    if (!credential.identityToken) {
+      throw new Error("Apple did not return an identity token.");
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+      nonce: rawNonce,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const displayName = getAppleDisplayName(credential.fullName);
+
+    if (displayName) {
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          display_name: displayName,
+          family_name: credential.fullName?.familyName ?? undefined,
+          full_name: displayName,
+          given_name: credential.fullName?.givenName ?? undefined,
+        },
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      return {
+        session: await this.getCurrentSession(),
+      };
+    }
+
+    return {
+      session: mapSupabaseSession(data.session),
     };
   },
 

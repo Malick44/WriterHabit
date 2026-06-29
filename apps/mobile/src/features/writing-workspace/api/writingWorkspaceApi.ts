@@ -28,10 +28,12 @@ interface SubmitDraftInput extends WorkspaceRequestInput {
   draft: WritingDraft;
 }
 
-function getAssignmentCanvasAttachment(assignment: AssignmentRecord): WritingCanvasAttachment | null {
-  if (assignment.draft?.canvasPageCount && assignment.draft.canvasPageCount > 0) {
+function getAssignmentCanvasAttachment(assignment: AssignmentRecord, canvasDocumentIds: string[] = []): WritingCanvasAttachment | null {
+  const [canvasId] = canvasDocumentIds;
+
+  if (canvasId && assignment.draft?.canvasPageCount && assignment.draft.canvasPageCount > 0) {
     return {
-      canvasId: `canvas-${assignment.id}`,
+      canvasId,
       pageCount: assignment.draft.canvasPageCount,
       title: "Attached canvas work",
       updatedLabel: assignment.draft.lastEditedLabel,
@@ -84,14 +86,18 @@ export const writingWorkspaceApi = {
       gradeLevel: input.gradeLevel,
       studentId: input.studentId,
     });
-    const assignmentCanvasAttachment = getAssignmentCanvasAttachment(detail.assignment);
+    const backendDraft = await assignmentsApi.getBackendDraft(input);
+    const assignmentCanvasAttachment = getAssignmentCanvasAttachment(
+      detail.assignment,
+      backendDraft?.canvasDocumentIds ?? [],
+    );
     const fallbackDraft = createWritingDraft({
       assignmentId: detail.assignment.id,
       canvasAttachment: localCanvasAttachment ?? assignmentCanvasAttachment,
       revisionNumber: detail.assignment.draft?.revisionNumber ?? 0,
-      seedText: getSeedText(detail.assignment),
+      seedText: backendDraft?.text ?? getSeedText(detail.assignment),
       studentId: input.studentId,
-      timestamp: new Date("2026-06-08T09:00:00.000Z").toISOString(),
+      timestamp: backendDraft?.updatedAt ?? new Date("2026-06-08T09:00:00.000Z").toISOString(),
     });
     const draft = await draftPersistenceService.getDraft(fallbackDraft);
 
@@ -109,7 +115,17 @@ export const writingWorkspaceApi = {
   },
 
   async saveDraft(input: SaveDraftInput): Promise<WritingDraft> {
-    return draftPersistenceService.saveDraft(input.draft);
+    const savedDraft = await draftPersistenceService.saveDraft(input.draft);
+    await assignmentsApi.saveBackendDraft({
+      assignmentId: input.assignmentId,
+      autosaveVersion: Date.now(),
+      canvasDocumentIds: savedDraft.canvasAttachment ? [savedDraft.canvasAttachment.canvasId] : [],
+      gradeLevel: input.gradeLevel,
+      studentId: input.studentId,
+      text: savedDraft.text,
+    });
+
+    return savedDraft;
   },
 
   async submitDraft(input: SubmitDraftInput): Promise<WritingSubmissionResponse> {

@@ -1,4 +1,22 @@
+import { sessionService } from "./sessionService";
 import { useAuthStore } from "./authStore";
+
+jest.mock("expo-apple-authentication", () => ({
+  AppleAuthenticationScope: {
+    EMAIL: "EMAIL",
+    FULL_NAME: "FULL_NAME",
+  },
+  isAvailableAsync: jest.fn(),
+  signInAsync: jest.fn(),
+}));
+
+jest.mock("expo-crypto", () => ({
+  CryptoDigestAlgorithm: {
+    SHA256: "SHA-256",
+  },
+  digestStringAsync: jest.fn(),
+  getRandomBytesAsync: jest.fn(),
+}));
 
 function resetAuthStore() {
   useAuthStore.setState({
@@ -38,6 +56,28 @@ describe("auth demo users", () => {
 
     expect(result.session?.user.displayName).toBe("Sam Patel");
     expect(result.session?.onboardingComplete).toBe(false);
+  });
+});
+
+describe("auth Apple sign-in", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    resetAuthStore();
+  });
+
+  it("does not show an auth error when the Apple sheet is cancelled", async () => {
+    jest.spyOn(sessionService, "signInWithApple").mockRejectedValueOnce({
+      code: "ERR_REQUEST_CANCELED",
+    });
+
+    const result = await useAuthStore.getState().signInWithApple();
+
+    expect(result).toMatchObject({
+      cancelled: true,
+      session: null,
+    });
+    expect(useAuthStore.getState().errorCode).toBeNull();
+    expect(useAuthStore.getState().operationStatus).toBe("idle");
   });
 });
 

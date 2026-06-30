@@ -425,11 +425,12 @@ export function StudentHomeScreen() {
 
                 {isTablet ? (
                   <>
-                    <StreakHeroCard
-                      streak={viewModel.streak}
-                      weeklySessionsCompleted={
-                        viewModel.weeklyWriting.sessionsCompleted
-                      }
+                    <TodayPlanOverviewCard
+                      isTablet={isTablet}
+                      onOpenPractice={handleStartPractice}
+                      onOpenTask={handleOpenTask}
+                      onViewProgress={handleViewProgress}
+                      viewModel={viewModel}
                     />
 
                     <View style={styles.tabletDashboardGrid}>
@@ -462,6 +463,12 @@ export function StudentHomeScreen() {
                       </View>
 
                       <View style={styles.tabletSecondaryColumn}>
+                        <StreakHeroCard
+                          streak={viewModel.streak}
+                          weeklySessionsCompleted={
+                            viewModel.weeklyWriting.sessionsCompleted
+                          }
+                        />
                         <Grade3AdventureHomeCard
                           isTablet={isTablet}
                           onPress={handleOpenGrade3Writing}
@@ -482,11 +489,11 @@ export function StudentHomeScreen() {
                   <>
                     <Greeting name={viewModel.studentFirstName} />
 
-                    <StreakHeroCard
-                      streak={viewModel.streak}
-                      weeklySessionsCompleted={
-                        viewModel.weeklyWriting.sessionsCompleted
-                      }
+                    <TodayPlanOverviewCard
+                      onOpenPractice={handleStartPractice}
+                      onOpenTask={handleOpenTask}
+                      onViewProgress={handleViewProgress}
+                      viewModel={viewModel}
                     />
 
                     <MomentumCardsRow
@@ -498,6 +505,13 @@ export function StudentHomeScreen() {
                     />
 
                     <Grade3AdventureHomeCard onPress={handleOpenGrade3Writing} />
+
+                    <StreakHeroCard
+                      streak={viewModel.streak}
+                      weeklySessionsCompleted={
+                        viewModel.weeklyWriting.sessionsCompleted
+                      }
+                    />
 
                     <CoachChipsCard
                       actions={viewModel.coachActions}
@@ -679,6 +693,216 @@ function WeeklyWritingCard({
       >
         {description}
       </Text>
+    </View>
+  );
+}
+
+function TodayPlanOverviewCard({
+  isTablet = false,
+  onOpenPractice,
+  onOpenTask,
+  onViewProgress,
+  viewModel,
+}: {
+  isTablet?: boolean;
+  onOpenPractice: () => void;
+  onOpenTask: () => void;
+  onViewProgress: () => void;
+  viewModel: StudentHomeViewModel;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
+  const primaryColor = tuned["colors.buttonPrimary"] ?? homeColors.primary;
+  const draft = viewModel.continueDraft;
+  const assignment = viewModel.todayAssignment;
+  const planTitle =
+    draft?.title ??
+    assignment?.title ??
+    t("studentHome.todayPlan.emptyTaskTitle");
+  const planMeta = draft
+    ? t("studentHome.todayPlan.draftMeta", { count: draft.wordCount })
+    : assignment
+      ? t("studentHome.todayPlan.assignmentMeta", {
+          count: assignment.estimatedMinutes,
+          skill: getSkillLabel(t, assignment.skillFocus[0]),
+        })
+      : t("studentHome.todayPlan.emptyTaskMeta");
+  const primaryActionLabel = draft
+    ? t("studentHome.todayPlan.continueCta")
+    : assignment
+      ? t("studentHome.todayPlan.startCta")
+      : t("studentHome.todayPlan.assignmentsCta");
+  const practiceMeta = viewModel.dailyPractice.completedToday
+    ? t("studentHome.todayPlan.practiceDone")
+    : t("studentHome.todayPlan.practiceMinutes", {
+        count: viewModel.dailyPractice.minutesGoal,
+      });
+
+  return (
+    <View
+      accessible
+      accessibilityLabel={t("studentHome.todayPlan.accessibility")}
+      style={[
+        styles.card,
+        styles.todayPlanCard,
+        isTablet ? styles.todayPlanCardTablet : null,
+        tunedCardStyle(tuned, "regular"),
+      ]}
+      testID="student-home-today-plan"
+    >
+      <View style={styles.todayPlanHeader}>
+        <View style={styles.todayPlanIconBubble}>
+          <Ionicons name="sparkles" size={20} color={primaryColor} />
+        </View>
+        <View style={styles.todayPlanHeaderCopy}>
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.todayPlanEyebrow, settings),
+              highContrastText.muted,
+            ]}
+          >
+            {t("studentHome.todayPlan.eyebrow")}
+          </Text>
+          <Text
+            numberOfLines={2}
+            style={[
+              getAccessibleTextStyle(styles.todayPlanTitle, settings),
+              tunedTextStyle(tuned["colors.textPrimary"]),
+              highContrastText.body,
+            ]}
+          >
+            {planTitle}
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        numberOfLines={2}
+        style={[
+          getAccessibleTextStyle(styles.todayPlanMeta, settings),
+          tunedTextStyle(tuned["colors.textSecondary"]),
+          highContrastText.muted,
+        ]}
+      >
+        {planMeta}
+      </Text>
+
+      <View style={styles.todayPlanStatsRow}>
+        <TodayPlanStat
+          icon="flame-outline"
+          label={t("studentHome.todayPlan.streakLabel")}
+          value={t("studentHome.todayPlan.streakValue", {
+            count: viewModel.streak.currentDays,
+          })}
+        />
+        <TodayPlanStat
+          icon="time-outline"
+          label={t("studentHome.todayPlan.practiceLabel")}
+          value={practiceMeta}
+        />
+        <TodayPlanStat
+          icon="bar-chart-outline"
+          label={t("studentHome.todayPlan.weekLabel")}
+          value={t("studentHome.todayPlan.weekValue", {
+            completed: viewModel.weeklyWriting.minutesCompleted,
+            goal: viewModel.weeklyWriting.minutesGoal,
+          })}
+        />
+      </View>
+
+      <View style={styles.todayPlanActions}>
+        <Pressable
+          accessibilityLabel={t("studentHome.todayPlan.primaryAccessibility")}
+          accessibilityRole="button"
+          onPress={onOpenTask}
+          style={({ pressed }) => [
+            styles.todayPlanPrimaryButton,
+            pressed ? styles.cardPressed : null,
+          ]}
+        >
+          <Text
+            numberOfLines={1}
+            style={getAccessibleTextStyle(styles.todayPlanPrimaryText, settings)}
+          >
+            {primaryActionLabel}
+          </Text>
+          <Ionicons name="arrow-forward" size={17} color={homeColors.inverseText} />
+        </Pressable>
+        <Pressable
+          accessibilityLabel={t("studentHome.todayPlan.practiceAccessibility")}
+          accessibilityRole="button"
+          onPress={onOpenPractice}
+          style={({ pressed }) => [
+            styles.todayPlanSecondaryButton,
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Ionicons name="create-outline" size={17} color={primaryColor} />
+          <Text
+            numberOfLines={1}
+            style={[
+              getAccessibleTextStyle(styles.todayPlanSecondaryText, settings),
+              highContrastText.body,
+            ]}
+          >
+            {t("studentHome.todayPlan.practiceCta")}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityLabel={t("studentHome.todayPlan.progressAccessibility")}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onViewProgress}
+          style={({ pressed }) => [
+            styles.todayPlanIconButton,
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Ionicons name="stats-chart" size={18} color={primaryColor} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function TodayPlanStat({
+  icon,
+  label,
+  value,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+}) {
+  const { settings } = useAccessibilityContext();
+  const highContrastText = getHighContrastTextStyles(settings);
+
+  return (
+    <View accessible accessibilityLabel={`${label}: ${value}`} style={styles.todayPlanStat}>
+      <Ionicons name={icon} size={16} color={homeColors.primary} />
+      <View style={styles.todayPlanStatCopy}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.todayPlanStatValue, settings),
+            highContrastText.body,
+          ]}
+        >
+          {value}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.todayPlanStatLabel, settings),
+            highContrastText.muted,
+          ]}
+        >
+          {label}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -1808,6 +2032,137 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 24,
     minWidth: 280,
+  },
+  todayPlanActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: homeSpacing.sm,
+  },
+  todayPlanCard: {
+    gap: homeSpacing.md,
+    padding: homeSpacing.lg,
+  },
+  todayPlanCardTablet: {
+    padding: homeSpacing.xl,
+  },
+  todayPlanEyebrow: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0,
+    lineHeight: 14,
+    textTransform: "uppercase",
+  },
+  todayPlanHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: homeSpacing.md,
+  },
+  todayPlanHeaderCopy: {
+    flex: 1,
+    gap: homeSpacing.xs,
+    minWidth: 0,
+  },
+  todayPlanIconBubble: {
+    alignItems: "center",
+    backgroundColor: homeColors.secondaryContainerSoft,
+    borderRadius: homeRadius.lg,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  todayPlanIconButton: {
+    alignItems: "center",
+    backgroundColor: homeColors.surfaceContainerLow,
+    borderColor: homeColors.outlineVariant,
+    borderRadius: homeRadius.lg,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  todayPlanMeta: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 18,
+  },
+  todayPlanPrimaryButton: {
+    alignItems: "center",
+    backgroundColor: homeColors.primary,
+    borderRadius: homeRadius.lg,
+    flexDirection: "row",
+    flexGrow: 1,
+    gap: homeSpacing.sm,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 154,
+    paddingHorizontal: homeSpacing.md,
+  },
+  todayPlanPrimaryText: {
+    color: homeColors.inverseText,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  todayPlanSecondaryButton: {
+    alignItems: "center",
+    backgroundColor: homeColors.surfaceContainerLow,
+    borderColor: homeColors.outlineVariant,
+    borderRadius: homeRadius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: homeSpacing.xs,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: homeSpacing.md,
+  },
+  todayPlanSecondaryText: {
+    color: homeColors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  todayPlanStat: {
+    alignItems: "center",
+    backgroundColor: homeColors.surfaceContainerLow,
+    borderColor: homeColors.outlineVariant,
+    borderRadius: homeRadius.lg,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: "row",
+    gap: homeSpacing.xs,
+    minHeight: 58,
+    minWidth: 100,
+    paddingHorizontal: homeSpacing.sm,
+  },
+  todayPlanStatCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  todayPlanStatLabel: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 10.5,
+    fontWeight: "600",
+    lineHeight: 13,
+  },
+  todayPlanStatsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: homeSpacing.sm,
+  },
+  todayPlanStatValue: {
+    color: homeColors.onSurface,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 17,
+  },
+  todayPlanTitle: {
+    color: homeColors.onSurface,
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 26,
   },
   weeklyCard: {
     gap: homeSpacing.md,

@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     gap: 8,
-    padding: 17,
-    width: 212,
+    padding: 15,
+    width: 182,
   },
   cardCta: {
     alignItems: "center",

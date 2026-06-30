@@ -204,18 +204,23 @@ CREATE TABLE IF NOT EXISTS grade3_writing_progress (
   stronger_sentence TEXT,
   favorite_sentence TEXT,
   checklist_json TEXT,
+  planning_json TEXT,
   completed INTEGER DEFAULT 0,
   updated_at TEXT NOT NULL
 );
 ```
 
 Day 1 is unlocked by default. Each next day unlocks after the previous day has
-`completed = 1`. Lesson writing is handwriting-first: the write step opens the
-canvas or accepts an uploaded/taken image of handwritten work, and the `draft`
-field stores only an optional typed copy for the local library. Library and
-badge screens read from the same local table. The progress summary derives
-completed days, unlocked days, saved draft days, the ordered Day 1-forward
-streak, and named milestone badges from this local table.
+`completed = 1`. The Grade 3 lesson route renders a focused internal step flow:
+Read, Talk, Plan, Write, Check, Submit, then a local celebration state.
+`planning_json` stores the Talk idea and beginning/middle/end planner fields.
+The `draft` field stores the student's typed daily writing and is sufficient for
+submission when the stronger sentence and checklist requirements are complete.
+Canvas and image upload remain optional handwriting supports, not required
+completion evidence. Library and badge screens read from the same local table.
+The progress summary derives completed days, unlocked days, saved draft days,
+the ordered Day 1-forward streak, and named milestone badges from this local
+table.
 
 Daily assignment selection now lives in
 `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`. The

@@ -5,6 +5,11 @@ import type {
   Grade3WritingProgress,
   Grade3WritingProgressInput,
 } from "../types";
+import {
+  defaultGrade3PlanningState,
+  deserializeGrade3PlanningState,
+  serializeGrade3PlanningState,
+} from "./grade3PlanningState";
 
 type ProgressRow = {
   day: number;
@@ -12,6 +17,7 @@ type ProgressRow = {
   stronger_sentence: string | null;
   favorite_sentence: string | null;
   checklist_json: string | null;
+  planning_json: string | null;
   completed: number | null;
   updated_at: string;
 };
@@ -52,9 +58,19 @@ function rowToProgress(row: ProgressRow): Grade3WritingProgress {
     day: row.day,
     draft: row.draft ?? "",
     favoriteSentence: row.favorite_sentence ?? "",
+    planning: deserializeGrade3PlanningState(row.planning_json),
     strongerSentence: row.stronger_sentence ?? "",
     updatedAt: row.updated_at,
   };
+}
+
+async function ensurePlanningColumn(database: SQLite.SQLiteDatabase): Promise<void> {
+  const columns = await database.getAllAsync<{ name: string }>("PRAGMA table_info(grade3_writing_progress)");
+  const hasPlanningColumn = columns.some((column) => column.name === "planning_json");
+
+  if (!hasPlanningColumn) {
+    await database.execAsync("ALTER TABLE grade3_writing_progress ADD COLUMN planning_json TEXT;");
+  }
 }
 
 async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
@@ -66,10 +82,12 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
         stronger_sentence TEXT,
         favorite_sentence TEXT,
         checklist_json TEXT,
+        planning_json TEXT,
         completed INTEGER DEFAULT 0,
         updated_at TEXT NOT NULL
       );
     `);
+    await ensurePlanningColumn(database);
 
     return database;
   });
@@ -114,6 +132,7 @@ export const grade3WritingProgressService = {
       day: input.day,
       draft: normalizeText(input.draft ?? existing?.draft),
       favoriteSentence: normalizeText(input.favoriteSentence ?? existing?.favoriteSentence),
+      planning: input.planning ?? existing?.planning ?? defaultGrade3PlanningState,
       strongerSentence: normalizeText(input.strongerSentence ?? existing?.strongerSentence),
       updatedAt,
     };
@@ -126,14 +145,16 @@ export const grade3WritingProgressService = {
         stronger_sentence,
         favorite_sentence,
         checklist_json,
+        planning_json,
         completed,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(day) DO UPDATE SET
         draft = excluded.draft,
         stronger_sentence = excluded.stronger_sentence,
         favorite_sentence = excluded.favorite_sentence,
         checklist_json = excluded.checklist_json,
+        planning_json = excluded.planning_json,
         completed = excluded.completed,
         updated_at = excluded.updated_at`,
       next.day,
@@ -141,6 +162,7 @@ export const grade3WritingProgressService = {
       next.strongerSentence,
       next.favoriteSentence,
       JSON.stringify(next.checklist),
+      serializeGrade3PlanningState(next.planning),
       next.completed ? 1 : 0,
       next.updatedAt,
     );

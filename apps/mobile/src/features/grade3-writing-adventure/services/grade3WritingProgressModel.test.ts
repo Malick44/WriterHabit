@@ -12,6 +12,12 @@ function makeProgress(
     day,
     draft: "",
     favoriteSentence: "",
+    planning: {
+      beginning: "",
+      end: "",
+      middle: "",
+      talkIdea: "",
+    },
     strongerSentence: "",
     updatedAt: "2026-06-30T12:00:00.000Z",
     ...overrides,

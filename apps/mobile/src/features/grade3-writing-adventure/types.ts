@@ -4,12 +4,20 @@ export type { Grade3WritingDay };
 
 export type Grade3ChecklistState = Record<string, boolean>;
 
+export type Grade3PlanningState = {
+  talkIdea: string;
+  beginning: string;
+  middle: string;
+  end: string;
+};
+
 export type Grade3WritingProgress = {
   day: number;
   draft: string;
   strongerSentence: string;
   favoriteSentence: string;
   checklist: Grade3ChecklistState;
+  planning: Grade3PlanningState;
   completed: boolean;
   updatedAt: string;
 };
@@ -20,6 +28,7 @@ export type Grade3WritingProgressInput = {
   strongerSentence?: string;
   favoriteSentence?: string;
   checklist?: Grade3ChecklistState;
+  planning?: Grade3PlanningState;
   completed?: boolean;
 };
 

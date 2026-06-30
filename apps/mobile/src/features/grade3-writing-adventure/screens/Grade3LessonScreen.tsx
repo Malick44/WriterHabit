@@ -1,26 +1,40 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Text, View } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 
 import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
-import { Button, ErrorState, LoadingState, TextField } from "@/shared/components";
-import { spacing, typography } from "@/design/tokens";
-import { AssignmentAttachmentUploader } from "@/features/assignments/components";
-import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
+import { ErrorState, LoadingState } from "@/shared/components";
 import { useI18n } from "@/i18n";
-import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
 
-import { Grade3AdventureCard } from "../components/Grade3AdventureCard";
-import { Grade3ChecklistCard } from "../components/Grade3ChecklistCard";
+import { CelebrationStep } from "../components/lesson-flow/CelebrationStep";
+import { CheckStep } from "../components/lesson-flow/CheckStep";
+import { LessonBottomBar } from "../components/lesson-flow/LessonBottomBar";
+import { LessonStepTracker } from "../components/lesson-flow/LessonStepTracker";
+import { PlanStep } from "../components/lesson-flow/PlanStep";
+import { ReadStep } from "../components/lesson-flow/ReadStep";
+import { SubmitStep } from "../components/lesson-flow/SubmitStep";
+import { TalkStep } from "../components/lesson-flow/TalkStep";
+import { WriteStep } from "../components/lesson-flow/WriteStep";
+import {
+  canProceedToNextStep,
+  defaultGrade3PlanningState,
+  getLessonStepIndex,
+  getNextLessonStep,
+  getPreviousLessonStep,
+  type LessonSaveState,
+  type LessonStep,
+} from "../components/lesson-flow/lessonFlowTypes";
 import { Grade3Screen } from "../components/Grade3Screen";
-import { Grade3TopActions } from "../components/Grade3TopActions";
-import { Grade3WorksheetPreview } from "../components/Grade3WorksheetPreview";
-import { ReadAloudCard } from "../components/ReadAloudCard";
-import { WordBankChips } from "../components/WordBankChips";
 import { grade3WritingProgram } from "../content/grade3WritingProgram.content";
 import { useGrade3WritingProgress } from "../hooks/useGrade3WritingProgress";
 import { isGrade3DayUnlocked } from "../services/grade3WritingProgressModel";
-import type { Grade3ChecklistState, Grade3WritingDay, Grade3WritingProgress, Grade3WritingProgressInput } from "../types";
+import type {
+  Grade3ChecklistState,
+  Grade3PlanningState,
+  Grade3WritingDay,
+  Grade3WritingProgress,
+  Grade3WritingProgressInput,
+} from "../types";
 
 const AUTOSAVE_DELAY_MS = 650;
 
@@ -67,7 +81,6 @@ export function Grade3LessonScreen() {
     <Grade3LessonWorkspace
       key={lesson.day}
       lesson={lesson}
-      onComplete={() => router.push("/(student)/grade3-writing/progress")}
       saveProgress={progressState.saveProgress}
       storedProgress={storedProgress}
     />
@@ -76,33 +89,43 @@ export function Grade3LessonScreen() {
 
 type Grade3LessonWorkspaceProps = {
   lesson: Grade3WritingDay;
-  onComplete: () => void;
   saveProgress: (input: Grade3WritingProgressInput) => Promise<Grade3WritingProgress>;
   storedProgress: Grade3WritingProgress | null | undefined;
 };
 
-function Grade3LessonWorkspace({
-  lesson,
-  onComplete,
-  saveProgress,
-  storedProgress,
-}: Grade3LessonWorkspaceProps) {
+function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3LessonWorkspaceProps) {
   const router = useRouter();
   const { t } = useI18n();
-  const { settings } = useAccessibilityContext();
-  const accessibleColors = getAccessibleColors(settings);
-  const type = typography.gradeBands.elementary;
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [currentStep, setCurrentStep] = useState<LessonStep>("read");
+  const [furthestStepIndex, setFurthestStepIndex] = useState(0);
   const [draft, setDraft] = useState(storedProgress?.draft ?? "");
   const [strongerSentence, setStrongerSentence] = useState(storedProgress?.strongerSentence ?? "");
   const [favoriteSentence, setFavoriteSentence] = useState(storedProgress?.favoriteSentence ?? "");
   const [checklist, setChecklist] = useState<Grade3ChecklistState>(storedProgress?.checklist ?? {});
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("saved");
+  const [planning, setPlanning] = useState<Grade3PlanningState>(
+    storedProgress?.planning ?? defaultGrade3PlanningState,
+  );
+  const [saveState, setSaveState] = useState<LessonSaveState>("saved");
   const [startedCanvas, setStartedCanvas] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [validationReason, setValidationReason] = useState<"draft" | "check" | null>(null);
   const attachments = useAssignmentAttachments();
-  const checkedCount = useMemo(() => Object.values(checklist).filter(Boolean).length, [checklist]);
-  const hasHandwritingEvidence = startedCanvas || attachments.attachments.length > 0;
-  const readyToComplete = Boolean(hasHandwritingEvidence && strongerSentence.trim() && checkedCount === lesson.checklist.length);
+
+  const saveLabel = saveState === "saving"
+    ? t("grade3WritingAdventure.lessonFlow.autosave.saving")
+    : t("grade3WritingAdventure.lessonFlow.autosave.saved");
+
+  const validation = useMemo(
+    () =>
+      canProceedToNextStep(currentStep, {
+        checklist,
+        checklistItems: lesson.checklist,
+        draft,
+        strongerSentence,
+      }),
+    [checklist, currentStep, draft, lesson.checklist, strongerSentence],
+  );
 
   useEffect(() => {
     if (autosaveTimer.current) {
@@ -115,6 +138,7 @@ function Grade3LessonWorkspace({
         day: lesson.day,
         draft,
         favoriteSentence,
+        planning,
         strongerSentence,
       })
         .then(() => setSaveState("saved"))
@@ -126,15 +150,17 @@ function Grade3LessonWorkspace({
         clearTimeout(autosaveTimer.current);
       }
     };
-  }, [checklist, draft, favoriteSentence, lesson.day, saveProgress, strongerSentence]);
+  }, [checklist, draft, favoriteSentence, lesson.day, planning, saveProgress, strongerSentence]);
 
   const updateDraft = useCallback((nextDraft: string) => {
     setSaveState("saving");
+    setValidationReason(null);
     setDraft(nextDraft);
   }, []);
 
   const updateStrongerSentence = useCallback((nextSentence: string) => {
     setSaveState("saving");
+    setValidationReason(null);
     setStrongerSentence(nextSentence);
   }, []);
 
@@ -145,7 +171,13 @@ function Grade3LessonWorkspace({
 
   const updateChecklist = useCallback((nextChecklist: Grade3ChecklistState) => {
     setSaveState("saving");
+    setValidationReason(null);
     setChecklist(nextChecklist);
+  }, []);
+
+  const updatePlanning = useCallback((nextPlanning: Grade3PlanningState) => {
+    setSaveState("saving");
+    setPlanning(nextPlanning);
   }, []);
 
   const openCanvas = useCallback(() => {
@@ -153,163 +185,179 @@ function Grade3LessonWorkspace({
     router.push(getCanvasCreateRoute());
   }, [router]);
 
+  const goToMap = useCallback(() => {
+    router.push("/(student)/grade3-writing");
+  }, [router]);
+
+  const goToProgress = useCallback(() => {
+    router.push("/(student)/grade3-writing/progress");
+  }, [router]);
+
   const completeDay = async () => {
-    await saveProgress({
-      checklist,
-      completed: true,
-      day: lesson.day,
-      draft,
-      favoriteSentence,
-      strongerSentence,
-    });
-    onComplete();
+    setSubmitting(true);
+    try {
+      await saveProgress({
+        checklist,
+        completed: true,
+        day: lesson.day,
+        draft,
+        favoriteSentence,
+        planning,
+        strongerSentence,
+      });
+      setSaveState("saved");
+      setFurthestStepIndex(6);
+      setCurrentStep("celebration");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const goBack = () => {
+    setValidationReason(null);
+
+    if (currentStep === "read") {
+      goToMap();
+      return;
+    }
+
+    if (currentStep === "celebration") {
+      goToMap();
+      return;
+    }
+
+    setCurrentStep(getPreviousLessonStep(currentStep));
+  };
+
+  const goNext = () => {
+    if (currentStep === "celebration") {
+      goToProgress();
+      return;
+    }
+
+    if (currentStep === "submit") {
+      void completeDay();
+      return;
+    }
+
+    if (!validation.canProceed) {
+      setValidationReason(validation.reason);
+      return;
+    }
+
+    const nextStep = getNextLessonStep(currentStep);
+    setValidationReason(null);
+    setFurthestStepIndex((previous) => Math.max(previous, getLessonStepIndex(nextStep)));
+    setCurrentStep(nextStep);
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case "read":
+        return <ReadStep lesson={lesson} />;
+      case "talk":
+        return <TalkStep lesson={lesson} onPlanningChange={updatePlanning} planning={planning} />;
+      case "plan":
+        return <PlanStep lesson={lesson} onPlanningChange={updatePlanning} planning={planning} />;
+      case "write":
+        return (
+          <WriteStep
+            attachments={attachments}
+            draft={draft}
+            lesson={lesson}
+            onDraftChange={updateDraft}
+            onOpenCanvas={openCanvas}
+            saveLabel={saveLabel}
+            startedCanvas={startedCanvas}
+          />
+        );
+      case "check":
+        return (
+          <CheckStep
+            checklist={checklist}
+            favoriteSentence={favoriteSentence}
+            lesson={lesson}
+            onChecklistChange={updateChecklist}
+            onFavoriteSentenceChange={updateFavoriteSentence}
+            onStrongerSentenceChange={updateStrongerSentence}
+            strongerSentence={strongerSentence}
+          />
+        );
+      case "submit":
+        return <SubmitStep draft={draft} favoriteSentence={favoriteSentence} lesson={lesson} />;
+      case "celebration":
+        return <CelebrationStep />;
+    }
+  };
+
+  const getBackLabel = () => {
+    if (currentStep === "read" || currentStep === "celebration") {
+      return t("grade3WritingAdventure.lessonFlow.cta.backToMap");
+    }
+
+    if (currentStep === "check") {
+      return t("grade3WritingAdventure.lessonFlow.cta.backToWrite");
+    }
+
+    if (currentStep === "submit") {
+      return t("grade3WritingAdventure.lessonFlow.cta.keepEditing");
+    }
+
+    return t("grade3WritingAdventure.lessonFlow.cta.back");
+  };
+
+  const getNextLabel = () => {
+    switch (currentStep) {
+      case "read":
+        return t("grade3WritingAdventure.lessonFlow.cta.nextTalk");
+      case "talk":
+        return t("grade3WritingAdventure.lessonFlow.cta.nextPlan");
+      case "plan":
+        return t("grade3WritingAdventure.lessonFlow.cta.nextWrite");
+      case "write":
+        return t("grade3WritingAdventure.lessonFlow.cta.nextCheck");
+      case "check":
+        return t("grade3WritingAdventure.lessonFlow.cta.readySubmit");
+      case "submit":
+        return t("grade3WritingAdventure.lessonFlow.cta.submit");
+      case "celebration":
+        return t("grade3WritingAdventure.lessonFlow.cta.seeProgress");
+    }
+  };
+
+  const activeValidationReason =
+    validationReason ??
+    (!validation.canProceed && (currentStep === "write" || currentStep === "check") ? validation.reason : null);
+  const helperText = activeValidationReason
+    ? t(
+        activeValidationReason === "draft"
+          ? "grade3WritingAdventure.lessonFlow.validation.draft"
+          : "grade3WritingAdventure.lessonFlow.validation.check",
+      )
+    : undefined;
 
   return (
     <Grade3Screen
+      footer={
+        <LessonBottomBar
+          backLabel={getBackLabel()}
+          helperText={helperText}
+          nextDisabled={!validation.canProceed && (currentStep === "write" || currentStep === "check")}
+          nextLabel={getNextLabel()}
+          nextLoading={submitting}
+          onBack={goBack}
+          onNext={goNext}
+          saveLabel={saveLabel}
+        />
+      }
       subtitle={t("grade3WritingAdventure.lesson.subtitle", {
         minutes: lesson.estimatedMinutes,
         skill: lesson.miniSkill,
       })}
       title={t("grade3WritingAdventure.lesson.title", { day: lesson.day, title: lesson.title })}
     >
-      <Grade3TopActions />
-      <Grade3AdventureCard
-        icon={lesson.visualPrompt.emoji}
-        subtitle={saveState === "saving" ? t("grade3WritingAdventure.lesson.saving") : t("grade3WritingAdventure.lesson.saved")}
-        title={t("grade3WritingAdventure.lesson.flowTitle")}
-        variant="peach"
-      >
-        <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-          {t("grade3WritingAdventure.lesson.flow")}
-        </Text>
-      </Grade3AdventureCard>
-
-      <ReadAloudCard reading={lesson.reading} title={t("grade3WritingAdventure.lesson.readTitle")} />
-
-      <Grade3AdventureCard
-        icon="💬"
-        subtitle={t("grade3WritingAdventure.lesson.talkSubtitle")}
-        title={t("grade3WritingAdventure.lesson.talkTitle")}
-        variant="mint"
-      >
-        <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-          {lesson.talkQuestion}
-        </Text>
-      </Grade3AdventureCard>
-
-      <Grade3AdventureCard
-        icon={lesson.visualPrompt.emoji}
-        subtitle={lesson.visualPrompt.drawingTask}
-        title={lesson.visualPrompt.scene}
-        variant="sky"
-      >
-        <Grade3WorksheetPreview emoji={lesson.visualPrompt.emoji} scene={lesson.visualPrompt.scene} />
-      </Grade3AdventureCard>
-
-      <Grade3AdventureCard
-        icon="🔤"
-        subtitle={t("grade3WritingAdventure.lesson.wordBankSubtitle")}
-        title={t("grade3WritingAdventure.lesson.wordBankTitle")}
-        variant="cream"
-      >
-        <WordBankChips words={lesson.wordBank} />
-      </Grade3AdventureCard>
-
-      <Grade3AdventureCard
-        icon="✏️"
-        subtitle={lesson.writingPrompt}
-        title={t("grade3WritingAdventure.lesson.writeTitle")}
-        variant="mint"
-      >
-        <View style={{ gap: spacing.md }}>
-          <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-            {t("grade3WritingAdventure.lesson.handwritingFirst")}
-          </Text>
-          <Button
-            accessibilityLabel={t("grade3WritingAdventure.lesson.useCanvasAccessibility")}
-            fullWidth
-            gradeBand="elementary"
-            label={startedCanvas ? t("grade3WritingAdventure.lesson.returnToCanvas") : t("grade3WritingAdventure.lesson.useCanvasCta")}
-            onPress={openCanvas}
-            size="lg"
-          />
-          <AssignmentAttachmentUploader
-            attachments={attachments.attachments}
-            error={attachments.error}
-            gradeBand="elementary"
-            isPicking={attachments.isPicking}
-            onPickFile={() => {
-              void attachments.pickFile();
-            }}
-            onPickPhoto={() => {
-              void attachments.pickPhoto();
-            }}
-            onRemove={attachments.remove}
-            onRetryExtraction={attachments.retryExtraction}
-            onTakePhoto={() => {
-              void attachments.takePhoto();
-            }}
-          />
-        </View>
-        <TextField
-          gradeBand="elementary"
-          inputStyle={{ minHeight: 180 }}
-          label={t("grade3WritingAdventure.lesson.draftLabel")}
-          multiline
-          onChangeText={updateDraft}
-          placeholder={t("grade3WritingAdventure.lesson.draftPlaceholder")}
-          scrollEnabled={false}
-          textAlignVertical="top"
-          value={draft}
-        />
-      </Grade3AdventureCard>
-
-      <Grade3AdventureCard
-        icon="💪"
-        subtitle={lesson.makeItStronger}
-        title={t("grade3WritingAdventure.lesson.strongerTitle")}
-        variant="peach"
-      >
-        <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-          {t("grade3WritingAdventure.lesson.strongerHandwritingHint")}
-        </Text>
-        <TextField
-          gradeBand="elementary"
-          label={t("grade3WritingAdventure.lesson.strongerLabel")}
-          multiline
-          onChangeText={updateStrongerSentence}
-          placeholder={t("grade3WritingAdventure.lesson.strongerPlaceholder")}
-          scrollEnabled={false}
-          textAlignVertical="top"
-          value={strongerSentence}
-        />
-        <TextField
-          gradeBand="elementary"
-          label={t("grade3WritingAdventure.lesson.favoriteLabel")}
-          onChangeText={updateFavoriteSentence}
-          placeholder={t("grade3WritingAdventure.lesson.favoritePlaceholder")}
-          value={favoriteSentence}
-        />
-      </Grade3AdventureCard>
-
-      <Grade3ChecklistCard checklist={lesson.checklist} onChange={updateChecklist} value={checklist} />
-
-      <Grade3AdventureCard
-        icon="🏁"
-        subtitle={readyToComplete ? t("grade3WritingAdventure.lesson.completeReady") : t("grade3WritingAdventure.lesson.completeNotReady")}
-        title={t("grade3WritingAdventure.lesson.completeTitle")}
-        variant="success"
-      >
-        <Button
-          disabled={!readyToComplete}
-          fullWidth
-          gradeBand="elementary"
-          label={storedProgress?.completed ? t("grade3WritingAdventure.lesson.completedAgain") : t("grade3WritingAdventure.lesson.completeAction")}
-          onPress={completeDay}
-          size="lg"
-        />
-      </Grade3AdventureCard>
+      <LessonStepTracker currentStep={currentStep} furthestStepIndex={furthestStepIndex} />
+      {renderStep()}
     </Grade3Screen>
   );
 }

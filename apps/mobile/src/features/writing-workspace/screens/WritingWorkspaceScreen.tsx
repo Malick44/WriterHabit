@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   I18nManager,
   Pressable,
@@ -155,7 +155,7 @@ export function WritingWorkspaceScreen() {
   const openPanel = useWritingWorkspaceUiStore((store) => store.openPanel);
   const closePanel = useWritingWorkspaceUiStore((store) => store.closePanel);
   const [isSavingNow, setIsSavingNow] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<WorkspaceStage | null>(routeStage);
+  const [selectedStage, setSelectedStage] = useState<WorkspaceStage | null>(null);
   const [checkedRubricIds, setCheckedRubricIds] = useState<readonly string[]>([]);
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
@@ -163,16 +163,10 @@ export function WritingWorkspaceScreen() {
 
   const assignment = successState?.viewModel.assignment ?? null;
   const hasDraftText = (successState?.viewModel.text.trim().length ?? 0) > 0;
-  const stage = selectedStage ?? (hasDraftText ? "draft" : "understand");
+  const stage = selectedStage ?? routeStage ?? (hasDraftText ? "draft" : "understand");
   const stageIndex = stageOrder.findIndex((entry) => entry.id === stage);
   const rubric = assignment?.rubric ?? [];
   const checkedCount = rubric.filter((item) => checkedRubricIds.includes(item.id)).length;
-
-  useEffect(() => {
-    if (routeStage) {
-      setSelectedStage(routeStage);
-    }
-  }, [routeStage]);
 
   const toggleRubricItem = (id: string) => {
     setCheckedRubricIds((current) =>

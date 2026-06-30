@@ -185,6 +185,30 @@ start-writing/start-canvas routes, and guarded submission confirmation. Data is
 deterministic mock data; real assignment persistence and submission APIs remain
 future backend work.
 
+### Grade 3 Writing Adventure Local Progress
+
+The Grade 3 Writing Adventure is a local-first, no-login 30-day reading and
+writing program under `apps/mobile/src/features/grade3-writing-adventure/`.
+Program content is bundled in
+`apps/mobile/src/features/grade3-writing-adventure/content/grade3WritingProgram.content.ts`.
+Student progress is stored only on the device through Expo SQLite; it does not
+sync to Supabase and does not use AI grading.
+
+```sql
+CREATE TABLE IF NOT EXISTS grade3_writing_progress (
+  day INTEGER PRIMARY KEY NOT NULL,
+  draft TEXT,
+  stronger_sentence TEXT,
+  favorite_sentence TEXT,
+  checklist_json TEXT,
+  completed INTEGER DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
+```
+
+Day 1 is unlocked by default. Each next day unlocks after the previous day has
+`completed = 1`. Library and badge screens read from the same local table.
+
 Daily assignment selection now lives in
 `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`. The
 selector chooses from a deterministic daily assignment catalog using grade,

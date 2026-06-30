@@ -51,6 +51,11 @@ apps/mobile/app/
     canvas/index.tsx
     canvas/templates.tsx
     canvas/[canvasId].tsx
+    grade3-writing/index.tsx
+    grade3-writing/[day].tsx
+    grade3-writing/progress.tsx
+    grade3-writing/library.tsx
+    grade3-writing/parent-guide.tsx
     progress/index.tsx
     progress/badges.tsx
     progress/skills/[skillId].tsx
@@ -179,6 +184,11 @@ Student detail routes are hidden from the tab bar:
 /(student)/assignments/submit
 /(student)/canvas/templates
 /(student)/canvas/[canvasId]
+/(student)/grade3-writing
+/(student)/grade3-writing/[day]
+/(student)/grade3-writing/progress
+/(student)/grade3-writing/library
+/(student)/grade3-writing/parent-guide
 /(student)/progress
 /(student)/progress/badges
 /(student)/progress/skills/[skillId]

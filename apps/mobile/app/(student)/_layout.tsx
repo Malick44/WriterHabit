@@ -103,6 +103,11 @@ export default function StudentLayout() {
           <Tabs.Screen name="assignments/submit" options={{ href: null }} />
           <Tabs.Screen name="canvas/[canvasId]" options={{ href: null, tabBarStyle: { display: "none" } }} />
           <Tabs.Screen name="canvas/create" options={{ href: null }} />
+          <Tabs.Screen name="grade3-writing/[day]" options={{ href: null, tabBarStyle: { display: "none" } }} />
+          <Tabs.Screen name="grade3-writing/index" options={{ href: null }} />
+          <Tabs.Screen name="grade3-writing/library" options={{ href: null }} />
+          <Tabs.Screen name="grade3-writing/parent-guide" options={{ href: null }} />
+          <Tabs.Screen name="grade3-writing/progress" options={{ href: null }} />
           <Tabs.Screen name="progress/badges" options={{ href: null }} />
           <Tabs.Screen name="progress/skills/[skillId]" options={{ href: null }} />
           <Tabs.Screen name="progress/weekly-review" options={{ href: null }} />

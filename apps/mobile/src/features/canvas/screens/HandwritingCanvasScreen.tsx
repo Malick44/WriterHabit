@@ -107,6 +107,7 @@ export function HandwritingCanvasScreen() {
 
   const bannerPanResponder = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- refs are only read inside gesture callbacks after render
       PanResponder.create({
         onMoveShouldSetPanResponder: (_event, gestureState) =>
           Math.abs(gestureState.dx) > BANNER_DRAG_THRESHOLD || Math.abs(gestureState.dy) > BANNER_DRAG_THRESHOLD,

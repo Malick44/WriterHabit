@@ -1,11 +1,13 @@
 import { useCallback, type ReactNode } from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
+  type ImageSourcePropType,
   type TextStyle,
   type ViewStyle,
 } from "react-native";
@@ -86,6 +88,17 @@ const RING_SEGMENTS = Array.from(
   (_, index) => index,
 );
 const TABLET_BREAKPOINT = 768;
+
+const childHomeImages = {
+  books: require("../../../../assets/images/writerhabit-child-home/06_stacked_books.png"),
+  cloudRainbow: require("../../../../assets/images/writerhabit-child-home/03_cloud_rainbow.png"),
+  flame: require("../../../../assets/images/writerhabit-child-home/08_streak_flame_icon.png"),
+  medal: require("../../../../assets/images/writerhabit-child-home/05_gold_badge_medal.png"),
+  mayaAvatar: require("../../../../assets/images/writerhabit-child-home/01_maya_avatar.png"),
+  notebook: require("../../../../assets/images/writerhabit-child-home/04_notebook_pencil.png"),
+  starPoints: require("../../../../assets/images/writerhabit-child-home/07_star_points_badge_128.png"),
+  writingPuppy: require("../../../../assets/images/writerhabit-child-home/02_writing_puppy.png"),
+} satisfies Record<string, ImageSourcePropType>;
 
 const skillLabelKeys = {
   argument_strength: "assignments.skills.argument_strength",
@@ -546,17 +559,25 @@ function Greeting({ name }: { name: string }) {
   const highContrastText = getHighContrastTextStyles(settings);
 
   return (
-    <Text
-      accessibilityRole="header"
-      numberOfLines={1}
-      selectable
-      style={[
-        getAccessibleTextStyle(styles.greeting, settings),
-        highContrastText.body,
-      ]}
-    >
-      {t("studentHome.greeting", { name })}
-    </Text>
+    <View style={styles.greetingRow}>
+      <Image
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        source={childHomeImages.mayaAvatar}
+        style={styles.greetingAvatar}
+      />
+      <Text
+        accessibilityRole="header"
+        numberOfLines={1}
+        selectable
+        style={[
+          getAccessibleTextStyle(styles.greeting, settings),
+          highContrastText.body,
+        ]}
+      >
+        {t("studentHome.greeting", { name })}
+      </Text>
+    </View>
   );
 }
 
@@ -580,7 +601,12 @@ function CoachChipsCard({
     >
       <View style={styles.coachHeaderRow}>
         <View style={styles.coachIconBubble}>
-          <Ionicons name="sparkles" size={16} color={homeColors.secondary} />
+          <Image
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            source={childHomeImages.cloudRainbow}
+            style={styles.coachIconImage}
+          />
         </View>
         <Text
           numberOfLines={1}
@@ -754,7 +780,12 @@ function TodayPlanOverviewCard({
     >
       <View style={styles.todayPlanHeader}>
         <View style={styles.todayPlanIconBubble}>
-          <Ionicons name="sparkles" size={20} color={primaryColor} />
+          <Image
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            source={childHomeImages.writingPuppy}
+            style={styles.todayPlanHeroImage}
+          />
         </View>
         <View style={styles.todayPlanHeaderCopy}>
           <Text
@@ -792,19 +823,19 @@ function TodayPlanOverviewCard({
 
       <View style={styles.todayPlanStatsRow}>
         <TodayPlanStat
-          icon="flame-outline"
+          imageSource={childHomeImages.flame}
           label={t("studentHome.todayPlan.streakLabel")}
           value={t("studentHome.todayPlan.streakValue", {
             count: viewModel.streak.currentDays,
           })}
         />
         <TodayPlanStat
-          icon="time-outline"
+          imageSource={childHomeImages.notebook}
           label={t("studentHome.todayPlan.practiceLabel")}
           value={practiceMeta}
         />
         <TodayPlanStat
-          icon="bar-chart-outline"
+          imageSource={childHomeImages.starPoints}
           label={t("studentHome.todayPlan.weekLabel")}
           value={t("studentHome.todayPlan.weekValue", {
             completed: viewModel.weeklyWriting.minutesCompleted,
@@ -870,10 +901,12 @@ function TodayPlanOverviewCard({
 
 function TodayPlanStat({
   icon,
+  imageSource,
   label,
   value,
 }: {
-  icon: IconName;
+  icon?: IconName;
+  imageSource?: ImageSourcePropType;
   label: string;
   value: string;
 }) {
@@ -882,7 +915,16 @@ function TodayPlanStat({
 
   return (
     <View accessible accessibilityLabel={`${label}: ${value}`} style={styles.todayPlanStat}>
-      <Ionicons name={icon} size={16} color={homeColors.primary} />
+      {imageSource ? (
+        <Image
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+          source={imageSource}
+          style={styles.todayPlanStatImage}
+        />
+      ) : icon ? (
+        <Ionicons name={icon} size={16} color={homeColors.primary} />
+      ) : null}
       <View style={styles.todayPlanStatCopy}>
         <Text
           numberOfLines={1}
@@ -918,7 +960,6 @@ function Grade3AdventureHomeCard({
   const { settings } = useAccessibilityContext();
   const tuned = useStudentHomeTokenOverrides();
   const highContrastText = getHighContrastTextStyles(settings);
-  const primaryColor = tuned["colors.buttonPrimary"] ?? homeColors.primary;
 
   return (
     <Pressable
@@ -936,7 +977,12 @@ function Grade3AdventureHomeCard({
       testID="student-home-grade3-writing"
     >
       <View style={styles.grade3AdventureIcon}>
-        <Ionicons name="map-outline" size={25} color={primaryColor} />
+        <Image
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+          source={childHomeImages.books}
+          style={styles.grade3AdventureImage}
+        />
       </View>
       <View style={styles.grade3AdventureCopy}>
         <Text
@@ -1568,6 +1614,12 @@ function RecentFeedbackCard({
       </View>
       {feedback ? (
         <View style={styles.rewardChip}>
+          <Image
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            source={childHomeImages.medal}
+            style={styles.rewardImage}
+          />
           <Text
             numberOfLines={1}
             style={[
@@ -1691,7 +1743,12 @@ const styles = StyleSheet.create({
     borderRadius: homeRadius.lg,
     height: 28,
     justifyContent: "center",
+    overflow: "hidden",
     width: 28,
+  },
+  coachIconImage: {
+    height: 30,
+    width: 30,
   },
   coachSafetyNote: {
     color: homeColors.onSurfaceVariant,
@@ -1791,9 +1848,22 @@ const styles = StyleSheet.create({
   },
   greeting: {
     color: homeColors.onSurface,
+    flex: 1,
     fontSize: 22,
     fontWeight: "600",
     lineHeight: 28,
+  },
+  greetingAvatar: {
+    borderColor: homeColors.outlineVariant,
+    borderRadius: 24,
+    borderWidth: 1,
+    height: 48,
+    width: 48,
+  },
+  greetingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: homeSpacing.md,
   },
   grade3AdventureCard: {
     alignItems: "center",
@@ -1830,7 +1900,12 @@ const styles = StyleSheet.create({
     borderRadius: homeRadius.lg,
     height: 48,
     justifyContent: "center",
+    overflow: "hidden",
     width: 48,
+  },
+  grade3AdventureImage: {
+    height: 46,
+    width: 46,
   },
   grade3AdventureTitle: {
     color: homeColors.primary,
@@ -1863,9 +1938,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: homeColors.secondaryContainerSoft,
     borderRadius: homeRadius.sm,
+    flexDirection: "row",
+    gap: 4,
     minHeight: 28,
     paddingHorizontal: homeSpacing.sm,
     paddingVertical: homeSpacing.xs,
+  },
+  rewardImage: {
+    borderRadius: 7,
+    height: 16,
+    width: 16,
   },
   rewardText: {
     color: homeColors.secondary,
@@ -2070,7 +2152,12 @@ const styles = StyleSheet.create({
     borderRadius: homeRadius.lg,
     height: 44,
     justifyContent: "center",
+    overflow: "hidden",
     width: 44,
+  },
+  todayPlanHeroImage: {
+    height: 48,
+    width: 48,
   },
   todayPlanIconButton: {
     alignItems: "center",
@@ -2151,6 +2238,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: homeSpacing.sm,
+  },
+  todayPlanStatImage: {
+    borderRadius: 8,
+    height: 22,
+    width: 22,
   },
   todayPlanStatValue: {
     color: homeColors.onSurface,

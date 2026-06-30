@@ -29,9 +29,20 @@ export function getGrade3Summary(progress: Grade3WritingProgress[]): Grade3Progr
 
     return progressMap.get(day.day - 1)?.completed === true;
   }).length;
+  let currentStreakDays = 0;
+
+  for (const day of grade3WritingProgram) {
+    if (progressMap.get(day.day)?.completed === true) {
+      currentStreakDays += 1;
+      continue;
+    }
+
+    break;
+  }
 
   return {
     completedDays,
+    currentStreakDays,
     draftDays,
     totalDays: grade3WritingProgram.length,
     unlockedDays,

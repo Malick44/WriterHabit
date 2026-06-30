@@ -181,9 +181,12 @@ interface AssignmentRecord {
 ```
 
 The assignment feature currently supports history tabs, assignment detail,
-start-writing/start-canvas routes, and guarded submission confirmation. Data is
-deterministic mock data; real assignment persistence and submission APIs remain
-future backend work.
+handwriting canvas entry, image/file upload entry, and guarded submission
+confirmation. Student-facing writing assignments and daily practice are
+handwriting-first: primary writing actions open canvas or upload/photo capture,
+while typed text remains a saved copy/transcription and compatibility path.
+Data is deterministic mock data; real assignment persistence and submission APIs
+remain future backend work.
 
 ### Grade 3 Writing Adventure Local Progress
 
@@ -207,7 +210,12 @@ CREATE TABLE IF NOT EXISTS grade3_writing_progress (
 ```
 
 Day 1 is unlocked by default. Each next day unlocks after the previous day has
-`completed = 1`. Library and badge screens read from the same local table.
+`completed = 1`. Lesson writing is handwriting-first: the write step opens the
+canvas or accepts an uploaded/taken image of handwritten work, and the `draft`
+field stores only an optional typed copy for the local library. Library and
+badge screens read from the same local table. The progress summary derives
+completed days, unlocked days, saved draft days, the ordered Day 1-forward
+streak, and named milestone badges from this local table.
 
 Daily assignment selection now lives in
 `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`. The

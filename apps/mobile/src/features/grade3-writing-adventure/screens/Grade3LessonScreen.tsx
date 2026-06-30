@@ -2,8 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 
+import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { Button, ErrorState, LoadingState, TextField } from "@/shared/components";
 import { spacing, typography } from "@/design/tokens";
+import { AssignmentAttachmentUploader } from "@/features/assignments/components";
+import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
 import { useI18n } from "@/i18n";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
@@ -11,6 +14,7 @@ import { Grade3AdventureCard } from "../components/Grade3AdventureCard";
 import { Grade3ChecklistCard } from "../components/Grade3ChecklistCard";
 import { Grade3Screen } from "../components/Grade3Screen";
 import { Grade3TopActions } from "../components/Grade3TopActions";
+import { Grade3WorksheetPreview } from "../components/Grade3WorksheetPreview";
 import { ReadAloudCard } from "../components/ReadAloudCard";
 import { WordBankChips } from "../components/WordBankChips";
 import { grade3WritingProgram } from "../content/grade3WritingProgram.content";
@@ -83,6 +87,7 @@ function Grade3LessonWorkspace({
   saveProgress,
   storedProgress,
 }: Grade3LessonWorkspaceProps) {
+  const router = useRouter();
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
@@ -93,8 +98,11 @@ function Grade3LessonWorkspace({
   const [favoriteSentence, setFavoriteSentence] = useState(storedProgress?.favoriteSentence ?? "");
   const [checklist, setChecklist] = useState<Grade3ChecklistState>(storedProgress?.checklist ?? {});
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("saved");
+  const [startedCanvas, setStartedCanvas] = useState(false);
+  const attachments = useAssignmentAttachments();
   const checkedCount = useMemo(() => Object.values(checklist).filter(Boolean).length, [checklist]);
-  const readyToComplete = Boolean(draft.trim() && strongerSentence.trim() && checkedCount === lesson.checklist.length);
+  const hasHandwritingEvidence = startedCanvas || attachments.attachments.length > 0;
+  const readyToComplete = Boolean(hasHandwritingEvidence && strongerSentence.trim() && checkedCount === lesson.checklist.length);
 
   useEffect(() => {
     if (autosaveTimer.current) {
@@ -139,6 +147,11 @@ function Grade3LessonWorkspace({
     setSaveState("saving");
     setChecklist(nextChecklist);
   }, []);
+
+  const openCanvas = useCallback(() => {
+    setStartedCanvas(true);
+    router.push(getCanvasCreateRoute());
+  }, [router]);
 
   const completeDay = async () => {
     await saveProgress({
@@ -191,26 +204,7 @@ function Grade3LessonWorkspace({
         title={lesson.visualPrompt.scene}
         variant="sky"
       >
-        <View
-          style={{
-            alignItems: "center",
-            backgroundColor: "#FFFFFF",
-            borderColor: "#D7C2A4",
-            borderRadius: 18,
-            borderStyle: "dashed",
-            borderWidth: 2,
-            minHeight: 140,
-            justifyContent: "center",
-            padding: spacing.lg,
-          }}
-        >
-          <Text style={{ fontSize: 48, lineHeight: 58 }}>{lesson.visualPrompt.emoji}</Text>
-          <Text
-            style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText, textAlign: "center" }]}
-          >
-            {t("grade3WritingAdventure.lesson.sketchSpace")}
-          </Text>
-        </View>
+        <Grade3WorksheetPreview emoji={lesson.visualPrompt.emoji} scene={lesson.visualPrompt.scene} />
       </Grade3AdventureCard>
 
       <Grade3AdventureCard
@@ -228,6 +222,36 @@ function Grade3LessonWorkspace({
         title={t("grade3WritingAdventure.lesson.writeTitle")}
         variant="mint"
       >
+        <View style={{ gap: spacing.md }}>
+          <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+            {t("grade3WritingAdventure.lesson.handwritingFirst")}
+          </Text>
+          <Button
+            accessibilityLabel={t("grade3WritingAdventure.lesson.useCanvasAccessibility")}
+            fullWidth
+            gradeBand="elementary"
+            label={startedCanvas ? t("grade3WritingAdventure.lesson.returnToCanvas") : t("grade3WritingAdventure.lesson.useCanvasCta")}
+            onPress={openCanvas}
+            size="lg"
+          />
+          <AssignmentAttachmentUploader
+            attachments={attachments.attachments}
+            error={attachments.error}
+            gradeBand="elementary"
+            isPicking={attachments.isPicking}
+            onPickFile={() => {
+              void attachments.pickFile();
+            }}
+            onPickPhoto={() => {
+              void attachments.pickPhoto();
+            }}
+            onRemove={attachments.remove}
+            onRetryExtraction={attachments.retryExtraction}
+            onTakePhoto={() => {
+              void attachments.takePhoto();
+            }}
+          />
+        </View>
         <TextField
           gradeBand="elementary"
           inputStyle={{ minHeight: 180 }}
@@ -247,6 +271,9 @@ function Grade3LessonWorkspace({
         title={t("grade3WritingAdventure.lesson.strongerTitle")}
         variant="peach"
       >
+        <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+          {t("grade3WritingAdventure.lesson.strongerHandwritingHint")}
+        </Text>
         <TextField
           gradeBand="elementary"
           label={t("grade3WritingAdventure.lesson.strongerLabel")}

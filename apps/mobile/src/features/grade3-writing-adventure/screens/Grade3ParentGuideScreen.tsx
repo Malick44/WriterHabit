@@ -1,4 +1,4 @@
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 
 import { typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
@@ -41,6 +41,38 @@ export function Grade3ParentGuideScreen() {
             {item}
           </Text>
         ))}
+      </Grade3AdventureCard>
+      <Grade3AdventureCard
+        icon="✍️"
+        subtitle={t("grade3WritingAdventure.parentGuide.handwritingSubtitle")}
+        title={t("grade3WritingAdventure.parentGuide.handwritingTitle")}
+        variant="sky"
+      >
+        <View style={{ gap: 10 }}>
+          {[
+            t("grade3WritingAdventure.parentGuide.handwritingItemCanvas"),
+            t("grade3WritingAdventure.parentGuide.handwritingItemNotebook"),
+            t("grade3WritingAdventure.parentGuide.handwritingItemTypedCopy"),
+          ].map((item) => (
+            <Text
+              key={item}
+              selectable
+              style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
+            >
+              {item}
+            </Text>
+          ))}
+        </View>
+      </Grade3AdventureCard>
+      <Grade3AdventureCard
+        icon="🗓️"
+        subtitle={t("grade3WritingAdventure.parentGuide.routineSubtitle")}
+        title={t("grade3WritingAdventure.parentGuide.routineTitle")}
+        variant="cream"
+      >
+        <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+          {t("grade3WritingAdventure.parentGuide.routineBody")}
+        </Text>
       </Grade3AdventureCard>
       <Grade3AdventureCard
         icon="🛡️"

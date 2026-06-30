@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 
 import { ErrorState, LoadingState, ProgressBar } from "@/shared/components";
 import { spacing, typography } from "@/design/tokens";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { Grade3AdventureCard } from "../components/Grade3AdventureCard";
@@ -10,7 +10,49 @@ import { Grade3Screen } from "../components/Grade3Screen";
 import { Grade3TopActions } from "../components/Grade3TopActions";
 import { useGrade3WritingProgress } from "../hooks/useGrade3WritingProgress";
 
-const BADGE_MILESTONES = [1, 5, 10, 20, 30] as const;
+const BADGES = [
+  {
+    earnedIcon: "🌱",
+    lockedIcon: "🔒",
+    milestone: 1,
+    subtitleKey: "grade3WritingAdventure.progress.badges.day1Subtitle",
+    titleKey: "grade3WritingAdventure.progress.badges.day1Title",
+  },
+  {
+    earnedIcon: "✏️",
+    lockedIcon: "🔒",
+    milestone: 5,
+    subtitleKey: "grade3WritingAdventure.progress.badges.day5Subtitle",
+    titleKey: "grade3WritingAdventure.progress.badges.day5Title",
+  },
+  {
+    earnedIcon: "📚",
+    lockedIcon: "🔒",
+    milestone: 10,
+    subtitleKey: "grade3WritingAdventure.progress.badges.day10Subtitle",
+    titleKey: "grade3WritingAdventure.progress.badges.day10Title",
+  },
+  {
+    earnedIcon: "🚀",
+    lockedIcon: "🔒",
+    milestone: 20,
+    subtitleKey: "grade3WritingAdventure.progress.badges.day20Subtitle",
+    titleKey: "grade3WritingAdventure.progress.badges.day20Title",
+  },
+  {
+    earnedIcon: "🏆",
+    lockedIcon: "🔒",
+    milestone: 30,
+    subtitleKey: "grade3WritingAdventure.progress.badges.day30Subtitle",
+    titleKey: "grade3WritingAdventure.progress.badges.day30Title",
+  },
+] satisfies {
+  earnedIcon: string;
+  lockedIcon: string;
+  milestone: number;
+  subtitleKey: TranslationKey;
+  titleKey: TranslationKey;
+}[];
 
 export function Grade3ProgressScreen() {
   const { t } = useI18n();
@@ -64,6 +106,7 @@ export function Grade3ProgressScreen() {
         />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
           {[
+            t("grade3WritingAdventure.progress.streakStat", { count: progressState.summary.currentStreakDays }),
             t("grade3WritingAdventure.progress.unlockedStat", { count: progressState.summary.unlockedDays }),
             t("grade3WritingAdventure.progress.draftStat", { count: progressState.summary.draftDays }),
             t("grade3WritingAdventure.progress.completedStat", { count: progressState.summary.completedDays }),
@@ -78,20 +121,29 @@ export function Grade3ProgressScreen() {
         </View>
       </Grade3AdventureCard>
 
+      <Grade3AdventureCard
+        icon="🔥"
+        subtitle={t("grade3WritingAdventure.progress.streakSubtitle")}
+        title={t("grade3WritingAdventure.progress.streakTitle", {
+          count: progressState.summary.currentStreakDays,
+        })}
+        variant="mint"
+      />
+
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
-        {BADGE_MILESTONES.map((milestone) => {
-          const earned = progressState.summary.completedDays >= milestone;
+        {BADGES.map((badge) => {
+          const earned = progressState.summary.completedDays >= badge.milestone;
 
           return (
-            <View key={milestone} style={{ flexBasis: "45%", flexGrow: 1 }}>
+            <View key={badge.milestone} style={{ flexBasis: "45%", flexGrow: 1 }}>
               <Grade3AdventureCard
-                icon={earned ? "🏅" : "🔒"}
+                icon={earned ? badge.earnedIcon : badge.lockedIcon}
                 subtitle={
                   earned
-                    ? t("grade3WritingAdventure.progress.badgeEarned")
-                    : t("grade3WritingAdventure.progress.badgeLocked", { count: milestone })
+                    ? t(badge.subtitleKey)
+                    : t("grade3WritingAdventure.progress.badgeLocked", { count: badge.milestone })
                 }
-                title={t("grade3WritingAdventure.progress.badgeTitle", { count: milestone })}
+                title={t(badge.titleKey)}
                 variant={earned ? "success" : "cream"}
               />
             </View>

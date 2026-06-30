@@ -34,6 +34,7 @@ apps/mobile/src/features/assignments/
 apps/mobile/src/features/auth/
 apps/mobile/src/features/canvas/
 apps/mobile/src/features/feedback-review/
+apps/mobile/src/features/grade3-writing-adventure/
 apps/mobile/src/features/onboarding/
 apps/mobile/src/features/parent/
 apps/mobile/src/features/profile-settings/
@@ -197,6 +198,8 @@ Current evidence:
 Consequences:
 
 - `apps/mobile/app/` route files remain thin exports or route-group layout shells.
+- Student Home can link to local-first student detail routes such as
+  `/(student)/grade3-writing` through shared route constants.
 - Unauthenticated users route to `/(auth)/welcome`.
 - Authenticated users with incomplete onboarding route to `/(onboarding)/role-selection`.
 - Completed student, parent, and teacher sessions route to their role homes.
@@ -324,21 +327,27 @@ Consequences:
 
 - Assignment status is explicit: `not_started`, `in_progress`, `submitted`, `reviewing`, `feedback_ready`, `revision_in_progress`, and `completed`.
 - History tabs are derived from status rather than hardcoded screen filters.
-- Students can start typed writing or canvas planning from details, then return to a guarded submission checklist.
-- Submission is allowed only when the assignment has student-created typed or canvas work.
+- Students start assignment work through handwriting canvas or image/file upload
+  from details, then return to a guarded submission checklist. The typed
+  workspace remains a typed-copy/revision/recovery path rather than the primary
+  practice mode.
+- Submission is allowed only when the assignment has student-created typed,
+  uploaded, or canvas work.
 - Assignment bookmarking is deferred until a backend-backed saved-assignment model, filtered saved list, offline behavior, and RLS policy are designed together. The current release should not show a nonfunctional bookmark affordance.
 - The feature currently uses deterministic mock data. Backend persistence and real assignment submission APIs remain future work.
 - Assignment UI must continue to guide planning, drafting, revision, and submission without offering AI-completed work.
 
-## ADR-017: Typed Writing Workspace Owns Local Draft Autosave
+## ADR-017: Writing Workspace Owns Typed-Copy Autosave
 
 Status: accepted
 
-The typed writing workspace is owned by `apps/mobile/src/features/writing-workspace/`.
+The writing workspace is owned by `apps/mobile/src/features/writing-workspace/`.
 It loads assignment context through the assignment feature API, restores a
-feature-owned draft, autosaves locally, validates student-written text before
-submission, and routes successful submissions to the feedback-review loading
-route.
+feature-owned typed copy, autosaves locally, validates student-written text
+before submission, and routes successful submissions to the feedback-review
+loading route. Student-facing assignment and practice entry points are
+handwriting-first; the workspace copy now frames typing as transcription of the
+student's handwritten work.
 
 Current evidence:
 

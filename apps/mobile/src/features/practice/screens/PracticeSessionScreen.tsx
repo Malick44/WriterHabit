@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -46,12 +46,15 @@ export function PracticeSessionScreen() {
   );
   const session = usePracticeSession();
   const attachments = useAssignmentAttachments();
+  const [startedCanvas, setStartedCanvas] = useState(false);
+  const hasHandwritingEvidence = startedCanvas || attachments.attachments.length > 0;
 
   const handleBackToPractice = useCallback(() => {
     router.navigate(routes.studentPractice);
   }, [router]);
 
   const handleUseCanvas = useCallback(() => {
+    setStartedCanvas(true);
     router.push(getCanvasCreateRoute());
   }, [router]);
 
@@ -226,7 +229,7 @@ export function PracticeSessionScreen() {
                 <Button
                   accessibilityLabel={t("dailyPractice.useCanvasAccessibility")}
                   fullWidth
-                  label={t("dailyPractice.useCanvasCta")}
+                  label={startedCanvas ? t("dailyPractice.returnToCanvasCta") : t("dailyPractice.useCanvasCta")}
                   onPress={handleUseCanvas}
                   size="md"
                   variant="secondary"
@@ -253,12 +256,23 @@ export function PracticeSessionScreen() {
 
               <Button
                 accessibilityLabel={t("dailyPractice.completeAccessibility")}
+                disabled={!hasHandwritingEvidence}
                 fullWidth
                 label={t("dailyPractice.completeCta")}
                 onPress={session.complete}
                 size="md"
                 variant="primary"
               />
+              {!hasHandwritingEvidence ? (
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.caption, settings),
+                    styles.completionHint,
+                  ]}
+                >
+                  {t("dailyPractice.completionHint")}
+                </Text>
+              ) : null}
             </View>
 
             <Text
@@ -316,6 +330,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   coachNote: {
+    color: dashboard.onSurfaceVariant,
+    textAlign: "center",
+  },
+  completionHint: {
     color: dashboard.onSurfaceVariant,
     textAlign: "center",
   },

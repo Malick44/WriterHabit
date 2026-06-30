@@ -380,8 +380,8 @@ export function WritingWorkspaceScreen() {
               />
 
               <StageCta
-                label={t("writingWorkspace.stages.startDrafting")}
-                onPress={() => setSelectedStage("draft")}
+                label={t("writingWorkspace.stages.startHandwriting")}
+                onPress={openCanvas}
                 testID="workspace-cta-start-drafting"
               />
             </Stack>
@@ -389,6 +389,15 @@ export function WritingWorkspaceScreen() {
 
           {stage === "draft" ? (
             <Stack gap="md">
+              <StatusState
+                actionLabel={t("writingWorkspace.canvas.openCta")}
+                accessibilityLabel={t("writingWorkspace.editor.handwritingFirstAccessibility")}
+                description={t("writingWorkspace.editor.handwritingFirstDescription")}
+                gradeBand={state.gradeBand}
+                onActionPress={openCanvas}
+                title={t("writingWorkspace.editor.handwritingFirstTitle")}
+                tone="info"
+              />
               <View style={styles.card}>
                 <View style={styles.cardHeaderRow}>
                   <Text selectable style={[getAccessibleTextStyle(styles.cardEyebrow, settings), styles.cardEyebrowGreen]}>

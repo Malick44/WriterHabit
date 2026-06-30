@@ -25,6 +25,7 @@ export type Grade3WritingProgressInput = {
 
 export type Grade3ProgressSummary = {
   completedDays: number;
+  currentStreakDays: number;
   totalDays: number;
   unlockedDays: number;
   draftDays: number;

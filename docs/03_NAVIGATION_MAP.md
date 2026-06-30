@@ -207,9 +207,16 @@ Student detail routes are hidden from the tab bar:
 ```
 
 `/(student)/write/[assignmentId]` accepts an optional `stage` query parameter
-with `understand`, `draft`, `revise`, or `submit`. Assignment detail uses
-`stage=draft` when the student chooses to start or edit a draft so the
-workspace opens directly on the draft editor.
+with `understand`, `draft`, `revise`, or `submit`. Student assignment and
+practice entry points are handwriting-first: primary writing actions open the
+canvas or an upload/photo path. The write route remains available for typed
+copies, recovery, revision checklist, and submission plumbing, but its primary
+CTA also sends students back to canvas handwriting.
+
+Student Home also includes a Grade 3 Writing Adventure card that opens
+`/(student)/grade3-writing`. The Grade 3 routes are local-first detail routes
+inside the student stack and do not require a backend assignment or login sync
+to function.
 
 ## Parent Bottom Tabs
 

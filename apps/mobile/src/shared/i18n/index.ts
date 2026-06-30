@@ -100,6 +100,17 @@ function parseIcuOptions(source: string): Record<string, string> {
   return options;
 }
 
+function selectPluralCategory(locale: Locale, count: number): Intl.LDMLPluralRule {
+  if (typeof Intl.PluralRules === "function") {
+    return new Intl.PluralRules(locale).select(count);
+  }
+
+  switch (locale) {
+    case "en":
+      return count === 1 ? "one" : "other";
+  }
+}
+
 function formatIcuBlock(
   block: string,
   params: TranslationParams,
@@ -122,7 +133,7 @@ function formatIcuBlock(
     }
 
     const exactMatch = options[`=${count}`];
-    const pluralCategory = new Intl.PluralRules(locale).select(count);
+    const pluralCategory = selectPluralCategory(locale, count);
     const selectedMessage = exactMatch ?? options[pluralCategory] ?? options.other;
 
     if (!selectedMessage) {

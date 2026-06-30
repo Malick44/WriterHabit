@@ -294,6 +294,10 @@ export function StudentHomeScreen() {
     navigateToTarget({ kind: "canvasCreate" });
   }, [navigateToTarget]);
 
+  const handleOpenGrade3Writing = useCallback(() => {
+    router.push(routes.studentGrade3Writing);
+  }, [router]);
+
   const handleOpenTask = useCallback(() => {
     if (viewModel?.continueDraft) {
       handleContinueDraft();
@@ -458,6 +462,10 @@ export function StudentHomeScreen() {
                       </View>
 
                       <View style={styles.tabletSecondaryColumn}>
+                        <Grade3AdventureHomeCard
+                          isTablet={isTablet}
+                          onPress={handleOpenGrade3Writing}
+                        />
                         <WeeklyProgressSummary
                           isTablet={isTablet}
                           viewModel={viewModel}
@@ -488,6 +496,8 @@ export function StudentHomeScreen() {
                       onOpenTask={handleOpenTask}
                       viewModel={viewModel}
                     />
+
+                    <Grade3AdventureHomeCard onPress={handleOpenGrade3Writing} />
 
                     <CoachChipsCard
                       actions={viewModel.coachActions}
@@ -670,6 +680,77 @@ function WeeklyWritingCard({
         {description}
       </Text>
     </View>
+  );
+}
+
+function Grade3AdventureHomeCard({
+  isTablet = false,
+  onPress,
+}: {
+  isTablet?: boolean;
+  onPress: () => void;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const tuned = useStudentHomeTokenOverrides();
+  const highContrastText = getHighContrastTextStyles(settings);
+  const primaryColor = tuned["colors.buttonPrimary"] ?? homeColors.primary;
+
+  return (
+    <Pressable
+      accessibilityHint={t("studentHome.grade3Adventure.hint")}
+      accessibilityLabel={t("studentHome.grade3Adventure.accessibility")}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        styles.grade3AdventureCard,
+        isTablet ? styles.grade3AdventureCardTablet : null,
+        tunedCardStyle(tuned, "regular"),
+        pressed ? styles.cardPressed : null,
+      ]}
+      testID="student-home-grade3-writing"
+    >
+      <View style={styles.grade3AdventureIcon}>
+        <Ionicons name="map-outline" size={25} color={primaryColor} />
+      </View>
+      <View style={styles.grade3AdventureCopy}>
+        <Text
+          numberOfLines={1}
+          style={[
+            getAccessibleTextStyle(styles.grade3AdventureEyebrow, settings),
+            highContrastText.muted,
+          ]}
+        >
+          {t("studentHome.grade3Adventure.eyebrow")}
+        </Text>
+        <Text
+          numberOfLines={2}
+          style={[
+            getAccessibleTextStyle(styles.grade3AdventureTitle, settings),
+            tunedTextStyle(tuned["colors.buttonPrimary"]),
+            highContrastText.body,
+          ]}
+        >
+          {t("studentHome.grade3Adventure.title")}
+        </Text>
+        <Text
+          numberOfLines={2}
+          style={[
+            getAccessibleTextStyle(styles.grade3AdventureDescription, settings),
+            tunedTextStyle(tuned["colors.textSecondary"]),
+            highContrastText.muted,
+          ]}
+        >
+          {t("studentHome.grade3Adventure.description")}
+        </Text>
+      </View>
+      <Ionicons
+        name="chevron-forward"
+        size={23}
+        color={tuned["colors.cardBorder"] ?? homeColors.outlineVariant}
+      />
+    </Pressable>
   );
 }
 
@@ -1489,6 +1570,49 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "600",
     lineHeight: 28,
+  },
+  grade3AdventureCard: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: homeSpacing.md,
+    minHeight: 118,
+    padding: homeSpacing.lg,
+  },
+  grade3AdventureCardTablet: {
+    alignItems: "flex-start",
+    minHeight: 154,
+  },
+  grade3AdventureCopy: {
+    flex: 1,
+    gap: homeSpacing.xs,
+    minWidth: 0,
+  },
+  grade3AdventureDescription: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  grade3AdventureEyebrow: {
+    color: homeColors.onSurfaceVariant,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0,
+    lineHeight: 14,
+    textTransform: "uppercase",
+  },
+  grade3AdventureIcon: {
+    alignItems: "center",
+    backgroundColor: homeColors.secondaryContainerSoft,
+    borderRadius: homeRadius.lg,
+    height: 48,
+    justifyContent: "center",
+    width: 48,
+  },
+  grade3AdventureTitle: {
+    color: homeColors.primary,
+    fontSize: 17,
+    fontWeight: "700",
+    lineHeight: 23,
   },
   inlineMeta: {
     alignItems: "center",

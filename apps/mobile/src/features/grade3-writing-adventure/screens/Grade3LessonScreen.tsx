@@ -4,7 +4,7 @@ import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 
 import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { ErrorState, LoadingState } from "@/shared/components";
-import { typography } from "@/design/tokens";
+import { spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -356,7 +356,7 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
           saveLabel={currentStep === "read" ? undefined : saveLabel}
         />
       }
-      contentPaddingTop={currentStep === "read" ? 32 : undefined}
+      contentPaddingTop={currentStep === "read" ? spacing.xxl : undefined}
       subtitle={
         currentStep === "read"
           ? undefined
@@ -372,7 +372,7 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
           accessibilityRole="header"
           style={[
             getAccessibleTextStyle(typography.gradeBands.elementary.bodyStrong, settings),
-            { color: accessibleColors.text, fontSize: 17, lineHeight: 22 },
+            { color: accessibleColors.text },
           ]}
         >
           {t("grade3WritingAdventure.lessonFlow.read.screenTitle", { day: lesson.day })}

@@ -1,9 +1,10 @@
 import { ScrollView, Text, View } from "react-native";
 
-import { colors, spacing, typography } from "@/design/tokens";
+import { colors, radius, spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
+import { grade3Theme } from "../../theme/grade3Theme";
 import { getLessonStepIndex, lessonSteps, type LessonStep } from "./lessonFlowTypes";
 
 type LessonStepTrackerProps = {
@@ -44,31 +45,45 @@ export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStep
             key={step}
             style={{
               alignItems: "center",
-              gap: 2,
-              minWidth: 44,
+              gap: spacing.xs,
+              minWidth: 52,
             }}
           >
             <View
               style={{
                 alignItems: "center",
-                backgroundColor: isCurrent ? "#5F3DC4" : isComplete ? colors.feedback.success.border : "#EEE9F6",
-                borderColor: isCurrent ? "#5F3DC4" : "#D9D0E9",
-                borderRadius: 999,
+                backgroundColor: isCurrent
+                  ? grade3Theme.accent.lavender
+                  : isComplete
+                    ? colors.feedback.success.border
+                    : grade3Theme.accent.lavenderSoft,
+                borderColor: isCurrent ? grade3Theme.accent.lavender : grade3Theme.accent.lavenderBorder,
+                borderRadius: radius.full,
                 borderWidth: 1,
-                height: 18,
+                height: 28,
                 justifyContent: "center",
-                width: 18,
+                width: 28,
               }}
             >
-              <Text style={{ color: isCurrent ? "#FFFFFF" : accessibleColors.text, fontSize: 9, fontWeight: "700" }}>
-                {isComplete ? "★" : index + 1}
+              <Text
+                style={{
+                  color: isCurrent ? colors.text.inverse : accessibleColors.text,
+                  fontSize: 13,
+                  fontWeight: "700",
+                }}
+              >
+                {isComplete ? "✓" : index + 1}
               </Text>
             </View>
             <Text
               numberOfLines={1}
               style={[
                 getAccessibleTextStyle(type.caption, settings),
-                { color: isCurrent ? "#5F3DC4" : accessibleColors.mutedText, fontSize: 10, lineHeight: 13 },
+                {
+                  color: isCurrent ? grade3Theme.accent.lavender : accessibleColors.mutedText,
+                  fontSize: 12,
+                  lineHeight: 16,
+                },
               ]}
             >
               {label}

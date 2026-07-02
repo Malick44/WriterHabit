@@ -3,6 +3,8 @@ import { Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
+import { grade3Theme } from "../theme/grade3Theme";
+
 type WordBankChipsProps = {
   words: string[];
 };
@@ -20,11 +22,12 @@ export function WordBankChips({ words }: WordBankChipsProps) {
           accessibilityRole="text"
           key={word}
           style={{
-            backgroundColor: settings.highContrast ? accessibleColors.surface : "#FFF5D7",
-            borderColor: settings.highContrast ? accessibleColors.border : "#E1B858",
-            borderRadius: radius.lg,
+            backgroundColor: settings.highContrast ? accessibleColors.surface : grade3Theme.chip.background,
+            borderColor: settings.highContrast ? accessibleColors.border : grade3Theme.chip.border,
+            borderRadius: radius.full,
             borderWidth: 1,
-            paddingHorizontal: spacing.md,
+            justifyContent: "center",
+            paddingHorizontal: spacing.lg,
             paddingVertical: spacing.sm,
           }}
         >

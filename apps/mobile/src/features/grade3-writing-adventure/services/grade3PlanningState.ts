@@ -7,8 +7,11 @@ export const defaultGrade3PlanningState: Grade3PlanningState = {
   talkIdea: "",
 };
 
+/** Safety cap per planning field (talk idea, beginning, middle, end) before persisting. */
+const MAX_PLANNING_TEXT_LENGTH = 1200;
+
 function normalizeText(value: unknown): string {
-  return typeof value === "string" ? value.slice(0, 1200) : "";
+  return typeof value === "string" ? value.slice(0, MAX_PLANNING_TEXT_LENGTH) : "";
 }
 
 export function normalizeGrade3PlanningState(value: unknown): Grade3PlanningState {

@@ -95,9 +95,9 @@ export function Grade3AdventureHomeScreen() {
           return (
             <View key={day.day} style={{ minWidth: 154, flexBasis: "46%", flexGrow: 1 }}>
               <Grade3AdventureCard
-                icon={completed ? "⭐" : day.visualPrompt.emoji}
+                icon={completed ? "⭐" : unlocked ? day.visualPrompt.emoji : "🔒"}
                 style={{
-                  opacity: unlocked ? 1 : 0.58,
+                  opacity: unlocked ? 1 : 0.72,
                   padding: 0,
                 }}
                 title={t("grade3WritingAdventure.home.dayTitle", { day: day.day })}

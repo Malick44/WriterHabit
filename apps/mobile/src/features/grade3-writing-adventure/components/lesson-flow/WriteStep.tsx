@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import * as Speech from "expo-speech";
 
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { radius, spacing, typography } from "@/design/tokens";
 import { Button, TextField } from "@/shared/components";
 import { AssignmentAttachmentUploader } from "@/features/assignments/components";
 import type { AssignmentAttachmentsState } from "@/features/assignments/hooks/useAssignmentAttachments";
@@ -10,7 +10,9 @@ import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } 
 import { useI18n } from "@/i18n";
 
 import { Grade3AdventureCard } from "../Grade3AdventureCard";
+import { StarterChip } from "../StarterChip";
 import { WordBankChips } from "../WordBankChips";
+import { grade3Theme } from "../../theme/grade3Theme";
 import type { Grade3WritingDay } from "../../types";
 
 type WriteStepProps = {
@@ -90,31 +92,19 @@ export function WriteStep({
           <WordBankChips words={lesson.wordBank} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
             {starters.map((starter) => (
-              <Pressable
-                accessibilityRole="button"
+              <StarterChip
+                accessibilityHint={t("grade3WritingAdventure.lessonFlow.write.starterHint")}
                 key={starter}
+                label={starter}
                 onPress={() => appendStarter(starter)}
-                style={{
-                  backgroundColor: "#FFF5D7",
-                  borderColor: "#E1B858",
-                  borderRadius: radius.lg,
-                  borderWidth: 1,
-                  minHeight: 44,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.sm,
-                }}
-              >
-                <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: colors.text.primary }]}>
-                  {starter}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
           <View
             style={{
               alignSelf: "flex-start",
-              backgroundColor: "#ECF8F0",
-              borderColor: "#A6D6B5",
+              backgroundColor: grade3Theme.card.mint.background,
+              borderColor: grade3Theme.card.mint.border,
               borderRadius: radius.lg,
               borderWidth: 1,
               paddingHorizontal: spacing.md,

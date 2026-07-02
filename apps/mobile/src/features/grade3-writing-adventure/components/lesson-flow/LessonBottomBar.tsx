@@ -8,6 +8,8 @@ import { Button } from "@/shared/components";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
+import { grade3Theme } from "../../theme/grade3Theme";
+
 type LessonBottomBarProps = {
   backLabel: string;
   nextLabel: string;
@@ -69,8 +71,8 @@ export function LessonBottomBar({
   return (
     <View
       style={{
-        backgroundColor: settings.highContrast ? accessibleColors.surface : "#FFF8E9",
-        borderTopColor: settings.highContrast ? accessibleColors.border : "#E8CFA2",
+        backgroundColor: settings.highContrast ? accessibleColors.surface : grade3Theme.screen.background,
+        borderTopColor: settings.highContrast ? accessibleColors.border : grade3Theme.screen.barBorder,
         borderTopWidth: 1,
         gap: spacing.sm,
         paddingBottom: Math.max(insets.bottom, spacing.md),
@@ -83,8 +85,8 @@ export function LessonBottomBar({
         <View
           style={{
             alignSelf: "center",
-            backgroundColor: helperText ? colors.feedback.warning.background : "#ECF8F0",
-            borderColor: helperText ? colors.feedback.warning.border : "#A6D6B5",
+            backgroundColor: helperText ? colors.feedback.warning.background : grade3Theme.card.mint.background,
+            borderColor: helperText ? colors.feedback.warning.border : grade3Theme.card.mint.border,
             borderRadius: radius.lg,
             borderWidth: 1,
             paddingHorizontal: spacing.md,
@@ -106,11 +108,11 @@ export function LessonBottomBar({
         <Button
           accessibilityLabel={backLabel}
           gradeBand="elementary"
-          label={isReadBar ? "‹" : backLabel}
+          label={isReadBar ? "←" : backLabel}
           onPress={onBack}
           size={isReadBar ? "md" : "lg"}
-          style={isReadBar ? { borderRadius: 999, width: 54 } : { flex: 1 }}
-          textStyle={isReadBar ? { fontSize: 24, lineHeight: 26 } : undefined}
+          style={isReadBar ? { borderRadius: radius.full, width: 56 } : { flex: 1 }}
+          textStyle={isReadBar ? { fontSize: 24, lineHeight: 28 } : undefined}
           variant="secondary"
         />
         {isReadBar ? (
@@ -124,7 +126,7 @@ export function LessonBottomBar({
             onPress={toggleReadAloud}
             size="md"
             style={{ flex: 1 }}
-            textStyle={{ fontSize: 13, lineHeight: 17 }}
+            textStyle={{ fontSize: 15, lineHeight: 20 }}
             variant="secondary"
           />
         ) : null}
@@ -135,8 +137,11 @@ export function LessonBottomBar({
           loading={nextLoading}
           onPress={onNext}
           size={isReadBar ? "md" : "lg"}
-          style={{ flex: isReadBar ? 1.15 : 1, backgroundColor: isReadBar ? "#6D4AD9" : undefined }}
-          textStyle={isReadBar ? { fontSize: 14, lineHeight: 18 } : undefined}
+          style={{
+            backgroundColor: isReadBar && !nextDisabled ? grade3Theme.accent.lavenderBright : undefined,
+            flex: isReadBar ? 1.15 : 1,
+          }}
+          textStyle={isReadBar ? { fontSize: 15, lineHeight: 20 } : undefined}
         />
       </View>
     </View>

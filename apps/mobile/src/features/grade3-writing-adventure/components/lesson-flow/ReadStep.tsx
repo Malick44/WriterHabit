@@ -1,9 +1,10 @@
 import { Image, Text, View } from "react-native";
 
-import { radius, shadows, spacing, typography } from "@/design/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
+import { grade3Theme } from "../../theme/grade3Theme";
 import type { Grade3WritingDay } from "../../types";
 
 const mayaAvatar = require("../../../../../assets/images/writerhabit-child-home/01_maya_avatar.png");
@@ -24,18 +25,18 @@ export function ReadStep({ lesson }: ReadStepProps) {
       <View style={{ gap: spacing.xs }}>
         <Text
           accessibilityRole="header"
-          style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text, fontSize: 20, lineHeight: 25 }]}
+          style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}
         >
           {t("grade3WritingAdventure.lessonFlow.read.cardTitle")}
         </Text>
-        <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText, fontSize: 13, lineHeight: 18 }]}>
+        <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
           {t("grade3WritingAdventure.lessonFlow.read.cardSubtitle")}
         </Text>
       </View>
       <View
         style={{
-          backgroundColor: settings.highContrast ? accessibleColors.surface : "#FFFFFF",
-          borderColor: settings.highContrast ? accessibleColors.border : "#E7DED3",
+          backgroundColor: settings.highContrast ? accessibleColors.surface : colors.background.surface,
+          borderColor: settings.highContrast ? accessibleColors.border : grade3Theme.scene.cardBorder,
           borderRadius: radius.lg,
           borderWidth: 1,
           gap: spacing.md,
@@ -47,8 +48,8 @@ export function ReadStep({ lesson }: ReadStepProps) {
           accessibilityLabel={lesson.visualPrompt.scene}
           accessibilityRole="image"
           style={{
-            backgroundColor: "#F6E9CF",
-            borderColor: "#E1D3B8",
+            backgroundColor: grade3Theme.scene.background,
+            borderColor: grade3Theme.scene.border,
             borderRadius: radius.md,
             borderWidth: 1,
             height: 150,
@@ -57,7 +58,7 @@ export function ReadStep({ lesson }: ReadStepProps) {
         >
           <View
             style={{
-              backgroundColor: "#CFEBDD",
+              backgroundColor: grade3Theme.scene.sky,
               height: 70,
               left: 0,
               position: "absolute",
@@ -67,7 +68,7 @@ export function ReadStep({ lesson }: ReadStepProps) {
           />
           <View
             style={{
-              backgroundColor: "#E9D6B4",
+              backgroundColor: grade3Theme.scene.ground,
               bottom: 0,
               height: 62,
               left: 0,
@@ -77,8 +78,8 @@ export function ReadStep({ lesson }: ReadStepProps) {
           />
           <View
             style={{
-              backgroundColor: "#93C98E",
-              borderRadius: 999,
+              backgroundColor: grade3Theme.scene.bush,
+              borderRadius: radius.full,
               height: 70,
               left: -18,
               position: "absolute",
@@ -88,8 +89,8 @@ export function ReadStep({ lesson }: ReadStepProps) {
           />
           <View
             style={{
-              backgroundColor: "#9BC4D7",
-              borderRadius: 999,
+              backgroundColor: grade3Theme.scene.sun,
+              borderRadius: radius.full,
               height: 54,
               position: "absolute",
               right: -14,
@@ -99,7 +100,7 @@ export function ReadStep({ lesson }: ReadStepProps) {
           />
           <View
             style={{
-              backgroundColor: "#D9A96D",
+              backgroundColor: grade3Theme.scene.table,
               borderRadius: radius.md,
               bottom: 16,
               height: 50,
@@ -135,10 +136,7 @@ export function ReadStep({ lesson }: ReadStepProps) {
         </View>
         <Text
           selectable
-          style={[
-            getAccessibleTextStyle(type.body, settings),
-            { color: accessibleColors.text, fontSize: 16, lineHeight: 24 },
-          ]}
+          style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
         >
           {lesson.reading}
         </Text>

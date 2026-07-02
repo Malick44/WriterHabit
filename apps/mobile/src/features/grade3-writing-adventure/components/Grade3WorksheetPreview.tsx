@@ -8,6 +8,8 @@ import {
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
+import { grade3Theme } from "../theme/grade3Theme";
+
 type Grade3WorksheetPreviewProps = {
   emoji: string;
   scene: string;
@@ -90,8 +92,8 @@ const styles = StyleSheet.create({
   },
   emojiBox: {
     alignItems: "center",
-    backgroundColor: "#FFF4D6",
-    borderColor: "#EBCB8B",
+    backgroundColor: grade3Theme.worksheet.emojiBox,
+    borderColor: grade3Theme.card.cream.border,
     borderRadius: radius.md,
     borderWidth: 1,
     height: 58,
@@ -109,9 +111,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hole: {
-    backgroundColor: "#F4E7D0",
-    borderColor: "#D8B986",
-    borderRadius: 999,
+    backgroundColor: grade3Theme.worksheet.hole,
+    borderColor: grade3Theme.worksheet.holeBorder,
+    borderRadius: radius.full,
     borderWidth: 1,
     height: 12,
     width: 12,
@@ -128,8 +130,8 @@ const styles = StyleSheet.create({
   },
   pictureFrame: {
     alignItems: "center",
-    backgroundColor: "#FFFDF8",
-    borderColor: "#D7C2A4",
+    backgroundColor: grade3Theme.worksheet.paper,
+    borderColor: grade3Theme.worksheet.frameBorder,
     borderRadius: radius.md,
     borderStyle: "dashed",
     borderWidth: 2,
@@ -143,8 +145,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   sheet: {
-    backgroundColor: "#FFFDF8",
-    borderColor: "#E3C79A",
+    backgroundColor: grade3Theme.worksheet.paper,
+    borderColor: grade3Theme.worksheet.paperBorder,
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: "row",
@@ -161,8 +163,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   writingLine: {
-    backgroundColor: withAlpha("#7EA4B8", 0.45),
-    borderRadius: 999,
+    backgroundColor: withAlpha(grade3Theme.worksheet.writingLine, 0.45),
+    borderRadius: radius.full,
     height: 2,
   },
   writingLines: {

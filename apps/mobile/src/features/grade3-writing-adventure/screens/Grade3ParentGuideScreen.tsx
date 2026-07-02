@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { typography } from "@/design/tokens";
+import { spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
@@ -48,7 +48,7 @@ export function Grade3ParentGuideScreen() {
         title={t("grade3WritingAdventure.parentGuide.handwritingTitle")}
         variant="sky"
       >
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: spacing.md }}>
           {[
             t("grade3WritingAdventure.parentGuide.handwritingItemCanvas"),
             t("grade3WritingAdventure.parentGuide.handwritingItemNotebook"),

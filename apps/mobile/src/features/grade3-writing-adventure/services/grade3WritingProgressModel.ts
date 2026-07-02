@@ -6,6 +6,10 @@ export function getProgressMap(progress: Grade3WritingProgress[]): Map<number, G
 }
 
 export function isGrade3DayUnlocked(day: number, progress: Grade3WritingProgress[]): boolean {
+  if (!Number.isInteger(day) || day < 1 || day > grade3WritingProgram.length) {
+    return false;
+  }
+
   if (day === 1) {
     return true;
   }
@@ -22,13 +26,10 @@ export function getGrade3Summary(progress: Grade3WritingProgress[]): Grade3Progr
       item.strongerSentence.trim().length > 0 ||
       item.favoriteSentence.trim().length > 0,
   ).length;
-  const unlockedDays = grade3WritingProgram.filter((day) => {
-    if (day.day === 1) {
-      return true;
-    }
-
-    return progressMap.get(day.day - 1)?.completed === true;
-  }).length;
+  // Mirror isGrade3DayUnlocked so the summary always agrees with per-day unlock checks.
+  const unlockedDays = grade3WritingProgram.filter(
+    (day) => day.day === 1 || progressMap.get(day.day - 1)?.completed === true,
+  ).length;
   let currentStreakDays = 0;
 
   for (const day of grade3WritingProgram) {

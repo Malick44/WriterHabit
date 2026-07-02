@@ -1,11 +1,12 @@
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "@/design/tokens";
+import { spacing, typography } from "@/design/tokens";
 import { TextField } from "@/shared/components";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
 import { Grade3AdventureCard } from "../Grade3AdventureCard";
+import { StarterChip } from "../StarterChip";
 import type { Grade3PlanningState, Grade3WritingDay } from "../../types";
 
 type TalkStepProps = {
@@ -55,24 +56,12 @@ export function TalkStep({ lesson, onPlanningChange, planning }: TalkStepProps) 
       >
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
           {starters.map((starter) => (
-            <Pressable
-              accessibilityRole="button"
+            <StarterChip
+              accessibilityHint={t("grade3WritingAdventure.lessonFlow.talk.starterHint")}
               key={starter}
+              label={starter}
               onPress={() => appendStarter(starter)}
-              style={{
-                backgroundColor: "#FFF5D7",
-                borderColor: "#E1B858",
-                borderRadius: radius.lg,
-                borderWidth: 1,
-                minHeight: 44,
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-              }}
-            >
-              <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: colors.text.primary }]}>
-                {starter}
-              </Text>
-            </Pressable>
+            />
           ))}
         </View>
         <TextField

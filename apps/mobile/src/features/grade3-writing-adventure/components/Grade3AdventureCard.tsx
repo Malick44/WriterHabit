@@ -1,8 +1,10 @@
 import { Text, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { colors, radius, shadows, spacing, typography, withAlpha } from "@/design/tokens";
+import { colors, layout, radius, shadows, spacing, typography, withAlpha } from "@/design/tokens";
 import { Card } from "@/shared/components";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
+
+import { grade3Theme } from "../theme/grade3Theme";
 
 type Grade3AdventureCardProps = {
   title: string;
@@ -14,10 +16,10 @@ type Grade3AdventureCardProps = {
 };
 
 const variantColors = {
-  cream: { backgroundColor: "#FFF8E9", borderColor: "#EBCB8B" },
-  mint: { backgroundColor: "#ECF8F0", borderColor: "#A6D6B5" },
-  peach: { backgroundColor: "#FFF0E8", borderColor: "#F0B493" },
-  sky: { backgroundColor: "#EEF7FF", borderColor: "#A8CBE8" },
+  cream: { backgroundColor: grade3Theme.card.cream.background, borderColor: grade3Theme.card.cream.border },
+  mint: { backgroundColor: grade3Theme.card.mint.background, borderColor: grade3Theme.card.mint.border },
+  peach: { backgroundColor: grade3Theme.card.peach.background, borderColor: grade3Theme.card.peach.border },
+  sky: { backgroundColor: grade3Theme.card.sky.background, borderColor: grade3Theme.card.sky.border },
   success: { backgroundColor: colors.feedback.success.background, borderColor: colors.feedback.success.border },
 } as const;
 
@@ -56,13 +58,13 @@ export function Grade3AdventureCard({
               style={{
                 alignItems: "center",
                 backgroundColor: withAlpha(variantStyle.borderColor, 0.3),
-                borderRadius: 999,
-                height: 48,
+                borderRadius: radius.full,
+                height: layout.touchTargetLarge,
                 justifyContent: "center",
-                width: 48,
+                width: layout.touchTargetLarge,
               }}
             >
-              <Text style={{ fontSize: 26, lineHeight: 32 }}>{icon}</Text>
+              <Text style={{ fontSize: 28, lineHeight: 34 }}>{icon}</Text>
             </View>
           ) : null}
           <View style={{ flex: 1, gap: spacing.xs }}>

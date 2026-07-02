@@ -10,6 +10,7 @@ import type {
 import {
   defaultGrade3PlanningState,
   deserializeGrade3PlanningState,
+  normalizeGrade3PlanningState,
   serializeGrade3PlanningState,
 } from "./grade3PlanningState";
 
@@ -38,7 +39,12 @@ type RemoteProgressRow = {
 
 const DATABASE_NAME = "writerhabit_grade3_writing_adventure.db";
 
+/** Safety cap for free-form writing fields (draft, sentences) before persisting. */
+const MAX_TEXT_LENGTH = 6000;
+
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
+/** Serializes saveProgress calls so concurrent read-modify-write cycles cannot interleave. */
+let saveQueue: Promise<unknown> = Promise.resolve();
 const progressListeners = new Set<(progress: Grade3WritingProgress) => void>();
 
 function normalizeChecklist(value: unknown): Grade3ChecklistState {
@@ -64,7 +70,7 @@ function parseChecklist(value: string | null): Grade3ChecklistState {
 }
 
 function normalizeText(value: string | undefined): string {
-  return value?.slice(0, 6000) ?? "";
+  return value?.slice(0, MAX_TEXT_LENGTH) ?? "";
 }
 
 function rowToProgress(row: ProgressRow): Grade3WritingProgress {
@@ -87,7 +93,11 @@ function remoteRowToProgress(row: RemoteProgressRow): Grade3WritingProgress {
     day: row.day,
     draft: row.draft ?? "",
     favoriteSentence: row.favorite_sentence ?? "",
-    planning: deserializeGrade3PlanningState(JSON.stringify(row.planning ?? {})),
+    // Supabase JSONB usually arrives as an object, but tolerate double-encoded strings.
+    planning:
+      typeof row.planning === "string"
+        ? deserializeGrade3PlanningState(row.planning)
+        : normalizeGrade3PlanningState(row.planning),
     strongerSentence: row.stronger_sentence ?? "",
     updatedAt: row.client_updated_at ?? row.updated_at,
   };
@@ -263,51 +273,66 @@ export const grade3WritingProgressService = {
   },
 
   async saveProgress(input: Grade3WritingProgressInput): Promise<Grade3WritingProgress> {
-    const existing = await this.getProgress(input.day);
-    const updatedAt = new Date().toISOString();
-    const next: Grade3WritingProgress = {
-      checklist: input.checklist ?? existing?.checklist ?? {},
-      completed: input.completed ?? existing?.completed ?? false,
-      day: input.day,
-      draft: normalizeText(input.draft ?? existing?.draft),
-      favoriteSentence: normalizeText(input.favoriteSentence ?? existing?.favoriteSentence),
-      planning: input.planning ?? existing?.planning ?? defaultGrade3PlanningState,
-      strongerSentence: normalizeText(input.strongerSentence ?? existing?.strongerSentence),
-      updatedAt,
-    };
+    // Queue saves so overlapping calls cannot interleave their read-modify-write cycles.
+    const queued = saveQueue.then(() => performSaveProgress(input));
+    saveQueue = queued.catch(() => undefined);
 
-    try {
-      const studentProfileId = await getSignedInStudentProfileId();
-
-      if (!studentProfileId) {
-        await saveLocalProgress(next);
-      } else {
-        const { error } = await supabase.from("grade3_writing_progress").upsert(
-          {
-            student_profile_id: studentProfileId,
-            day: next.day,
-            draft: next.draft,
-            stronger_sentence: next.strongerSentence,
-            favorite_sentence: next.favoriteSentence,
-            checklist: next.checklist,
-            planning: next.planning,
-            completed: next.completed,
-            client_updated_at: next.updatedAt,
-          },
-          { onConflict: "student_profile_id,day" },
-        );
-
-        if (error) {
-          throw error;
-        }
-      }
-    } catch (error) {
-      console.error("Failed to save Grade 3 progress to Supabase, saving local SQLite fallback:", error);
-      await saveLocalProgress(next);
-    }
-
-    progressListeners.forEach((listener) => listener(next));
-
-    return next;
+    return queued;
   },
 };
+
+async function performSaveProgress(input: Grade3WritingProgressInput): Promise<Grade3WritingProgress> {
+  const existing = await grade3WritingProgressService.getProgress(input.day);
+  const updatedAt = new Date().toISOString();
+  const next: Grade3WritingProgress = {
+    checklist: input.checklist ?? existing?.checklist ?? {},
+    completed: input.completed ?? existing?.completed ?? false,
+    day: input.day,
+    draft: normalizeText(input.draft ?? existing?.draft),
+    favoriteSentence: normalizeText(input.favoriteSentence ?? existing?.favoriteSentence),
+    planning: input.planning ?? existing?.planning ?? defaultGrade3PlanningState,
+    strongerSentence: normalizeText(input.strongerSentence ?? existing?.strongerSentence),
+    updatedAt,
+  };
+
+  try {
+    const studentProfileId = await getSignedInStudentProfileId();
+
+    if (!studentProfileId) {
+      await saveLocalProgress(next);
+    } else {
+      const { error } = await supabase.from("grade3_writing_progress").upsert(
+        {
+          student_profile_id: studentProfileId,
+          day: next.day,
+          draft: next.draft,
+          stronger_sentence: next.strongerSentence,
+          favorite_sentence: next.favoriteSentence,
+          checklist: next.checklist,
+          planning: next.planning,
+          completed: next.completed,
+          client_updated_at: next.updatedAt,
+        },
+        { onConflict: "student_profile_id,day" },
+      );
+
+      if (error) {
+        throw error;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to save Grade 3 progress to Supabase, saving local SQLite fallback:", error);
+    await saveLocalProgress(next);
+  }
+
+  for (const listener of progressListeners) {
+    try {
+      listener(next);
+    } catch (error) {
+      // One broken listener must not stop the others from receiving updates.
+      console.error("Grade 3 progress listener threw:", error);
+    }
+  }
+
+  return next;
+}

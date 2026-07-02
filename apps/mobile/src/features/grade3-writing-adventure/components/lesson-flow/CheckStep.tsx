@@ -1,12 +1,13 @@
 import { Text, View } from "react-native";
 
-import { spacing, typography } from "@/design/tokens";
+import { colors, radius, spacing, typography } from "@/design/tokens";
 import { TextField } from "@/shared/components";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
 import { Grade3AdventureCard } from "../Grade3AdventureCard";
 import { Grade3ChecklistCard } from "../Grade3ChecklistCard";
+import { grade3Theme } from "../../theme/grade3Theme";
 import type { Grade3ChecklistState, Grade3WritingDay } from "../../types";
 
 type CheckStepProps = {
@@ -45,19 +46,49 @@ export function CheckStep({
           <Text style={[getAccessibleTextStyle(type.bodyStrong, settings), { color: accessibleColors.text }]}>
             {lesson.makeItStronger}
           </Text>
-          <View style={{ gap: spacing.xs }}>
-            <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
-              {t("grade3WritingAdventure.lessonFlow.check.simpleExample")}
-            </Text>
-            <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-              {t("grade3WritingAdventure.lessonFlow.check.simpleSentence")}
-            </Text>
-            <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
-              {t("grade3WritingAdventure.lessonFlow.check.strongerExample")}
-            </Text>
-            <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-              {t("grade3WritingAdventure.lessonFlow.check.strongerSentence")}
-            </Text>
+          <View style={{ gap: spacing.sm }}>
+            <View
+              accessible
+              accessibilityRole="text"
+              style={{
+                backgroundColor: settings.highContrast ? accessibleColors.surface : colors.background.surface,
+                borderColor: settings.highContrast ? accessibleColors.border : colors.border.default,
+                borderLeftColor: settings.highContrast ? accessibleColors.border : colors.border.strong,
+                borderLeftWidth: spacing.xs,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                gap: spacing.xxs,
+                padding: spacing.md,
+              }}
+            >
+              <Text style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
+                {t("grade3WritingAdventure.lessonFlow.check.simpleExample")}
+              </Text>
+              <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+                {t("grade3WritingAdventure.lessonFlow.check.simpleSentence")}
+              </Text>
+            </View>
+            <View
+              accessible
+              accessibilityRole="text"
+              style={{
+                backgroundColor: settings.highContrast ? accessibleColors.surface : grade3Theme.card.mint.background,
+                borderColor: settings.highContrast ? accessibleColors.border : grade3Theme.card.mint.border,
+                borderLeftColor: settings.highContrast ? accessibleColors.border : colors.feedback.success.icon,
+                borderLeftWidth: spacing.xs,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                gap: spacing.xxs,
+                padding: spacing.md,
+              }}
+            >
+              <Text style={[getAccessibleTextStyle(type.caption, settings), { color: colors.feedback.success.text }]}>
+                {t("grade3WritingAdventure.lessonFlow.check.strongerExample")}
+              </Text>
+              <Text style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+                {t("grade3WritingAdventure.lessonFlow.check.strongerSentence")}
+              </Text>
+            </View>
           </View>
           <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
             {t("grade3WritingAdventure.lessonFlow.microcopy.oneSentence")}

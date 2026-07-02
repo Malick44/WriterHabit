@@ -24,6 +24,7 @@ import {
   BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
   useBottomMenuScrollHandler,
 } from "@/shared/components/navigation/bottom-menu";
+import { getScreenMaxWidth, isTabletWidth, type ScreenWidthMode } from "@/shared/utils/responsive";
 
 interface ScreenProps extends PropsWithChildren {
   title?: string;
@@ -33,6 +34,7 @@ interface ScreenProps extends PropsWithChildren {
   scroll?: boolean;
   keyboardAvoiding?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  contentWidth?: ScreenWidthMode;
   contentPaddingTop?: number;
   backgroundColor?: string;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -48,6 +50,7 @@ export function Screen({
   scroll = true,
   keyboardAvoiding = false,
   contentStyle,
+  contentWidth = "wide",
   contentPaddingTop,
   backgroundColor,
   onScroll,
@@ -59,7 +62,7 @@ export function Screen({
   const gradeBand = useGradeBand(gradeBandProp);
   const { settings } = useAccessibilityContext();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
+  const isTablet = isTabletWidth(width);
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
@@ -70,20 +73,21 @@ export function Screen({
       : layout.screenPadding.phone;
   const resolvedBackgroundColor = backgroundColor ?? accessibleColors.background;
   const resolvedContentPaddingTop = contentPaddingTop ?? Math.max(insets.top, spacing.lg);
+  const contentMaxWidth = getScreenMaxWidth(width, contentWidth);
   const content = (
     <View
       style={[
         {
           alignSelf: "center",
           gap: spacing.lg,
-          maxWidth: layout.maxContentWidth,
+          maxWidth: contentMaxWidth,
           width: "100%",
         },
         contentStyle,
       ]}
     >
       {title || subtitle ? (
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.xs, maxWidth: layout.maxReadableWidth }}>
           {title ? (
             <Text
               accessibilityRole="header"

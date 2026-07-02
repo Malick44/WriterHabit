@@ -349,4 +349,4 @@ apps/mobile/src/features/onboarding/services/onboardingPersistenceService.ts
 apps/mobile/src/features/onboarding/services/personalizedPlanService.ts
 ```
 
-The summary step calls `apps/mobile/src/core/auth/authStore.ts` to complete onboarding. For Supabase sessions, public auth metadata currently stores `onboarding_complete`, `role`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`.
+The summary step calls `apps/mobile/src/core/auth/authStore.ts` to complete onboarding. For Supabase sessions, durable onboarding fields are written to `student_profiles`; public auth metadata keeps non-secret route-gate compatibility fields such as `onboarding_complete` and does not store role or entitlement values.

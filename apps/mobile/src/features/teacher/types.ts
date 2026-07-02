@@ -1,40 +1,10 @@
 import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
+import { assignmentTypeSchema, gradeLevelSchema, writingSkillSchema } from "@WriterHabit/shared";
 import { z } from "zod";
 
 import type { GradeBand } from "@/design/tokens";
 
-const gradeLevelSchema = z.custom<GradeLevel>(
-  (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 12,
-);
-
-export const teacherWritingSkillSchema = z.enum([
-  "spelling",
-  "grammar",
-  "punctuation",
-  "sentence_structure",
-  "vocabulary",
-  "organization",
-  "creativity",
-  "clarity",
-  "evidence_usage",
-  "argument_strength",
-  "revision_quality",
-  "handwriting",
-  "reading_response",
-]);
-
-const assignmentTypeSchema = z.enum([
-  "sentence_practice",
-  "paragraph_writing",
-  "essay_writing",
-  "creative_writing",
-  "reading_response",
-  "grammar_practice",
-  "vocabulary_practice",
-  "test_prep",
-  "journal",
-  "handwriting_practice",
-]);
+export const teacherWritingSkillSchema = writingSkillSchema;
 
 export const teacherScenarioSchema = z.enum(["success", "empty", "error", "offline"]);
 export type TeacherScenario = z.infer<typeof teacherScenarioSchema>;

@@ -208,21 +208,6 @@ function createDashboard(input: GetStudentHomeDashboardInput, scenario: StudentH
   return studentHomeApiResponseSchema.parse(response);
 }
 
-function getDefaultSkillProgress(gradeLevel: GradeLevel) {
-  const defaultSkills: WritingSkill[] =
-    gradeLevel <= 5
-      ? ["sentence_structure", "vocabulary"]
-      : gradeLevel <= 8
-        ? ["organization", "clarity", "revision_quality"]
-        : ["argument_strength", "evidence_usage", "organization"];
-
-  return defaultSkills.map((skill) => ({
-    current_score: 60,
-    previous_score: 55,
-    skill,
-  }));
-}
-
 export const studentHomeApi = {
   async getDashboard(input: GetStudentHomeDashboardInput): Promise<StudentHomeApiResponse> {
     const scenario = readScenario();
@@ -251,7 +236,11 @@ export const studentHomeApi = {
       if (profileErr) throw profileErr;
 
       if (!profile) {
-        return createDashboard(input, scenario);
+        return studentHomeApiResponseSchema.parse({
+          ...createDashboard(input, "empty"),
+          generatedAt: new Date().toISOString(),
+          studentId: input.studentId,
+        });
       }
 
       const gradeLevel = profile.grade_level as GradeLevel;
@@ -287,7 +276,7 @@ export const studentHomeApi = {
 
       if (skillsErr) throw skillsErr;
 
-      const skillRows = dbSkills && dbSkills.length > 0 ? dbSkills : getDefaultSkillProgress(gradeLevel);
+      const skillRows = dbSkills ?? [];
 
       // 4. Fetch assignments
       const { data: studentAssignments, error: saErr } = await supabase
@@ -357,7 +346,7 @@ export const studentHomeApi = {
           status: todaySa.status,
           title: todaySa.assignments.title_fallback,
         }
-        : createAssignmentForGrade(gradeLevel);
+        : null;
 
       const practicedToday = progressTotals.practiced_today_on === new Date().toISOString().split("T")[0];
 
@@ -402,9 +391,9 @@ export const studentHomeApi = {
       return studentHomeApiResponseSchema.parse(dashboardResponse);
     } catch (err) {
       if ((globalThis as { __DEV__?: boolean }).__DEV__ === true) {
-        console.debug("Using mock student dashboard fallback after Supabase dashboard read failed.", err);
+        console.debug("Failed to query Supabase student dashboard.", err);
       }
-      return createDashboard(input, scenario);
+      throw err;
     }
   },
 };

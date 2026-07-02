@@ -102,8 +102,9 @@ Key lifecycle fields:
   `not_started` through `completed`.
 - `student_assignments.current_submission_id`: points to the latest submission
   once one exists.
-- `writing_drafts.autosave_version` and `canvas_documents.client_version` support
-  conflict detection for future sync APIs.
+- `writing_drafts.autosave_version`, `submission_revision_drafts.client_updated_at`,
+  and `canvas_documents.client_version` support recoverable in-progress student
+  work.
 - `submissions.idempotency_key` and `submission_revisions.idempotency_key`
   support retry-safe writes.
 - Assignment submission, feedback publication, and revision completion are
@@ -148,6 +149,7 @@ submissions
       -> feedback_rubric_scores
           -> rubric_criteria
       -> grammar_suggestions
+  -> submission_revision_drafts
   -> submission_revisions
 ```
 

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import { apiClient } from "@/core/api/apiClient";
+import { getApiAccessToken } from "@/core/api/apiTokenProvider";
+import { supabase } from "@/core/supabase/supabaseClient";
 
 import {
   INITIAL_CANVAS_CLIENT_VERSION,
@@ -17,6 +19,7 @@ import { attachCanvasToAssignment } from "./canvasDocumentService";
 import { canvasPersistenceService } from "./canvasPersistenceService";
 
 export const CANVAS_AUTOSAVE_DEBOUNCE_MS = 700;
+const canvasArtifactStorageBucket = "canvas-artifacts";
 
 const canvasConnectionStatusSchema = z.enum(["online", "offline_cached"]);
 export const canvasSignedUploadPlaceholderSchema = z.object({
@@ -122,8 +125,22 @@ export interface CanvasAutosaveScheduler {
   schedule: (document: CanvasDocument) => void;
 }
 
-function isBackendSyncEnabled(): boolean {
-  return process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC === "true";
+async function isBackendSyncEnabled(): Promise<boolean> {
+  const configured = process.env.EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC;
+
+  if (configured === "false") {
+    return false;
+  }
+
+  if (configured === "true") {
+    return true;
+  }
+
+  try {
+    return Boolean(await getApiAccessToken());
+  } catch {
+    return false;
+  }
 }
 
 export function readCanvasScenario(): CanvasScenario {
@@ -237,7 +254,7 @@ function getExportPlaceholder(document: CanvasDocument): CanvasExportPlaceholder
 async function requestSignedUploadPlaceholder(document: CanvasDocument): Promise<CanvasSignedUploadPlaceholder> {
   const placeholder = getSignedUploadPlaceholder(document);
 
-  if (!isBackendSyncEnabled()) {
+  if (!(await isBackendSyncEnabled())) {
     return placeholder;
   }
 
@@ -253,13 +270,49 @@ async function requestSignedUploadPlaceholder(document: CanvasDocument): Promise
   );
 }
 
+async function uploadStrokeDocumentArtifact(input: {
+  document: CanvasDocument;
+  signedUpload: CanvasSignedUploadPlaceholder;
+}): Promise<void> {
+  if (!(await isBackendSyncEnabled())) {
+    return;
+  }
+
+  const { data } = await supabase.auth.getSession();
+
+  if (!data.session) {
+    return;
+  }
+
+  const payload = {
+    canvasDocumentId: input.document.id,
+    clientVersion: getClientVersion(input.document),
+    createdAt: input.document.createdAt,
+    strokes: input.document.strokes,
+    studentId: input.document.studentId,
+    template: input.document.template,
+    title: input.document.title,
+    updatedAt: input.document.updatedAt,
+  };
+  const { error } = await supabase.storage
+    .from(canvasArtifactStorageBucket)
+    .upload(input.signedUpload.objectPath, JSON.stringify(payload), {
+      contentType: input.signedUpload.contentType,
+      upsert: true,
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
 async function upsertBackendMetadata(
   document: CanvasDocument,
   signedUpload: CanvasSignedUploadPlaceholder,
 ): Promise<CanvasBackendMetadata> {
   const placeholder = getBackendMetadataPlaceholder(document, signedUpload);
 
-  if (!isBackendSyncEnabled()) {
+  if (!(await isBackendSyncEnabled())) {
     return placeholder;
   }
 
@@ -282,7 +335,7 @@ async function upsertBackendMetadata(
 }
 
 async function attachBackendCanvas(document: CanvasDocument, assignmentId: string): Promise<void> {
-  if (!isBackendSyncEnabled()) {
+  if (!(await isBackendSyncEnabled())) {
     return;
   }
 
@@ -300,7 +353,7 @@ async function attachBackendCanvas(document: CanvasDocument, assignmentId: strin
 async function requestPreviewExportPlaceholder(document: CanvasDocument): Promise<CanvasExportPlaceholder> {
   const placeholder = getExportPlaceholder(document);
 
-  if (!isBackendSyncEnabled()) {
+  if (!(await isBackendSyncEnabled())) {
     return placeholder;
   }
 
@@ -426,8 +479,11 @@ async function saveCanvasLocalFirst(input: CanvasSyncSaveInput): Promise<CanvasS
     };
   }
 
+  const backendSyncEnabled = await isBackendSyncEnabled();
+
   try {
     const signedUpload = await requestSignedUploadPlaceholder(localDocument);
+    await uploadStrokeDocumentArtifact({ document: localDocument, signedUpload });
     const metadata = await upsertBackendMetadata(localDocument, signedUpload);
 
     if (localDocument.assignmentId) {
@@ -445,7 +501,7 @@ async function saveCanvasLocalFirst(input: CanvasSyncSaveInput): Promise<CanvasS
     });
 
     return {
-      backendStatus: isBackendSyncEnabled() ? "synced" : "backend_disabled",
+      backendStatus: backendSyncEnabled ? "synced" : "backend_disabled",
       document: syncedDocument,
       exportPlaceholder,
       signedUpload,
@@ -493,7 +549,7 @@ export const canvasSyncService = {
     const localDocument = await canvasPersistenceService.getDocument(input.studentId, input.canvasId);
     let document = localDocument;
 
-    if (isBackendSyncEnabled()) {
+    if (await isBackendSyncEnabled()) {
       try {
         const backendDocument = await apiClient.get(`/canvas-documents/${input.canvasId}`, {
           schema: canvasBackendMetadataSchema,
@@ -528,7 +584,7 @@ export const canvasSyncService = {
 
     let documents = scenario === "empty" ? [] : await canvasPersistenceService.getDocuments(input.studentId);
 
-    if (scenario !== "empty" && isBackendSyncEnabled()) {
+    if (scenario !== "empty" && (await isBackendSyncEnabled())) {
       try {
         const backendList = await apiClient.get(`/students/${encodeURIComponent(input.studentId)}/canvas-documents`, {
           schema: canvasBackendListSchema,

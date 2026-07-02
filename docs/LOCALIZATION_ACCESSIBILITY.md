@@ -86,11 +86,15 @@ apps/mobile/src/features/profile-settings/accessibility/accessibilitySettingsSto
 apps/mobile/src/features/profile-settings/accessibility/AccessibilitySettingsProvider.tsx
 ```
 
-The store persists locally through:
+The store persists locally for recovery through:
 
 ```txt
 apps/mobile/src/services/storage/preferencesStorage.ts
 ```
+
+For signed-in student sessions, the same settings sync to
+`student_profiles.accessibility_settings` through RLS-protected Supabase profile
+updates.
 
 Supported settings:
 

@@ -1,1 +1,8 @@
-{"name":"writerhabit","version":"0.1.0","private":true}
+{
+  "name": "writerhabit",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

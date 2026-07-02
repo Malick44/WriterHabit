@@ -1,12 +1,9 @@
 import { z } from "zod";
 import type { GradeLevel } from "@WriterHabit/shared";
+import { gradeLevelSchema } from "@WriterHabit/shared";
 
 import type { GradeBand } from "@/design/tokens";
 import { assignmentRecordSchema, type AssignmentRecord } from "@/features/assignments/types";
-
-const gradeLevelSchema = z.custom<GradeLevel>(
-  (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 12,
-);
 
 export const MAX_DRAFT_TEXT_LENGTH = 20_000;
 

@@ -1,11 +1,5 @@
 import { useCallback, type ComponentProps, type ReactNode } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
+import { useStudentProfileSummary } from "@/features/profile-settings/hooks/useStudentProfileSummary";
 import { useProgressDashboard } from "@/features/progress/hooks/useProgress";
 import { useSubscriptions } from "@/features/subscriptions/hooks/useSubscriptions";
 import { useI18n } from "@/i18n";
@@ -44,26 +39,38 @@ const profileColors = {
   statValue: colors.dashboard.onSurface,
 } as const;
 
-// UI-first gamification data mirroring the profile design; wire to real
-// services (XP/points/badges) when they exist.
-const MOCK_PROFILE = {
-  level: 4,
-  xpToNext: 260,
-  levelProgress: 0.74,
-  points: 1240,
-  badgesEarned: 5,
-  badgesInReach: 3,
-} as const;
-
 const type = typography.gradeBands.middle;
 
-function ProfileStatTile({ value, label, color }: { value: string; label: string; color: string }) {
+function ProfileStatTile({
+  value,
+  label,
+  color,
+}: {
+  value: string;
+  label: string;
+  color: string;
+}) {
   const { settings } = useAccessibilityContext();
 
   return (
     <View style={styles.statTile}>
-      <Text style={[getAccessibleTextStyle(type.heading, settings), styles.statValue, { color }]}>{value}</Text>
-      <Text style={[getAccessibleTextStyle(type.caption, settings), styles.statLabel]}>{label}</Text>
+      <Text
+        style={[
+          getAccessibleTextStyle(type.heading, settings),
+          styles.statValue,
+          { color },
+        ]}
+      >
+        {value}
+      </Text>
+      <Text
+        style={[
+          getAccessibleTextStyle(type.caption, settings),
+          styles.statLabel,
+        ]}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -91,7 +98,9 @@ function ProfileRow({
 
   return (
     <Pressable
-      accessibilityHint={onPress ? t("profileSettings.profile.rowHint") : undefined}
+      accessibilityHint={
+        onPress ? t("profileSettings.profile.rowHint") : undefined
+      }
       accessibilityLabel={label}
       accessibilityRole={onPress ? "button" : undefined}
       disabled={!onPress}
@@ -106,9 +115,19 @@ function ProfileRow({
       <View style={[styles.rowIcon, { backgroundColor: iconBg }]}>
         <Ionicons color={iconColor} name={icon} size={16} />
       </View>
-      <Text style={[getAccessibleTextStyle(type.label, settings), styles.rowLabel]}>{label}</Text>
+      <Text
+        style={[getAccessibleTextStyle(type.label, settings), styles.rowLabel]}
+      >
+        {label}
+      </Text>
       {rightAccessory}
-      {onPress ? <Ionicons color={profileColors.outline} name="chevron-forward" size={18} /> : null}
+      {onPress ? (
+        <Ionicons
+          color={profileColors.outline}
+          name="chevron-forward"
+          size={18}
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -121,26 +140,56 @@ export function StudentProfileScreen() {
   const { settings } = useAccessibilityContext();
   const progressState = useProgressDashboard();
   const progressViewModel =
-    progressState.status === "success" || progressState.status === "empty" ? progressState.viewModel : null;
+    progressState.status === "success" || progressState.status === "empty"
+      ? progressState.viewModel
+      : null;
+  const profileSummaryState = useStudentProfileSummary(
+    progressViewModel?.totals ?? null,
+  );
+  const profileSummary =
+    profileSummaryState.status === "success" ||
+    profileSummaryState.status === "empty"
+      ? profileSummaryState.summary
+      : null;
   const subscriptionsState = useSubscriptions();
-  const isPremium = subscriptionsState.status === "success" && subscriptionsState.viewModel.isPremium;
+  const isPremium =
+    subscriptionsState.status === "success" &&
+    subscriptionsState.viewModel.isPremium;
 
-  const profileName = session?.user.displayName ?? t("profileSettings.profile.defaultName");
+  const profileName =
+    session?.user.displayName ?? t("profileSettings.profile.defaultName");
   const profileGrade = session?.user.gradeLevel ?? 5;
   const profileInitial = profileName.trim().slice(0, 1).toUpperCase() || "A";
-  const streakDays = progressViewModel?.streak.currentDays ?? 7;
-  const completed = progressViewModel?.totals.assignmentsCompleted ?? 12;
+  const streakDays = progressViewModel?.streak.currentDays ?? 0;
+  const completed = progressViewModel?.totals.assignmentsCompleted ?? 0;
+  const dailyGoalMinutes = profileSummary?.dailyGoalMinutes ?? 10;
+  const level = profileSummary?.level ?? 1;
+  const xpToNext = profileSummary?.xpToNext ?? 300;
+  const levelProgress = profileSummary?.levelProgress ?? 0;
+  const points = profileSummary?.points ?? 0;
+  const badgesEarned = profileSummary?.badgesEarned ?? 0;
+  const badgesInReach = profileSummary?.badgesInReach ?? 0;
 
-  const handleOpenSettings = useCallback(() => router.push(routes.studentSettings), [router]);
-  const handleOpenRoute = useCallback((route: AppRoute) => router.push(route), [router]);
-  const handleOpenPlus = useCallback(() => router.push(routes.paywall), [router]);
+  const handleOpenSettings = useCallback(
+    () => router.push(routes.studentSettings),
+    [router],
+  );
+  const handleOpenRoute = useCallback(
+    (route: AppRoute) => router.push(route),
+    [router],
+  );
+  const handleOpenPlus = useCallback(
+    () => router.push(routes.paywall),
+    [router],
+  );
 
   return (
     <View style={styles.root}>
       <AppHeader
         rightActions={[
           {
-            accessibilityLabelKey: "profileSettings.profile.headerSettingsAccessibility",
+            accessibilityLabelKey:
+              "profileSettings.profile.headerSettingsAccessibility",
             icon: "settings-outline",
             onPress: handleOpenSettings,
             type: "icon",
@@ -151,7 +200,10 @@ export function StudentProfileScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 112, 136) }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom + 112, 136) },
+        ]}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
         testID="student-profile-screen"
@@ -159,30 +211,65 @@ export function StudentProfileScreen() {
         <View style={styles.content}>
           <View style={styles.hero}>
             <View
-              accessibilityLabel={t("profileSettings.profile.avatarAccessibility", { name: profileName })}
+              accessibilityLabel={t(
+                "profileSettings.profile.avatarAccessibility",
+                { name: profileName },
+              )}
               accessible
               style={styles.avatar}
             >
-              <Text style={[getAccessibleTextStyle(type.heading, settings), { color: profileColors.primary }]}>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.heading, settings),
+                  { color: profileColors.primary },
+                ]}
+              >
                 {profileInitial}
               </Text>
             </View>
             <View style={styles.heroIdentity}>
               <Text
                 accessibilityRole="header"
-                style={[getAccessibleTextStyle(type.title, settings), styles.heroName]}
+                style={[
+                  getAccessibleTextStyle(type.title, settings),
+                  styles.heroName,
+                ]}
               >
                 {profileName}
               </Text>
               <View style={styles.pillRow}>
-                <View style={[styles.pill, { backgroundColor: profileColors.gradePillBg }]}>
-                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.gradePillText]}>
-                    {t("profileSettings.profile.gradePillShort", { grade: profileGrade })}
+                <View
+                  style={[
+                    styles.pill,
+                    { backgroundColor: profileColors.gradePillBg },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      getAccessibleTextStyle(type.caption, settings),
+                      styles.gradePillText,
+                    ]}
+                  >
+                    {t("profileSettings.profile.gradePillShort", {
+                      grade: profileGrade,
+                    })}
                   </Text>
                 </View>
-                <View style={[styles.pill, { backgroundColor: profileColors.planPillBg }]}>
-                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.planPillText]}>
-                    {isPremium ? t("profileSettings.profile.planPlus") : t("profileSettings.profile.planFree")}
+                <View
+                  style={[
+                    styles.pill,
+                    { backgroundColor: profileColors.planPillBg },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      getAccessibleTextStyle(type.caption, settings),
+                      styles.planPillText,
+                    ]}
+                  >
+                    {isPremium
+                      ? t("profileSettings.profile.planPlus")
+                      : t("profileSettings.profile.planFree")}
                   </Text>
                 </View>
               </View>
@@ -190,30 +277,48 @@ export function StudentProfileScreen() {
           </View>
 
           <View
-            accessibilityLabel={t("profileSettings.profile.level.accessibility", {
-              level: MOCK_PROFILE.level,
-              xp: MOCK_PROFILE.xpToNext,
-              next: MOCK_PROFILE.level + 1,
-            })}
+            accessibilityLabel={t(
+              "profileSettings.profile.level.accessibility",
+              {
+                level,
+                xp: xpToNext,
+                next: level + 1,
+              },
+            )}
             accessible
             style={styles.card}
           >
             <View style={styles.levelRow}>
-              <Text style={[getAccessibleTextStyle(type.label, settings), styles.levelTitle]}>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.label, settings),
+                  styles.levelTitle,
+                ]}
+              >
                 {t("profileSettings.profile.level.title", {
-                  level: MOCK_PROFILE.level,
+                  level,
                   name: t("profileSettings.profile.level.name"),
                 })}
               </Text>
-              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.levelXp]}>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.caption, settings),
+                  styles.levelXp,
+                ]}
+              >
                 {t("profileSettings.profile.level.xpToNext", {
-                  xp: MOCK_PROFILE.xpToNext,
-                  next: MOCK_PROFILE.level + 1,
+                  xp: xpToNext,
+                  next: level + 1,
                 })}
               </Text>
             </View>
             <View style={styles.levelTrack}>
-              <View style={[styles.levelFill, { width: `${Math.round(MOCK_PROFILE.levelProgress * 100)}%` }]} />
+              <View
+                style={[
+                  styles.levelFill,
+                  { width: `${Math.round(levelProgress * 100)}%` },
+                ]}
+              />
             </View>
           </View>
 
@@ -226,7 +331,7 @@ export function StudentProfileScreen() {
             <ProfileStatTile
               color={profileColors.accent}
               label={t("profileSettings.profile.stats.points")}
-              value={MOCK_PROFILE.points.toLocaleString("en-US")}
+              value={points.toLocaleString("en-US")}
             />
             <ProfileStatTile
               color={profileColors.statValue}
@@ -237,35 +342,74 @@ export function StudentProfileScreen() {
 
           <Pressable
             accessibilityHint={t("profileSettings.profile.rowHint")}
-            accessibilityLabel={t("profileSettings.profile.badgeShelf.accessibility", {
-              earned: MOCK_PROFILE.badgesEarned,
-              inReach: MOCK_PROFILE.badgesInReach,
-            })}
+            accessibilityLabel={t(
+              "profileSettings.profile.badgeShelf.accessibility",
+              {
+                earned: badgesEarned,
+                inReach: badgesInReach,
+              },
+            )}
             accessibilityRole="button"
             onPress={() => handleOpenRoute(routes.studentProgressBadges)}
-            style={({ pressed }) => [styles.card, styles.badgeCard, pressed ? styles.rowPressed : null]}
+            style={({ pressed }) => [
+              styles.card,
+              styles.badgeCard,
+              pressed ? styles.rowPressed : null,
+            ]}
           >
             <View style={styles.badgeIcons}>
-              <View style={[styles.badgeIcon, { backgroundColor: profileColors.accentTrack }]}>
-                <Ionicons color={profileColors.accent} name="ribbon" size={16} />
+              <View
+                style={[
+                  styles.badgeIcon,
+                  { backgroundColor: profileColors.accentTrack },
+                ]}
+              >
+                <Ionicons
+                  color={profileColors.accent}
+                  name="ribbon"
+                  size={16}
+                />
               </View>
-              <View style={[styles.badgeIcon, { backgroundColor: profileColors.accentTrack }]}>
-                <Ionicons color={profileColors.accent} name="create" size={16} />
+              <View
+                style={[
+                  styles.badgeIcon,
+                  { backgroundColor: profileColors.accentTrack },
+                ]}
+              >
+                <Ionicons
+                  color={profileColors.accent}
+                  name="create"
+                  size={16}
+                />
               </View>
               <View style={[styles.badgeIcon, styles.badgeIconEmpty]} />
             </View>
             <View style={styles.badgeText}>
-              <Text style={[getAccessibleTextStyle(type.label, settings), styles.badgeTitle]}>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.label, settings),
+                  styles.badgeTitle,
+                ]}
+              >
                 {t("profileSettings.profile.badgeShelf.title")}
               </Text>
-              <Text style={[getAccessibleTextStyle(type.caption, settings), styles.badgeSummary]}>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.caption, settings),
+                  styles.badgeSummary,
+                ]}
+              >
                 {t("profileSettings.profile.badgeShelf.summary", {
-                  earned: MOCK_PROFILE.badgesEarned,
-                  inReach: MOCK_PROFILE.badgesInReach,
+                  earned: badgesEarned,
+                  inReach: badgesInReach,
                 })}
               </Text>
             </View>
-            <Ionicons color={profileColors.outline} name="chevron-forward" size={18} />
+            <Ionicons
+              color={profileColors.outline}
+              name="chevron-forward"
+              size={18}
+            />
           </Pressable>
 
           <View style={[styles.card, styles.rowsCard]}>
@@ -283,8 +427,15 @@ export function StudentProfileScreen() {
               label={t("profileSettings.profile.rows.dailyGoal")}
               onPress={() => handleOpenRoute(routes.studentWritingGoals)}
               rightAccessory={
-                <Text style={[getAccessibleTextStyle(type.caption, settings), styles.rowValue]}>
-                  {t("profileSettings.profile.rows.dailyGoalValue")}
+                <Text
+                  style={[
+                    getAccessibleTextStyle(type.caption, settings),
+                    styles.rowValue,
+                  ]}
+                >
+                  {t("profileSettings.profile.rows.dailyGoalValue", {
+                    minutes: dailyGoalMinutes,
+                  })}
                 </Text>
               }
             />
@@ -297,7 +448,12 @@ export function StudentProfileScreen() {
               rightAccessory={
                 <View style={styles.connectedBadge}>
                   <View style={styles.connectedDot} />
-                  <Text style={[getAccessibleTextStyle(type.caption, settings), styles.connectedText]}>
+                  <Text
+                    style={[
+                      getAccessibleTextStyle(type.caption, settings),
+                      styles.connectedText,
+                    ]}
+                  >
                     {t("profileSettings.profile.rows.linkedParentConnected")}
                   </Text>
                 </View>

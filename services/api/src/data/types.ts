@@ -1,575 +1,61 @@
-export type StudentAssignmentStatus =
-  | "not_started"
-  | "in_progress"
-  | "submitted"
-  | "reviewing"
-  | "feedback_ready"
-  | "revision_in_progress"
-  | "completed";
+export * from "./assignments.types";
+export * from "./audit.types";
+export * from "./canvas.types";
+export * from "./entitlements.types";
+export * from "./feedback.types";
+export * from "./identity.types";
+export * from "./notifications.types";
+export * from "./progress.types";
 
-export type SubmissionStatus =
-  | "submitted"
-  | "reviewing"
-  | "feedback_ready"
-  | "revision_in_progress"
-  | "completed";
-
-export type AssignmentDifficulty = "easy" | "moderate" | "challenging";
-export type EntitlementStatus =
-  | "free"
-  | "trial"
-  | "active"
-  | "past_due"
-  | "canceled"
-  | "expired"
-  | "refunded"
-  | "grace_period";
-export type EntitlementProvider = "revenuecat" | "stripe" | "manual";
-export type EntitlementProviderEventStatus = "received" | "processed" | "ignored" | "failed";
-export type EntitlementScopeType = "personal" | "family" | "class" | "school";
-export type SubscriptionPlanId = "WriterHabit_plus_monthly" | "WriterHabit_plus_yearly";
-export type BillingPeriod = "month" | "year";
-
-export interface EntitlementRecord {
-  billingPeriod: BillingPeriod | null;
-  canAccessPremium: boolean;
-  createdAt: string;
-  currentPeriodEndsAt: string | null;
-  currentPlanId: SubscriptionPlanId | null;
-  id: string;
-  managementUrl: string | null;
-  ownerUserId: string;
-  provider: EntitlementProvider | null;
-  providerCustomerId: string | null;
-  providerLastEventId: string | null;
-  providerLastEventTimestampMs: number | null;
-  providerLastEventType: string | null;
-  providerSubscriptionId: string | null;
-  scopeId: string | null;
-  scopeType: EntitlementScopeType;
-  status: EntitlementStatus;
-  trialEndsAt: string | null;
-  updatedAt: string;
-}
-
-export interface UpsertEntitlementInput {
-  billingPeriod: BillingPeriod | null;
-  canAccessPremium: boolean;
-  currentPeriodEndsAt: string | null;
-  currentPlanId: SubscriptionPlanId | null;
-  managementUrl: string | null;
-  ownerUserId: string;
-  provider: EntitlementProvider | null;
-  providerCustomerId: string | null;
-  providerLastEventId?: string | null;
-  providerLastEventTimestampMs?: number | null;
-  providerLastEventType?: string | null;
-  providerSubscriptionId: string | null;
-  scopeId: string | null;
-  scopeType: EntitlementScopeType;
-  status: EntitlementStatus;
-  trialEndsAt: string | null;
-}
-
-export interface EntitlementProviderEventRecord {
-  eventType: string;
-  id: string;
-  metadata: Record<string, unknown>;
-  ownerUserId: string | null;
-  processedAt: string | null;
-  processingStatus: EntitlementProviderEventStatus;
-  provider: Extract<EntitlementProvider, "revenuecat" | "stripe">;
-  providerEventId: string;
-  receivedAt: string;
-}
-
-export interface ApplyEntitlementProviderEventInput {
-  entitlement?: UpsertEntitlementInput;
-  eventType: string;
-  metadata: Record<string, unknown>;
-  ownerUserId: string | null;
-  provider: Extract<EntitlementProvider, "revenuecat" | "stripe">;
-  providerEventId: string;
-  processingStatus?: Extract<EntitlementProviderEventStatus, "ignored" | "processed">;
-}
-
-export interface ApplyEntitlementProviderEventResult {
-  entitlement: EntitlementRecord | null;
-  event: EntitlementProviderEventRecord;
-  wasDuplicate: boolean;
-}
-
-export interface StudentProfileRecord {
-  gradeLevel: number;
-  id: string;
-  userId: string;
-}
-
-export interface AssignmentRecord {
-  assignmentType: string;
-  classId: string | null;
-  difficulty: AssignmentDifficulty;
-  dueAt: string | null;
-  estimatedMinutes: number;
-  gradeLevelMax: number;
-  gradeLevelMin: number;
-  id: string;
-  instructions: unknown;
-  promptFallback: string;
-  promptKey: string;
-  rubricId: string;
-  skillFocus: string[];
-  status: string;
-  titleFallback: string;
-  titleKey: string;
-}
-
-export interface StudentAssignmentRecord {
-  assignmentId: string;
-  classId: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  currentSubmissionId: string | null;
-  dailySelectionMetadata: Record<string, unknown>;
-  dueAt: string | null;
-  id: string;
-  startedAt: string | null;
-  status: StudentAssignmentStatus;
-  studentProfileId: string;
-  submittedAt: string | null;
-  teacherNoteFallback: string | null;
-  teacherNoteKey: string | null;
-  updatedAt: string;
-}
-
-export interface StudentAssignmentWithAssignment extends StudentAssignmentRecord {
-  assignment: AssignmentRecord;
-}
-
-export interface RubricCriterionRecord {
-  descriptionFallback: string;
-  descriptionKey: string;
-  id: string;
-  labelFallback: string;
-  labelKey: string;
-  maxScore: number;
-  rubricId: string;
-  skill: string;
-  sortOrder: number;
-}
-
-export interface DraftRecord {
-  autosaveVersion: number;
-  canvasDocumentIds: string[];
-  createdAt: string;
-  id: string;
-  paragraphCount: number;
-  revisionNumber: number;
-  sentenceCount: number;
-  studentAssignmentId: string;
-  studentProfileId: string;
-  textContent: string;
-  textPreview: string;
-  updatedAt: string;
-  wordCount: number;
-}
-
-export interface SaveDraftInput {
-  autosaveVersion: number;
-  canvasDocumentIds: string[];
-  paragraphCount: number;
-  revisionNumber: number;
-  sentenceCount: number;
-  studentAssignmentId: string;
-  studentProfileId: string;
-  textContent: string;
-  textPreview: string;
-  wordCount: number;
-}
-
-export type CanvasTemplate =
-  | "blank_page"
-  | "lined_paper"
-  | "storyboard"
-  | "mind_map"
-  | "essay_plan"
-  | "vocabulary_web"
-  | "handwriting_practice"
-  | "annotate_passage";
-
-export type CanvasSyncStatus = "local_only" | "saving" | "saved" | "sync_failed";
-export type CanvasExportStatus = "not_requested" | "queued" | "ready" | "failed";
-
-export interface CanvasDocumentRecord {
-  assignmentId: string | null;
-  attachedAt: string | null;
-  clientVersion: number;
-  createdAt: string;
-  exportStatus: CanvasExportStatus;
-  id: string;
-  objectPath: string | null;
-  previewImagePath: string | null;
-  recognizedText: string | null;
-  recognitionStatus: string;
-  serverVersion: number;
-  studentAssignmentId: string | null;
-  studentProfileId: string;
-  strokeCount: number;
-  strokes: unknown[];
-  syncStatus: CanvasSyncStatus;
-  template: CanvasTemplate;
-  title: string;
-  updatedAt: string;
-}
-
-export interface UpsertCanvasDocumentInput {
-  assignmentId?: string | null;
-  clientVersion: number;
-  id: string;
-  objectPath?: string | null;
-  previewImagePath?: string | null;
-  studentAssignmentId?: string | null;
-  studentProfileId: string;
-  strokes: unknown[];
-  syncStatus?: CanvasSyncStatus;
-  template: CanvasTemplate;
-  title: string;
-}
-
-export interface SubmissionRecord {
-  canvasDocumentIds: string[];
-  createdAt: string;
-  id: string;
-  idempotencyKey: string;
-  paragraphCount: number;
-  revisionNumber: number;
-  sentenceCount: number;
-  status: SubmissionStatus;
-  studentAssignmentId: string;
-  studentProfileId: string;
-  submittedAt: string;
-  typedTextExcerpt: string;
-  wordCount: number;
-}
-
-export interface CreateSubmissionInput {
-  canvasDocumentIds: string[];
-  idempotencyKey: string;
-  paragraphCount: number;
-  revisionNumber: number;
-  sentenceCount: number;
-  studentAssignmentId: string;
-  studentProfileId: string;
-  typedText: string;
-  typedTextExcerpt: string;
-  wordCount: number;
-}
-
-export interface SubmissionRevisionRecord {
-  createdAt: string;
-  id: string;
-  idempotencyKey: string;
-  revisedExcerpt: string;
-  revisionTaskId: string | null;
-  studentProfileId: string;
-  submissionId: string;
-}
-
-export interface CreateSubmissionRevisionInput {
-  idempotencyKey: string;
-  revisedExcerpt: string;
-  revisionTaskId: string | null;
-  studentProfileId: string;
-  submissionId: string;
-}
-
-export type ReviewJobStatus = "queued" | "processing" | "completed" | "failed" | "safety_blocked";
-
-export type ReviewJobTransition = "start_review" | "fail_review" | "safety_block_review";
-
-export interface ReviewJobRecord {
-  createdAt?: string;
-  completedAt?: string | null;
-  failureCode?: string | null;
-  failedAt?: string | null;
-  id: string;
-  idempotencyKey: string;
-  queuedAt?: string;
-  safetyFlags?: string[];
-  startedAt?: string | null;
-  status: ReviewJobStatus;
-  studentProfileId: string;
-  submissionId: string;
-}
-
-export interface TransitionReviewJobInput {
-  failureCode?: string | null;
-  idempotencyKey: string;
-  safetyFlags?: string[];
-  studentProfileId: string;
-  submissionId: string;
-  transition: ReviewJobTransition;
-}
-
-export interface FeedbackRecord {
-  createdAt: string;
-  gradeLevel: number;
-  id: string;
-  improvementFallback: string;
-  improvementKey: string;
-  nextRevisionTaskFallback: string;
-  nextRevisionTaskKey: string;
-  progressMinutes: number;
-  progressPoints: number;
-  progressSkill: string;
-  strengthFallback: string;
-  strengthKey: string;
-  studentProfileId: string;
-  submissionId: string;
-  submittedTextExcerpt: string;
-  updatedAt: string;
-}
-
-export interface RevisionTaskRecord {
-  createdAt: string;
-  feedbackId: string;
-  guidingQuestionFallback: string;
-  guidingQuestionKey: string;
-  id: string;
-  instructionFallback: string;
-  instructionKey: string;
-  originalExcerpt: string;
-  targetSkill: string;
-  updatedAt: string;
-}
-
-export interface FeedbackRubricScoreRecord {
-  coachingNoteFallback: string;
-  coachingNoteKey: string;
-  criterionDescriptionFallback: string;
-  criterionDescriptionKey: string;
-  criterionId: string;
-  criterionLabelFallback: string;
-  criterionLabelKey: string;
-  feedbackId: string;
-  id: string;
-  level: "starting" | "building" | "meeting" | "strong";
-  maxScore: 4;
-  score: 1 | 2 | 3 | 4;
-}
-
-export interface GrammarSuggestionRecord {
-  explanationFallback: string;
-  explanationKey: string;
-  feedbackId: string;
-  id: string;
-  originalExcerpt: string;
-  studentActionFallback: string;
-  studentActionKey: string;
-  titleFallback: string;
-  titleKey: string;
-}
-
-export interface FeedbackWithDetails {
-  assignment: AssignmentRecord;
-  feedback: FeedbackRecord;
-  grammarSuggestions: GrammarSuggestionRecord[];
-  revisionTask: RevisionTaskRecord | null;
-  rubricScores: FeedbackRubricScoreRecord[];
-  studentAssignment: StudentAssignmentRecord;
-  submission: SubmissionRecord;
-}
-
-export interface PublishFeedbackInput {
-  feedback: {
-    gradeLevel: number;
-    improvementFallback: string;
-    improvementKey: string;
-    nextRevisionTaskFallback: string;
-    nextRevisionTaskKey: string;
-    progressMinutes: number;
-    progressPoints: number;
-    progressSkill: string;
-    strengthFallback: string;
-    strengthKey: string;
-    submittedTextExcerpt: string;
-  };
-  grammarSuggestions: Array<{
-    explanationFallback: string;
-    explanationKey: string;
-    idempotencyId: string;
-    originalExcerpt: string;
-    studentActionFallback: string;
-    studentActionKey: string;
-    titleFallback: string;
-    titleKey: string;
-  }>;
-  idempotencyKey: string;
-  revisionTask: {
-    guidingQuestionFallback: string;
-    guidingQuestionKey: string;
-    idempotencyId: string;
-    instructionFallback: string;
-    instructionKey: string;
-    originalExcerpt: string;
-    targetSkill: string;
-  };
-  rubricScores: Array<{
-    coachingNoteFallback: string;
-    coachingNoteKey: string;
-    criterionId: string;
-    level: "starting" | "building" | "meeting" | "strong";
-    maxScore: 4;
-    score: 1 | 2 | 3 | 4;
-  }>;
-  safetyFlags: string[];
-  studentProfileId: string;
-  submissionId: string;
-}
-
-export interface TeacherProfileRecord {
-  displayName: string;
-  id: string;
-  userId: string;
-}
-
-export interface ClassRecord {
-  gradeLevel: number;
-  id: string;
-  name: string;
-  status: "active" | "archived";
-  teacherProfileId: string;
-}
-
-export interface ClassRosterStudentRecord {
-  displayName: string;
-  gradeLevel: number;
-  studentProfileId: string;
-}
-
-export interface ParentLinkedStudentRecord {
-  displayName: string;
-  gradeLevel: number;
-  relationshipLabel: string;
-  studentProfileId: string;
-}
-
-export type StreakStatus = "continued" | "at_risk" | "missed" | "not_started";
-
-export interface StudentProgressTotalsRecord {
-  aiFeedbackApplied: number;
-  assignmentsCompleted: number;
-  bestStreakDays: number;
-  currentStreakDays: number;
-  handwritingMinutes: number;
-  minutesThisWeek: number;
-  practicedTodayOn: string | null;
-  revisionsCompleted: number;
-  rubricImprovement: number;
-  streakStatus: StreakStatus;
-  studentProfileId: string;
-  weeklyMinutesGoal: number;
-  wordsWritten: number;
-}
-
-export interface StudentSkillProgressRecord {
-  currentScore: number;
-  level: number;
-  previousScore: number;
-  skill: string;
-  studentProfileId: string;
-  updatedAt: string;
-}
-
-export interface StudentActivityDayRecord {
-  activityDate: string;
-  assignmentsCompleted: number;
-  feedbackApplied: number;
-  handwritingMinutes: number;
-  minutesPracticed: number;
-  practicedSkills: string[];
-  revisionsCompleted: number;
-  studentProfileId: string;
-  wordsWritten: number;
-}
-
-export interface WeeklyReviewRecord {
-  celebrationFallback: string;
-  celebrationKey: string;
-  focusForNextWeekFallback: string;
-  focusForNextWeekKey: string;
-  id: string;
-  studentProfileId: string;
-  weekEnd: string;
-  weekStart: string;
-}
-
-export interface BadgeRecord {
-  code: string;
-  descriptionFallback: string;
-  descriptionKey: string;
-  iconName: string;
-  id: string;
-  nameFallback: string;
-  nameKey: string;
-}
-
-export type StudentBadgeStatus = "locked" | "in_progress" | "unlocked";
-
-export interface StudentBadgeRecord {
-  badgeId: string;
-  progressPercent: number;
-  status: StudentBadgeStatus;
-  studentProfileId: string;
-  unlockedAt: string | null;
-}
-
-/**
- * Teacher review-queue row: a submission joined with the assignment title and
- * the owning student's display name, strictly scoped to class-assigned work
- * (`student_assignments.class_id`).
- */
-export interface SubmissionQueueRecord {
-  assignmentId: string;
-  assignmentTitleFallback: string;
-  assignmentTitleKey: string;
-  classId: string;
-  hasCanvas: boolean;
-  id: string;
-  status: SubmissionStatus;
-  studentAssignmentId: string;
-  studentDisplayName: string;
-  studentProfileId: string;
-  submittedAt: string;
-  wordCount: number;
-}
-
-export interface ActivityDateRange {
-  /** Inclusive ISO date (YYYY-MM-DD). */
-  fromDate: string;
-  /** Inclusive ISO date (YYYY-MM-DD). */
-  toDate: string;
-}
-
-export interface ListSubmissionQueueOptions {
-  limit: number;
-  statuses?: readonly SubmissionStatus[];
-}
-
-export interface ListStudentAssignmentsOptions {
-  assignmentType?: string;
-  limit: number;
-  orderBy?: "createdAt" | "updatedAt";
-  statuses?: readonly StudentAssignmentStatus[];
-}
-
-export interface StudentAssignmentUpdate {
-  completedAt?: string | null;
-  currentSubmissionId?: string | null;
-  startedAt?: string | null;
-  status?: StudentAssignmentStatus;
-  submittedAt?: string | null;
-}
+import type {
+  ApplyEntitlementProviderEventInput,
+  ApplyEntitlementProviderEventResult,
+  EntitlementRecord,
+  UpsertEntitlementInput,
+} from "./entitlements.types";
+import type { RecordAiCoachInteractionInput } from "./audit.types";
+import type {
+  AssignmentRecord,
+  CreateSubmissionInput,
+  CreateSubmissionRevisionInput,
+  DraftRecord,
+  ListStudentAssignmentsOptions,
+  RubricCriterionRecord,
+  SaveDraftInput,
+  StudentAssignmentStatus,
+  StudentAssignmentUpdate,
+  StudentAssignmentWithAssignment,
+  SubmissionRecord,
+  SubmissionRevisionRecord,
+} from "./assignments.types";
+import type {
+  CanvasDocumentRecord,
+  UpsertCanvasDocumentInput,
+} from "./canvas.types";
+import type {
+  FeedbackWithDetails,
+  PublishFeedbackInput,
+  ReviewJobRecord,
+  TransitionReviewJobInput,
+} from "./feedback.types";
+import type {
+  ClassRecord,
+  ClassRosterStudentRecord,
+  ParentLinkedStudentRecord,
+  StudentProfileRecord,
+  TeacherProfileRecord,
+} from "./identity.types";
+import type {
+  ActivityDateRange,
+  BadgeRecord,
+  ListSubmissionQueueOptions,
+  StudentActivityDayRecord,
+  StudentBadgeRecord,
+  StudentProgressTotalsRecord,
+  StudentSkillProgressRecord,
+  SubmissionQueueRecord,
+  WeeklyReviewRecord,
+} from "./progress.types";
 
 /**
  * Injectable persistence boundary for the core student writing loop.
@@ -674,6 +160,7 @@ export interface Database {
   listTeacherClasses(teacherProfileId: string, limit: number): Promise<ClassRecord[]>;
   listTeacherLinkedStudentProfileIds(teacherUserId: string): Promise<string[]>;
   publishFeedback(input: PublishFeedbackInput): Promise<FeedbackWithDetails>;
+  recordAiCoachInteraction(input: RecordAiCoachInteractionInput): Promise<void>;
   saveDraft(input: SaveDraftInput): Promise<DraftRecord>;
   transitionReviewJob(input: TransitionReviewJobInput): Promise<ReviewJobRecord>;
   updateStudentAssignment(id: string, update: StudentAssignmentUpdate): Promise<void>;

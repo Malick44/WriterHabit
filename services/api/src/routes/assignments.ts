@@ -11,12 +11,12 @@ import { createForbiddenError, createResourceNotFoundError } from "../runtime/er
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
 import { getNextAssignmentStatusOnStart } from "../features/workflows/writing-workflow-state-machine";
 import {
-  mapDailySelection,
-  mapDraftSummary,
-  mapInstructions,
-  mapStudentAssignmentSummary,
-  studentAssignmentStatusSchema,
-} from "./writing-shared";
+  mapAssignmentDetailApiResponse,
+  mapAssignmentHistoryApiResponse,
+  mapDailyAssignmentApiResponse,
+  mapStartedAssignmentApiResponse,
+} from "../mappers/assignments.mapper";
+import { studentAssignmentStatusSchema } from "./writing-shared";
 
 const defaultListLimit = 50;
 
@@ -58,12 +58,7 @@ export async function registerAssignmentRoutes(
       ...(query.status ? { statuses: [query.status] } : {}),
     });
 
-    return {
-      items: records.map((record) => mapStudentAssignmentSummary(record)),
-      // Cursor pagination is not implemented yet; responses are capped at the
-      // newest `limit` student assignments.
-      nextCursor: null,
-    };
+    return mapAssignmentHistoryApiResponse(records);
   });
 
   app.get("/students/:studentId/daily-assignment", { preHandler: authenticate }, async (request) => {
@@ -89,10 +84,7 @@ export async function registerAssignmentRoutes(
       });
     }
 
-    return {
-      ...mapStudentAssignmentSummary(record),
-      selection: mapDailySelection(record.dailySelectionMetadata, record.assignment.difficulty),
-    };
+    return mapDailyAssignmentApiResponse(record);
   });
 
   app.get("/assignments/:assignmentId", { preHandler: authenticate }, async (request) => {
@@ -116,22 +108,7 @@ export async function registerAssignmentRoutes(
     const draft =
       principal.role === "student" ? await database.getDraftByStudentAssignmentId(record.id) : null;
 
-    return {
-      ...mapStudentAssignmentSummary(record),
-      draft: draft ? mapDraftSummary(draft) : null,
-      instructions: mapInstructions(record.assignment.instructions),
-      rubric: rubric.map((criterion) => ({
-        description: { fallback: criterion.descriptionFallback, key: criterion.descriptionKey },
-        id: criterion.id,
-        label: { fallback: criterion.labelFallback, key: criterion.labelKey },
-        maxScore: criterion.maxScore,
-        skill: criterion.skill,
-      })),
-      teacherNote:
-        record.teacherNoteKey && record.teacherNoteFallback
-          ? { fallback: record.teacherNoteFallback, key: record.teacherNoteKey }
-          : null,
-    };
+    return mapAssignmentDetailApiResponse({ draft, record, rubric });
   });
 
   app.post("/students/:studentId/assignments/:assignmentId/start", { preHandler: authenticate }, async (request) => {
@@ -163,9 +140,6 @@ export async function registerAssignmentRoutes(
       throw createResourceNotFoundError({ studentAssignmentId: record.id });
     }
 
-    return {
-      ...mapStudentAssignmentSummary(updated),
-      startedAt,
-    };
+    return mapStartedAssignmentApiResponse({ record: updated, startedAt });
   });
 }

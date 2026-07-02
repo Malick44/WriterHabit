@@ -4,7 +4,6 @@ import { z } from "zod";
 import type {
   ClassRecord,
   Database,
-  SubmissionQueueRecord,
   SubmissionStatus,
 } from "../data/types";
 import {
@@ -15,8 +14,16 @@ import {
 } from "../runtime/authorization";
 import { assertPremiumFeatureAccess } from "../features/subscriptions/entitlement-authorization";
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
-import { localizedCopy, mapSubmissionResponse } from "./writing-shared";
-import { currentWeekRange, emptyProgressTotals, type IsoDateRange } from "./dashboards-shared";
+import {
+  mapTeacherClassSummaryApiResponse,
+  mapTeacherClassesListApiResponse,
+  mapTeacherClassProgressApiResponse,
+  mapTeacherDashboardApiResponse,
+  mapTeacherQueueApiResponse,
+} from "../mappers/teachers.mapper";
+import { mapSubmissionResponse } from "../mappers/writing-loop.mapper";
+import { currentWeekRange } from "./dashboards-shared";
+import { type IsoDateRange } from "../mappers/dashboards.mapper";
 
 const maxClasses = 50;
 const dashboardClassLimit = 20;
@@ -51,21 +58,6 @@ const queueQuerySchema = z.object({
     .optional(),
 });
 
-function mapQueueItem(record: SubmissionQueueRecord) {
-  return {
-    assignmentId: record.assignmentId,
-    assignmentTitle: localizedCopy(record.assignmentTitleKey, record.assignmentTitleFallback),
-    classId: record.classId,
-    hasCanvas: record.hasCanvas,
-    id: record.id,
-    status: record.status,
-    studentDisplayName: record.studentDisplayName,
-    studentId: record.studentProfileId,
-    submittedAt: record.submittedAt,
-    wordCount: record.wordCount,
-  };
-}
-
 /**
  * Per-class dashboard numbers, computed from bounded queries because the
  * schema keeps no class-level rollups: counts come from class-scoped
@@ -86,22 +78,16 @@ async function buildClassSummary(database: Database, classRecord: ClassRecord, w
       database.listActivityDaysForStudents(rosterIds, week),
     ]);
 
-  const averageSkillScore =
-    skillRows.length > 0
-      ? Math.round((skillRows.reduce((sum, row) => sum + row.currentScore, 0) / skillRows.length) * 10) / 10
-      : 0;
-
-  return {
+  return mapTeacherClassSummaryApiResponse({
     activeAssignmentCount,
-    averageCompletionPercent: totalAssigned > 0 ? Math.round((completed / totalAssigned) * 100) : 0,
-    averageSkillScore,
-    gradeLevel: classRecord.gradeLevel,
-    id: classRecord.id,
-    name: classRecord.name,
-    studentCount: roster.length,
-    submissionsNeedingReview: needsReview,
-    weeklyWritingMinutes: activityDays.reduce((sum, day) => sum + day.minutesPracticed, 0),
-  };
+    activityDays,
+    classRecord,
+    completedAssignments: completed,
+    needsReview,
+    rosterSize: roster.length,
+    skillRows,
+    totalAssigned,
+  });
 }
 
 export async function registerTeacherRoutes(
@@ -124,23 +110,12 @@ export async function registerTeacherRoutes(
       ),
     ]);
 
-    return {
+    return mapTeacherDashboardApiResponse({
       classes: classSummaries,
-      connectionStatus: "online",
-      emptyState:
-        classes.length > 0
-          ? null
-          : {
-              body: {
-                fallback: "Create a class to start assigning writing practice.",
-                key: "teachers.dashboard.emptyState.body",
-              },
-              title: { fallback: "No classes yet", key: "teachers.dashboard.emptyState.title" },
-            },
       generatedAt: new Date().toISOString(),
-      submissionsNeedingReview: queue.map((record) => mapQueueItem(record)),
+      queue,
       teacherId: teacherProfile.id,
-    };
+    });
   });
 
   app.get("/teachers/:teacherId/classes", { preHandler: authenticate }, async (request) => {
@@ -155,12 +130,7 @@ export async function registerTeacherRoutes(
       classes.map((classRecord) => buildClassSummary(database, classRecord, week)),
     );
 
-    return {
-      items,
-      // Cursor pagination is not implemented yet; responses are capped at the
-      // first `limit` active classes.
-      nextCursor: null,
-    };
+    return mapTeacherClassesListApiResponse(items);
   });
 
   app.get("/classes/:classId/progress", { preHandler: authenticate }, async (request) => {
@@ -178,37 +148,15 @@ export async function registerTeacherRoutes(
       database.listActivityDaysForStudents(rosterIds, week),
     ]);
 
-    const students = roster.map((student) => {
-      const totals =
-        totalsRows.find((row) => row.studentProfileId === student.studentProfileId) ??
-        emptyProgressTotals(student.studentProfileId);
-      const skills = skillRows.filter((row) => row.studentProfileId === student.studentProfileId);
-      const averageSkillScore =
-        skills.length > 0
-          ? Math.round((skills.reduce((sum, row) => sum + row.currentScore, 0) / skills.length) * 10) / 10
-          : 0;
-
-      return {
-        assignmentsCompleted: totals.assignmentsCompleted,
-        averageSkillScore,
-        currentStreakDays: totals.currentStreakDays,
-        displayName: student.displayName,
-        gradeLevel: student.gradeLevel,
-        studentId: student.studentProfileId,
-        weeklyWritingMinutes: activityDays
-          .filter((day) => day.studentProfileId === student.studentProfileId)
-          .reduce((sum, day) => sum + day.minutesPracticed, 0),
-      };
-    });
-
-    return {
-      classId: classRecord.id,
+    return mapTeacherClassProgressApiResponse({
+      activityDays,
+      classRecord,
       generatedAt: new Date().toISOString(),
-      gradeLevel: classRecord.gradeLevel,
-      name: classRecord.name,
-      students,
+      roster,
+      skillRows,
+      totalsRows,
       weekLabel: `${week.fromDate} - ${week.toDate}`,
-    };
+    });
   });
 
   app.get("/teachers/:teacherId/submissions", { preHandler: authenticate }, async (request) => {
@@ -226,12 +174,7 @@ export async function registerTeacherRoutes(
       },
     );
 
-    return {
-      items: queue.map((record) => mapQueueItem(record)),
-      // Cursor pagination is not implemented yet; responses are capped at the
-      // newest `limit` submissions.
-      nextCursor: null,
-    };
+    return mapTeacherQueueApiResponse(queue);
   });
 
   app.get(

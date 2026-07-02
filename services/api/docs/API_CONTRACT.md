@@ -311,11 +311,14 @@ interface StudentHomeResponse {
 
 ## Onboarding
 
-The mobile app stores in-progress onboarding locally and writes public auth
-metadata on completion. Student profile settings are synced through the
-Supabase RPCs created in
+The mobile app keeps recoverable in-progress onboarding locally and syncs
+signed-in student progress to `student_profiles` once a profile/grade exists.
+Completion writes grade, writing goals, writing level, daily goal, and
+`onboarding_completed_at` to `student_profiles`; public auth metadata is kept
+only as a current mobile route-gate compatibility signal. Student profile
+settings are also synced through the Supabase RPCs created in
 `services/api/migrations/202606100001_profile_settings_notification_sync.sql`;
-broader onboarding records and production API hydration remain planned here.
+broader role-specific onboarding APIs remain planned here.
 
 ```txt
 GET  /students/:studentId/onboarding
@@ -468,13 +471,16 @@ Daily assignment example response:
 
 ## Submissions And Drafts
 
-The typed writing workspace saves local drafts first, then syncs authenticated
-draft and submission writes through the backend. Submission creation is a
-server-owned state-machine transition: the backend transaction stores the
+The typed writing workspace saves signed-in drafts to Supabase and keeps local
+recovery storage for no-session or failed remote saves. Submission creation is
+a server-owned state-machine transition: the backend transaction stores the
 submission row, full content row, canvas links, queued review job, and
 `student_assignments.current_submission_id/status/submitted_at` together.
-Public mobile clients cannot write submission, review, feedback, revision, or
-assignment workflow rows directly through RLS.
+In-progress feedback revision drafts are stored in student-owned
+`submission_revision_drafts`; final revision completion still goes through the
+backend workflow and writes immutable `submission_revisions`. Public mobile
+clients cannot write submission, review, feedback, final revision, or assignment
+workflow rows directly through RLS.
 
 ```txt
 GET    /student-assignments/:studentAssignmentId/draft
@@ -526,6 +532,14 @@ interface SubmitRevisionRequest {
   revisionTaskId: string; // must be the backend-generated task id from feedback
   idempotencyKey: string;
 }
+
+interface SubmissionRevisionDraftRecord {
+  submissionId: string;
+  studentProfileId: string;
+  revisedText: string; // <= 2400 characters
+  clientUpdatedAt?: string;
+  updatedAt: string;
+}
 ```
 
 Submission example:
@@ -563,10 +577,13 @@ keeps local-first mobile fallback behavior for offline or failed syncs.
 Backend canvas storage splits editable payloads from metadata:
 
 - Stroke JSON is persisted in `canvas_document_contents` and referenced by
-  `canvas_documents`.
+  `canvas_documents`; signed-in mobile saves also upload the editable
+  stroke-document JSON object to the private `canvas-artifacts` Supabase
+  Storage bucket.
 - Metadata endpoints store template, title, stroke count, client/server version,
   assignment attachment, preview/export state, and sync timestamps.
-- Export queues a placeholder status until runtime workers exist. Delete,
+- Upload-url responses return authenticated-user-scoped object paths. Export
+  queues a placeholder status until runtime workers exist. Delete,
   create-by-student collection POST, and recognition remain fail-closed
   placeholder routes.
 
@@ -696,9 +713,16 @@ Canvas recognition response:
 
 ## AI Coach
 
-Current mobile AI coach responses are deterministic mocks guarded by local policy
-checks. Framework-neutral backend service scaffolding now exists under
-`services/api/src/features/ai/coach/` and shared AI support folders:
+Signed-in mobile AI coach requests call the backend endpoints below. The backend
+authorizes the student scope, resolves the active `student_assignments` row,
+runs the framework-neutral AI coach service, and records each completed,
+safety-blocked, or failed request in `ai_coach_interactions`. Demo/local sessions
+without a Supabase auth session still use deterministic mobile responses guarded
+by the same local policy checks.
+
+The current backend provider is still deterministic. Framework-neutral backend
+service code lives under `services/api/src/features/ai/coach/` and shared AI
+support folders:
 
 - `services/api/src/features/ai/contracts.ts`
 - `services/api/src/features/ai/prompts/ai-prompt-builder.service.ts`
@@ -707,10 +731,9 @@ checks. Framework-neutral backend service scaffolding now exists under
 - `services/api/src/features/ai/usage/`
 - `services/api/src/features/ai/providers/mock-ai-provider.ts`
 
-The backend scaffold builds bounded grade-aware prompts, checks academic
-integrity, runs deterministic input/output moderation placeholders, evaluates
-usage limits, and returns mock coaching responses. It does not call an external
-model provider yet.
+The backend builds bounded grade-aware prompts, checks academic integrity, runs
+deterministic input/output moderation placeholders, evaluates usage limits, and
+returns mock coaching responses. It does not call an external model provider yet.
 
 Allowed coaching actions:
 
@@ -884,6 +907,33 @@ interface FeedbackResponse {
 Feedback must include one strength, one improvement, and one next revision task.
 It must not include a complete replacement draft.
 
+## Grade 3 Writing Adventure Progress
+
+The Grade 3 Writing Adventure is not part of the assignment workflow. Signed-in
+mobile sessions persist lesson progress directly to the RLS-protected
+`grade3_writing_progress` table by `student_profile_id`; no-session and failed
+remote saves use the mobile SQLite fallback.
+
+```ts
+interface Grade3WritingProgressRecord {
+  studentProfileId: string;
+  day: number; // 1 through 30
+  draft: string; // <= 6000 characters
+  strongerSentence: string; // <= 6000 characters
+  favoriteSentence: string; // <= 6000 characters
+  checklist: Record<string, boolean>;
+  planning: {
+    talkIdea: string;
+    beginning: string;
+    middle: string;
+    end: string;
+  };
+  completed: boolean;
+  clientUpdatedAt?: string;
+  updatedAt: string;
+}
+```
+
 ## Progress
 
 ```txt
@@ -916,6 +966,17 @@ interface ProgressDashboardResponse {
     practicedToday: boolean;
     status: "continued" | "at_risk" | "missed" | "not_started";
   };
+  activityDays: Array<{
+    activityDate: string;
+    practicedSkills: WritingSkill[];
+    assignmentsCompleted: number;
+    minutesPracticed: number;
+    wordsWritten: number;
+    revisionsCompleted: number;
+    aiFeedbackApplied: number;
+    handwritingMinutes: number;
+    rubricImprovement: number;
+  }>;
   skills: Array<{
     skill: WritingSkill;
     currentScore: number;
@@ -942,6 +1003,46 @@ interface WeeklyReviewSummary {
   weekEnd: string;
   celebration: LocalizedCopy;
   focusForNextWeek: LocalizedCopy;
+}
+```
+
+## Daily Practice Sessions
+
+The mobile practice session screen writes signed-in task completions directly to
+the RLS-protected `practice_sessions` table. Rows are student-owned, keyed by
+student profile, skill id, task id, and completion date. The current in-session
+practice streak is derived from recent `completed_on` rows. No-session/demo
+states keep local in-memory completion behavior.
+
+```ts
+interface PracticeSessionRecord {
+  id: string;
+  studentProfileId: string;
+  skillId: string;
+  taskId: string;
+  estimatedMinutes: number;
+  completedOn: string;
+  completedAt: string;
+}
+```
+
+## Student Messages
+
+The mobile student messages route reads signed-in message previews directly from
+the RLS-protected `student_messages` table. Public clients may select authorized
+rows through `can_read_student`, but message writes are admin/service-owned.
+No-session demo states use localized fallback threads on device.
+
+```ts
+interface StudentMessageThreadRecord {
+  id: string;
+  studentProfileId: string;
+  senderKind: "teacher" | "coach";
+  senderName: string;
+  senderInitials: string;
+  preview: string; // <= 500 characters
+  sentAt: string;
+  readAt: string | null;
 }
 ```
 

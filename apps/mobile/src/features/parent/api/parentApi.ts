@@ -1,4 +1,6 @@
+import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
 
+import { supabase } from "@/core/supabase/supabaseClient";
 import {
   parentAssignmentReviewApiResponseSchema,
   parentDashboardApiResponseSchema,
@@ -39,6 +41,105 @@ interface ParentSettingsInput extends ParentRequestInput {
 }
 
 const generatedAt = "2026-06-08T09:00:00.000Z";
+
+type StudentProfileRow = {
+  daily_goal_minutes: number | null;
+  grade_level: number;
+  id: string;
+  user_id: string;
+};
+
+type ProgressTotalRow = {
+  assignments_completed: number | null;
+  current_streak_days: number | null;
+  minutes_this_week: number | null;
+  revisions_completed: number | null;
+  rubric_improvement: number | string | null;
+  weekly_minutes_goal: number | null;
+};
+
+type SkillProgressRow = {
+  current_score: number | string | null;
+  previous_score: number | string | null;
+  skill: WritingSkill;
+};
+
+type AssignmentJoinRow = {
+  assignment_type: AssignmentType;
+  prompt_fallback: string;
+  skill_focus: WritingSkill[] | null;
+  title_fallback: string;
+};
+
+type StudentAssignmentRow = {
+  assignments: AssignmentJoinRow | AssignmentJoinRow[] | null;
+  completed_at: string | null;
+  current_submission_id: string | null;
+  id: string;
+  status: string;
+  submitted_at: string | null;
+};
+
+type SubmissionRow = {
+  id: string;
+  status: string;
+  student_assignment_id: string;
+  submitted_at: string;
+  typed_text_excerpt: string;
+  word_count: number | null;
+};
+
+type FeedbackRow = {
+  id: string;
+  improvement_fallback: string;
+  next_revision_task_fallback: string;
+  strength_fallback: string;
+  submission_id: string;
+};
+
+type RubricCriterionJoinRow = {
+  description_fallback: string;
+  id: string;
+  label_fallback: string;
+  max_score: number;
+};
+
+type RubricScoreRow = {
+  feedback_id: string;
+  id: string;
+  max_score: number;
+  rubric_criteria: RubricCriterionJoinRow | RubricCriterionJoinRow[] | null;
+  score: number;
+};
+
+type CanvasDocumentRow = {
+  id: string;
+  student_assignment_id: string | null;
+  template: string;
+  title: string;
+};
+
+type ParentSupabaseData = {
+  assignmentRows: StudentAssignmentRow[];
+  canvasRows: CanvasDocumentRow[];
+  feedbackRows: FeedbackRow[];
+  progressTotal: ProgressTotalRow | null;
+  rubricRows: RubricScoreRow[];
+  settings: ParentSettings;
+  skillRows: SkillProgressRow[];
+  student: ParentStudentSummary;
+  submissionRows: SubmissionRow[];
+};
+
+type ParentSettingsRow = {
+  ai_coach_access: ParentSettings["aiCoachAccess"];
+  assignment_alerts_enabled: boolean;
+  digest_frequency: ParentSettings["digestFrequency"];
+  practice_reminder_enabled: boolean;
+  quiet_hours_label: string;
+  share_weekly_summary_with_teacher: boolean;
+  weekly_report_email_enabled: boolean;
+};
 
 const parentStudents: ParentStudentSummary[] = [
   {
@@ -85,6 +186,502 @@ function readScenario(): ParentScenario {
 
 function getConnectionStatus(scenario: ParentScenario): ParentDashboardApiResponse["connectionStatus"] {
   return scenario === "offline" ? "offline_cached" : "online";
+}
+
+function toGradeLevel(value: number): GradeLevel {
+  return value >= 1 && value <= 12 ? (value as GradeLevel) : 7;
+}
+
+function toInteger(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? Math.round(parsed) : fallback;
+}
+
+function getDisplayNameFromEmail(email?: string): string {
+  const localPart = email?.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+
+  return localPart || "Dev Student";
+}
+
+function getInitials(displayName: string): string {
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
+  return initials.slice(0, 2) || "DS";
+}
+
+function getSubmittedLabel(value?: string | null): string {
+  if (!value) {
+    return "Saved";
+  }
+
+  const submitted = new Date(value);
+  const now = new Date();
+  const diffDays = Math.max(0, Math.floor((now.getTime() - submitted.getTime()) / 86_400_000));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return submitted.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function getSkillLabel(skill: WritingSkill): string {
+  const labels: Record<WritingSkill, string> = {
+    argument_strength: "Argument strength",
+    clarity: "Clarity",
+    creativity: "Creativity",
+    evidence_usage: "Evidence",
+    grammar: "Grammar",
+    handwriting: "Handwriting",
+    organization: "Organization",
+    punctuation: "Punctuation",
+    reading_response: "Reading response",
+    revision_quality: "Revision",
+    sentence_structure: "Sentences",
+    spelling: "Spelling",
+    vocabulary: "Vocabulary",
+  };
+
+  return labels[skill];
+}
+
+function getSkillNextPractice(skill: WritingSkill): string {
+  const prompts: Record<WritingSkill, string> = {
+    argument_strength: "Ask what claim the paragraph is proving.",
+    clarity: "Ask for one specific example after the topic sentence.",
+    creativity: "Ask which detail would surprise the reader.",
+    evidence_usage: "Ask how the evidence connects back to the claim.",
+    grammar: "Review one sentence for a grammar pattern.",
+    handwriting: "Use the lined canvas for one short response.",
+    organization: "Check that each detail supports the same main idea.",
+    punctuation: "Read one sentence aloud and check the ending mark.",
+    reading_response: "Keep evidence in the same order as the passage.",
+    revision_quality: "Choose one sentence and revise it for clarity.",
+    sentence_structure: "Combine two short ideas into one clearer sentence.",
+    spelling: "Circle one word to check before submitting.",
+    vocabulary: "Choose one stronger describing word.",
+  };
+
+  return prompts[skill];
+}
+
+function getPrimaryPracticeSkill(skillRows: SkillProgressRow[]): WritingSkill {
+  return skillRows
+    .slice()
+    .sort((a, b) => toInteger(a.current_score) - toInteger(b.current_score))[0]?.skill ?? "clarity";
+}
+
+function toParentSkillProgress(row: SkillProgressRow): ParentSkillProgress {
+  const currentScore = toInteger(row.current_score);
+  const previousScore = toInteger(row.previous_score);
+  const delta = currentScore - previousScore;
+
+  return {
+    currentScore,
+    label: getSkillLabel(row.skill),
+    nextPractice: getSkillNextPractice(row.skill),
+    previousScore,
+    skill: row.skill,
+    trendDescription:
+      delta > 0 ? `Up ${delta} points this week` : delta < 0 ? `Down ${Math.abs(delta)} points this week` : "Steady progress",
+  };
+}
+
+function toParentStatus(status: string): ParentAssignmentSummary["status"] {
+  if (status === "completed") {
+    return "completed";
+  }
+
+  if (status === "revision_in_progress") {
+    return "revision_in_progress";
+  }
+
+  return "feedback_ready";
+}
+
+function getFeedbackScorePercent(feedback: FeedbackRow | undefined, rubricRows: RubricScoreRow[]): number {
+  const rows = rubricRows.filter((row) => row.feedback_id === feedback?.id);
+  const earned = rows.reduce((total, row) => total + row.score, 0);
+  const possible = rows.reduce((total, row) => total + row.max_score, 0);
+
+  return possible > 0 ? Math.round((earned / possible) * 100) : 75;
+}
+
+function getAssignmentFromRow(row: StudentAssignmentRow): AssignmentJoinRow | null {
+  if (Array.isArray(row.assignments)) {
+    return row.assignments[0] ?? null;
+  }
+
+  return row.assignments;
+}
+
+function getRubricCriterionFromRow(row: RubricScoreRow): RubricCriterionJoinRow | null {
+  if (Array.isArray(row.rubric_criteria)) {
+    return row.rubric_criteria[0] ?? null;
+  }
+
+  return row.rubric_criteria;
+}
+
+function toParentSettings(row?: ParentSettingsRow | null): ParentSettings {
+  if (!row) {
+    return defaultSettings;
+  }
+
+  return {
+    aiCoachAccess: row.ai_coach_access,
+    assignmentAlertsEnabled: row.assignment_alerts_enabled,
+    digestFrequency: row.digest_frequency,
+    practiceReminderEnabled: row.practice_reminder_enabled,
+    quietHoursLabel: row.quiet_hours_label,
+    shareWeeklySummaryWithTeacher: row.share_weekly_summary_with_teacher,
+    weeklyReportEmailEnabled: row.weekly_report_email_enabled,
+  };
+}
+
+function toParentSettingsRow(userId: string, settings: ParentSettings): ParentSettingsRow & { parent_user_id: string } {
+  return {
+    ai_coach_access: settings.aiCoachAccess,
+    assignment_alerts_enabled: settings.assignmentAlertsEnabled,
+    digest_frequency: settings.digestFrequency,
+    parent_user_id: userId,
+    practice_reminder_enabled: settings.practiceReminderEnabled,
+    quiet_hours_label: settings.quietHoursLabel,
+    share_weekly_summary_with_teacher: settings.shareWeeklySummaryWithTeacher,
+    weekly_report_email_enabled: settings.weeklyReportEmailEnabled,
+  };
+}
+
+async function getSignedInParentUserId(parentId: string): Promise<string | null> {
+  const { data: authData } = await supabase.auth.getSession();
+  const userId = authData.session?.user.id;
+
+  return userId && userId === parentId ? userId : null;
+}
+
+async function saveSignedInParentSettings(input: ParentSettingsInput): Promise<boolean> {
+  const userId = await getSignedInParentUserId(input.parentId);
+
+  if (!userId) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("parent_settings")
+    .upsert(toParentSettingsRow(userId, input.settings), { onConflict: "parent_user_id" });
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
+}
+
+async function getSignedInParentSupabaseData(parentId: string): Promise<ParentSupabaseData | null> {
+  const { data: authData } = await supabase.auth.getSession();
+  const user = authData.session?.user;
+
+  if (!user || user.id !== parentId) {
+    return null;
+  }
+
+  const { data: profileRows, error: profileError } = await supabase
+    .from("student_profiles")
+    .select("id,user_id,grade_level,daily_goal_minutes")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  if (profileError) {
+    throw profileError;
+  }
+
+  const profile = ((profileRows ?? []) as StudentProfileRow[])[0];
+
+  if (!profile) {
+    return null;
+  }
+
+  const displayName =
+    typeof user.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : getDisplayNameFromEmail(user.email);
+  const gradeLevel = toGradeLevel(profile.grade_level);
+  const student: ParentStudentSummary = {
+    avatarInitials: getInitials(displayName),
+    displayName,
+    gradeLevel,
+    id: profile.id,
+    relationshipLabel: "Student",
+    schoolLabel: `Grade ${gradeLevel}`,
+  };
+
+  const [
+    progressResult,
+    skillsResult,
+    assignmentsResult,
+    submissionsResult,
+    feedbackResult,
+    canvasResult,
+    settingsResult,
+  ] = await Promise.all([
+    supabase
+      .from("student_progress_totals")
+      .select("assignments_completed,current_streak_days,minutes_this_week,revisions_completed,rubric_improvement,weekly_minutes_goal")
+      .eq("student_profile_id", profile.id)
+      .maybeSingle(),
+    supabase
+      .from("student_skill_progress")
+      .select("skill,current_score,previous_score")
+      .eq("student_profile_id", profile.id),
+    supabase
+      .from("student_assignments")
+      .select("id,status,submitted_at,completed_at,current_submission_id,assignments(title_fallback,prompt_fallback,assignment_type,skill_focus)")
+      .eq("student_profile_id", profile.id)
+      .in("status", ["feedback_ready", "revision_in_progress", "completed"])
+      .order("updated_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("submissions")
+      .select("id,student_assignment_id,status,typed_text_excerpt,word_count,submitted_at")
+      .eq("student_profile_id", profile.id)
+      .order("submitted_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("feedback")
+      .select("id,submission_id,strength_fallback,improvement_fallback,next_revision_task_fallback")
+      .eq("student_profile_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("canvas_documents")
+      .select("id,student_assignment_id,title,template")
+      .eq("student_profile_id", profile.id)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("parent_settings")
+      .select("ai_coach_access,assignment_alerts_enabled,digest_frequency,practice_reminder_enabled,quiet_hours_label,share_weekly_summary_with_teacher,weekly_report_email_enabled")
+      .eq("parent_user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  if (progressResult.error) throw progressResult.error;
+  if (skillsResult.error) throw skillsResult.error;
+  if (assignmentsResult.error) throw assignmentsResult.error;
+  if (submissionsResult.error) throw submissionsResult.error;
+  if (feedbackResult.error) throw feedbackResult.error;
+  if (canvasResult.error) throw canvasResult.error;
+  if (settingsResult.error) throw settingsResult.error;
+
+  const feedbackRows = (feedbackResult.data ?? []) as FeedbackRow[];
+  const feedbackIds = feedbackRows.map((row) => row.id);
+  let rubricRows: RubricScoreRow[] = [];
+
+  if (feedbackIds.length > 0) {
+    const { data: rubricData, error: rubricError } = await supabase
+      .from("feedback_rubric_scores")
+      .select("id,feedback_id,score,max_score,rubric_criteria(id,label_fallback,description_fallback,max_score)")
+      .in("feedback_id", feedbackIds);
+
+    if (rubricError) {
+      throw rubricError;
+    }
+
+    rubricRows = (rubricData ?? []) as RubricScoreRow[];
+  }
+
+  return {
+    assignmentRows: (assignmentsResult.data ?? []) as StudentAssignmentRow[],
+    canvasRows: (canvasResult.data ?? []) as CanvasDocumentRow[],
+    feedbackRows,
+    progressTotal: (progressResult.data as ProgressTotalRow | null) ?? null,
+    rubricRows,
+    settings: toParentSettings((settingsResult.data as ParentSettingsRow | null) ?? null),
+    skillRows: (skillsResult.data ?? []) as SkillProgressRow[],
+    student,
+    submissionRows: (submissionsResult.data ?? []) as SubmissionRow[],
+  };
+}
+
+function buildSupabaseAssignmentSummaries(data: ParentSupabaseData): ParentAssignmentSummary[] {
+  return data.assignmentRows.flatMap((studentAssignment) => {
+    const assignment = getAssignmentFromRow(studentAssignment);
+    const submission =
+      data.submissionRows.find((row) => row.id === studentAssignment.current_submission_id) ??
+      data.submissionRows.find((row) => row.student_assignment_id === studentAssignment.id);
+
+    if (!assignment || !submission) {
+      return [];
+    }
+
+    const feedback = data.feedbackRows.find((row) => row.submission_id === submission.id);
+
+    return [
+      {
+        assignmentType: assignment.assignment_type,
+        feedbackSummary: feedback?.improvement_fallback ?? "Feedback is ready for one focused revision.",
+        hasCanvas: data.canvasRows.some((row) => row.student_assignment_id === studentAssignment.id),
+        scorePercent: getFeedbackScorePercent(feedback, data.rubricRows),
+        skillFocus: assignment.skill_focus && assignment.skill_focus.length > 0 ? assignment.skill_focus : ["clarity"],
+        status: toParentStatus(studentAssignment.status),
+        studentId: data.student.id,
+        submissionId: submission.id,
+        submittedLabel: getSubmittedLabel(submission.submitted_at),
+        title: assignment.title_fallback,
+      },
+    ];
+  });
+}
+
+function buildSupabaseWeeklyProgress(data: ParentSupabaseData): ParentWeeklyProgress {
+  const focusSkill = getPrimaryPracticeSkill(data.skillRows);
+  const progress = data.progressTotal;
+  const assignments = buildSupabaseAssignmentSummaries(data);
+
+  return {
+    areaToPractice: focusSkill,
+    areaToPracticeDescription: getSkillNextPractice(focusSkill),
+    areaToPracticeLabel: getSkillLabel(focusSkill),
+    assignedAssignments: Math.max(assignments.length, toInteger(progress?.assignments_completed)),
+    celebration: "Your student has current WriterHabit practice and feedback saved in Supabase.",
+    completedAssignments: toInteger(progress?.assignments_completed),
+    minutesCompleted: toInteger(progress?.minutes_this_week),
+    minutesGoal: Math.max(1, toInteger(progress?.weekly_minutes_goal, data.student.gradeLevel <= 5 ? 50 : 75)),
+    sessionsCompleted: Math.max(assignments.length, toInteger(progress?.revisions_completed)),
+    skillImprovementPercent: toInteger(progress?.rubric_improvement),
+    streakDays: toInteger(progress?.current_streak_days),
+    weekLabel: "Current week",
+  };
+}
+
+function buildSupabaseDashboard(
+  input: ParentDashboardInput,
+  scenario: ParentScenario,
+  data: ParentSupabaseData,
+): ParentDashboardApiResponse {
+  const assignments = buildSupabaseAssignmentSummaries(data);
+
+  return parentDashboardApiResponseSchema.parse({
+    assignments,
+    connectionStatus: getConnectionStatus(scenario),
+    generatedAt: new Date().toISOString(),
+    parentId: input.parentId,
+    selectedStudentId: data.student.id,
+    settingsSummary: data.settings,
+    skillProgress: data.skillRows.map(toParentSkillProgress),
+    students: [data.student],
+    weeklyProgress: buildSupabaseWeeklyProgress(data),
+  });
+}
+
+function buildSupabaseReport(
+  scenario: ParentScenario,
+  data: ParentSupabaseData,
+): ParentStudentReportApiResponse {
+  const weeklyProgress = buildSupabaseWeeklyProgress(data);
+  const skillProgress = data.skillRows.map(toParentSkillProgress);
+  const topSkill = skillProgress[0];
+
+  return parentStudentReportApiResponseSchema.parse({
+    assignments: buildSupabaseAssignmentSummaries(data),
+    connectionStatus: getConnectionStatus(scenario),
+    familyNote: "This report is built from the logged-in dev user's Supabase writing data.",
+    generatedAt: new Date().toISOString(),
+    nextSteps: [
+      weeklyProgress.areaToPracticeDescription,
+      "Open the latest feedback and ask about the next student-owned revision task.",
+    ],
+    practiceFocus: [weeklyProgress.areaToPracticeLabel, weeklyProgress.areaToPracticeDescription],
+    skillProgress,
+    strengths: [
+      topSkill ? `${topSkill.label} is currently at ${topSkill.currentScore}%.` : "Writing practice is being tracked.",
+      "Feedback and revisions are connected to saved submissions.",
+    ],
+    student: data.student,
+    weeklyProgress,
+  });
+}
+
+function buildSupabaseReview(
+  scenario: ParentScenario,
+  data: ParentSupabaseData,
+  submissionId?: string,
+): ParentAssignmentReviewApiResponse {
+  const submission =
+    data.submissionRows.find((row) => row.id === submissionId) ??
+    data.submissionRows.find((row) => data.feedbackRows.some((feedback) => feedback.submission_id === row.id));
+
+  if (!submission) {
+    return parentAssignmentReviewApiResponseSchema.parse({
+      connectionStatus: getConnectionStatus(scenario),
+      generatedAt: new Date().toISOString(),
+      review: null,
+    });
+  }
+
+  const studentAssignment = data.assignmentRows.find((row) => row.id === submission.student_assignment_id);
+  const assignment = studentAssignment ? getAssignmentFromRow(studentAssignment) : null;
+  const feedback = data.feedbackRows.find((row) => row.submission_id === submission.id);
+  const rubricRows = data.rubricRows.filter((row) => row.feedback_id === feedback?.id);
+  const canvas = data.canvasRows.find((row) => row.student_assignment_id === studentAssignment?.id);
+
+  return parentAssignmentReviewApiResponseSchema.parse({
+    connectionStatus: getConnectionStatus(scenario),
+    generatedAt: new Date().toISOString(),
+    review: {
+      aiFeedback: {
+        improvement: feedback?.improvement_fallback ?? "Choose one sentence to make more specific.",
+        revisionTask: feedback?.next_revision_task_fallback ?? "Revise one sentence using your own words.",
+        strength: feedback?.strength_fallback ?? "The response has a clear starting point.",
+      },
+      assignmentPrompt: assignment?.prompt_fallback ?? "Review the saved student response.",
+      assignmentTitle: assignment?.title_fallback ?? "WriterHabit assignment",
+      canvasPreview: canvas
+        ? {
+            canvasId: canvas.id,
+            strokeCount: 0,
+            templateLabel: canvas.template.replace(/_/g, " "),
+            title: canvas.title,
+          }
+        : null,
+      gradeLevel: data.student.gradeLevel,
+      parentGuidance: [
+        "Ask what the student was trying to improve.",
+        "Look for one revision that keeps the student's own wording.",
+      ],
+      rubric:
+        rubricRows.length > 0
+          ? rubricRows.map((row) => ({
+              description: getRubricCriterionFromRow(row)?.description_fallback ?? "Writing skill",
+              id: getRubricCriterionFromRow(row)?.id ?? row.id,
+              label: getRubricCriterionFromRow(row)?.label_fallback ?? "Writing",
+              maxScore: row.max_score,
+              score: row.score,
+            }))
+          : [
+              {
+                description: "The response has one clear idea to revise.",
+                id: "revision-focus",
+                label: "Revision focus",
+                maxScore: 4,
+                score: 3,
+              },
+            ],
+      safetyNote: "WriterHabit gives hints and revision tasks, not finished student work.",
+      studentId: data.student.id,
+      studentName: data.student.displayName,
+      submittedLabel: getSubmittedLabel(submission.submitted_at),
+      submissionId: submission.id,
+      wordCount: toInteger(submission.word_count),
+      writingPreview: submission.typed_text_excerpt || feedback?.strength_fallback || "Student writing preview unavailable.",
+    },
+  });
 }
 
 function getSelectedStudent(studentId?: string): ParentStudentSummary {
@@ -640,6 +1237,12 @@ export const parentApi = {
       throw new Error("Parent assignment review mock error");
     }
 
+    const supabaseData = scenario === "empty" ? null : await getSignedInParentSupabaseData(input.parentId);
+
+    if (supabaseData) {
+      return buildSupabaseReview(scenario, supabaseData, input.submissionId);
+    }
+
     return buildReview(input, scenario);
   },
 
@@ -648,6 +1251,12 @@ export const parentApi = {
 
     if (scenario === "error") {
       throw new Error("Parent dashboard mock error");
+    }
+
+    const supabaseData = scenario === "empty" ? null : await getSignedInParentSupabaseData(input.parentId);
+
+    if (supabaseData) {
+      return buildSupabaseDashboard(input, scenario, supabaseData);
     }
 
     return buildDashboard(input, scenario);
@@ -660,12 +1269,15 @@ export const parentApi = {
       throw new Error("Parent settings mock error");
     }
 
+    const supabaseData = scenario === "empty" ? null : await getSignedInParentSupabaseData(input.parentId);
+    const linkedStudents = supabaseData ? [supabaseData.student] : scenario === "empty" ? [] : parentStudents;
+
     return parentSettingsApiResponseSchema.parse({
       connectionStatus: getConnectionStatus(scenario),
-      generatedAt,
-      linkedStudents: scenario === "empty" ? [] : parentStudents,
+      generatedAt: supabaseData ? new Date().toISOString() : generatedAt,
+      linkedStudents,
       parentId: input.parentId,
-      settings: defaultSettings,
+      settings: supabaseData?.settings ?? defaultSettings,
     });
   },
 
@@ -674,6 +1286,12 @@ export const parentApi = {
 
     if (scenario === "error") {
       throw new Error("Parent student report mock error");
+    }
+
+    const supabaseData = scenario === "empty" ? null : await getSignedInParentSupabaseData(input.parentId);
+
+    if (supabaseData) {
+      return buildSupabaseReport(scenario, supabaseData);
     }
 
     return buildReport(input, scenario);
@@ -686,12 +1304,16 @@ export const parentApi = {
       throw new Error("Parent settings update mock error");
     }
 
+    const didSave = scenario === "empty" ? false : await saveSignedInParentSettings(input);
+    const supabaseData = scenario === "empty" ? null : await getSignedInParentSupabaseData(input.parentId);
+    const linkedStudents = supabaseData ? [supabaseData.student] : scenario === "empty" ? [] : parentStudents;
+
     return parentSettingsApiResponseSchema.parse({
       connectionStatus: getConnectionStatus(scenario),
-      generatedAt,
-      linkedStudents: scenario === "empty" ? [] : parentStudents,
+      generatedAt: didSave || supabaseData ? new Date().toISOString() : generatedAt,
+      linkedStudents,
       parentId: input.parentId,
-      settings: input.settings,
+      settings: didSave ? input.settings : supabaseData?.settings ?? input.settings,
     });
   },
 };

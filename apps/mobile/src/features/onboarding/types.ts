@@ -1,4 +1,5 @@
 import type { GradeLevel, WritingGoal } from "@WriterHabit/shared";
+import { gradeLevelSchema, writingGoalSchema } from "@WriterHabit/shared";
 import { z } from "zod";
 
 import { routes, type AppRoute } from "@/core/navigation/routeNames";
@@ -92,12 +93,6 @@ export const CONFIDENCE_OPTIONS = [
 
 export const DAILY_PRACTICE_OPTIONS = [5, 10, 15, 20, 30] as const satisfies readonly DailyPracticeMinutes[];
 
-const gradeLevelSchema = z.custom<GradeLevel>(
-  (value) => GRADE_LEVELS.includes(value as GradeLevel),
-  "onboarding.errors.gradeRequired",
-);
-
-const writingGoalSchema = z.enum(WRITING_GOAL_OPTIONS);
 const confidenceSchema = z.enum(CONFIDENCE_OPTIONS);
 const dailyPracticeSchema = z.custom<DailyPracticeMinutes>(
   (value) => DAILY_PRACTICE_OPTIONS.includes(value as DailyPracticeMinutes),

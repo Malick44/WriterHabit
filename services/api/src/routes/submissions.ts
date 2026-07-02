@@ -12,11 +12,14 @@ import { ApiHttpError, createResourceNotFoundError } from "../runtime/errors";
 import { validateRequestBody, validateRequestParams } from "../runtime/validation";
 import {
   computeTextStats,
-  mapDraftResponse,
-  mapRevisionResponse,
-  mapSubmissionResponse,
   toExcerpt,
 } from "./writing-shared";
+import {
+  mapDraftResponse,
+  mapRevisionListApiResponse,
+  mapRevisionResponse,
+  mapSubmissionResponse,
+} from "../mappers/writing-loop.mapper";
 import {
   assertAssignmentTransition,
   assertSubmissionTransition,
@@ -257,10 +260,7 @@ export async function registerSubmissionRoutes(
     const submission = await authorizeSubmissionRead(database, principal, params.submissionId);
     const revisions = await database.listSubmissionRevisions(submission.id);
 
-    return {
-      items: revisions.map((revision) => mapRevisionResponse(revision)),
-      nextCursor: null,
-    };
+    return mapRevisionListApiResponse(revisions);
   });
 
   app.post("/submissions/:submissionId/revisions", { preHandler: authenticate }, async (request, reply) => {

@@ -24,6 +24,7 @@ import type {
   ListSubmissionQueueOptions,
   ParentLinkedStudentRecord,
   PublishFeedbackInput,
+  RecordAiCoachInteractionInput,
   RevisionTaskRecord,
   ReviewJobRecord,
   RubricCriterionRecord,
@@ -1662,6 +1663,25 @@ export class SupabaseDatabase implements Database {
     }
 
     return feedback;
+  }
+
+  async recordAiCoachInteraction(input: RecordAiCoachInteractionInput): Promise<void> {
+    const { error } = await this.client.from("ai_coach_interactions").insert({
+      action: input.action,
+      draft_excerpt: input.draftExcerpt ?? null,
+      provider_request_id: input.providerRequestId ?? null,
+      response_message_key: input.responseMessageKey ?? null,
+      response_title_key: input.responseTitleKey ?? null,
+      safety_flags: input.safetyFlags,
+      selected_text_excerpt: input.selectedTextExcerpt ?? null,
+      status: input.status,
+      student_assignment_id: input.studentAssignmentId ?? null,
+      student_profile_id: input.studentProfileId,
+    });
+
+    if (error) {
+      throw toDatabaseError(error, "ai_coach_interactions.insert");
+    }
   }
 
   async saveDraft(input: SaveDraftInput): Promise<DraftRecord> {

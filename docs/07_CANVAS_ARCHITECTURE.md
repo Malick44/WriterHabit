@@ -96,7 +96,7 @@ Flow:
 User draws stroke
   -> Update local canvas state
   -> Debounced local JSON autosave through canvasSyncService
-  -> Attempt backend metadata/upload/export placeholders when enabled
+  -> Attempt backend metadata/stroke sync for signed-in sessions
   -> Preserve local document and surface sync status if backend sync fails
 ```
 
@@ -105,13 +105,14 @@ Current implementation:
 - `apps/mobile/src/features/canvas/services/canvasPersistenceService.ts`
   stores bounded editable stroke documents in local JSON storage.
 - `apps/mobile/src/features/canvas/services/canvasSyncService.ts` saves
-  locally first, debounces autosave scheduling, creates deterministic signed
-  upload/export placeholders by default, and can call future backend endpoints
-  only when `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`.
-- Backend sync is scaffolded in
-  `services/api/src/features/canvas/canvas.service.ts` and
-  `services/api/src/features/canvas/canvas.contracts.ts`. There is still no
-  running backend API server in this repository.
+  locally first, debounces autosave scheduling, calls backend canvas routes by
+  default for signed-in sessions, uploads editable stroke-document JSON to the
+  private `canvas-artifacts` Supabase Storage bucket, and keeps deterministic
+  upload/export placeholders for no-session or explicitly disabled local
+  testing.
+- Backend sync routes live in `services/api/src/routes/canvas.ts` and persist
+  metadata plus editable stroke JSON through `canvas_documents` and
+  `canvas_document_contents`.
 
 ## Sync States
 
@@ -165,9 +166,10 @@ Current app implementation:
 - Save compact editable strokes locally.
 - Attach the canvas document id to the assignment locally before sync.
 - Show attached canvas summary in the typed writing workspace.
-- Prepare signed upload and preview export placeholders for backend storage.
+- Upload editable stroke-document JSON to Supabase Storage for signed-in saves.
+- Prepare preview export placeholders for backend storage.
 
-Actual image/PDF generation, object upload execution, and parent/teacher review
+Actual image/PDF generation, preview object uploads, and parent/teacher review
 previews remain future work.
 
 Post-MVP:

@@ -9,8 +9,8 @@ import {
 } from "@/core/notifications/notificationService";
 import { supabase } from "@/core/supabase/supabaseClient";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
+import { storageKeys } from "@/services/storage/storageKeys";
 
-const NOTIFICATION_PREFERENCES_KEY_PREFIX = "profile-settings.notifications";
 const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const remoteNotificationPreferencesRowSchema = z.object({
   daily_assignment_enabled: z.boolean(),
@@ -62,7 +62,7 @@ export const notificationPreferencesSchema = z.object({
 });
 
 function getNotificationPreferencesKey(studentId: string): string {
-  return `${NOTIFICATION_PREFERENCES_KEY_PREFIX}.${studentId}`;
+  return storageKeys.notificationPreferences(studentId);
 }
 
 export function parseNotificationPreferences(value: unknown): NotificationPreferences {

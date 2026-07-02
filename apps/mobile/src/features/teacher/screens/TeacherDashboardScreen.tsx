@@ -16,7 +16,6 @@ import { getTeacherClassProgressRoute, getTeacherSubmissionReviewRoute } from "@
 import { routes } from "@/core/navigation/routeNames";
 import { colors, palette } from "@/design/tokens";
 import { useI18n, type TFunction, type TranslationKey } from "@/i18n";
-import { preferencesStorage } from "@/services/storage/preferencesStorage";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import {
   AppHeader,
@@ -31,6 +30,7 @@ import {
 } from "@/shared/utils/accessibility";
 
 import { useTeacherDashboardData } from "../hooks/useTeacher";
+import { teacherDashboardPreferencesService } from "../services/teacherDashboardPreferencesService";
 import type {
   TeacherDashboardActivityItem,
   TeacherDashboardViewModel,
@@ -40,7 +40,6 @@ import type {
 type IconName = keyof typeof Ionicons.glyphMap;
 
 const TABLET_BREAKPOINT = 768;
-const INSIGHT_DISMISSED_KEY_PREFIX = "teacher.dashboard.insight-dismissed";
 
 const teacherColors = {
   background: colors.dashboard.background,
@@ -133,13 +132,13 @@ export function TeacherDashboardScreen() {
   const isTablet = width >= TABLET_BREAKPOINT;
   const [isInsightVisible, setIsInsightVisible] = useState(false);
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
-  const insightDismissedKey = `${INSIGHT_DISMISSED_KEY_PREFIX}.${session?.user.id ?? "preview-teacher"}`;
+  const teacherPreferenceUserId = session?.user.id ?? "preview-teacher";
 
   useEffect(() => {
     let active = true;
 
-    void preferencesStorage
-      .getPreference<boolean>(insightDismissedKey, false)
+    void teacherDashboardPreferencesService
+      .getInsightDismissed(teacherPreferenceUserId)
       .then((dismissed) => {
         if (active) {
           setIsInsightVisible(!dismissed);
@@ -154,7 +153,7 @@ export function TeacherDashboardScreen() {
     return () => {
       active = false;
     };
-  }, [insightDismissedKey]);
+  }, [teacherPreferenceUserId]);
 
   const handleCreateAssignment = useCallback(() => {
     router.push(routes.teacherCreateAssignment);
@@ -199,8 +198,8 @@ export function TeacherDashboardScreen() {
 
   const handleDismissInsight = useCallback(() => {
     setIsInsightVisible(false);
-    void preferencesStorage.setPreference(insightDismissedKey, true).catch(() => undefined);
-  }, [insightDismissedKey]);
+    void teacherDashboardPreferencesService.setInsightDismissed(teacherPreferenceUserId, true).catch(() => undefined);
+  }, [teacherPreferenceUserId]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>

@@ -79,7 +79,7 @@ Work:
 
 Risks:
 
-- User profile/onboarding records beyond Supabase auth metadata are not implemented yet.
+- Signed-in student profile/onboarding fields now sync to `student_profiles`; broader parent/teacher role profiles and production profile hydration remain incomplete.
 - Backend authorization and role profile tables still need concrete contracts.
 
 ## Phase 2: Onboarding
@@ -95,7 +95,7 @@ Work:
 - Maintain writing goals with capped multi-select.
 - Maintain writing confidence and daily practice selection.
 - Maintain personalized plan loading and summary.
-- Persist local onboarding progress and complete onboarding through auth/session metadata.
+- Keep local onboarding recovery while syncing signed-in student progress and completion fields to `student_profiles`.
 - Use Zod for validation.
 
 Grade adaptation:
@@ -130,7 +130,7 @@ Work:
 Risks:
 
 - Assignment APIs are deterministic mock data until backend contracts exist.
-- Canvas screens are implemented with local stroke autosave, local-first sync orchestration, and backend metadata/upload/export placeholders.
+- Canvas screens are implemented with local stroke autosave, local-first sync orchestration, and signed-in backend metadata/stroke sync with upload/export placeholders.
 - Cross-feature contracts between dashboard and assignments should be shared without importing feature internals.
 
 ## Phase 4: Writing Workspace
@@ -146,7 +146,7 @@ Supporting feature:
 Work:
 
 - Maintain the implemented typed writing editor in `apps/mobile/src/features/writing-workspace/`.
-- Maintain feature-owned local draft autosave and recovery states.
+- Maintain feature-owned signed-in draft autosave and local recovery states.
 - Add outline builder.
 - Maintain rubric checklist and attached canvas preview panels.
 - Maintain the embedded policy-safe AI coach drawer with approved actions only.
@@ -154,7 +154,8 @@ Work:
 
 Risks:
 
-- Drafts are currently local-device only; backend draft persistence contracts are not implemented.
+- Drafts persist to Supabase for signed-in students and fall back to local
+  recovery storage when no session or remote persistence is unavailable.
 - AI coach UI and mock responses must continue to avoid assignment-completion CTAs or outputs.
 - Submit currently routes to review loading; full feedback generation remains future work.
 
@@ -180,7 +181,7 @@ Risks:
 
 - File system facade currently has TODO implementations.
 - Current canvas rendering uses a local React Native stroke adapter rather than a production drawing engine.
-- Canvas backend sync is scaffolded but disabled unless `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=true`.
+- Canvas backend sync runs by default for signed-in sessions and can be disabled with `EXPO_PUBLIC_WriterHabit_ENABLE_CANVAS_BACKEND_SYNC=false` for local/offline testing.
 - Canvas artifacts can become memory-sensitive; keep stroke and undo bounds in place and operate on URIs for future exports.
 
 ## Phase 6: AI Coach and Feedback Review
@@ -192,14 +193,14 @@ Primary features:
 
 Work:
 
-- Maintain the implemented AI coach drawer, bounded context builder, policy service, grade-aware prompt builder, and deterministic mock API.
+- Maintain the implemented AI coach drawer, bounded context builder, policy service, grade-aware prompt builder, signed-in backend API path, and deterministic demo fallback.
 - Maintain the implemented review loading, feedback summary, rubric score, grammar suggestions, revision task, and completion celebration screens.
 - Maintain Zod validation for AI review results and revision completion payloads.
 - Keep safety tests for prompt and action guardrails.
 
 Risks:
 
-- AI coach currently uses deterministic local mock responses on mobile; backend AI service scaffolding exists in `services/api/src/features/ai/` but is not wired to production route handlers or an external model provider.
+- AI coach signed-in sessions route through backend handlers that persist `ai_coach_interactions`, but the backend still uses the deterministic mock provider until production model/provider integration is completed.
 - AI feedback review uses deterministic coaching responses. Authenticated sessions route through backend review workflow persistence, while no-session demo paths still use local mock responses; production external model/provider wiring, durable workers, usage metering, and audit logging remain future work.
 - AI feedback must not rewrite student assignments.
 

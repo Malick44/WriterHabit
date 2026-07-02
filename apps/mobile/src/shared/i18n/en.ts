@@ -32,7 +32,8 @@ export const en = {
     examples: {
       deleteDescription: "This action cannot be undone.",
       deleteTitle: "Delete file?",
-      selectionCount: "{count, plural, one {# selected item} other {# selected items}}",
+      selectionCount:
+        "{count, plural, one {# selected item} other {# selected items}}",
     },
   },
   alerts: {
@@ -89,7 +90,8 @@ export const en = {
       resetScreenAccessibility: "Reset every override for this screen",
       resetScreenLabel: "Reset screen",
       resetTokenAccessibility: "Reset {token} to its default value",
-      screensEmpty: "No screens registered yet. Navigate to a screen that calls useRegisterTunableScreen.",
+      screensEmpty:
+        "No screens registered yet. Navigate to a screen that calls useRegisterTunableScreen.",
       screensTitle: "Registered screens",
       selectComponentAccessibility: "Inspect tokens for {name}",
       selectScreenAccessibility: "Tune tokens for {name}",
@@ -114,7 +116,8 @@ export const en = {
     global: {
       active: "Global defaults",
       title: "Global theme defaults",
-      description: "Fallback controls used by screens that have not registered their own tuning surface.",
+      description:
+        "Fallback controls used by screens that have not registered their own tuning surface.",
     },
     groups: {
       components: "Components",
@@ -239,9 +242,11 @@ export const en = {
     },
     welcome: {
       title: "Welcome to WriterHabit AI",
-      subtitle: "Sign in, create an account, or use a demo role for local routing checks.",
+      subtitle:
+        "Sign in, create an account, or use a demo role for local routing checks.",
       mockTitle: "Demo session",
-      mockDescription: "These controls only switch local development session state.",
+      mockDescription:
+        "These controls only switch local development session state.",
       studentCta: "Continue as student",
       studentOnboardingCta: "Start student onboarding",
       parentCta: "Continue as parent",
@@ -254,8 +259,7 @@ export const en = {
       subtitle: "Complete setup before entering your workspace.",
       cardTitle: "Onboarding required",
       description: "The current account role is {{role}}.",
-      note:
-        "Setup collects grade, writing goals, coaching pace, and daily practice preferences before opening the student workspace.",
+      note: "Setup collects grade, writing goals, coaching pace, and daily practice preferences before opening the student workspace.",
       completeCta: "Finish setup",
       signOutCta: "Back to welcome",
     },
@@ -317,12 +321,15 @@ export const en = {
     },
     welcome: {
       title: "WriterHabit AI",
-      description: "A writing coach for planning, drafting, and revising with student thinking first.",
+      description:
+        "A writing coach for planning, drafting, and revising with student thinking first.",
       heroTitle: "Your personal writing coach for school",
-      heroSubtitle: "Improve your writing with AI feedback, daily practice, and skills that build confidence.",
+      heroSubtitle:
+        "Improve your writing with AI feedback, daily practice, and skills that build confidence.",
       getStartedCta: "Get Started",
       alreadyHaveAccountCta: "I already have an account",
-      illustrationAccessibility: "WriterHabit student and AI coach illustration",
+      illustrationAccessibility:
+        "WriterHabit student and AI coach illustration",
       logoLabel: "WriterHabit AI",
       logoIconAccessibility: "WriterHabit logo",
       positioningTitle: "Coaching, not completion",
@@ -331,7 +338,8 @@ export const en = {
       signInCta: "Sign in",
       signUpCta: "Create account",
       demoTitle: "Demo role shortcuts",
-      demoDescription: "Use these local-only sessions to check protected routing while backend data is still expanding.",
+      demoDescription:
+        "Use these local-only sessions to check protected routing while backend data is still expanding.",
       demoStudentCta: "Demo student workspace",
       demoStudentOnboardingCta: "Demo student setup",
       demoParentCta: "Demo parent workspace",
@@ -342,12 +350,15 @@ export const en = {
     demoUsers: {
       title: "Demo users",
       collapsedTitle: "Developer demo users",
-      description: "Tap a local profile to enter the app without a Supabase sign-in.",
+      description:
+        "Tap a local profile to enter the app without a Supabase sign-in.",
       devOnlyBadge: "DEV ONLY",
       optionHint: "Log in immediately with this local demo user.",
-      onboardingDescription: "Open a specific onboarding step with sample saved choices already prepared.",
+      onboardingDescription:
+        "Open a specific onboarding step with sample saved choices already prepared.",
       onboardingOptionHint: "Select this onboarding preview step.",
-      onboardingSubtitle: "Preview setup routes without creating another account.",
+      onboardingSubtitle:
+        "Preview setup routes without creating another account.",
       onboardingTitle: "Onboarding previews",
       openOnboardingCta: "Open {{screen}}",
       panelAccessibility: "Developer demo user login panel",
@@ -360,10 +371,12 @@ export const en = {
       floatingLabel: "Dev",
       floatingTitle: "Developer panel",
       devPanel: {
-        subtitle: "Local diagnostics, route shortcuts, session switching, and overlay smoke tests.",
+        subtitle:
+          "Local diagnostics, route shortcuts, session switching, and overlay smoke tests.",
         diagnostics: {
           title: "Runtime context",
-          description: "Check the active route, session source, role, grade, and entitlement state.",
+          description:
+            "Check the active route, session source, role, grade, and entitlement state.",
           route: "Route",
           routeValue: "{{route}}",
           user: "User",
@@ -379,7 +392,8 @@ export const en = {
         },
         routes: {
           title: "Route shortcuts",
-          description: "Jump to protected screens for the current local session role.",
+          description:
+            "Jump to protected screens for the current local session role.",
           launch: "Launch",
           launchAccessibility: "Open the launch route for this session.",
           paywall: "Paywall",
@@ -387,7 +401,8 @@ export const en = {
           studentHome: "Student home",
           studentHomeAccessibility: "Open the student home screen.",
           studentAssignments: "Assignments",
-          studentAssignmentsAccessibility: "Open the student assignments screen.",
+          studentAssignmentsAccessibility:
+            "Open the student assignments screen.",
           studentCanvas: "Canvas",
           studentCanvasAccessibility: "Open the student canvas screen.",
           studentProgress: "Progress",
@@ -397,17 +412,21 @@ export const en = {
           parentReports: "Reports",
           parentReportsAccessibility: "Open the parent reports screen.",
           parentAssignments: "Reviews",
-          parentAssignmentsAccessibility: "Open the parent assignment reviews screen.",
+          parentAssignmentsAccessibility:
+            "Open the parent assignment reviews screen.",
           parentSettings: "Settings",
           parentSettingsAccessibility: "Open the parent settings screen.",
           teacherDashboard: "Dashboard",
           teacherDashboardAccessibility: "Open the teacher dashboard screen.",
           teacherAssignments: "Assignments",
-          teacherAssignmentsAccessibility: "Open the teacher assignments screen.",
+          teacherAssignmentsAccessibility:
+            "Open the teacher assignments screen.",
           teacherSubmissions: "Submissions",
-          teacherSubmissionsAccessibility: "Open the teacher submissions screen.",
+          teacherSubmissionsAccessibility:
+            "Open the teacher submissions screen.",
           teacherCreateAssignment: "Create task",
-          teacherCreateAssignmentAccessibility: "Open the create assignment screen.",
+          teacherCreateAssignmentAccessibility:
+            "Open the create assignment screen.",
         },
         actions: {
           title: "Tools",
@@ -419,7 +438,8 @@ export const en = {
         },
         alerts: {
           testTitle: "Top alert is working",
-          testDescription: "This confirms the global alert provider is mounted for the current screen.",
+          testDescription:
+            "This confirms the global alert provider is mounted for the current screen.",
           sessionSwitchedTitle: "Demo session switched",
           sessionSwitchedDescription: "Now signed in as {{user}}.",
           signedOutTitle: "Signed out",
@@ -447,7 +467,8 @@ export const en = {
         },
         grade: {
           label: "Grade selection",
-          description: "Open the grade-level picker with the student role seeded.",
+          description:
+            "Open the grade-level picker with the student role seeded.",
           accessibility: "Preview the onboarding grade selection screen.",
         },
         goals: {
@@ -457,38 +478,46 @@ export const en = {
         },
         confidence: {
           label: "Confidence check",
-          description: "Open the legacy confidence step with sample goals seeded.",
+          description:
+            "Open the legacy confidence step with sample goals seeded.",
           accessibility: "Preview the onboarding writing confidence screen.",
         },
         dailyPractice: {
           label: "Daily practice",
-          description: "Open the daily practice screen with sample goals and steady coaching seeded.",
+          description:
+            "Open the daily practice screen with sample goals and steady coaching seeded.",
           accessibility: "Preview the onboarding daily practice screen.",
         },
         planSummary: {
           label: "Plan summary",
-          description: "Open the personalized plan screen with a complete Grade 5 setup.",
-          accessibility: "Preview the onboarding personalized plan summary screen.",
+          description:
+            "Open the personalized plan screen with a complete Grade 5 setup.",
+          accessibility:
+            "Preview the onboarding personalized plan summary screen.",
         },
       },
       elementaryStudent: {
         label: "Mira, Grade 4 student",
         description: "Elementary student workspace with onboarding complete.",
-        accessibility: "Select Mira, a grade 4 demo student with onboarding complete.",
+        accessibility:
+          "Select Mira, a grade 4 demo student with onboarding complete.",
       },
       middleSchoolStudent: {
         label: "Jordan, Grade 7 student",
-        description: "Middle school student workspace with active draft and progress context.",
+        description:
+          "Middle school student workspace with active draft and progress context.",
         accessibility: "Select Jordan, a grade 7 demo student.",
       },
       highSchoolStudent: {
         label: "Avery, Grade 10 student",
-        description: "High school student workspace for essay and rubric views.",
+        description:
+          "High school student workspace for essay and rubric views.",
         accessibility: "Select Avery, a grade 10 demo student.",
       },
       studentNeedsOnboarding: {
         label: "Sam, setup needed",
-        description: "Student account that routes into onboarding before the workspace.",
+        description:
+          "Student account that routes into onboarding before the workspace.",
         accessibility: "Select Sam, a demo student who still needs onboarding.",
       },
       parentReviewer: {
@@ -498,16 +527,19 @@ export const en = {
       },
       teacherCoach: {
         label: "Casey, teacher",
-        description: "Teacher workspace for classes, assignments, and submissions.",
+        description:
+          "Teacher workspace for classes, assignments, and submissions.",
         accessibility: "Select Casey, a demo teacher.",
       },
     },
     signIn: {
       appleCta: "Continue with Apple",
-      appleUnavailableDescription: "Apple sign-in is available on supported iOS devices after the Apple provider is configured.",
+      appleUnavailableDescription:
+        "Apple sign-in is available on supported iOS devices after the Apple provider is configured.",
       emailSeparator: "or log in with email",
       googleCta: "Continue with Google",
-      googleUnavailableDescription: "Google sign-in is visible in the design and will be enabled when the provider is configured.",
+      googleUnavailableDescription:
+        "Google sign-in is visible in the design and will be enabled when the provider is configured.",
       helpBadge: "Need help logging in?",
       helpBadgeAccessibility: "Need help logging in?",
       helper: "We'll email you a secure link to log in instantly.",
@@ -523,20 +555,25 @@ export const en = {
     },
     signUp: {
       appleCta: "Continue with Apple",
-      appleUnavailableDescription: "Apple sign-up is available on supported iOS devices after the Apple provider is configured.",
+      appleUnavailableDescription:
+        "Apple sign-up is available on supported iOS devices after the Apple provider is configured.",
       confirmationAction: "Go to sign in",
-      confirmationDescription: "Confirm your email address, then sign in to continue setup.",
+      confirmationDescription:
+        "Confirm your email address, then sign in to continue setup.",
       confirmationTitle: "Check your email",
       emailSeparator: "or create with email",
       googleCta: "Continue with Google",
-      googleUnavailableDescription: "Google sign-up is visible in the design and will be enabled when the provider is configured.",
+      googleUnavailableDescription:
+        "Google sign-up is visible in the design and will be enabled when the provider is configured.",
       haveAccountPrompt: "Already have an account?",
       helpBadge: "Need help signing up?",
       helpBadgeAccessibility: "Need help signing up?",
-      helper: "Create your account, then finish setup with coaching goals and grade-level preferences.",
+      helper:
+        "Create your account, then finish setup with coaching goals and grade-level preferences.",
       heroImageAccessibility: "Student and robot coach",
       socialUnavailableTitle: "Social sign-up is not ready yet",
-      subtitle: "Create your writing workspace and choose how WriterHabit should support you.",
+      subtitle:
+        "Create your writing workspace and choose how WriterHabit should support you.",
       submitCta: "Create account",
       switchCta: "Sign In",
       title: "Create account",
@@ -555,13 +592,15 @@ export const en = {
       passwordLabel: "Password",
       passwordPlaceholder: "Enter your password",
       roleAccessibility: "Select this account role",
-      roleHint: "Choose the workspace this account should open after onboarding.",
+      roleHint:
+        "Choose the workspace this account should open after onboarding.",
       roleLabel: "Account role",
     },
     roles: {
       parent: {
         label: "Parent",
-        description: "Review progress, reports, and assigned practice for a student.",
+        description:
+          "Review progress, reports, and assigned practice for a student.",
       },
       student: {
         label: "Student",
@@ -569,11 +608,13 @@ export const en = {
       },
       teacher: {
         label: "Teacher",
-        description: "Manage class writing practice, assignments, and submissions.",
+        description:
+          "Manage class writing practice, assignments, and submissions.",
       },
     },
     errors: {
-      completeOnboardingFailed: "We could not finish setup. Check your connection and try again.",
+      completeOnboardingFailed:
+        "We could not finish setup. Check your connection and try again.",
       confirmPasswordRequired: "Confirm your password.",
       displayNameRequired: "Enter a display name.",
       emailInvalid: "Enter a valid email address.",
@@ -581,9 +622,12 @@ export const en = {
       passwordMismatch: "Passwords must match.",
       passwordRequired: "Enter your password.",
       passwordTooShort: "Use at least 8 characters.",
-      restoreFailed: "We could not restore the saved session. Sign in again to continue.",
-      signInFailed: "We could not send a sign-in link for that email. Check the address and try again.",
-      signUpFailed: "We could not create that account. Check the details and try again.",
+      restoreFailed:
+        "We could not restore the saved session. Sign in again to continue.",
+      signInFailed:
+        "We could not send a sign-in link for that email. Check the address and try again.",
+      signUpFailed:
+        "We could not create that account. Check the details and try again.",
       title: "Auth needs attention",
       validation: "Check this field and try again.",
     },
@@ -613,11 +657,14 @@ export const en = {
       title: "What grade are you in?",
       description: "This helps us choose the right content for you.",
       elementaryTitle: "Elementary (Grades 1-5)",
-      elementaryDescription: "Larger controls, simple wording, and friendly writing practice.",
+      elementaryDescription:
+        "Larger controls, simple wording, and friendly writing practice.",
       middleTitle: "Middle School (Grades 6-8)",
-      middleDescription: "Paragraph support, revision practice, and structured goals.",
+      middleDescription:
+        "Paragraph support, revision practice, and structured goals.",
       highTitle: "High School (Grades 9-12)",
-      highDescription: "Essay planning, rubric detail, evidence, tone, and style support.",
+      highDescription:
+        "Essay planning, rubric detail, evidence, tone, and style support.",
       gradeAccessibilityHint: "Select grade {{grade}}",
       gradeLabel: "Grade {{grade}}",
       adaptationHints: {
@@ -673,7 +720,8 @@ export const en = {
     },
     confidence: {
       title: "How does writing feel right now?",
-      description: "Choose the answer that feels closest. This only helps WriterHabit coach at the right pace.",
+      description:
+        "Choose the answer that feels closest. This only helps WriterHabit coach at the right pace.",
       confidenceAccessibilityHint: "Select this writing confidence level",
       options: {
         building: {
@@ -699,10 +747,12 @@ export const en = {
       description: "Consistency is the key to improvement!",
       choosePaceTitle: "Choose a practice rhythm",
       dailyGoalAccessibilityHint: "Select this daily practice goal",
-      flexibilityNote: "You can change this later as your writing routine grows.",
+      flexibilityNote:
+        "You can change this later as your writing routine grows.",
       progressLabel: "Daily practice length",
       recommendedBadge: "Recommended",
-      selectedSummaryAccessibility: "{{minutes}} minute daily practice goal selected.",
+      selectedSummaryAccessibility:
+        "{{minutes}} minute daily practice goal selected.",
       summaryEyebrow: "Daily target",
       summaryTitle: "{{minutes}} minutes each day",
       options: {
@@ -736,7 +786,8 @@ export const en = {
         paragraphPractice: "Paragraph practice",
         sentencePractice: "Sentence practice",
       },
-      assignmentPreviewQuote: "\"Write a paragraph about a time you helped someone.\"",
+      assignmentPreviewQuote:
+        '"Write a paragraph about a time you helped someone."',
       assignmentPreviewTitle: "FIRST ASSIGNMENT PREVIEW",
       assignmentLabel: "Practice type",
       chart: {
@@ -744,7 +795,8 @@ export const en = {
         axisMid: "6 weeks",
         axisStart: "Today",
         eyebrow: "Where daily practice takes you",
-        footnote: "Illustrative projection from a {{minutes}}-minute daily rhythm — small habits compound.",
+        footnote:
+          "Illustrative projection from a {{minutes}}-minute daily rhythm — small habits compound.",
         legendApp: "WriterHabit",
         legendSolo: "On your own",
         milestoneBadge: "Skill Milestone",
@@ -800,7 +852,8 @@ export const en = {
       practiceLabel: "DAILY PLAN",
       practiceSubvalue: "5 days per week",
       practiceValue: "{{daily}} minutes / day",
-      readyDescription: "The first version is ready. Future assignments can tune it as progress data arrives.",
+      readyDescription:
+        "The first version is ready. Future assignments can tune it as progress data arrives.",
       readyTitle: "Plan ready",
       recap: {
         confidenceLabel: "Starting confidence",
@@ -823,13 +876,15 @@ export const en = {
       },
     },
     errors: {
-      completionFailed: "We could not finish setup. Check your connection and try again.",
+      completionFailed:
+        "We could not finish setup. Check your connection and try again.",
       confidenceRequired: "Choose how writing feels right now.",
       dailyPracticeRequired: "Choose a daily practice goal.",
       goalsRequired: "Choose at least one writing goal.",
       gradeRequired: "Choose a grade.",
       planFailed: "We could not create the plan. Try again.",
-      readFailed: "Saved setup choices could not be loaded. You can continue from here.",
+      readFailed:
+        "Saved setup choices could not be loaded. You can continue from here.",
       roleRequired: "Choose how you are using WriterHabit.",
       title: "Setup needs attention",
       validationFailed: "Review the required choices before continuing.",
@@ -910,19 +965,22 @@ export const en = {
     },
     empty: {
       title: "No assignment yet",
-      description: "Daily practice and feedback will appear here when they are ready.",
+      description:
+        "Daily practice and feedback will appear here when they are ready.",
       action: "View assignments",
       accessibility: "No student home activity yet",
     },
     offline: {
       title: "Offline mode",
-      description: "Showing saved dashboard details. New feedback and progress sync when the connection returns.",
+      description:
+        "Showing saved dashboard details. New feedback and progress sync when the connection returns.",
       action: "Check again",
       accessibility: "Student home is showing saved offline data",
     },
     practiceComplete: {
       title: "Practice complete today",
-      description: "You kept the writing habit going. Come back later for the next step.",
+      description:
+        "You kept the writing habit going. Come back later for the next step.",
       accessibility: "Daily writing practice is complete today",
     },
     revisionNudge: {
@@ -931,7 +989,8 @@ export const en = {
     },
     sections: {
       coach: "Coach",
-      coachSubtitle: "Ask for hints and questions while you keep control of the writing.",
+      coachSubtitle:
+        "Ask for hints and questions while you keep control of the writing.",
       draft: "Continue",
       draftSubtitle: "Resume your latest student-owned draft.",
       feedback: "Recent feedback",
@@ -966,7 +1025,8 @@ export const en = {
       assignmentsCta: "View assignments",
       continueCta: "Continue draft",
       draftMeta: "{{count}} words drafted • finish by hand when you are ready",
-      emptyTaskMeta: "Choose a writing task or start a quick handwriting practice.",
+      emptyTaskMeta:
+        "Choose a writing task or start a quick handwriting practice.",
       emptyTaskTitle: "Pick your writing path",
       eyebrow: "Today's plan",
       practiceAccessibility: "Start daily handwriting practice",
@@ -1042,8 +1102,10 @@ export const en = {
       cta: "Open progress",
       ctaAccessibility: "Open full progress dashboard",
       descriptionElementary: "A few skills from your recent writing practice.",
-      descriptionHigh: "Rubric-aligned growth from assignments, feedback, and revisions.",
-      descriptionMiddle: "Skill growth from paragraphs, feedback, and revision practice.",
+      descriptionHigh:
+        "Rubric-aligned growth from assignments, feedback, and revisions.",
+      descriptionMiddle:
+        "Skill growth from paragraphs, feedback, and revision practice.",
       hint: "Open detailed writing progress.",
       note: "Scores update after assignments, feedback, and revisions.",
       percent: "{{count}}%",
@@ -1055,7 +1117,8 @@ export const en = {
       accessibility: "Recent feedback",
       cta: "Review",
       ctaAccessibility: "Open recent writing feedback",
-      emptyDescription: "Feedback appears after your next submitted writing practice.",
+      emptyDescription:
+        "Feedback appears after your next submitted writing practice.",
       hint: "Open feedback and the next revision task.",
       points: "+{{count}} pts",
       title: "Recent Feedback",
@@ -1064,9 +1127,12 @@ export const en = {
       accessibility: "AI coach entry points",
       actionHint: "Open coaching from the current writing context.",
       brainstormAccessibility: "Ask the coach to help brainstorm ideas",
-      descriptionElementary: "Ask for a hint or a question when you need help thinking.",
-      descriptionHigh: "Use coaching for planning, evidence, sentence checks, and revision choices.",
-      descriptionMiddle: "Get help planning, checking a sentence, or choosing a revision step.",
+      descriptionElementary:
+        "Ask for a hint or a question when you need help thinking.",
+      descriptionHigh:
+        "Use coaching for planning, evidence, sentence checks, and revision choices.",
+      descriptionMiddle:
+        "Get help planning, checking a sentence, or choosing a revision step.",
       hintAccessibility: "Ask the coach for a hint",
       reviseAccessibility: "Ask the coach to help revise",
       sentenceCheckAccessibility: "Ask the coach to check a sentence",
@@ -1104,13 +1170,15 @@ export const en = {
     inputPlaceholder: "Type your answer…",
     inputAccessibility: "Your practice answer",
     workTitle: "Show your work",
-    workSubtitle: "Handwrite your answer on the canvas, or upload a picture of your handwritten work.",
+    workSubtitle:
+      "Handwrite your answer on the canvas, or upload a picture of your handwritten work.",
     useCanvasCta: "Handwrite on canvas",
     returnToCanvasCta: "Return to canvas",
     useCanvasAccessibility: "Open the handwriting canvas for this practice",
     completeCta: "Mark practice complete",
     completeAccessibility: "Mark this practice complete",
-    completionHint: "Use the canvas or upload a picture of handwritten work before marking practice complete.",
+    completionHint:
+      "Use the canvas or upload a picture of handwritten work before marking practice complete.",
     coachNote: "Practice builds the skill — the coach never writes it for you.",
     backAccessibility: "Go back",
     home: {
@@ -1131,7 +1199,8 @@ export const en = {
     },
     notFound: {
       title: "Practice task not available",
-      description: "This practice task could not be found. Choose another one to keep going.",
+      description:
+        "This practice task could not be found. Choose another one to keep going.",
       action: "Back to practice",
     },
     complete: {
@@ -1151,10 +1220,22 @@ export const en = {
     errorTitle: "Messages unavailable",
     errorDescription: "We could not load your messages. Try again in a moment.",
     emptyTitle: "No messages yet",
-    emptyDescription: "Notes from your teacher and writing coach will appear here.",
+    emptyDescription:
+      "Notes from your teacher and writing coach will appear here.",
     threadAccessibility: "Message from {{sender}}: {{preview}}",
     coachAvatarAccessibility: "Writing Coach",
     senderInitialAccessibility: "{{sender}} avatar",
+    mock: {
+      coachName: "Writing Coach",
+      coachPreview:
+        "Ready when you are for Step 2. I'll ask the questions, you write the words.",
+      coachTime: "Yest",
+      teacherInitials: "MR",
+      teacherName: "Ms. Rivera",
+      teacherPreview:
+        "Lovely progress on your forest draft. Keep that vivid detail going!",
+      teacherTime: "9:02",
+    },
   },
   assignments: {
     historyTitle: "Assignments",
@@ -1205,19 +1286,23 @@ export const en = {
       errorDescription: "Check your connection and try again.",
       errorAccessibility: "Assignments loading error",
       offlineTitle: "Offline mode",
-      offlineDescription: "Showing saved assignments. New submissions and feedback sync when the connection returns.",
+      offlineDescription:
+        "Showing saved assignments. New submissions and feedback sync when the connection returns.",
       offlineAccessibility: "Assignments are showing saved offline data",
       offlineAction: "Check again",
       listTitle: "Assignment list",
-      listSubtitle: "Open one assignment to read the prompt and choose the next work step.",
+      listSubtitle:
+        "Open one assignment to read the prompt and choose the next work step.",
       emptyTitle: "No assignments yet",
       emptyDescription: "Daily writing practice will appear here.",
       emptyActionLabel: "Start daily practice",
       emptyAccessibility: "No assignments in this view",
       emptyTabTitle: "No {{tab}} assignments",
-      emptyTabDescription: "Assignments will appear here when their status changes to {{tab}}.",
+      emptyTabDescription:
+        "Assignments will appear here when their status changes to {{tab}}.",
       paginationTitle: "Recent assignments shown",
-      paginationDescription: "Older assignments will appear here as history sync adds more saved work.",
+      paginationDescription:
+        "Older assignments will appear here as history sync adds more saved work.",
       paginationAccessibility: "Assignment history pagination placeholder",
       openHint: "Open assignment details",
       draftSummary: "{{count}} words, {{label}}",
@@ -1263,7 +1348,8 @@ export const en = {
       canvasHint: "Start canvas planning or handwriting",
       canvasAccessibility: "Start canvas",
       canvasCta: "Draw / Canvas",
-      subtitle: "Understand the prompt, plan your work, and submit your own writing.",
+      subtitle:
+        "Understand the prompt, plan your work, and submit your own writing.",
       loadingTitle: "Loading assignment",
       loadingDescription: "Preparing the prompt, plan, and rubric.",
       loadingAccessibility: "Assignment detail is loading",
@@ -1271,11 +1357,13 @@ export const en = {
       errorDescription: "Check your connection and try again.",
       errorAccessibility: "Assignment detail loading error",
       missingTitle: "Assignment not found",
-      missingDescription: "This assignment is not available in the current student workspace.",
+      missingDescription:
+        "This assignment is not available in the current student workspace.",
       missingAccessibility: "Assignment not found",
       missingAction: "Back to assignments",
       offlineTitle: "Offline mode",
-      offlineDescription: "Showing saved assignment details. Starting or submitting may need a connection.",
+      offlineDescription:
+        "Showing saved assignment details. Starting or submitting may need a connection.",
       offlineAccessibility: "Assignment detail is showing saved offline data",
       offlineAction: "Check again",
       promptTitle: "Prompt",
@@ -1292,20 +1380,24 @@ export const en = {
       skillsTitle: "Practice skills",
       skillsAccessibility: "Assignment skill focus",
       skillsDescriptionElementary: "Practice these skills while you write.",
-      skillsDescriptionMiddle: "Use the skills to guide your paragraph and revision.",
-      skillsDescriptionHigh: "Use the skill focus to guide planning, evidence, and revision.",
+      skillsDescriptionMiddle:
+        "Use the skills to guide your paragraph and revision.",
+      skillsDescriptionHigh:
+        "Use the skill focus to guide planning, evidence, and revision.",
       rubricSectionTitle: "Rubric",
       successCriteriaTitle: "Success Criteria (Rubric)",
       rubricSubtitle: "Check your own work before submitting.",
       rubricTitle: "Before you submit",
       rubricAccessibility: "Assignment rubric checklist",
       rubricUncheckedAccessibility: "Rubric item not checked",
-      rubricNote: "Use the rubric as a checklist. Write and revise the work yourself.",
+      rubricNote:
+        "Use the rubric as a checklist. Write and revise the work yourself.",
       actionsSectionTitle: "Next step",
       actionsSubtitle: "Choose how you want to work on this assignment.",
       actionsTitle: "Work on assignment",
       actionsAccessibility: "Assignment actions",
-      actionsDescription: "Handwrite your work on the canvas or upload a picture of it, then return here when your own work is ready.",
+      actionsDescription:
+        "Handwrite your work on the canvas or upload a picture of it, then return here when your own work is ready.",
       inputMenuAccessibility: "Assignment input options",
       inputMenuOpenAccessibility: "Open assignment input options",
       inputMenuCloseAccessibility: "Close assignment input options",
@@ -1316,7 +1408,8 @@ export const en = {
       uploadWorkCta: "Upload photo or file",
       uploadWorkDescription: "Take a picture, choose a photo, or attach a PDF.",
       uploadWorkAccessibility: "Upload a photo or file for this assignment",
-      canvasWorkDescription: "Plan, draw, or handwrite a page for this assignment.",
+      canvasWorkDescription:
+        "Plan, draw, or handwrite a page for this assignment.",
       startWritingAccessibility: "Start typed writing for this assignment",
       startWritingCta: "Start Writing",
       startWritingHint: "Open the typed writing workspace.",
@@ -1324,9 +1417,11 @@ export const en = {
       startCanvasCta: "Start with canvas",
       startCanvasHint: "Open canvas templates for planning or handwriting.",
       startErrorTitle: "Could not start assignment",
-      startErrorDescription: "Try again. Your existing draft is still available.",
+      startErrorDescription:
+        "Try again. Your existing draft is still available.",
       startErrorAccessibility: "Assignment start error",
-      safetyNote: "WriterHabit can coach with hints and revision questions, but the assignment stays your work.",
+      safetyNote:
+        "WriterHabit can coach with hints and revision questions, but the assignment stays your work.",
       typeEyebrow: "{{type}} \u00b7 Grade {{grade}}",
       skillFocusLabel: "Skill focus",
       rubricFocusLabel: "Rubric focus",
@@ -1341,7 +1436,8 @@ export const en = {
         revised: "Revised",
         complete: "Complete",
       },
-      coachNote: "Use the coach to plan, revise, and strengthen your own ideas.",
+      coachNote:
+        "Use the coach to plan, revise, and strengthen your own ideas.",
       useCanvasCta: "Use Canvas",
       submitLinkCta: "Ready to hand in? Submit for review \u203a",
       submitLinkAccessibility: "Submit this assignment for review",
@@ -1362,21 +1458,26 @@ export const en = {
       screenTitle: "Submit assignment",
       subtitle: "Review the rubric before sending your own work for feedback.",
       title: "Ready to submit?",
-      description: "Check that your draft or canvas work answers the prompt and uses the rubric.",
+      description:
+        "Check that your draft or canvas work answers the prompt and uses the rubric.",
       accessibility: "Assignment submission checklist",
       checklistComplete: "OK",
       checklistPending: "?",
       assignmentTitle: "Assignment",
       assignmentSubtitle: "Confirm this is the assignment you want to submit.",
       checklistTitle: "Final check",
-      checklistSubtitle: "Submit only after you have written or drawn your own response.",
+      checklistSubtitle:
+        "Submit only after you have written or drawn your own response.",
       loadingTitle: "Loading submission check",
       loadingDescription: "Checking the assignment and saved work.",
       loadingAccessibility: "Assignment submission screen is loading",
-      loadErrorDescription: "We could not load the submission check. Your draft has not been submitted.",
+      loadErrorDescription:
+        "We could not load the submission check. Your draft has not been submitted.",
       offlineTitle: "Offline mode",
-      offlineDescription: "You can review the checklist, but submission may need a connection.",
-      offlineAccessibility: "Assignment submission screen is showing saved offline data",
+      offlineDescription:
+        "You can review the checklist, but submission may need a connection.",
+      offlineAccessibility:
+        "Assignment submission screen is showing saved offline data",
       offlineAction: "Check again",
       reviewCta: "Review and submit",
       ctaAccessibility: "Review assignment before submitting",
@@ -1389,19 +1490,23 @@ export const en = {
       backAccessibility: "Return to assignment details",
       backHint: "Go back to the assignment before submitting.",
       notReadyTitle: "Work is not ready yet",
-      notReadyDescription: "Add a typed draft or canvas page before submitting.",
+      notReadyDescription:
+        "Add a typed draft or canvas page before submitting.",
       notReadyAccessibility: "Assignment is not ready to submit",
       errorTitle: "Submission did not work",
-      errorDescription: "Your work was not submitted. Check your connection and try again.",
+      errorDescription:
+        "Your work was not submitted. Check your connection and try again.",
       errorAccessibility: "Assignment submission error",
       successTitle: "Submitted for review",
-      successDescription: "Your work is ready for feedback. You can return to the assignment details.",
+      successDescription:
+        "Your work is ready for feedback. You can return to the assignment details.",
       successAccessibility: "Assignment submitted successfully",
       successAction: "View assignment",
     },
     attachments: {
       sectionTitle: "Add a photo or file",
-      sectionSubtitle: "Upload a picture of your handwritten work, or attach a PDF.",
+      sectionSubtitle:
+        "Upload a picture of your handwritten work, or attach a PDF.",
       takePhoto: "Take photo",
       choosePhoto: "Choose photo",
       uploadFile: "Upload file",
@@ -1410,13 +1515,15 @@ export const en = {
       uploadFileAccessibility: "Upload a file from your device",
       picking: "Opening…",
       emptyTitle: "No photos or files yet",
-      emptyDescription: "Add a picture of your work or attach a PDF to submit it.",
+      emptyDescription:
+        "Add a picture of your work or attach a PDF to submit it.",
       imageAccessibility: "Attached photo: {{name}}",
       fileAccessibility: "Attached file: {{name}}",
       removeAccessibility: "Remove {{name}}",
       countLabel: "{{count}} attached",
       attachedStatusTitle: "Photo or file attached",
-      attachedStatusDescription: "Your uploaded work will be sent with this submission.",
+      attachedStatusDescription:
+        "Your uploaded work will be sent with this submission.",
       extracting: "Reading your writing…",
       extracted: "Text added",
       extractFailed: "Couldn't read the text",
@@ -1424,32 +1531,38 @@ export const en = {
       retryAccessibility: "Try reading the text from {{name}} again",
       error: {
         permissionTitle: "Permission needed",
-        permissionDescription: "Allow camera and photo access in Settings to add a picture.",
+        permissionDescription:
+          "Allow camera and photo access in Settings to add a picture.",
         failedTitle: "Could not add that",
-        failedDescription: "Something went wrong while adding your file. Please try again.",
+        failedDescription:
+          "Something went wrong while adding your file. Please try again.",
       },
       extractedSectionTitle: "Your work from the upload",
-      extractedSectionSubtitle: "We read the text from your photo. Check it and fix anything before you submit.",
+      extractedSectionSubtitle:
+        "We read the text from your photo. Check it and fix anything before you submit.",
       extractedPlaceholder: "Text from your photo will appear here…",
       extractedAccessibility: "Text read from your uploaded work, editable",
       extractingHint: "Reading the text from your upload…",
       extractedWordCount: "{{count}} words",
       resetToExtracted: "Reset to extracted text",
-      resetAccessibility: "Replace your edits with the text we read from your upload",
+      resetAccessibility:
+        "Replace your edits with the text we read from your upload",
     },
   },
   writingWorkspace: {
     headerTitle: "Write",
     aiCoachButton: "AI Coach",
     title: "Writing workspace",
-    subtitle: "Handwrite first on canvas or paper, then keep any typed copy in your own words.",
+    subtitle:
+      "Handwrite first on canvas or paper, then keep any typed copy in your own words.",
     outlineTitle: "Outline builder",
     outlinePlaceholderDescription: "Outline builder implementation goes here.",
     saveDraft: "Save draft",
     askForHint: "Give me a hint",
     brainstorm: "Help me brainstorm",
     revise: "Help me revise",
-    emptyDraft: "Start with your own idea, then ask for coaching when you need it.",
+    emptyDraft:
+      "Start with your own idea, then ask for coaching when you need it.",
     loading: {
       title: "Opening your draft",
       description: "Checking the assignment and restoring saved writing.",
@@ -1457,7 +1570,8 @@ export const en = {
     },
     error: {
       title: "We could not open this draft",
-      description: "Check your connection and try again. Saved local writing is kept on this device.",
+      description:
+        "Check your connection and try again. Saved local writing is kept on this device.",
       accessibility: "Writing workspace error",
     },
     missing: {
@@ -1468,13 +1582,16 @@ export const en = {
     },
     offline: {
       title: "Offline draft mode",
-      description: "You can keep drafting. Autosave uses this device until the assignment can refresh.",
+      description:
+        "You can keep drafting. Autosave uses this device until the assignment can refresh.",
       action: "Check connection",
-      accessibility: "Writing workspace is using cached offline assignment data",
+      accessibility:
+        "Writing workspace is using cached offline assignment data",
     },
     recovery: {
       title: "Autosave needs attention",
-      description: "Your latest writing is still on screen. Try saving again before you leave.",
+      description:
+        "Your latest writing is still on screen. Try saving again before you leave.",
       action: "Save again",
       accessibility: "Writing workspace autosave failed",
     },
@@ -1487,7 +1604,8 @@ export const en = {
       prompt: "Understand",
       promptSubtitle: "Read the task before you draft.",
       draft: "Typed copy",
-      draftSubtitle: "Copy handwritten work here only if you need a typed version.",
+      draftSubtitle:
+        "Copy handwritten work here only if you need a typed version.",
       coach: "Coach",
       coachSubtitle: "Ask for hints, questions, and revision help.",
       canvas: "Plan",
@@ -1504,15 +1622,21 @@ export const en = {
     editor: {
       title: "Typed copy of handwritten work",
       accessibility: "Writing workspace draft editor",
-      descriptionElementary: "Handwrite your sentences first. Use this box only to copy them for saving or review.",
-      descriptionMiddle: "Handwrite the paragraph first. Use this box only to copy your own work for saving or review.",
-      descriptionHigh: "Draft by hand first when practicing. Use this box for a typed transcription of your own work.",
+      descriptionElementary:
+        "Handwrite your sentences first. Use this box only to copy them for saving or review.",
+      descriptionMiddle:
+        "Handwrite the paragraph first. Use this box only to copy your own work for saving or review.",
+      descriptionHigh:
+        "Draft by hand first when practicing. Use this box for a typed transcription of your own work.",
       emptyTitle: "Start with handwriting",
-      emptyDescription: "Open canvas or upload handwritten work before adding a typed copy.",
+      emptyDescription:
+        "Open canvas or upload handwritten work before adding a typed copy.",
       emptyAccessibility: "Writing workspace draft is empty",
       handwritingFirstTitle: "Handwriting first",
-      handwritingFirstDescription: "Use the canvas or upload handwritten work. Typing here is only for copying your own handwritten draft.",
-      handwritingFirstAccessibility: "Handwriting first guidance for writing workspace",
+      handwritingFirstDescription:
+        "Use the canvas or upload handwritten work. Typing here is only for copying your own handwritten draft.",
+      handwritingFirstAccessibility:
+        "Handwriting first guidance for writing workspace",
       inputAccessibility: "Typed copy of student handwriting",
       inputHint: "Copy your own handwritten work for this assignment.",
       placeholder: "Copy your handwritten draft here...",
@@ -1545,7 +1669,8 @@ export const en = {
       sketchOnCanvas: "Use canvas",
       submitSummaryTitle: "Your typed copy",
       submitChecklistChip: "Checklist {{count}} of {{total}}",
-      submitNote: "Submit when the work includes your own thinking. Feedback closes the loop \u2014 review it to keep your streak growing.",
+      submitNote:
+        "Submit when the work includes your own thinking. Feedback closes the loop \u2014 review it to keep your streak growing.",
     },
     metrics: {
       words: "{{count}} words",
@@ -1556,15 +1681,20 @@ export const en = {
       title: "AI coach entry points",
       accessibility: "Writing workspace AI coach panel",
       closedTitle: "Coach is ready",
-      closedDescription: "Open the coach when you want a hint, a brainstorming question, a sentence check, or a revision task.",
+      closedDescription:
+        "Open the coach when you want a hint, a brainstorming question, a sentence check, or a revision task.",
       closedAccessibility: "Writing workspace AI coach is closed",
       openCta: "Open coach",
-      descriptionElementary: "Choose a small kind of help. The coach will not write the assignment for you.",
-      descriptionMiddle: "Use the coach for questions and revision moves while keeping the paragraph in your words.",
-      descriptionHigh: "Use coaching to test reasoning, clarify structure, or choose a revision target; the draft stays yours.",
+      descriptionElementary:
+        "Choose a small kind of help. The coach will not write the assignment for you.",
+      descriptionMiddle:
+        "Use the coach for questions and revision moves while keeping the paragraph in your words.",
+      descriptionHigh:
+        "Use coaching to test reasoning, clarify structure, or choose a revision target; the draft stays yours.",
       actionHint: "Open a coaching prompt that supports your own writing.",
       readyAccessibility: "Writing workspace coaching choice selected",
-      readyDescription: "{{action}} is ready for the AI coach drawer when the full coach feature is enabled.",
+      readyDescription:
+        "{{action}} is ready for the AI coach drawer when the full coach feature is enabled.",
       readyTitle: "Coaching mode selected",
       closeAccessibility: "Close writing coach panel",
       closeCta: "Close coach",
@@ -1578,7 +1708,8 @@ export const en = {
       openCta: "Open canvas",
       addCta: "Add handwriting page",
       emptyAccessibility: "No handwriting canvas attached",
-      emptyDescription: "Use canvas for handwriting, an outline, or a quick plan before adding any typed copy.",
+      emptyDescription:
+        "Use canvas for handwriting, an outline, or a quick plan before adding any typed copy.",
       emptyTitle: "No handwriting attached",
     },
     rubric: {
@@ -1590,21 +1721,26 @@ export const en = {
     submit: {
       accessibility: "Writing workspace submit panel",
       title: "Ready for review?",
-      description: "Submit when the work includes your own thinking and you have checked one revision goal.",
+      description:
+        "Submit when the work includes your own thinking and you have checked one revision goal.",
       emptyTitle: "Add your own work first",
-      emptyDescription: "A blank typed copy cannot be submitted for review. Use canvas or upload handwriting first.",
+      emptyDescription:
+        "A blank typed copy cannot be submitted for review. Use canvas or upload handwriting first.",
       emptyAccessibility: "Writing workspace draft cannot be submitted yet",
       saveHint: "Save the current draft on this device.",
       saveAccessibility: "Save writing draft",
       confirmCta: "Submit for review",
       confirmAccessibility: "Submit draft for review",
       confirmHint: "Send your own current draft for feedback.",
-      disabledHint: "Add your own handwritten work or typed copy before submitting.",
+      disabledHint:
+        "Add your own handwritten work or typed copy before submitting.",
       errorAccessibility: "Writing workspace submit error",
       saveErrorTitle: "Save did not finish",
-      saveErrorDescription: "Your work was not submitted. Try saving again before you submit.",
+      saveErrorDescription:
+        "Your work was not submitted. Try saving again before you submit.",
       submitErrorTitle: "Submission did not work",
-      submitErrorDescription: "Your draft was not submitted. Check your connection and try again.",
+      submitErrorDescription:
+        "Your draft was not submitted. Check your connection and try again.",
       successAccessibility: "Writing workspace submitted successfully",
       successDescription: "Your draft is on its way to feedback review.",
       successTitle: "Submitted",
@@ -1627,16 +1763,19 @@ export const en = {
       errorDescription: "Your saved canvas work was not changed. Try again.",
       errorAccessibility: "Canvas home error",
       offlineTitle: "Offline canvas mode",
-      offlineDescription: "Saved canvas pages are available on this device. New changes stay local until sync is ready.",
+      offlineDescription:
+        "Saved canvas pages are available on this device. New changes stay local until sync is ready.",
       offlineAccessibility: "Canvas home is showing offline saved work",
       offlineAction: "Check again",
       emptyAccessibility: "No saved canvas work",
       createAccessibility: "Create a new canvas page",
       createCta: "New canvas",
       recentTitle: "Saved canvas pages",
-      recentSubtitle: "Open a page to keep planning or attach it to an assignment.",
+      recentSubtitle:
+        "Open a page to keep planning or attach it to an assignment.",
       paginationTitle: "Recent pages shown",
-      paginationDescription: "Older saved canvas pages will appear here as history sync adds more work.",
+      paginationDescription:
+        "Older saved canvas pages will appear here as history sync adds more work.",
       paginationAccessibility: "Canvas saved pages pagination placeholder",
       cardAccessibility: "Saved canvas page",
       cardHint: "Open this canvas page.",
@@ -1661,15 +1800,18 @@ export const en = {
       errorDescription: "Try the template again. No canvas work was lost.",
       errorAccessibility: "Canvas template creation error",
       assignmentTitle: "Assignment attachment",
-      assignmentDescription: "This canvas can attach to the assignment after you add your own planning or handwriting.",
-      assignmentAccessibility: "Canvas template picker opened from an assignment",
+      assignmentDescription:
+        "This canvas can attach to the assignment after you add your own planning or handwriting.",
+      assignmentAccessibility:
+        "Canvas template picker opened from an assignment",
       blankPage: {
         label: "Blank page",
         description: "Free space for drawing, quick notes, or a first idea.",
       },
       linedPaper: {
         label: "Lined paper",
-        description: "Handwrite sentences, paragraph notes, or a short response.",
+        description:
+          "Handwrite sentences, paragraph notes, or a short response.",
       },
       storyboard: {
         label: "Storyboard",
@@ -1677,7 +1819,8 @@ export const en = {
       },
       mindMap: {
         label: "Mind map",
-        description: "Put one idea in the middle and branch supporting details around it.",
+        description:
+          "Put one idea in the middle and branch supporting details around it.",
       },
       essayPlan: {
         label: "Essay plan",
@@ -1759,7 +1902,8 @@ export const en = {
       drawPrompt: "Touch and drag to write or draw",
     },
     workspace: {
-      subtitle: "Use this page for planning, handwriting, annotation, and revision notes.",
+      subtitle:
+        "Use this page for planning, handwriting, annotation, and revision notes.",
       loadingTitle: "Opening canvas",
       loadingDescription: "Restoring your saved canvas page.",
       loadingAccessibility: "Canvas workspace is loading",
@@ -1771,27 +1915,33 @@ export const en = {
       missingAction: "Choose template",
       missingAccessibility: "Canvas page is missing",
       offlineTitle: "Offline drawing mode",
-      offlineDescription: "Keep drawing. Your work is saved locally on this device.",
+      offlineDescription:
+        "Keep drawing. Your work is saved locally on this device.",
       offlineAccessibility: "Canvas workspace is offline",
       offlineAction: "Check sync",
       recoveryTitle: "Save needs attention",
-      recoveryDescription: "Your marks are still on this page. Try saving again; do not close the app until it finishes.",
+      recoveryDescription:
+        "Your marks are still on this page. Try saving again; do not close the app until it finishes.",
       recoveryAction: "Save again",
       recoveryAccessibility: "Canvas autosave or sync failed",
       saveSuccessTitle: "Canvas saved",
       saveSuccessDescription: "This page is stored on this device.",
       saveSuccessAccessibility: "Canvas saved successfully",
       attachSuccessTitle: "Canvas attached",
-      attachSuccessDescription: "This planning page is linked to the assignment and can appear in the writing workspace.",
+      attachSuccessDescription:
+        "This planning page is linked to the assignment and can appear in the writing workspace.",
       attachSuccessAccessibility: "Canvas attached successfully",
       backToWritingCta: "Back to assignment",
       emptyTitle: "Start with one mark",
-      emptyDescription: "Use the page for your own outline, handwriting, annotation, or revision note.",
+      emptyDescription:
+        "Use the page for your own outline, handwriting, annotation, or revision note.",
       emptyAccessibility: "Canvas page is empty",
       surfaceTitle: "Page",
-      surfaceSubtitle: "Tap to add marks. Use undo or eraser to revise your planning.",
+      surfaceSubtitle:
+        "Tap to add marks. Use undo or eraser to revise your planning.",
       memoryTitle: "Memory-safe page",
-      memoryDescription: "This adapter stores compact strokes only. Current page has {{count}} marks.",
+      memoryDescription:
+        "This adapter stores compact strokes only. Current page has {{count}} marks.",
       memoryAccessibility: "Canvas memory safety note",
     },
     attachment: {
@@ -1802,13 +1952,15 @@ export const en = {
       emptyAccessibility: "No canvas pages available to attach",
       emptyDescription: "Create a canvas page, then return here to attach it.",
       infoTitle: "Attach your own work",
-      infoDescription: "Attach planning or handwriting to your assignment. You can keep editing after attaching.",
+      infoDescription:
+        "Attach planning or handwriting to your assignment. You can keep editing after attaching.",
       sectionTitle: "Your saved pages",
       sectionSubtitle: "Pick one page to review and attach.",
       cardMeta: "{{count}} marks · {{updated}}",
       selectAccessibility: "Select canvas page",
       selectHint: "Tap to choose this page to attach.",
-      selectedCount: "{count, plural, =0 {No pages selected} one {# page selected} other {# pages selected}}",
+      selectedCount:
+        "{count, plural, =0 {No pages selected} one {# page selected} other {# pages selected}}",
       openSelectedCta: "Open selected page",
     },
     handwriting: {
@@ -1818,7 +1970,8 @@ export const en = {
       attachAccessibility: "Attach this canvas to the assignment",
       attachDisabledHint: "Add some writing before attaching this canvas.",
       pageIndicator: "{total, plural, one {# page} other {# pages}}",
-      pageIndicatorAccessibility: "{total, plural, one {Canvas has # page} other {Canvas has # pages}}",
+      pageIndicatorAccessibility:
+        "{total, plural, one {Canvas has # page} other {Canvas has # pages}}",
       autosave: {
         accessibility: "Autosave status: {{status}}",
         saved: "Saved",
@@ -1847,7 +2000,8 @@ export const en = {
       penSize: {
         accessibility: "Pen size and color control",
         hint: "Tap for color · hold to resize",
-        adjustAccessibility: "Pen size {{size}} points. Hold and slide to resize, tap to choose color.",
+        adjustAccessibility:
+          "Pen size {{size}} points. Hold and slide to resize, tap to choose color.",
         preview: "{{size}} px",
         thin: "Thin",
         medium: "Medium",
@@ -1911,9 +2065,12 @@ export const en = {
   aiCoach: {
     drawerTitle: "AI coach",
     drawerAccessibility: "AI writing coach drawer",
-    descriptionElementary: "Pick one small kind of help. The coach asks questions and gives hints so the writing stays yours.",
-    descriptionMiddle: "Choose a coaching move for planning, sentence checks, questions, or revision decisions.",
-    descriptionHigh: "Use coaching to test reasoning, improve structure, or choose a focused revision move.",
+    descriptionElementary:
+      "Pick one small kind of help. The coach asks questions and gives hints so the writing stays yours.",
+    descriptionMiddle:
+      "Choose a coaching move for planning, sentence checks, questions, or revision decisions.",
+    descriptionHigh:
+      "Use coaching to test reasoning, improve structure, or choose a focused revision move.",
     hintCta: "Give me a hint",
     brainstormCta: "Help me brainstorm",
     sentenceCheckCta: "Check my sentence",
@@ -1923,16 +2080,20 @@ export const en = {
     askQuestionCta: "Ask me a question",
     closeAccessibility: "Close AI coach drawer",
     closeCta: "Close coach",
-    safetyReminder: "The coach helps you think and revise; it does not write the assignment for you.",
+    safetyReminder:
+      "The coach helps you think and revise; it does not write the assignment for you.",
     actions: {
       askQuestion: {
-        description: "Ask one guiding question that helps you decide the next writing move.",
+        description:
+          "Ask one guiding question that helps you decide the next writing move.",
       },
       brainstorm: {
-        description: "Get planning choices while keeping the final writing in your own words.",
+        description:
+          "Get planning choices while keeping the final writing in your own words.",
       },
       explainMistake: {
-        description: "Understand one mistake pattern so you can fix it yourself.",
+        description:
+          "Understand one mistake pattern so you can fix it yourself.",
       },
       hint: {
         description: "Get a small hint that points you back to the prompt.",
@@ -1941,31 +2102,37 @@ export const en = {
         description: "Choose one focused revision task for your current draft.",
       },
       sentenceCheck: {
-        description: "Check one sentence-level issue without replacing your draft.",
+        description:
+          "Check one sentence-level issue without replacing your draft.",
       },
       strongerWord: {
-        description: "Get help choosing a more precise word that still sounds like you.",
+        description:
+          "Get help choosing a more precise word that still sounds like you.",
       },
     },
     empty: {
       title: "Choose a coaching move",
-      description: "Start with a hint, a brainstorm, a question, or a sentence check when you have text.",
+      description:
+        "Start with a hint, a brainstorm, a question, or a sentence check when you have text.",
       accessibility: "AI coach is waiting for a coaching action",
     },
     emptyResult: {
       title: "Add your own text first",
-      description: "This coaching move needs a sentence or draft excerpt to review. Try a hint or brainstorm before drafting.",
+      description:
+        "This coaching move needs a sentence or draft excerpt to review. Try a hint or brainstorm before drafting.",
       action: "Choose another move",
       accessibility: "AI coach needs student writing before this action",
     },
     error: {
       title: "Coach did not respond",
-      description: "Your draft is unchanged. Try again, or keep writing and return to coaching later.",
+      description:
+        "Your draft is unchanged. Try again, or keep writing and return to coaching later.",
       accessibility: "AI coach request error",
     },
     loading: {
       title: "Preparing coaching",
-      description: "Checking the prompt, your draft excerpt, and the safety rules.",
+      description:
+        "Checking the prompt, your draft excerpt, and the safety rules.",
       accessibility: "AI coach is preparing a response",
     },
     missing: {
@@ -1975,7 +2142,8 @@ export const en = {
     },
     offline: {
       title: "Coach is offline",
-      description: "Keep drafting and saving on this device. New coaching can start after the connection returns.",
+      description:
+        "Keep drafting and saving on this device. New coaching can start after the connection returns.",
       action: "Back to choices",
       accessibility: "AI coach is unavailable offline",
     },
@@ -1987,13 +2155,15 @@ export const en = {
     },
     safetyBlocked: {
       title: "Use coaching help",
-      description: "WriterHabit can give hints, questions, explanations, and revision tasks, but it cannot replace your thinking.",
+      description:
+        "WriterHabit can give hints, questions, explanations, and revision tasks, but it cannot replace your thinking.",
       action: "Choose a safe move",
       accessibility: "AI coach safety policy blocked this request",
     },
     success: {
       title: "Coaching ready",
-      description: "Use the next step yourself, then revise the draft in your own words.",
+      description:
+        "Use the next step yourself, then revise the draft in your own words.",
       accessibility: "AI coach response ready",
     },
   },
@@ -2008,14 +2178,17 @@ export const en = {
       preparingFeedback: "Preparing feedback",
     },
     loadingTipTitle: "Tip from AI Coach",
-    loadingTipBody: "Great writers add details that help readers see, feel, and understand.",
+    loadingTipBody:
+      "Great writers add details that help readers see, feel, and understand.",
     coachingAccessibility: "Feedback review coaching safety note",
-    coachingDescription: "Feedback will focus on one strength, one improvement, and one next revision task.",
+    coachingDescription:
+      "Feedback will focus on one strength, one improvement, and one next revision task.",
     coachingTitle: "Coaching, not completion",
     celebrationTitle: "Revision complete",
     error: {
       accessibility: "Feedback review loading error",
-      description: "Your draft is still saved. Check the connection and try again.",
+      description:
+        "Your draft is still saved. Check the connection and try again.",
       title: "Feedback did not load",
     },
     loadingAccessibility: "AI review loading screen",
@@ -2028,20 +2201,24 @@ export const en = {
     missing: {
       accessibility: "Feedback review is missing",
       action: "Back to assignments",
-      description: "This feedback is not available in the current student workspace.",
+      description:
+        "This feedback is not available in the current student workspace.",
       title: "Feedback not found",
     },
     offline: {
       accessibility: "Feedback review is showing saved offline data",
       action: "Check connection",
-      description: "Showing saved feedback. New progress syncs when the connection returns.",
+      description:
+        "Showing saved feedback. New progress syncs when the connection returns.",
       title: "Offline feedback",
     },
     processingAccessibility: "Feedback review is still processing",
-    processingDescription: "The review is still being prepared. You can check again without changing your draft.",
+    processingDescription:
+      "The review is still being prepared. You can check again without changing your draft.",
     processingTitle: "Feedback still preparing",
     readyAccessibility: "AI feedback review is ready",
-    readyDescription: "Open the feedback summary, then complete one focused revision task yourself.",
+    readyDescription:
+      "Open the feedback summary, then complete one focused revision task yourself.",
     readyTitle: "Feedback ready",
     summaryTitle: "Feedback summary",
     revisionTitle: "Revision task",
@@ -2050,19 +2227,23 @@ export const en = {
     nextStepLabel: "Next revision task",
     summary: {
       cardAccessibility: "Structured feedback summary",
-      feedbackSubtitle: "Use this coaching feedback to choose one revision move.",
+      feedbackSubtitle:
+        "Use this coaching feedback to choose one revision move.",
       feedbackTitle: "Review",
       loadingAccessibility: "Feedback summary is loading",
-      loadingDescription: "Opening the strength, improvement, and revision task.",
+      loadingDescription:
+        "Opening the strength, improvement, and revision task.",
       loadingTitle: "Loading summary",
       progressAccessibility: "Rubric progress from this review",
       revisionAccessibility: "Start revision task",
       revisionCta: "Start revision task",
-      revisionHint: "Open the revision screen and make one focused edit yourself.",
+      revisionHint:
+        "Open the revision screen and make one focused edit yourself.",
       rubricAccessibility: "View rubric scores",
       rubricCta: "View rubric",
       rubricHint: "Open rubric scores and coaching notes.",
-      subtitle: "One strength, one improvement, and one task to revise your own writing.",
+      subtitle:
+        "One strength, one improvement, and one task to revise your own writing.",
     },
     rubric: {
       cardAccessibility: "Rubric score card",
@@ -2078,12 +2259,14 @@ export const en = {
       progressAccessibility: "{{label}} rubric progress",
       revisionAccessibility: "Move from rubric to revision task",
       revisionCta: "Revise one task",
-      revisionDescription: "Use the scores to make one targeted revision instead of changing everything at once.",
+      revisionDescription:
+        "Use the scores to make one targeted revision instead of changing everything at once.",
       scoreLabel: "{{score}} of {{max}}",
       sectionSubtitle: "Scores are coaching signals, not a final grade.",
       sectionTitle: "Rubric scores",
       simpleAccessibility: "Simplified rubric view",
-      simpleDescription: "Only the most important rubric goals are shown for this grade band.",
+      simpleDescription:
+        "Only the most important rubric goals are shown for this grade band.",
       simpleTitle: "Simple rubric view",
       subtitle: "See how the draft lines up with the assignment goals.",
       title: "Rubric score",
@@ -2091,7 +2274,8 @@ export const en = {
     grammar: {
       cardAccessibility: "Grammar suggestion card",
       emptyAccessibility: "No grammar suggestions",
-      emptyDescription: "No sentence-level issue needs attention right now. Focus on the revision task.",
+      emptyDescription:
+        "No sentence-level issue needs attention right now. Focus on the revision task.",
       emptyTitle: "No grammar task",
       excerpt: "From your draft: {{excerpt}}",
       studentAction: "Your action",
@@ -2116,7 +2300,8 @@ export const en = {
       coachingAccessibility: "Revision task coaching note",
       compareAccessibility: "Before and after revision comparison",
       compareSectionTitle: "Compare",
-      compareSubtitle: "Use the original excerpt and your revised passage side by side.",
+      compareSubtitle:
+        "Use the original excerpt and your revised passage side by side.",
       compareTitle: "Before and after",
       editorSubtitle: "Write the improved sentence or short passage yourself.",
       editorTitle: "Your revision",
@@ -2124,9 +2309,11 @@ export const en = {
       errorTitle: "Revision needs attention",
       errors: {
         empty: "Write a revised sentence or short passage before submitting.",
-        submitFailed: "The revision did not submit. Your text is still on screen; try again.",
+        submitFailed:
+          "The revision did not submit. Your text is still on screen; try again.",
         tooLong: "Keep this revision focused on one sentence or short passage.",
-        unchanged: "Make a real change to the original excerpt before submitting.",
+        unchanged:
+          "Make a real change to the original excerpt before submitting.",
       },
       inputAccessibility: "Student revision text",
       inputHint: "Write one focused revision in your own words.",
@@ -2138,12 +2325,14 @@ export const en = {
       questionAccessibility: "Revision guiding question",
       questionTitle: "Guiding question",
       recoveryAccessibility: "Revision autosave failed",
-      recoveryDescription: "Your revision is still on screen. Keep it open and try submitting again.",
+      recoveryDescription:
+        "Your revision is still on screen. Keep it open and try submitting again.",
       recoveryTitle: "Revision save needs attention",
       submitAccessibility: "Submit revision task",
       submitCta: "Submit revision",
       submitHint: "Complete this feedback cycle with your own revised passage.",
-      subtitle: "Make one focused change. WriterHabit does not rewrite it for you.",
+      subtitle:
+        "Make one focused change. WriterHabit does not rewrite it for you.",
       taskAccessibility: "Revision task instructions",
       taskSubtitle: "Complete one clear task before celebrating progress.",
       taskTitle: "Task",
@@ -2174,13 +2363,16 @@ export const en = {
       progressCta: "View progress",
       progressCtaAccessibility: "Open progress dashboard",
       progressHint: "Open the progress placeholder dashboard.",
-      progressPlaceholder: "Progress is a local placeholder until the backend progress API is implemented.",
+      progressPlaceholder:
+        "Progress is a local placeholder until the backend progress API is implemented.",
       progressSectionTitle: "Progress earned",
-      progressSubtitle: "This placeholder shows what will sync to progress later.",
+      progressSubtitle:
+        "This placeholder shows what will sync to progress later.",
       progressTitle: "Practice credit",
       subtitle: "You used feedback to improve your own writing.",
       successAccessibility: "Revision cycle completed",
-      successDescription: "You finished one focused revision task. The draft stayed in your words.",
+      successDescription:
+        "You finished one focused revision task. The draft stayed in your words.",
       successTitle: "Revision submitted",
     },
   },
@@ -2196,7 +2388,8 @@ export const en = {
       greeting: "{{name}}'s progress",
       subtitleElementary: "Small practice steps add up.",
       subtitleMiddle: "Track practice, revision, and skill growth.",
-      subtitleHigh: "Review writing output, rubric growth, and revision habits.",
+      subtitleHigh:
+        "Review writing output, rubric growth, and revision habits.",
       header: {
         notificationsAccessibility: "Open progress notifications",
         settingsAccessibility: "Open progress settings",
@@ -2233,7 +2426,8 @@ export const en = {
       history: {
         assignmentHeader: "Assignment Name",
         dateHeader: "Date",
-        empty: "Completed writing practice will appear here after assignments are finished.",
+        empty:
+          "Completed writing practice will appear here after assignments are finished.",
         levelGrowing: "Growing",
         levelPracticing: "Practicing",
         levelReady: "Ready",
@@ -2258,7 +2452,8 @@ export const en = {
       empty: {
         accessibility: "No progress data yet",
         title: "Progress starts after practice",
-        description: "Complete a writing task or revision to start building skill progress.",
+        description:
+          "Complete a writing task or revision to start building skill progress.",
         action: "Find writing practice",
       },
       offline: {
@@ -2274,7 +2469,8 @@ export const en = {
         skills: "Skill tracking",
         skillsSubtitle: "Open a skill to see details and a next step.",
         streak: "Writing streak",
-        streakSubtitle: "Keep the routine going with one honest practice session.",
+        streakSubtitle:
+          "Keep the routine going with one honest practice session.",
         weekly: "Weekly review",
         weeklySubtitle: "A short reflection on what changed this week.",
       },
@@ -2373,19 +2569,30 @@ export const en = {
         vocabulary: "Word choice",
       },
       nextSteps: {
-        argumentStrength: "Check whether each reason clearly supports the claim.",
+        argumentStrength:
+          "Check whether each reason clearly supports the claim.",
         clarity: "Revise one sentence so the idea is easier to follow.",
-        creativity: "Add one specific detail that makes the idea feel more original.",
-        evidenceUsage: "Add or explain one piece of evidence in your own words.",
-        grammar: "Review one sentence for a clear subject, action, and ending mark.",
-        handwriting: "Use the canvas for a short, neat planning or sentence practice.",
-        organization: "Make sure the first sentence tells the reader where the writing is going.",
-        punctuation: "Read one sentence aloud and check where the pause belongs.",
-        readingResponse: "Point to one detail from the reading before explaining your idea.",
-        revisionQuality: "Choose one feedback note and make one focused student-written change.",
-        sentenceStructure: "Try one stronger sentence with a clear who, what, and detail.",
+        creativity:
+          "Add one specific detail that makes the idea feel more original.",
+        evidenceUsage:
+          "Add or explain one piece of evidence in your own words.",
+        grammar:
+          "Review one sentence for a clear subject, action, and ending mark.",
+        handwriting:
+          "Use the canvas for a short, neat planning or sentence practice.",
+        organization:
+          "Make sure the first sentence tells the reader where the writing is going.",
+        punctuation:
+          "Read one sentence aloud and check where the pause belongs.",
+        readingResponse:
+          "Point to one detail from the reading before explaining your idea.",
+        revisionQuality:
+          "Choose one feedback note and make one focused student-written change.",
+        sentenceStructure:
+          "Try one stronger sentence with a clear who, what, and detail.",
         spelling: "Circle one tricky word and check it before submitting.",
-        vocabulary: "Replace one vague word with a clearer word that still sounds like you.",
+        vocabulary:
+          "Replace one vague word with a clearer word that still sounds like you.",
       },
     },
     skillDetail: {
@@ -2414,7 +2621,8 @@ export const en = {
         practice: "Practice mix",
         practiceSubtitle: "Signals connected to this skill.",
         rubric: "Rubric trend",
-        rubricSubtitle: "Shown for older students when rubric detail is useful.",
+        rubricSubtitle:
+          "Shown for older students when rubric detail is useful.",
         score: "Score",
         scoreSubtitle: "A coaching signal, not a grade.",
       },
@@ -2426,7 +2634,8 @@ export const en = {
         revisions: "Revisions",
         words: "Words",
       },
-      rubricImprovement: "This skill gained {{count}} rubric points through recent revision work.",
+      rubricImprovement:
+        "This skill gained {{count}} rubric points through recent revision work.",
       dashboardAccessibility: "Return to progress dashboard",
       dashboardCta: "Back to progress",
       dashboardHint: "Return to the progress dashboard.",
@@ -2449,7 +2658,8 @@ export const en = {
       },
       summaryAccessibility: "Badge summary",
       summaryTitle: "{{count}} of {{total}} badges earned",
-      summaryDescription: "Badges unlock from practice, revision, feedback use, and handwriting habits.",
+      summaryDescription:
+        "Badges unlock from practice, revision, feedback use, and handwriting habits.",
       sections: {
         all: "All badges",
         allSubtitle: "Locked badges show progress toward the next milestone.",
@@ -2514,7 +2724,8 @@ export const en = {
       emptyAccessibility: "Weekly review has no data",
       emptyAction: "Find writing practice",
       emptyTitle: "No weekly review yet",
-      emptyDescription: "A weekly review appears after writing practice, revision, or handwriting work.",
+      emptyDescription:
+        "A weekly review appears after writing practice, revision, or handwriting work.",
       nextFocusPreview: "Next focus: {{skill}}",
       openAccessibility: "Open weekly review",
       openCta: "Open weekly review",
@@ -2531,17 +2742,25 @@ export const en = {
       },
       summaryAccessibility: "Weekly review summary",
       summaryTitle: "What changed this week",
-      summaryDescription: "These notes summarize practice signals and revision effort.",
+      summaryDescription:
+        "These notes summarize practice signals and revision effort.",
       weekRangeLabel: "{{start}} - {{end}}",
       highlights: {
-        elementarySentenceDetails: "You practiced sentence details on {{count}} days.",
-        elementaryHandwritingRoutine: "Handwriting practice is building a steady routine.",
-        middleRevisedAfterFeedback: "You revised {{count}} times after feedback.",
-        middleOrganizationClarity: "Organization and clarity both improved this week.",
-        middleAiCoachingNotes: "You used AI feedback as coaching notes, not replacement writing.",
+        elementarySentenceDetails:
+          "You practiced sentence details on {{count}} days.",
+        elementaryHandwritingRoutine:
+          "Handwriting practice is building a steady routine.",
+        middleRevisedAfterFeedback:
+          "You revised {{count}} times after feedback.",
+        middleOrganizationClarity:
+          "Organization and clarity both improved this week.",
+        middleAiCoachingNotes:
+          "You used AI feedback as coaching notes, not replacement writing.",
         highFocusedBlocks: "You completed {{count}} focused writing blocks.",
-        highEvidenceOrganization: "Evidence and organization improved across essay practice.",
-        highRevisionReasoning: "Revision work added clearer reasoning to your draft.",
+        highEvidenceOrganization:
+          "Evidence and organization improved across essay practice.",
+        highRevisionReasoning:
+          "Revision work added clearer reasoning to your draft.",
       },
       sections: {
         highlights: "Highlights",
@@ -2560,7 +2779,8 @@ export const en = {
   parent: {
     homeTitle: "Parent home",
     homeTitleWithStudent: "{{name}}'s writing",
-    homeSubtitle: "Track progress, feedback, and next practice without taking over the student's work.",
+    homeSubtitle:
+      "Track progress, feedback, and next practice without taking over the student's work.",
     reportTitle: "Student report",
     assignmentReviewTitle: "Assignment review",
     loading: {
@@ -2583,13 +2803,15 @@ export const en = {
     error: {
       homeAccessibility: "Parent home could not load",
       homeTitle: "Parent home needs attention",
-      homeDescription: "We could not load parent progress right now. Try again.",
+      homeDescription:
+        "We could not load parent progress right now. Try again.",
       reportAccessibility: "Student report could not load",
       reportTitle: "Report needs attention",
       reportDescription: "We could not load this report. Try again.",
       assignmentsAccessibility: "Parent assignments could not load",
       assignmentsTitle: "Assignments need attention",
-      assignmentsDescription: "We could not load recent submissions. Try again.",
+      assignmentsDescription:
+        "We could not load recent submissions. Try again.",
       reviewAccessibility: "Assignment review could not load",
       reviewTitle: "Review needs attention",
       reviewDescription: "We could not load this assignment review. Try again.",
@@ -2600,22 +2822,27 @@ export const en = {
     empty: {
       homeAccessibility: "No linked student reports",
       homeTitle: "No report yet",
-      homeDescription: "Reports appear after a linked student completes writing practice.",
+      homeDescription:
+        "Reports appear after a linked student completes writing practice.",
       reportAccessibility: "No student report yet",
       reportTitle: "No report yet",
-      reportDescription: "A detailed report appears after the student completes practice and receives feedback.",
+      reportDescription:
+        "A detailed report appears after the student completes practice and receives feedback.",
       reportAction: "Back to parent home",
       assignmentsAccessibility: "No assignment reviews yet",
       assignmentsTitle: "No reviewed assignments yet",
-      assignmentsDescription: "Assignment reviews appear after a linked student submits writing and feedback is ready.",
+      assignmentsDescription:
+        "Assignment reviews appear after a linked student submits writing and feedback is ready.",
       settingsAccessibility: "No linked students for settings",
       settingsTitle: "No linked students",
-      settingsDescription: "Parent controls will apply after a student account is linked.",
+      settingsDescription:
+        "Parent controls will apply after a student account is linked.",
     },
     offline: {
       accessibility: "Parent data is offline cached",
       title: "Showing saved progress",
-      description: "This view may not include the latest writing activity. Try again when the connection improves.",
+      description:
+        "This view may not include the latest writing activity. Try again when the connection improves.",
     },
     dashboard: {
       header: {
@@ -2643,7 +2870,8 @@ export const en = {
       },
       weekly: {
         minutesGoal: "/ {{goal}} MIN",
-        progressAccessibility: "{{completed}} of {{goal}} weekly writing minutes completed",
+        progressAccessibility:
+          "{{completed}} of {{goal}} weekly writing minutes completed",
         streakLabel: "Daily Streak",
         streakValue: "{{count}} Days",
         title: "Weekly Writing",
@@ -2659,7 +2887,8 @@ export const en = {
         title: "Recent Milestones",
       },
       upcoming: {
-        empty: "Nothing is due right now. New assignments appear here when they are ready.",
+        empty:
+          "Nothing is due right now. New assignments appear here when they are ready.",
         openCalendar: "See full calendar",
         openCalendarAccessibility: "Open all parent assignment reviews",
         percent: "{{count}}%",
@@ -2686,7 +2915,8 @@ export const en = {
     },
     weekly: {
       title: "Weekly progress",
-      subtitle: "A quick view of practice, completed work, and current momentum.",
+      subtitle:
+        "A quick view of practice, completed work, and current momentum.",
       accessibility: "Weekly writing progress",
       minutesValue: "{{completed}} of {{goal}} min",
       progressAccessibility: "Weekly writing minutes progress",
@@ -2717,7 +2947,8 @@ export const en = {
       title: "Recent assignments",
       subtitle: "Review submitted work and feedback.",
       screenTitle: "Assignment reviews",
-      screenSubtitle: "Choose a linked student, then open a submitted assignment.",
+      screenSubtitle:
+        "Choose a linked student, then open a submitted assignment.",
       listTitle: "Reviewed work",
       listSubtitle: "Read-only submission summaries with coaching feedback.",
       cardAccessibility: "Assignment review",
@@ -2737,7 +2968,8 @@ export const en = {
     },
     report: {
       titleWithStudent: "{{name}}'s report",
-      subtitle: "A parent-facing summary of weekly writing progress and next practice.",
+      subtitle:
+        "A parent-facing summary of weekly writing progress and next practice.",
       openAccessibility: "Open report for {{name}}",
       openCta: "Open full report",
       openHint: "Open the detailed student report.",
@@ -2748,14 +2980,17 @@ export const en = {
       practiceSubtitle: "Specific skills that need attention next.",
       practiceAccessibility: "Practice focus",
       nextStepsTitle: "Family next steps",
-      nextStepsSubtitle: "Short prompts a parent can ask without writing for the student.",
+      nextStepsSubtitle:
+        "Short prompts a parent can ask without writing for the student.",
       nextStepAccessibility: "Family next step",
       nextStepValue: "{{count}}. {{step}}",
     },
     review: {
-      subtitle: "Read the student's work, feedback, canvas preview, and rubric.",
+      subtitle:
+        "Read the student's work, feedback, canvas preview, and rubric.",
       missingTitle: "Review not found",
-      missingDescription: "Choose a reviewed assignment from the assignments tab.",
+      missingDescription:
+        "Choose a reviewed assignment from the assignments tab.",
       missingAccessibility: "Assignment review is missing",
       missingAction: "Back to assignments",
       safetyAccessibility: "AI coaching safety note",
@@ -2767,7 +3002,8 @@ export const en = {
       studentWorkLabel: "Student writing",
       wordCount: "{{count}} words",
       feedbackTitle: "AI feedback",
-      feedbackSubtitle: "One strength, one improvement, and one student revision task.",
+      feedbackSubtitle:
+        "One strength, one improvement, and one student revision task.",
       feedbackAccessibility: "AI feedback summary",
       strengthLabel: "Strength",
       improvementLabel: "Improvement",
@@ -2787,7 +3023,8 @@ export const en = {
       rubricProgressAccessibility: "Rubric score progress",
       rubricRowAccessibility: "Rubric row",
       guidanceTitle: "Parent guidance",
-      guidanceSubtitle: "Questions to ask while keeping the writing student-owned.",
+      guidanceSubtitle:
+        "Questions to ask while keeping the writing student-owned.",
       guidanceAccessibility: "Parent guidance",
       guidanceValue: "{{count}}. {{guidance}}",
       backAccessibility: "Back to assignment reviews",
@@ -2796,59 +3033,73 @@ export const en = {
     },
     settings: {
       title: "Parent settings",
-      subtitle: "Control reports, reminders, and coaching visibility for linked students.",
+      subtitle:
+        "Control reports, reminders, and coaching visibility for linked students.",
       homeTitle: "Parent controls",
       homeSubtitle: "Review report and AI-coach preferences.",
       openHint: "Open parent settings.",
       summaryAccessibility: "Parent settings summary",
       summaryTitle: "Report and coaching settings",
-      summaryDescription: "Coach access: {{coach}}. Quiet hours: {{quietHours}}.",
+      summaryDescription:
+        "Coach access: {{coach}}. Quiet hours: {{quietHours}}.",
       savedAccessibility: "Parent settings status",
       savedTitle: "Settings saved",
-      savedDescription: "These preferences apply to linked student reports on this device.",
+      savedDescription:
+        "These preferences apply to linked student reports on this device.",
       savingTitle: "Saving settings",
       savingDescription: "Updating parent preferences.",
       aiTitle: "AI coach access",
-      aiSubtitle: "Choose whether linked students can use coaching hints and revision help.",
+      aiSubtitle:
+        "Choose whether linked students can use coaching hints and revision help.",
       aiCoachAccess: {
         allowed: "Hints and revision help",
-        allowedDescription: "Students can ask for hints, brainstorming questions, sentence checks, and revision guidance.",
+        allowedDescription:
+          "Students can ask for hints, brainstorming questions, sentence checks, and revision guidance.",
         allowedAccessibility: "Allow hints and revision help",
         restricted: "Restricted",
-        restrictedDescription: "Hide AI coach entry points until a parent changes this setting.",
+        restrictedDescription:
+          "Hide AI coach entry points until a parent changes this setting.",
         restrictedAccessibility: "Restrict AI coach access",
       },
       notificationsTitle: "Notifications",
       notificationsSubtitle: "Choose which parent updates should be prepared.",
       weeklyEmailLabel: "Weekly report email",
-      weeklyEmailDescription: "Prepare a weekly parent report when enough writing activity exists.",
+      weeklyEmailDescription:
+        "Prepare a weekly parent report when enough writing activity exists.",
       weeklyEmailAccessibility: "Toggle weekly report email",
       assignmentAlertsLabel: "Assignment alerts",
-      assignmentAlertsDescription: "Prepare an alert when feedback is ready for review.",
+      assignmentAlertsDescription:
+        "Prepare an alert when feedback is ready for review.",
       assignmentAlertsAccessibility: "Toggle assignment alerts",
       practiceReminderLabel: "Practice reminders",
-      practiceReminderDescription: "Prepare reminders for unfinished daily practice.",
+      practiceReminderDescription:
+        "Prepare reminders for unfinished daily practice.",
       practiceReminderAccessibility: "Toggle practice reminders",
       digestTitle: "Digest frequency",
-      digestSubtitle: "Choose how often parent report summaries should be prepared.",
+      digestSubtitle:
+        "Choose how often parent report summaries should be prepared.",
       digestWeeklyLabel: "Weekly",
       digestWeeklyDescription: "One progress digest each week.",
       digestWeeklyAccessibility: "Use weekly digest frequency",
       digestTwiceWeeklyLabel: "Twice weekly",
-      digestTwiceWeeklyDescription: "A shorter midweek check-in plus the weekly report.",
+      digestTwiceWeeklyDescription:
+        "A shorter midweek check-in plus the weekly report.",
       digestTwiceWeeklyAccessibility: "Use twice weekly digest frequency",
       sharingTitle: "Sharing and quiet hours",
       sharingSubtitle: "Control report sharing and reminder timing.",
       teacherShareLabel: "Share weekly summary with teacher",
-      teacherShareDescription: "Allow a linked teacher to see the weekly parent summary.",
+      teacherShareDescription:
+        "Allow a linked teacher to see the weekly parent summary.",
       teacherShareAccessibility: "Toggle weekly summary sharing with teacher",
       quietHoursTitle: "Quiet hours",
-      quietHoursDescription: "Parent and practice reminders stay quiet during {{quietHours}}.",
+      quietHoursDescription:
+        "Parent and practice reminders stay quiet during {{quietHours}}.",
       quietHoursAccessibility: "Quiet hours",
       accountTitle: "Account",
       accountSubtitle: "Manage the family plan and this parent session.",
       upgradeTitle: "WriterHabit Plus",
-      upgradeDescription: "Unlock deeper progress history, family reports, and review detail.",
+      upgradeDescription:
+        "Unlock deeper progress history, family reports, and review detail.",
       upgradeCta: "View Plus plans",
       upgradeAccessibility: "Open WriterHabit Plus plans",
       upgradeHint: "Opens the WriterHabit Plus paywall.",
@@ -2866,7 +3117,8 @@ export const en = {
       title: "Teacher settings",
       subtitle: "Adjust reading preferences and manage this teacher session.",
       preferencesTitle: "Preferences",
-      preferencesSubtitle: "Reading and interface options apply across WriterHabit screens.",
+      preferencesSubtitle:
+        "Reading and interface options apply across WriterHabit screens.",
       accessibilityLabel: "Accessibility",
       accessibilityHint: "Opens accessibility settings.",
       accountTitle: "Account",
@@ -2878,7 +3130,8 @@ export const en = {
     emptyDescription: "Class writing progress will appear here.",
     offline: {
       accessibility: "Teacher workspace is showing saved offline data",
-      description: "Showing saved class data. New assignment publishing and comment updates sync when the connection returns.",
+      description:
+        "Showing saved class data. New assignment publishing and comment updates sync when the connection returns.",
       title: "Offline class data",
     },
     safety: {
@@ -2890,7 +3143,8 @@ export const en = {
       assignmentsDescription: "Checking active writing tasks.",
       assignmentsTitle: "Loading assignments",
       classProgressAccessibility: "Teacher class progress is loading",
-      classProgressDescription: "Preparing class trends, students, and instructional groups.",
+      classProgressDescription:
+        "Preparing class trends, students, and instructional groups.",
       classProgressTitle: "Loading class progress",
       createAccessibility: "Teacher assignment form is loading",
       createDescription: "Checking classes available for assignment creation.",
@@ -2913,7 +3167,8 @@ export const en = {
       classProgressDescription: "Check your connection and try again.",
       classProgressTitle: "Class progress did not load",
       createAccessibility: "Teacher assignment form loading error",
-      createDescription: "Classes could not load. Try again before creating an assignment.",
+      createDescription:
+        "Classes could not load. Try again before creating an assignment.",
       createTitle: "Assignment form did not load",
       dashboardAccessibility: "Teacher dashboard loading error",
       dashboardDescription: "Check your connection and try again.",
@@ -2927,22 +3182,27 @@ export const en = {
     },
     empty: {
       assignmentListAccessibility: "No active teacher assignments",
-      assignmentListDescription: "Create an assignment to give students a writing task with a rubric.",
+      assignmentListDescription:
+        "Create an assignment to give students a writing task with a rubric.",
       assignmentListTitle: "No active assignments",
       assignmentsAccessibility: "No teacher assignments available",
-      assignmentsDescription: "Classes and active writing tasks will appear here when they are available.",
+      assignmentsDescription:
+        "Classes and active writing tasks will appear here when they are available.",
       assignmentsTitle: "No assignments yet",
       classProgressAccessibility: "No class progress data available",
-      classProgressDescription: "Student progress appears after submissions and revisions are available.",
+      classProgressDescription:
+        "Student progress appears after submissions and revisions are available.",
       classProgressTitle: "No progress yet",
       createAccessibility: "No classes available for assignment creation",
       createDescription: "Add or sync a class before creating an assignment.",
       createTitle: "No classes yet",
       dashboardAccessibility: "No teacher dashboard activity",
-      dashboardDescription: "Classes, assignments, and submissions will appear here when they are ready.",
+      dashboardDescription:
+        "Classes, assignments, and submissions will appear here when they are ready.",
       dashboardTitle: "No class activity yet",
       submissionsAccessibility: "No teacher submissions available",
-      submissionsDescription: "Student writing submissions will appear here when students submit their own work.",
+      submissionsDescription:
+        "Student writing submissions will appear here when students submit their own work.",
       submissionsTitle: "No submissions yet",
     },
     missing: {
@@ -2950,21 +3210,26 @@ export const en = {
       classProgressDescription: "Return to the dashboard and choose a class.",
       classProgressTitle: "Class not found",
       reviewAccessibility: "Submission review is unavailable",
-      reviewDescription: "This submission is not available in the current teacher workspace.",
+      reviewDescription:
+        "This submission is not available in the current teacher workspace.",
       reviewTitle: "Submission not found",
     },
     dashboard: {
-      assignmentsSubtitle: "Recently assigned writing tasks and completion signals.",
+      assignmentsSubtitle:
+        "Recently assigned writing tasks and completion signals.",
       assignmentsTitle: "Active assignments",
       backAccessibility: "Return to teacher dashboard",
       backCta: "Back to dashboard",
       backHint: "Return to the teacher dashboard.",
-      classesSubtitle: "Open a class to view progress, skill trends, and instructional groups.",
+      classesSubtitle:
+        "Open a class to view progress, skill trends, and instructional groups.",
       classesTitle: "Classes",
       metricsSubtitle: "A quick operating view across linked classes.",
       metricsTitle: "Today",
-      subtitle: "Welcome back, Professor Davis. Here is your writing performance summary.",
-      submissionsSubtitle: "Student work ready for teacher review or follow-up.",
+      subtitle:
+        "Welcome back, Professor Davis. Here is your writing performance summary.",
+      submissionsSubtitle:
+        "Student work ready for teacher review or follow-up.",
       submissionsTitle: "Submission queue",
       title: "Classroom Overview",
       activeToday: {
@@ -2977,12 +3242,14 @@ export const en = {
         create: "Create Assignment",
         createAccessibility: "Create a new teacher assignment",
         gradePending: "Grade Pending ({{count}})",
-        gradePendingAccessibility: "Open {{count}} pending submissions for grading",
+        gradePendingAccessibility:
+          "Open {{count}} pending submissions for grading",
         report: "Class Report",
         reportAccessibility: "Open the class report",
       },
       activity: {
-        empty: "No recent student activity yet. New submissions and feedback appear here.",
+        empty:
+          "No recent student activity yet. New submissions and feedback appear here.",
         rowAccessibility: "{{activity}}",
         score: "{{score}}/100",
         title: "Recent Activity",
@@ -3002,7 +3269,8 @@ export const en = {
       },
       insight: {
         accessibility: "WriterHabit AI teacher insight",
-        description: "Class grammar accuracy is up 12% today. Review which lesson helped most.",
+        description:
+          "Class grammar accuracy is up 12% today. Review which lesson helped most.",
         dismissAccessibility: "Dismiss WriterHabit AI insight",
         title: "WriterHabit AI Insight",
       },
@@ -3061,15 +3329,18 @@ export const en = {
       skillsTitle: "Skill trends",
       studentAccessibility: "Student progress for {{name}}",
       studentCount: "{{count}} students",
-      studentsSubtitle: "Assignment completion, rubric averages, and current focus.",
+      studentsSubtitle:
+        "Assignment completion, rubric averages, and current focus.",
       studentsTitle: "Student progress",
       subtitle: "Review class skill growth and choose the next teaching move.",
       summaryCompletionLabel: "Class completion",
-      summaryReviewDescription: "Submissions in this class waiting for teacher review.",
+      summaryReviewDescription:
+        "Submissions in this class waiting for teacher review.",
       summaryReviewLabel: "Need review",
       summarySubtitle: "Class activity and current trend.",
       summaryTitle: "Class summary",
-      supportSubtitle: "Students who may need a check-in or targeted mini lesson.",
+      supportSubtitle:
+        "Students who may need a check-in or targeted mini lesson.",
       supportTitle: "Support watchlist",
       title: "Class progress",
       titleWithClass: "{{name}} progress",
@@ -3094,34 +3365,41 @@ export const en = {
       classSubtitle: "Choose the class that should receive this writing task.",
       classTitle: "Class",
       createAnotherCta: "Create another assignment",
-      detailsSubtitle: "Keep the task focused on student-owned writing and revision.",
+      detailsSubtitle:
+        "Keep the task focused on student-owned writing and revision.",
       detailsTitle: "Assignment details",
       openAccessibility: "Open create assignment form",
       openCta: "Create assignment",
       openHint: "Open the form to create a teacher assignment.",
-      optionsSubtitle: "Choose whether students can attach planning or handwriting canvas work.",
+      optionsSubtitle:
+        "Choose whether students can attach planning or handwriting canvas work.",
       optionsTitle: "Student work options",
       resetAccessibility: "Reset create assignment form",
       resetHint: "Clear the current assignment form.",
-      defaultRubricText: "Clear response\nUses the skill focus\nRevises one part after feedback",
+      defaultRubricText:
+        "Clear response\nUses the skill focus\nRevises one part after feedback",
       rubricSubtitle: "Write each rubric criterion on its own line.",
       rubricTitle: "Rubric",
       saveErrorAccessibility: "Create assignment save error",
-      saveErrorDescription: "The assignment was not published. Check the fields and try again.",
+      saveErrorDescription:
+        "The assignment was not published. Check the fields and try again.",
       saveErrorTitle: "Assignment was not created",
-      skillsSubtitle: "Select up to three skills this assignment should practice.",
+      skillsSubtitle:
+        "Select up to three skills this assignment should practice.",
       skillsTitle: "Skill focus",
       submitAccessibility: "Publish teacher assignment",
       submitCta: "Publish assignment",
       submitHint: "Create the assignment for the selected class.",
-      subtitle: "Create a class writing task with a prompt, skill focus, rubric, and due date.",
+      subtitle:
+        "Create a class writing task with a prompt, skill focus, rubric, and due date.",
       successAccessibility: "Assignment created successfully",
       successDescription: "{{title}} is ready as a local teacher assignment.",
       successTitle: "Assignment created",
       title: "Create assignment",
       fields: {
         canvasAccessibility: "Allow students to attach canvas work",
-        canvasDescription: "Students can attach planning, handwriting, or organizer pages.",
+        canvasDescription:
+          "Students can attach planning, handwriting, or organizer pages.",
         canvasHint: "Toggle canvas attachments for this assignment.",
         canvasLabel: "Allow canvas attachments",
         classDescription: "Grade {{grade}}, {{count}} students",
@@ -3135,7 +3413,8 @@ export const en = {
         gradePlaceholder: "1-12",
         promptAccessibility: "Assignment prompt",
         promptLabel: "Prompt",
-        promptPlaceholder: "Ask students to write, explain, argue, describe, or revise in their own words.",
+        promptPlaceholder:
+          "Ask students to write, explain, argue, describe, or revise in their own words.",
         rubricAccessibility: "Rubric criteria",
         rubricHint: "Enter at least two rubric criteria, one per line.",
         rubricLabel: "Rubric criteria",
@@ -3173,18 +3452,22 @@ export const en = {
       emptyQueueDescription: "Reviewed and completed submissions remain below.",
       emptyQueueTitle: "Review queue is clear",
       emptyReviewedAccessibility: "No reviewed teacher submissions",
-      emptyReviewedDescription: "Reviewed submissions will appear here after feedback is returned.",
+      emptyReviewedDescription:
+        "Reviewed submissions will appear here after feedback is returned.",
       emptyReviewedTitle: "No reviewed submissions yet",
       openAccessibility: "Open submission review for {{student}}",
       openCta: "Review",
       openHint: "Open the submission review screen.",
       paginationAccessibility: "Teacher submissions pagination placeholder",
-      paginationDescription: "Older submissions will appear here as class history sync adds more work.",
+      paginationDescription:
+        "Older submissions will appear here as class history sync adds more work.",
       paginationTitle: "Recent submissions shown",
       priorityHigh: "Priority",
-      queueSubtitle: "Review recent student submissions without rewriting their work.",
+      queueSubtitle:
+        "Review recent student submissions without rewriting their work.",
       queueTitle: "Needs review",
-      reviewedSubtitle: "Submissions already reviewed or waiting on student revision.",
+      reviewedSubtitle:
+        "Submissions already reviewed or waiting on student revision.",
       reviewedTitle: "Reviewed",
       subtitle: "Review submitted work and leave coaching-oriented feedback.",
       title: "Submissions",
@@ -3199,10 +3482,13 @@ export const en = {
     review: {
       canvasPreview: "Canvas: {{title}}, {{count}} pages",
       commentAccessibility: "Teacher feedback comment",
-      commentHint: "Write coaching feedback that asks for one focused student revision.",
+      commentHint:
+        "Write coaching feedback that asks for one focused student revision.",
       commentLabel: "Teacher comment",
-      commentPlaceholder: "Name one strength, one improvement, and one revision task.",
-      commentSubtitle: "Leave feedback that guides the student without writing the response for them.",
+      commentPlaceholder:
+        "Name one strength, one improvement, and one revision task.",
+      commentSubtitle:
+        "Leave feedback that guides the student without writing the response for them.",
       commentTitle: "Teacher feedback",
       commentTooShort: "Write at least 10 characters of feedback.",
       overviewAccessibility: "Submission overview",
@@ -3222,7 +3508,8 @@ export const en = {
       saveErrorTitle: "Feedback was not saved",
       saveHint: "Save this comment for the student review record.",
       savedAccessibility: "Teacher feedback saved",
-      savedDescription: "The comment is saved in the local teacher review state.",
+      savedDescription:
+        "The comment is saved in the local teacher review state.",
       savedTitle: "Feedback saved",
       scoreLabel: "{{score}} of {{max}}",
       subtitle: "Review student work and leave coaching feedback.",
@@ -3236,15 +3523,18 @@ export const en = {
   },
   profileSettings: {
     studentProfileTitle: "Profile",
-    studentProfilePlaceholderDescription: "Student profile implementation goes here.",
+    studentProfilePlaceholderDescription:
+      "Student profile implementation goes here.",
     appSettingsTitle: "App settings",
     appSettingsPlaceholderDescription: "App settings implementation goes here.",
     accessibilityTitle: "Accessibility",
-    accessibilityDescription: "Adjust reading, motion, speech, and interface preferences.",
+    accessibilityDescription:
+      "Adjust reading, motion, speech, and interface preferences.",
     loadingTitle: "Loading settings",
     loadingDescription: "Checking saved profile choices on this device.",
     loadErrorTitle: "Settings did not load",
-    loadErrorDescription: "Saved profile choices could not be opened. Try again.",
+    loadErrorDescription:
+      "Saved profile choices could not be opened. Try again.",
     saveErrorTitle: "Settings were not saved",
     saveErrorDescription: "Try saving again before leaving this screen.",
     editProfile: {
@@ -3275,7 +3565,8 @@ export const en = {
       saveAccessibility: "Save student profile settings",
       savedDescription: "Profile details are saved on this device.",
       savedTitle: "Profile saved",
-      subtitle: "Update the student details used across profile and practice screens.",
+      subtitle:
+        "Update the student details used across profile and practice screens.",
       title: "Edit profile",
     },
     goals: {
@@ -3333,20 +3624,24 @@ export const en = {
         dailyPractice: "Daily practice",
         writingGoals: "Writing goals",
       },
-      subtitle: "Choose the writing skills and practice time this profile should focus on.",
+      subtitle:
+        "Choose the writing skills and practice time this profile should focus on.",
       title: "Writing goals",
       validationDescription: "Choose at least one writing goal before saving.",
       validationTitle: "Choose a goal",
     },
     notifications: {
-      deliveryNoticeDescription: "When notifications are allowed, WriterHabit schedules reminders on this device and syncs preferences to the account.",
+      deliveryNoticeDescription:
+        "When notifications are allowed, WriterHabit schedules reminders on this device and syncs preferences to the account.",
       deliveryNoticeTitle: "Reminder delivery is on this device",
       headerBackAccessibility: "Go back from notifications",
       save: "Save notifications",
       saveAccessibility: "Save notification preferences",
-      savedDescription: "Notification preferences are saved and scheduled when device permissions allow.",
+      savedDescription:
+        "Notification preferences are saved and scheduled when device permissions allow.",
       savedTitle: "Notifications saved",
-      subtitle: "Choose which WriterHabit reminders should be prepared for this student profile.",
+      subtitle:
+        "Choose which WriterHabit reminders should be prepared for this student profile.",
       title: "Notifications",
       toggles: {
         all: "All notifications",
@@ -3368,7 +3663,8 @@ export const en = {
       saveAccessibility: "Save language preference",
       savedDescription: "Language preference is saved on this device.",
       savedTitle: "Language saved",
-      subtitle: "WriterHabit is available in English today. More languages are on the way.",
+      subtitle:
+        "WriterHabit is available in English today. More languages are on the way.",
       title: "Language",
     },
     settings: {
@@ -3401,7 +3697,8 @@ export const en = {
         title: "Support",
       },
       title: "Settings",
-      unavailableDescription: "This setting is prepared in the interface and will open when the production account service is connected.",
+      unavailableDescription:
+        "This setting is prepared in the interface and will open when the production account service is connected.",
       unavailableTitle: "Setting not connected yet",
       version: "WriterHabit AI v0.1.0 · Made with academic excellence",
     },
@@ -3461,17 +3758,19 @@ export const en = {
         title: "Level {{level}} · {{name}}",
         name: "Word Explorer",
         xpToNext: "{{xp}} XP to Level {{next}}",
-        accessibility: "Level {{level}} Word Explorer, {{xp}} XP to level {{next}}",
+        accessibility:
+          "Level {{level}} Word Explorer, {{xp}} XP to level {{next}}",
       },
       badgeShelf: {
         title: "Badge shelf",
         summary: "{{earned}} earned · {{inReach}} in reach",
-        accessibility: "Badge shelf, {{earned}} earned and {{inReach}} in reach",
+        accessibility:
+          "Badge shelf, {{earned}} earned and {{inReach}} in reach",
       },
       rows: {
         myProgress: "My progress",
         dailyGoal: "Daily practice goal",
-        dailyGoalValue: "10 min/day",
+        dailyGoalValue: "{{minutes}} min/day",
         linkedParent: "Linked parent",
         linkedParentConnected: "Connected",
         plus: "WriterHabit Plus",
@@ -3503,7 +3802,8 @@ export const en = {
     restorePurchases: "Restore purchases",
     managePlan: "Manage plan",
     managePlanAccessibility: "Manage WriterHabit Plus plan",
-    managePlanHint: "Plan management opens after store subscriptions are connected.",
+    managePlanHint:
+      "Plan management opens after store subscriptions are connected.",
     paywall: {
       activeSubtitle: "Your account has Plus access.",
       activeTitle: "WriterHabit Plus is active",
@@ -3512,43 +3812,51 @@ export const en = {
     },
     loading: {
       accessibility: "Loading subscription details",
-      description: "Checking the saved plan and available options for this account.",
+      description:
+        "Checking the saved plan and available options for this account.",
       title: "Loading plan details",
     },
     error: {
       accessibility: "Subscription details error",
-      description: "We could not load plan details. Free writing practice still works.",
+      description:
+        "We could not load plan details. Free writing practice still works.",
       title: "Plan details did not load",
     },
     empty: {
       accessibility: "Subscription details unavailable",
-      description: "Plan options are not ready in this build. Keep using free writing tools and try again later.",
+      description:
+        "Plan options are not ready in this build. Keep using free writing tools and try again later.",
       title: "Plan options unavailable",
     },
     offline: {
       accessibility: "Subscription details shown from saved data",
-      description: "These plan details may be saved on this device. Reconnect to refresh before changing a plan.",
+      description:
+        "These plan details may be saved on this device. Reconnect to refresh before changing a plan.",
       title: "Showing saved plan details",
     },
     active: {
       accessibility: "WriterHabit Plus active",
       description: "Plus learning supports are available on this account.",
-      descriptionWithRenewal: "Plus learning supports are available. {{renewal}}.",
+      descriptionWithRenewal:
+        "Plus learning supports are available. {{renewal}}.",
       planAccessibility: "Current WriterHabit Plus plan",
       title: "Plus access is ready",
     },
     pastDue: {
       accessibility: "Subscription payment needs attention",
-      description: "Free writing practice remains available while the account owner reviews the plan.",
+      description:
+        "Free writing practice remains available while the account owner reviews the plan.",
       title: "Plan needs attention",
     },
     trust: {
       accessibility: "WriterHabit Plus trust summary",
-      disclosure: "Purchases are confirmed by the app stores and synced by the WriterHabit server before Plus access changes.",
+      disclosure:
+        "Purchases are confirmed by the app stores and synced by the WriterHabit server before Plus access changes.",
       privacy: "Privacy",
       privacyAccessibility: "Open WriterHabit privacy policy",
       privacyHint: "Opens the privacy policy in the browser.",
-      summary: "Plus adds progress history, reports, and review depth. It does not write assignments for students.",
+      summary:
+        "Plus adds progress history, reports, and review depth. It does not write assignments for students.",
       terms: "Terms",
       termsAccessibility: "Open WriterHabit terms",
       termsHint: "Opens the terms in the browser.",
@@ -3559,38 +3867,46 @@ export const en = {
       subtitle: "Age-appropriate support changes by grade band and role.",
       title: "What Plus supports",
       canvasArchive: {
-        description: "Keep more handwriting and canvas work available for review over time.",
+        description:
+          "Keep more handwriting and canvas work available for review over time.",
         title: "Canvas work archive",
       },
       dailyPractice: {
-        description: "Students keep daily writing practice and safe coaching on the free plan.",
+        description:
+          "Students keep daily writing practice and safe coaching on the free plan.",
         title: "Daily writing practice",
       },
       extendedProgress: {
-        description: "See longer skill trends, revision history, and growth signals.",
+        description:
+          "See longer skill trends, revision history, and growth signals.",
         title: "Extended progress history",
       },
       familyReports: {
-        description: "Give families clearer weekly summaries and next practice focus areas.",
+        description:
+          "Give families clearer weekly summaries and next practice focus areas.",
         title: "Family progress reports",
       },
       rubricDetail: {
-        description: "Review more rubric detail while keeping feedback focused on the next revision.",
+        description:
+          "Review more rubric detail while keeping feedback focused on the next revision.",
         title: "Detailed rubric review",
       },
       safeAiCoach: {
-        description: "Students can ask for hints, questions, sentence checks, and revision help.",
+        description:
+          "Students can ask for hints, questions, sentence checks, and revision help.",
         title: "Safe AI writing coach",
       },
       teacherInsights: {
-        description: "Help teachers scan class trends, support groups, and submissions that need review.",
+        description:
+          "Help teachers scan class trends, support groups, and submissions that need review.",
         title: "Teacher class insights",
       },
     },
     plans: {
       selectAccessibility: "Select {{title}}, {{price}}",
       selectHint: "Chooses this WriterHabit Plus plan option.",
-      subtitle: "The store confirms price, renewal, cancellation, and account owner approval before access changes.",
+      subtitle:
+        "The store confirms price, renewal, cancellation, and account owner approval before access changes.",
       title: "Choose a plan",
       monthly: {
         cadence: "per month",
@@ -3612,28 +3928,34 @@ export const en = {
       errorTitle: "Checkout did not start",
       hint: "Starts the store purchase flow. Plus access changes only after server verification.",
       pendingAccessibility: "WriterHabit Plus store purchase pending",
-      pendingDescription: "Finish the purchase in the store. Plus access turns on only after WriterHabit verifies the purchase.",
+      pendingDescription:
+        "Finish the purchase in the store. Plus access turns on only after WriterHabit verifies the purchase.",
       pendingTitle: "Store purchase pending",
     },
     restore: {
       accessibility: "Restore WriterHabit Plus purchases",
       errorAccessibility: "Restore purchases error",
-      errorDescription: "We could not verify purchases with the server. Your plan was not changed.",
+      errorDescription:
+        "We could not verify purchases with the server. Your plan was not changed.",
       errorTitle: "Restore did not finish",
       hint: "Checks the server and store provider for purchases linked to this account.",
       notFoundAccessibility: "No purchases found",
-      notFoundDescription: "No active verified purchase was found for this account.",
+      notFoundDescription:
+        "No active verified purchase was found for this account.",
       notFoundTitle: "No purchase found",
       successAccessibility: "Purchases restored",
-      successDescription: "Plus access from a previous purchase is available on this account.",
+      successDescription:
+        "Plus access from a previous purchase is available on this account.",
       successTitle: "Purchases restored",
     },
     gate: {
       emptyAccessibility: "Premium access details unavailable",
-      emptyDescription: "Plan details are not ready. Free writing practice remains available.",
+      emptyDescription:
+        "Plan details are not ready. Free writing practice remains available.",
       emptyTitle: "Plan details unavailable",
       errorAccessibility: "Premium access check error",
-      errorDescription: "We could not check the plan right now. Free writing tools still work outside this premium section.",
+      errorDescription:
+        "We could not check the plan right now. Free writing tools still work outside this premium section.",
       errorTitle: "Plan check failed",
       loadingAccessibility: "Checking premium access",
       loadingDescription: "Checking the saved plan for this account.",
@@ -3648,29 +3970,36 @@ export const en = {
       openPaywallAccessibility: "Open WriterHabit Plus plans",
       openPaywallCta: "View Plus plans",
       openPaywallHint: "Opens the WriterHabit Plus paywall.",
-      paymentIssueDescription: "The account owner can review the plan. Free writing practice remains available.",
+      paymentIssueDescription:
+        "The account owner can review the plan. Free writing practice remains available.",
       paymentIssueTitle: "Plan needs attention",
-      subtitle: "Plus can unlock deeper review and reporting while free practice stays available.",
+      subtitle:
+        "Plus can unlock deeper review and reporting while free practice stays available.",
       title: "Upgrade to Plus",
       features: {
         canvasArchive: {
-          description: "Plus keeps more canvas history available for review and family visibility.",
+          description:
+            "Plus keeps more canvas history available for review and family visibility.",
           title: "Save more canvas work",
         },
         extendedProgress: {
-          description: "Plus shows longer progress history so students and families can see growth over time.",
+          description:
+            "Plus shows longer progress history so students and families can see growth over time.",
           title: "See deeper progress",
         },
         familyReports: {
-          description: "Plus gives families clearer weekly progress reports and focused practice ideas.",
+          description:
+            "Plus gives families clearer weekly progress reports and focused practice ideas.",
           title: "Unlock family reports",
         },
         rubricDetail: {
-          description: "Plus unlocks more rubric detail while keeping feedback focused on student revision.",
+          description:
+            "Plus unlocks more rubric detail while keeping feedback focused on student revision.",
           title: "Review more rubric detail",
         },
         teacherInsights: {
-          description: "Plus helps teachers scan class trends and support groups faster.",
+          description:
+            "Plus helps teachers scan class trends and support groups faster.",
           title: "Unlock class insights",
         },
       },
@@ -3683,9 +4012,11 @@ export const en = {
       loadingTitle: "Loading accessibility settings",
       loadingDescription: "Checking saved preferences on this device.",
       errorTitle: "Settings were not saved",
-      errorDescription: "Your latest change could not be saved locally. Try again.",
+      errorDescription:
+        "Your latest change could not be saved locally. Try again.",
       savedTitle: "Preferences saved",
-      savedDescription: "These settings apply across shared WriterHabit screens.",
+      savedDescription:
+        "These settings apply across shared WriterHabit screens.",
       resetCta: "Reset accessibility settings",
     },
     textSize: {
@@ -3701,7 +4032,8 @@ export const en = {
     toggles: {
       dyslexiaFriendlyFont: {
         label: "Dyslexia-friendly reading style",
-        description: "Adds roomier spacing and a simpler system font style where supported.",
+        description:
+          "Adds roomier spacing and a simpler system font style where supported.",
       },
       highContrast: {
         label: "High contrast",
@@ -3713,15 +4045,18 @@ export const en = {
       },
       textToSpeech: {
         label: "Text-to-speech controls",
-        description: "Show read-aloud affordances where future screens support them.",
+        description:
+          "Show read-aloud affordances where future screens support them.",
       },
       speechToText: {
         label: "Speech-to-text controls",
-        description: "Show dictation affordances where future writing screens support them.",
+        description:
+          "Show dictation affordances where future writing screens support them.",
       },
       simplifiedUi: {
         label: "Simplified student UI",
-        description: "Favor fewer visible metrics and clearer recovery actions.",
+        description:
+          "Favor fewer visible metrics and clearer recovery actions.",
       },
     },
     announcements: {
@@ -3737,7 +4072,8 @@ export const en = {
       progress: "Progress",
     },
     states: {
-      errorDescription: "Your writing adventure is saved on this device. Try loading it again.",
+      errorDescription:
+        "Your writing adventure is saved on this device. Try loading it again.",
       errorTitle: "Adventure did not load",
       loadingDescription: "Opening your local Grade 3 writing adventure.",
       loadingTitle: "Loading adventure",
@@ -3751,7 +4087,8 @@ export const en = {
       openDay: "Start",
       progressAccessibility: "Grade 3 adventure completion progress",
       revisitDay: "Revisit",
-      subtitle: "Read, talk, imagine, write, and make one sentence stronger each day.",
+      subtitle:
+        "Read, talk, imagine, write, and make one sentence stronger each day.",
       title: "Grade 3 Writing Adventure",
       unlocked: "Unlocked",
     },
@@ -3760,27 +4097,33 @@ export const en = {
       checklistTitle: "Checklist",
       completeAction: "Complete day",
       completedAgain: "Save complete day",
-      completeNotReady: "Add handwriting with canvas or an image, make one sentence stronger, and finish the checklist.",
+      completeNotReady:
+        "Add handwriting with canvas or an image, make one sentence stronger, and finish the checklist.",
       completeReady: "Everything is ready. Save your win.",
       completeTitle: "Complete day",
       draftLabel: "Optional typed copy",
-      draftPlaceholder: "Copy your handwritten work here if you want it saved in the library.",
+      draftPlaceholder:
+        "Copy your handwritten work here if you want it saved in the library.",
       favoriteLabel: "Favorite sentence",
       favoritePlaceholder: "Copy one sentence you like best.",
       flow: "Read → Talk about it → Visual prompt → Word bank → Write → Make one sentence stronger → Checklist → Complete day",
       flowTitle: "Today's path",
-      handwritingFirst: "Write by hand first. Use the canvas, take a photo of notebook writing, or upload an image. Handwriting helps your brain remember what you practiced.",
-      lockedDescription: "Finish the day before this one to unlock the next adventure stop.",
+      handwritingFirst:
+        "Write by hand first. Use the canvas, take a photo of notebook writing, or upload an image. Handwriting helps your brain remember what you practiced.",
+      lockedDescription:
+        "Finish the day before this one to unlock the next adventure stop.",
       lockedTitle: "This day is still locked",
       readAloud: "Read aloud",
       readSubtitle: "Read first. You can listen too.",
       readTitle: "Read",
       saved: "Saved on this device",
       saving: "Saving...",
-      sketchSpace: "Sketch on paper or in your notebook, then come back to write.",
+      sketchSpace:
+        "Sketch on paper or in your notebook, then come back to write.",
       stopReading: "Stop reading",
       returnToCanvas: "Return to canvas",
-      strongerHandwritingHint: "Make the stronger sentence by hand first. Then copy it here so your grown-up can see it in the library.",
+      strongerHandwritingHint:
+        "Make the stronger sentence by hand first. Then copy it here so your grown-up can see it in the library.",
       strongerLabel: "Copy my stronger sentence",
       strongerPlaceholder: "Copy the handwritten stronger sentence here.",
       strongerTitle: "Make one sentence stronger",
@@ -3788,7 +4131,8 @@ export const en = {
       talkSubtitle: "Say your answer out loud or tell a grown-up.",
       talkTitle: "Talk about it",
       title: "Day {{day}}: {{title}}",
-      useCanvasAccessibility: "Open handwriting canvas for this Grade 3 writing day",
+      useCanvasAccessibility:
+        "Open handwriting canvas for this Grade 3 writing day",
       useCanvasCta: "Use handwriting canvas",
       worksheetAccessibility: "Printable-style worksheet preview for {{scene}}",
       worksheetLineOne: "Look closely.",
@@ -3819,7 +4163,8 @@ export const en = {
         strongerExample: "Stronger",
         strongerLabel: "My stronger sentence",
         strongerPlaceholder: "Write your stronger sentence here.",
-        strongerSentence: "The small golden dog wagged its tail and looked at Maya with happy brown eyes.",
+        strongerSentence:
+          "The small golden dog wagged its tail and looked at Maya with happy brown eyes.",
         subtitle: "Make one sentence stronger.",
         title: "5. Check",
       },
@@ -3827,6 +4172,7 @@ export const en = {
         back: "Back",
         backToMap: "Back to Map",
         backToWrite: "Back to Write",
+        iReadIt: "I read it  →",
         keepEditing: "Keep Editing",
         nextCheck: "Next: Check",
         nextPlan: "Next: Plan",
@@ -3855,7 +4201,10 @@ export const en = {
         wordBankTitle: "Word bank",
       },
       read: {
+        cardSubtitle: "Read the short story below.",
+        cardTitle: "Read",
         pictureTitle: "Picture clue",
+        screenTitle: "{{day}}. Step 1 – Read",
         storyTitle: "Tiny story",
         subtitle: "Read the tiny story first.",
         title: "1. Read",
@@ -3894,7 +4243,8 @@ export const en = {
         stepAccessibility: "{{label}}, {{status}}",
       },
       validation: {
-        check: "Add a stronger sentence and finish each checklist item before you submit.",
+        check:
+          "Add a stronger sentence and finish each checklist item before you submit.",
         draft: "Write at least one real sentence before you check your work.",
       },
       write: {
@@ -3910,7 +4260,8 @@ export const en = {
         stopDraft: "Stop reading",
         subtitle: "Use your prompt to write.",
         title: "4. Write",
-        uploadSubtitle: "Optional support for notebook writing. Typed writing is enough to submit.",
+        uploadSubtitle:
+          "Optional support for notebook writing. Typed writing is enough to submit.",
         uploadTitle: "Upload handwriting",
       },
     },
@@ -3952,21 +4303,28 @@ export const en = {
       title: "My Writing Library",
     },
     parentGuide: {
-      cardSubtitle: "The goal is practice, confidence, and student-owned writing.",
+      cardSubtitle:
+        "The goal is practice, confidence, and student-owned writing.",
       cardTitle: "How to help",
-      handwritingItemCanvas: "Use the canvas when your child wants to write directly on the device.",
-      handwritingItemNotebook: "Use take photo or upload image when they write in a notebook or on paper.",
-      handwritingItemTypedCopy: "The typed box is only for copying saved handwriting, not replacing it.",
+      handwritingItemCanvas:
+        "Use the canvas when your child wants to write directly on the device.",
+      handwritingItemNotebook:
+        "Use take photo or upload image when they write in a notebook or on paper.",
+      handwritingItemTypedCopy:
+        "The typed box is only for copying saved handwriting, not replacing it.",
       handwritingSubtitle: "Handwriting is the main practice path.",
       handwritingTitle: "Handwriting first",
       itemCelebrate: "Celebrate one strong detail or brave revision.",
-      itemRead: "Let your child read first, then use read-aloud if they want support.",
+      itemRead:
+        "Let your child read first, then use read-aloud if they want support.",
       itemTalk: "Ask the talk question before they write.",
       itemWait: "Give wait time. Do not write the answer for them.",
-      routineBody: "Most days should take about 15 to 20 minutes: read, talk, draw, handwrite, copy one stronger sentence, and mark the checklist.",
+      routineBody:
+        "Most days should take about 15 to 20 minutes: read, talk, draw, handwrite, copy one stronger sentence, and mark the checklist.",
       routineSubtitle: "Keep sessions short and predictable.",
       routineTitle: "Daily routine",
-      safetyBody: "This local adventure does not grade, sync, or use AI. It asks students to build their own ideas and revise one sentence at a time.",
+      safetyBody:
+        "This local adventure does not grade, sync, or use AI. It asks students to build their own ideas and revise one sentence at a time.",
       safetySubtitle: "Keep the work in the student's voice.",
       safetyTitle: "Learning guardrail",
       subtitle: "Simple ways a grown-up can support the 30-day adventure.",

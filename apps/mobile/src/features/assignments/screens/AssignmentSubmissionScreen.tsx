@@ -28,6 +28,15 @@ function getParamValue(
   return Array.isArray(value) ? value[0] : value;
 }
 
+export function getAttachmentSubmissionText(input: {
+  attachmentCount: number;
+  responseText: string;
+}): string | undefined {
+  return input.attachmentCount > 0 && input.responseText.trim().length > 0
+    ? input.responseText
+    : undefined;
+}
+
 export function AssignmentSubmissionScreen() {
   const router = useRouter();
   const { t } = useI18n();
@@ -47,6 +56,10 @@ export function AssignmentSubmissionScreen() {
 
   const handleChangeResponse = (text: string) => setEditedResponse(text);
   const handleResetResponse = () => setEditedResponse(null);
+  const attachmentSubmissionText = getAttachmentSubmissionText({
+    attachmentCount: attachmentsState.attachments.length,
+    responseText,
+  });
 
   const backToAssignment = () => {
     if (assignmentId) {
@@ -174,7 +187,10 @@ export function AssignmentSubmissionScreen() {
               gradeBand={state.gradeBand}
               onBackToAssignment={backToAssignment}
               onSubmit={() => {
-                void state.submitAssignment();
+                void state.submitAssignment({
+                  attachments: attachmentsState.attachments,
+                  typedText: attachmentSubmissionText,
+                });
               }}
               submitResult={state.submitResult}
               submitStatus={state.submitStatus}

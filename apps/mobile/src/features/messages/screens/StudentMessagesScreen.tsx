@@ -66,7 +66,7 @@ function MessageThreadCard({ thread }: { thread: StudentMessageThread }) {
 
 export function StudentMessagesScreen() {
   const { t } = useI18n();
-  const { threads } = useStudentMessages();
+  const { refresh, status, threads } = useStudentMessages();
 
   return (
     <Screen
@@ -74,7 +74,21 @@ export function StudentMessagesScreen() {
       testID="student-messages-screen"
       title={t("studentMessages.title")}
     >
-      {threads.length === 0 ? (
+      {status === "loading" ? (
+        <EmptyState
+          description={t("studentMessages.loadingDescription")}
+          title={t("studentMessages.loadingTitle")}
+        />
+      ) : status === "error" ? (
+        <EmptyState
+          actionLabel={t("common.retry")}
+          description={t("studentMessages.errorDescription")}
+          onActionPress={() => {
+            void refresh();
+          }}
+          title={t("studentMessages.errorTitle")}
+        />
+      ) : threads.length === 0 ? (
         <EmptyState
           description={t("studentMessages.emptyDescription")}
           title={t("studentMessages.emptyTitle")}

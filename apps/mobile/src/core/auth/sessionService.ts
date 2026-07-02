@@ -30,6 +30,13 @@ const userMetadataSchema = z.object({
   grade_level: z.coerce.number().int().min(1).max(12).optional(),
 });
 
+const studentProfileCompletionSchema = z.object({
+  confidenceLevel: z.enum(["getting_started", "building", "steady", "confident"]),
+  dailyPracticeMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
+  gradeLevel: z.coerce.number().int().min(1).max(12),
+  writingGoals: z.array(z.string()).max(4),
+});
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -297,24 +304,48 @@ export const sessionService = {
   },
 
   async completeOnboarding(input?: AuthOnboardingCompletionInput): Promise<AuthSession | null> {
+    const { data: currentAuthData, error: currentAuthError } = await supabase.auth.getSession();
+
+    if (currentAuthError) {
+      throw currentAuthError;
+    }
+
+    const currentSession = currentAuthData.session;
+
     const metadata: Record<string, unknown> = {
       onboarding_complete: true,
     };
-
-    if (input?.confidenceLevel) {
-      metadata.confidence_level = input.confidenceLevel;
-    }
-
-    if (input?.dailyPracticeMinutes) {
-      metadata.daily_practice_minutes = input.dailyPracticeMinutes;
-    }
 
     if (input?.gradeLevel) {
       metadata.grade_level = input.gradeLevel;
     }
 
-    if (input?.writingGoals) {
-      metadata.writing_goals = input.writingGoals;
+    const profileCompletion = studentProfileCompletionSchema.safeParse(input);
+
+    if (currentSession && profileCompletion.success) {
+      const { error: ensureProfileError } = await supabase.rpc("ensure_own_student_profile", {
+        p_grade_level: profileCompletion.data.gradeLevel,
+      });
+
+      if (ensureProfileError) {
+        throw ensureProfileError;
+      }
+
+      const { error: profileUpdateError } = await supabase
+        .from("student_profiles")
+        .update({
+          daily_goal_minutes: profileCompletion.data.dailyPracticeMinutes,
+          grade_level: profileCompletion.data.gradeLevel,
+          onboarding_completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          writing_goals: profileCompletion.data.writingGoals,
+          writing_level: profileCompletion.data.confidenceLevel,
+        })
+        .eq("user_id", currentSession.user.id);
+
+      if (profileUpdateError) {
+        throw profileUpdateError;
+      }
     }
 
     const { error } = await supabase.auth.updateUser({

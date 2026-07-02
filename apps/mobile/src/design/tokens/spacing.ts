@@ -12,12 +12,17 @@ export const spacing = {
 } as const;
 
 export const layout = {
+  breakpoints: {
+    tablet: 768,
+    desktop: 1024,
+  },
   screenPadding: {
     phone: 20,
-    tablet: 32,
+    tablet: 40,
   },
   maxContentWidth: 760,
-  maxReadableWidth: 640,
+  maxTabletContentWidth: 1120,
+  maxReadableWidth: 680,
   touchTarget: 44,
   touchTargetLarge: 52,
   hitSlop: {

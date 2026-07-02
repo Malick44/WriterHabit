@@ -1,5 +1,8 @@
 import type { GradeLevel } from "@WriterHabit/shared";
+import { z } from "zod";
 
+import { apiClient } from "@/core/api/apiClient";
+import { supabase } from "@/core/supabase/supabaseClient";
 import {
   progressApiResponseSchema,
   progressScenarioSchema,
@@ -9,12 +12,73 @@ import {
   type ProgressSkill,
   type ProgressTotals,
   type ProgressWeeklyHighlight,
+  writingSkillSchema,
 } from "../types";
 
 interface GetProgressDashboardInput {
   gradeLevel?: GradeLevel;
   studentId: string;
 }
+
+const localizedCopySchema = z.object({
+  fallback: z.string().min(1),
+  key: z.string().min(1),
+});
+
+const backendActivityDaySchema = z.object({
+  activityDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  aiFeedbackApplied: z.number().int().nonnegative(),
+  assignmentsCompleted: z.number().int().nonnegative(),
+  handwritingMinutes: z.number().int().nonnegative(),
+  minutesPracticed: z.number().int().nonnegative(),
+  practicedSkills: z.array(writingSkillSchema),
+  revisionsCompleted: z.number().int().nonnegative(),
+  rubricImprovement: z.number().int().nonnegative(),
+  wordsWritten: z.number().int().nonnegative(),
+});
+
+const backendProgressResponseSchema = z.object({
+  activityDays: z.array(backendActivityDaySchema).default([]),
+  connectionStatus: z.literal("online"),
+  generatedAt: z.string().datetime(),
+  gradeLevel: z.number().int().min(1).max(12),
+  skills: z.array(
+    z.object({
+      currentScore: z.number(),
+      label: localizedCopySchema,
+      level: z.number().int().nonnegative(),
+      previousScore: z.number(),
+      skill: writingSkillSchema,
+    }),
+  ),
+  streak: z.object({
+    bestDays: z.number().int().nonnegative(),
+    currentDays: z.number().int().nonnegative(),
+    practicedToday: z.boolean(),
+    status: z.string().min(1),
+  }),
+  studentId: z.string().min(1),
+  totals: z.object({
+    aiFeedbackApplied: z.number().int().nonnegative(),
+    assignmentsCompleted: z.number().int().nonnegative(),
+    handwritingMinutes: z.number().int().nonnegative(),
+    minutesThisWeek: z.number().int().nonnegative(),
+    revisionsCompleted: z.number().int().nonnegative(),
+    rubricImprovement: z.number().nonnegative(),
+    weeklyMinutesGoal: z.number().int().nonnegative(),
+    wordsWritten: z.number().int().nonnegative(),
+  }),
+  weeklyReview: z
+    .object({
+      celebration: localizedCopySchema,
+      focusForNextWeek: localizedCopySchema,
+      weekEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    })
+    .nullable(),
+});
+
+type BackendProgressResponse = z.infer<typeof backendProgressResponseSchema>;
 
 function readScenario(): ProgressScenario {
   const parsed = progressScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_PROGRESS_SCENARIO);
@@ -36,6 +100,101 @@ function getWeeklyMinutesGoal(gradeLevel: GradeLevel): number {
   }
 
   return 125;
+}
+
+function clampScore(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function mapBackendSkill(input: {
+  activityDays: BackendProgressResponse["activityDays"];
+  generatedAt: string;
+  skill: BackendProgressResponse["skills"][number];
+}): ProgressSkill {
+  const matchingDays = input.activityDays.filter((day) => day.practicedSkills.includes(input.skill.skill));
+  const trendDate = matchingDays.at(-1)?.activityDate ?? input.generatedAt.slice(0, 10);
+
+  return {
+    aiFeedbackApplied: matchingDays.reduce((sum, day) => sum + day.aiFeedbackApplied, 0),
+    currentScore: clampScore(input.skill.currentScore),
+    handwritingMinutes: matchingDays.reduce((sum, day) => sum + day.handwritingMinutes, 0),
+    minutesPracticed: matchingDays.reduce((sum, day) => sum + day.minutesPracticed, 0),
+    practiceCount: matchingDays.length,
+    previousScore: clampScore(input.skill.previousScore),
+    recentTrend: [
+      { date: trendDate, score: clampScore(input.skill.previousScore) },
+      { date: input.generatedAt.slice(0, 10), score: clampScore(input.skill.currentScore) },
+    ],
+    revisionsCompleted: matchingDays.reduce((sum, day) => sum + day.revisionsCompleted, 0),
+    rubricImprovement: matchingDays.reduce((sum, day) => sum + day.rubricImprovement, 0),
+    skill: input.skill.skill,
+    wordsWritten: matchingDays.reduce((sum, day) => sum + day.wordsWritten, 0),
+  };
+}
+
+function getNextFocusSkill(skills: ProgressSkill[]): ProgressSkill["skill"] | null {
+  const [weakest] = [...skills].sort((left, right) => left.currentScore - right.currentScore);
+
+  return weakest?.skill ?? null;
+}
+
+function mapBackendProgress(input: BackendProgressResponse): ProgressApiResponse {
+  const gradeLevel = input.gradeLevel as GradeLevel;
+  const skills = input.skills.map((skill) =>
+    mapBackendSkill({ activityDays: input.activityDays, generatedAt: input.generatedAt, skill }),
+  );
+  const weeklyMinutesGoal =
+    input.totals.weeklyMinutesGoal > 0 ? input.totals.weeklyMinutesGoal : getWeeklyMinutesGoal(gradeLevel);
+  const weeklyHighlights: ProgressWeeklyHighlight[] =
+    input.activityDays.length > 0 || input.weeklyReview
+      ? createWeeklyHighlights(gradeLevel, "success").slice(0, input.weeklyReview ? 2 : 1)
+      : [];
+  const today = input.generatedAt.slice(0, 10);
+  const activityDates = input.activityDays.map((day) => day.activityDate).sort();
+  const weekStart = input.weeklyReview?.weekStart ?? activityDates[0] ?? today;
+  const weekEnd = input.weeklyReview?.weekEnd ?? activityDates.at(-1) ?? today;
+
+  const response: ProgressApiResponse = {
+    connectionStatus: input.connectionStatus,
+    dailyActivity: input.activityDays.map((day) => ({
+      aiFeedbackApplied: day.aiFeedbackApplied,
+      assignmentsCompleted: day.assignmentsCompleted,
+      date: day.activityDate,
+      handwritingMinutes: day.handwritingMinutes,
+      minutes: day.minutesPracticed,
+      revisionsCompleted: day.revisionsCompleted,
+      rubricImprovement: day.rubricImprovement,
+      skillsPracticed: day.practicedSkills,
+      words: day.wordsWritten,
+    })),
+    generatedAt: input.generatedAt,
+    gradeLevel,
+    newBadgeIds: [],
+    skills,
+    studentId: input.studentId,
+    totals: {
+      aiFeedbackApplied: input.totals.aiFeedbackApplied,
+      assignmentsCompleted: input.totals.assignmentsCompleted,
+      handwritingMinutes: input.totals.handwritingMinutes,
+      minutesThisWeek: input.totals.minutesThisWeek,
+      revisionsCompleted: input.totals.revisionsCompleted,
+      rubricImprovement: Math.round(input.totals.rubricImprovement),
+      weeklyMinutesGoal,
+      wordsWritten: input.totals.wordsWritten,
+    },
+    weeklyReview: {
+      highlights: weeklyHighlights,
+      nextFocusSkill: getNextFocusSkill(skills),
+      weekEnd,
+      weekStart,
+    },
+  };
+
+  return progressApiResponseSchema.parse(response) as ProgressApiResponse;
 }
 
 function createElementaryActivity(): ProgressDailyActivity[] {
@@ -567,6 +726,17 @@ export const progressApi = {
 
     if (scenario === "error") {
       throw new Error("Progress dashboard mock error");
+    }
+
+    const { data: authData } = await supabase.auth.getSession();
+    const session = authData?.session;
+
+    if (session) {
+      const backendResponse = await apiClient.get(`/students/${encodeURIComponent(input.studentId)}/progress`, {
+        schema: backendProgressResponseSchema,
+      });
+
+      return mapBackendProgress(backendResponse);
     }
 
     return createDashboard(input, scenario);

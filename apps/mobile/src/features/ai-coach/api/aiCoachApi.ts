@@ -1,3 +1,5 @@
+import { apiClient } from "@/core/api/apiClient";
+import { supabase } from "@/core/supabase/supabaseClient";
 import { buildAiCoachPrompt } from "../prompts/coachPrompt";
 import { evaluateAiCoachOutput, evaluateAiCoachRequest } from "../services/aiCoachPolicyService";
 import {
@@ -13,6 +15,18 @@ import {
 
 export type AiCoachApiErrorCode = "offline" | "request_failed";
 type AiCoachGuidance = Omit<AiCoachResponse, "action" | "generatedAt" | "learningMode" | "safetyFlags" | "state">;
+
+const backendCoachResponseSchema = aiCoachResponseSchema;
+
+const backendCoachPathByAction: Record<AiCoachAction, string> = {
+  ask_question: "/ai/coach/revision-question",
+  brainstorm: "/ai/coach/brainstorm",
+  explain_mistake: "/ai/coach/explain-grammar",
+  hint: "/ai/coach/hint",
+  revision_help: "/ai/coach/revision-question",
+  sentence_check: "/ai/coach/check-sentence",
+  stronger_word: "/ai/coach/suggest-vocabulary",
+};
 
 export class AiCoachApiError extends Error {
   code: AiCoachApiErrorCode;
@@ -237,6 +251,44 @@ export const aiCoachApi = {
 
     if (!prompt.action) {
       throw new AiCoachApiError("request_failed", "AI coach prompt was not created");
+    }
+
+    const { data: authData } = await supabase.auth.getSession();
+
+    if (authData.session) {
+      const backendResponse = await apiClient.post(
+        backendCoachPathByAction[input.context.requestedAction],
+        {
+          assignmentId: input.context.assignmentId,
+          canvasRecognizedText: input.context.canvasContext?.recognizedTextExcerpt,
+          clientAction: input.context.requestedAction,
+          draftExcerpt: input.context.draftExcerpt,
+          gradeLevel: input.context.gradeLevel,
+          rubricCriteria: input.context.rubric,
+          studentId: input.context.studentId,
+          studentRequest: input.context.studentRequest,
+          writingLevel:
+            input.context.writingLevel === "high"
+              ? "confident"
+              : input.context.writingLevel === "middle"
+                ? "steady"
+                : "getting_started",
+        },
+        {
+          retry: false,
+          schema: backendCoachResponseSchema,
+        },
+      );
+      const outputPolicy = evaluateAiCoachOutput(backendResponse);
+
+      if (!outputPolicy.allowed) {
+        return createResponse(input.context, "safety_blocked", outputPolicy.flags);
+      }
+
+      return aiCoachResponseSchema.parse({
+        ...backendResponse,
+        safetyFlags: outputPolicy.flags,
+      });
     }
 
     const response = createResponse(input.context, "success", requestPolicy.flags);

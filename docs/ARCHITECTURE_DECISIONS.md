@@ -258,23 +258,23 @@ Consequences:
 
 Status: accepted
 
-Student onboarding is a linear Expo Router flow owned by `apps/mobile/src/features/onboarding/`. It persists non-secret setup progress locally by signed-in user id, validates required choices with Zod, generates a deterministic starter plan on device, and completes the auth/session onboarding gate only from the plan summary step.
+Student onboarding is a linear Expo Router flow owned by `apps/mobile/src/features/onboarding/`. It persists non-secret setup progress locally by signed-in user id for recovery, syncs signed-in student progress to `student_profiles` once a profile/grade exists, validates required choices with Zod, generates a deterministic starter plan on device, and completes the auth/session onboarding gate only from the plan summary step.
 
 Current evidence:
 
 - Route files: `apps/mobile/app/(onboarding)/`
 - Store: `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`
 - Validation and route helpers: `apps/mobile/src/features/onboarding/types.ts`
-- Local persistence: `apps/mobile/src/features/onboarding/services/onboardingPersistenceService.ts`
+- Local/Supabase persistence: `apps/mobile/src/features/onboarding/services/onboardingPersistenceService.ts`
 - Plan generation: `apps/mobile/src/features/onboarding/services/personalizedPlanService.ts`
-- Auth completion metadata: `apps/mobile/src/core/auth/sessionService.ts`
+- Auth/profile completion: `apps/mobile/src/core/auth/sessionService.ts`
 
 Consequences:
 
 - Route files remain thin exports.
 - Onboarding screens use shared UI, shared localization, and accessibility-aware controls.
 - Progress survives app restarts without storing secrets.
-- Current Supabase auth metadata is the temporary completion boundary until dedicated student profile tables/API contracts are implemented.
+- Signed-in completion writes durable onboarding fields to `student_profiles`; Supabase auth metadata remains a route-gate compatibility signal and is not the durable profile source.
 - The student flow transitions to `/(student)/home` after completion.
 
 ## ADR-015: Student Home Dashboard Uses a Feature-Owned Read Model
@@ -299,6 +299,10 @@ Consequences:
 - Dashboard loading, empty, error, offline cached, and success states are explicit in the student-home feature.
 - Grade adaptation is computed before rendering so elementary, middle, and high-school dashboard layouts can diverge without route changes.
 - Dashboard navigation may link to existing assignment, writing workspace, progress, feedback, and canvas routes, but those downstream feature screens remain separately owned.
+- The student messages route reads signed-in teacher/coach message previews from
+  Supabase `student_messages`; no-session demo states use localized fallback
+  threads. Public clients can read authorized rows, while writes remain
+  admin/service-owned.
 - AI coaching entry points on the dashboard must stay learning-oriented and may not offer assignment completion.
 
 ## ADR-016: Assignment Screens Own Student Assignment Status
@@ -354,7 +358,7 @@ Current evidence:
 - Screen: `apps/mobile/src/features/writing-workspace/screens/WritingWorkspaceScreen.tsx`
 - Hook: `apps/mobile/src/features/writing-workspace/hooks/useWritingWorkspace.ts`
 - API facade: `apps/mobile/src/features/writing-workspace/api/writingWorkspaceApi.ts`
-- Local draft persistence: `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.ts`
+- Draft persistence: `apps/mobile/src/features/writing-workspace/services/draftPersistenceService.ts`
 - Draft metrics and grade adaptation: `apps/mobile/src/features/writing-workspace/services/writingMetricsService.ts`
 - UI state store: `apps/mobile/src/features/writing-workspace/stores/writingWorkspaceUiStore.ts`
 - Local JSON storage facade: `apps/mobile/src/services/storage/localJsonStorage.ts`
@@ -366,9 +370,9 @@ Consequences:
 
 - Route file `apps/mobile/app/(student)/write/[assignmentId].tsx` remains a thin feature export.
 - Draft state is explicit: restoring, unsaved, saving, saved, failed, empty, offline cached, and submitted-for-review paths are visible in the feature UI.
-- Drafts are saved locally first, then authenticated sessions can sync through
-  backend draft endpoints. They are validated with Zod and capped before
-  persistence.
+- Drafts persist to Supabase `writing_drafts` for authenticated students and
+  fall back to local recovery storage for no-session or failed remote saves.
+  They are validated with Zod and capped before persistence.
 - AI coach entry points are limited to approved learning actions: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
 - Authenticated submission uses the backend workflow transaction to create
   submission/content/review-job rows and advance assignment status. Local/demo
@@ -415,22 +419,24 @@ Current evidence:
 Consequences:
 
 - Route files under `apps/mobile/app/(student)/canvas/` remain thin feature exports.
-- Canvas documents are local, non-secret student work persisted through the shared local JSON storage facade.
+- Canvas documents are local-first, non-secret student work persisted through the shared local JSON storage facade and synced to backend canvas tables by default for signed-in sessions.
 - Canvas storage is bounded: 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots.
 - Canvas saves are local-first: backend failures preserve the local document and surface `sync_failed`.
-- Backend sync is scaffolded with typed metadata, signed upload, attach, and export placeholders under `services/api/src/features/canvas/`.
+- Backend sync uses typed metadata, signed upload placeholder, attach, and export placeholder routes under `services/api/src/routes/canvas.ts`.
 - Actual image/PDF generation, object upload execution, and handwriting recognition remain future work.
 - The typed writing workspace reads attached canvas summaries through the canvas feature API, so an attached page can appear without importing canvas screen internals.
 
-## ADR-019: AI Coach Uses a Local Policy-Safe Service Boundary
+## ADR-019: AI Coach Uses a Policy-Safe Service Boundary
 
 Status: accepted
 
 The AI coach feature is owned by `apps/mobile/src/features/ai-coach/`. The
-current implementation uses a deterministic local mock API instead of a backend
-AI call. It validates AI context and responses with Zod, keeps request context
-bounded, blocks assignment-completion intent through a feature-owned policy
-service, and renders the coach drawer from the typed writing workspace.
+current implementation validates AI context and responses with Zod, keeps
+request context bounded, blocks assignment-completion intent through a
+feature-owned policy service, and renders the coach drawer from the typed
+writing workspace. Signed-in Supabase sessions call backend AI coach endpoints,
+which authorize the student scope and persist `ai_coach_interactions`; demo
+sessions without auth still use the deterministic local fallback.
 
 Current evidence:
 
@@ -440,7 +446,11 @@ Current evidence:
 - Bounded context builder: `apps/mobile/src/features/ai-coach/services/aiCoachContextService.ts`
 - Policy guard: `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.ts`
 - Grade-aware prompt builder: `apps/mobile/src/features/ai-coach/prompts/coachPrompt.ts`
+- Backend route: `services/api/src/routes/ai-coach.ts`
+- Backend service: `services/api/src/features/ai/coach/ai-coach.service.ts`
+- Interaction persistence: `services/api/src/data/supabase-database.ts`
 - Tests: `apps/mobile/src/features/ai-coach/services/aiCoachPolicyService.test.ts`
+- Backend tests: `services/api/src/__tests__/ai-coach.test.ts`
 - Workspace bridge: `apps/mobile/src/features/writing-workspace/components/CoachEntryPanel.tsx`
 
 Consequences:
@@ -449,7 +459,7 @@ Consequences:
 - Visible actions remain approved learning actions only: hint, brainstorming, guiding question, sentence check, revision help, explanation, and stronger word coaching.
 - Coach requests carry assignment metadata, grade level, skill focus, rubric criteria, writing metrics, optional canvas summary, and a bounded draft excerpt rather than the full draft.
 - TanStack Query mutation state uses a short garbage-collection window for coach responses; full drafts and canvas documents remain owned by their source features.
-- Backend runtime wiring, external provider calls, persistent usage logs, and audit-safe metadata storage remain future work. Framework-neutral backend AI usage limits and mock service boundaries now exist under `services/api/src/features/ai/`.
+- External provider calls, durable workers, and production usage metering remain future work. The signed-in API path now writes audit-safe interaction metadata through the backend database boundary while using the deterministic mock provider.
 
 ## ADR-020: Feedback Review Uses Bounded Local Review Results
 
@@ -475,7 +485,7 @@ Current evidence:
 - API facade: `apps/mobile/src/features/feedback-review/api/feedbackreviewApi.ts`
 - Hook: `apps/mobile/src/features/feedback-review/hooks/useFeedbackReview.ts`
 - View-model and validation service: `apps/mobile/src/features/feedback-review/services/feedbackReviewService.ts`
-- Focused revision local persistence: `apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
+- Focused revision draft persistence: `apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
 - Tests: `apps/mobile/src/features/feedback-review/services/feedbackReviewService.test.ts`
 
 Consequences:
@@ -484,18 +494,20 @@ Consequences:
 - The review flow supports loading, processing, empty/missing, error, offline cached, success, revision submission, and completion states.
 - Feedback is framed as one strength, one improvement, one revision task, rubric coaching, and grammar suggestions.
 - Revision asks the student to write one focused revised passage; it does not auto-apply or generate a polished final draft.
-- In-progress revision text is locally autosaved and restored, then cleared after successful submission.
+- In-progress revision text persists to Supabase `submission_revision_drafts`
+  for signed-in students and uses local recovery storage for no-session or
+  failed remote saves. Drafts are cleared after successful revision submission.
 - Progress earned now links into the local progress dashboard, and backend
   revision completion updates progress totals/activity rows through the workflow
   transaction.
 - Production AI provider integration, durable async workers, audit-safe metadata
   logging, and persisted usage limits remain future work.
 
-## ADR-021: Progress Tracking Uses Local Analytics Contracts Until Backend Exists
+## ADR-021: Progress Tracking Uses Backend Reads With Local Demo Fallbacks
 
 Status: accepted
 
-Student progress lives in `apps/mobile/src/features/progress/`. The current implementation uses deterministic local mock data validated with Zod, then derives dashboard, skill detail, badge, and weekly review view models on device.
+Student progress lives in `apps/mobile/src/features/progress/`. Signed-in Supabase sessions read `GET /students/:studentId/progress` through the backend API, including totals, streak state, skill progress, badges, weekly review, and current-week activity-day rows. Unauthenticated dev/demo states still use deterministic local fixture data validated with Zod, then derive dashboard, skill detail, badge, and weekly review view models on device.
 
 Current evidence:
 
@@ -512,7 +524,10 @@ Consequences:
 - Progress routes under `apps/mobile/app/(student)/progress/` remain thin feature exports.
 - The dashboard tracks assignments, streaks, weekly minutes, words, revisions, rubric improvement, AI feedback applied, handwriting time, skills, badges, and weekly review.
 - Grade-band adaptation controls metric density and rubric detail for elementary, middle, and high school students.
-- Backend progress persistence, cross-device sync, and teacher analytics remain future work. Parent reports currently exist as local mobile reporting surfaces backed by deterministic mock data.
+- Backend workflow transactions persist student progress totals and activity
+  days, and signed-in student progress reads use the API. Teacher analytics and
+  parent reports currently exist as local mobile reporting surfaces backed by
+  deterministic mock data.
 
 ## ADR-022: Notification Preparation Is Provider-Free Until Native Push Setup
 
@@ -769,8 +784,8 @@ Consequences:
 - Offline visibility is driven by existing feature response states such as
   `connectionStatus: "offline_cached"` and canvas `syncStatus`, not by a global
   NetInfo listener.
-- Drafts and canvas documents remain device-local, non-secret data persisted
-  through `apps/mobile/src/services/storage/localJsonStorage.ts`.
+- No-session and failed remote draft/canvas saves remain recoverable through
+  `apps/mobile/src/services/storage/localJsonStorage.ts`.
 - Canvas stroke documents remain bounded to 24 documents per student, 240
   strokes per document, 16 points per stroke, and 12 undo snapshots.
 - Assignment, canvas, and teacher submission history surfaces now expose

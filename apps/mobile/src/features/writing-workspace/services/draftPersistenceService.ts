@@ -1,5 +1,6 @@
 import { localJsonStorage } from "@/services/storage/localJsonStorage";
 import { supabase } from "@/core/supabase/supabaseClient";
+import { storageKeys } from "@/services/storage/storageKeys";
 import { getWritingMetrics } from "./writingMetricsService";
 
 import {
@@ -9,10 +10,6 @@ import {
   type WritingCanvasAttachment,
   type WritingDraft,
 } from "../types";
-
-function getDraftKey(studentId: string, assignmentId: string): string {
-  return `writing-draft.${studentId}.${assignmentId}`;
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -296,3 +293,7 @@ export const draftPersistenceService = {
     await localJsonStorage.removeItem(getDraftKey(studentId, assignmentId));
   },
 };
+
+function getDraftKey(studentId: string, assignmentId: string): string {
+  return storageKeys.writingDraft(studentId, assignmentId);
+}

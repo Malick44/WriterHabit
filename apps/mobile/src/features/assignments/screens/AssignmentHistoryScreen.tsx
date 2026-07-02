@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
@@ -18,6 +18,7 @@ import {
   BOTTOM_MENU_SCROLL_EVENT_THROTTLE,
   useBottomMenuScrollHandler,
 } from "@/shared/components/navigation";
+import { getResponsiveColumnCount } from "@/shared/utils/responsive";
 
 import {
   AssignmentFilterChips,
@@ -52,10 +53,12 @@ function matchesFilter(
 export function AssignmentHistoryScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] =
     useState<AssignmentListFilter>("all");
   const state = useAssignmentHistoryData("all");
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
+  const columnCount = getResponsiveColumnCount(width, { maxColumns: 2, minColumnWidth: 400 });
   const handleStartPractice = useCallback(() => {
     router.navigate(routes.studentPractice);
   }, [router]);
@@ -76,11 +79,13 @@ export function AssignmentHistoryScreen() {
 
   const renderAssignment = useCallback(
     ({ item }: { item: AssignmentRecord }) => (
-      <AssignmentSummaryCard
-        assignment={item}
-        gradeBand={state.gradeBand}
-        onPress={() => router.push(getAssignmentDetailRoute(item.id))}
-      />
+      <View style={styles.gridItem}>
+        <AssignmentSummaryCard
+          assignment={item}
+          gradeBand={state.gradeBand}
+          onPress={() => router.push(getAssignmentDetailRoute(item.id))}
+        />
+      </View>
     ),
     [router, state.gradeBand],
   );
@@ -129,9 +134,12 @@ export function AssignmentHistoryScreen() {
 
         {state.status === "empty" || state.status === "success" ? (
           <FlatList
+            key={`assignment-history-${columnCount}`}
             data={filteredAssignments}
             keyExtractor={(assignment) => assignment.id}
             renderItem={renderAssignment}
+            numColumns={columnCount}
+            columnWrapperStyle={columnCount > 1 ? styles.columnWrapper : undefined}
             ItemSeparatorComponent={ItemSeparator}
             contentContainerStyle={styles.listContent}
             onScroll={handleBottomMenuScroll}
@@ -205,6 +213,12 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     paddingHorizontal: 0,
     paddingTop: 0,
+  },
+  columnWrapper: {
+    gap: spacing.md,
+  },
+  gridItem: {
+    flex: 1,
   },
   listContent: {
     paddingBottom: 120,

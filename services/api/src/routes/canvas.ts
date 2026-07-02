@@ -1,13 +1,20 @@
 import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 
-import type { CanvasDocumentRecord, Database, StudentProfileRecord } from "../data/types";
+import type { Database, StudentProfileRecord } from "../data/types";
 import {
   authorizeStudentScopeRead,
   requirePrincipal,
 } from "../runtime/authorization";
 import { createForbiddenError, createResourceNotFoundError } from "../runtime/errors";
 import { validateRequestBody, validateRequestParams } from "../runtime/validation";
+import {
+  mapCanvasAttachApiResponse,
+  mapCanvasDocumentApiResponse,
+  mapCanvasExportApiResponse,
+  mapCanvasListApiResponse,
+  mapCanvasUploadUrlApiResponse,
+} from "../mappers/canvas.mapper";
 
 const MAX_CANVAS_LIST_LIMIT = 100;
 
@@ -92,45 +99,10 @@ function getCanvasObjectPath(input: {
   clientVersion: number;
   contentType: string;
   fileKind: string;
+  ownerUserId: string;
 }) {
   const extension = input.contentType === "image/png" ? "png" : input.contentType === "application/pdf" ? "pdf" : "json";
-  return `canvas/${input.canvasDocumentId}/${input.fileKind}/v${input.clientVersion}.${extension}`;
-}
-
-function mapCanvasDocument(record: CanvasDocumentRecord) {
-  return {
-    assignmentId: record.assignmentId,
-    attachedAt: record.attachedAt,
-    canvasDocumentId: record.id,
-    clientVersion: record.clientVersion,
-    createdAt: record.createdAt,
-    exportStatus: record.exportStatus,
-    previewImageUrl: record.previewImagePath,
-    recognizedText: record.recognizedText,
-    serverVersion: record.serverVersion,
-    storageObjectPath: record.objectPath,
-    strokeCount: record.strokeCount,
-    strokes: record.strokes,
-    syncStatus: record.syncStatus,
-    template: record.template,
-    title: record.title,
-    updatedAt: record.updatedAt,
-  };
-}
-
-function mapCanvasSummary(record: CanvasDocumentRecord) {
-  return {
-    assignmentId: record.assignmentId,
-    canvasDocumentId: record.id,
-    clientVersion: record.clientVersion,
-    isAttached: Boolean(record.assignmentId),
-    previewImageUrl: record.previewImagePath,
-    strokeCount: record.strokeCount,
-    syncStatus: record.syncStatus,
-    template: record.template,
-    title: record.title,
-    updatedAt: record.updatedAt,
-  };
+  return `${input.ownerUserId}/canvas/${input.canvasDocumentId}/${input.fileKind}/v${input.clientVersion}.${extension}`;
 }
 
 async function authorizeStudentCanvasWrite(
@@ -181,10 +153,7 @@ export async function registerCanvasRoutes(
     const profile = await authorizeStudentScopeRead(database, principal, params.studentId);
     const documents = await database.listCanvasDocumentsForStudent(profile.id, MAX_CANVAS_LIST_LIMIT);
 
-    return {
-      items: documents.map(mapCanvasSummary),
-      nextCursor: null,
-    };
+    return mapCanvasListApiResponse(documents);
   });
 
   app.get("/canvas-documents/:canvasDocumentId", { preHandler: authenticate }, async (request) => {
@@ -198,7 +167,7 @@ export async function registerCanvasRoutes(
 
     await authorizeStudentScopeRead(database, principal, document.studentProfileId);
 
-    return mapCanvasDocument(document);
+    return mapCanvasDocumentApiResponse(document);
   });
 
   app.put("/canvas-documents/:canvasDocumentId", { preHandler: authenticate }, async (request) => {
@@ -234,6 +203,7 @@ export async function registerCanvasRoutes(
         clientVersion: body.clientVersion,
         contentType: "application/json",
         fileKind: "stroke-document",
+        ownerUserId: principal.id,
       }),
       previewImagePath: body.previewImageUrl ?? null,
       studentAssignmentId,
@@ -244,7 +214,7 @@ export async function registerCanvasRoutes(
       title: body.title,
     });
 
-    return mapCanvasDocument(document);
+    return mapCanvasDocumentApiResponse(document);
   });
 
   app.post("/canvas-documents/:canvasDocumentId/attach", { preHandler: authenticate }, async (request) => {
@@ -289,13 +259,7 @@ export async function registerCanvasRoutes(
       title: existing.title,
     });
 
-    return {
-      assignmentId: document.assignmentId,
-      attachedAt: document.attachedAt ?? document.updatedAt,
-      canvasDocumentId: document.id,
-      clientVersion: document.clientVersion,
-      syncStatus: "saved",
-    };
+    return mapCanvasAttachApiResponse(document);
   });
 
   app.post("/canvas-documents/:canvasDocumentId/upload-url", { preHandler: authenticate }, async (request) => {
@@ -304,10 +268,19 @@ export async function registerCanvasRoutes(
     const body = validateRequestBody(request, uploadUrlBodySchema);
     const document = await database.getCanvasDocumentById(params.canvasDocumentId);
 
-    if (document) {
-      await authorizeStudentScopeRead(database, principal, document.studentProfileId);
-    } else if (principal.role !== "student") {
+    if (principal.role !== "student") {
       throw createForbiddenError();
+    }
+
+    if (document) {
+      const profile = await authorizeStudentCanvasWrite(database, principal.id, document.studentProfileId);
+
+      if (document.studentProfileId !== profile.id) {
+        throw createForbiddenError({
+          code: "authorization.student_scope_denied",
+          details: { canvasDocumentId: params.canvasDocumentId },
+        });
+      }
     }
 
     const objectPath = getCanvasObjectPath({
@@ -315,19 +288,15 @@ export async function registerCanvasRoutes(
       clientVersion: body.clientVersion,
       contentType: body.contentType,
       fileKind: body.fileKind,
+      ownerUserId: principal.id,
     });
 
-    return {
+    return mapCanvasUploadUrlApiResponse({
+      clientVersion: body.clientVersion,
       contentType: body.contentType,
       expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
-      method: "PUT",
       objectPath,
-      requiredHeaders: {
-        "content-type": body.contentType,
-        "x-WriterHabit-canvas-client-version": String(body.clientVersion),
-      },
-      uploadUrl: `server-managed://${objectPath}`,
-    };
+    });
   });
 
   app.post("/canvas-documents/:canvasDocumentId/export", { preHandler: authenticate }, async (request) => {
@@ -342,13 +311,12 @@ export async function registerCanvasRoutes(
 
     await authorizeStudentScopeRead(database, principal, document.studentProfileId);
 
-    return {
+    return mapCanvasExportApiResponse({
       canvasDocumentId: params.canvasDocumentId,
-      exportId: `canvas-export-${params.canvasDocumentId}-${body.clientVersion}`,
+      clientVersion: body.clientVersion,
       format: body.format,
       generatedAt: new Date().toISOString(),
       previewImageUrl: document.previewImagePath,
-      status: "queued",
-    };
+    });
   });
 }

@@ -40,14 +40,18 @@ export function PracticeSessionScreen() {
     skillId?: string | string[];
     taskId?: string | string[];
   }>();
-  const entry = getPracticeTask(
-    getParamValue(params.skillId),
-    getParamValue(params.taskId),
-  );
-  const session = usePracticeSession();
+  const skillId = getParamValue(params.skillId);
+  const taskId = getParamValue(params.taskId);
+  const entry = getPracticeTask(skillId, taskId);
+  const session = usePracticeSession({
+    estimatedMinutes: entry?.task.estimatedMinutes,
+    skillId,
+    taskId,
+  });
   const attachments = useAssignmentAttachments();
   const [startedCanvas, setStartedCanvas] = useState(false);
-  const hasHandwritingEvidence = startedCanvas || attachments.attachments.length > 0;
+  const hasHandwritingEvidence =
+    startedCanvas || attachments.attachments.length > 0;
 
   const handleBackToPractice = useCallback(() => {
     router.navigate(routes.studentPractice);
@@ -229,7 +233,11 @@ export function PracticeSessionScreen() {
                 <Button
                   accessibilityLabel={t("dailyPractice.useCanvasAccessibility")}
                   fullWidth
-                  label={startedCanvas ? t("dailyPractice.returnToCanvasCta") : t("dailyPractice.useCanvasCta")}
+                  label={
+                    startedCanvas
+                      ? t("dailyPractice.returnToCanvasCta")
+                      : t("dailyPractice.useCanvasCta")
+                  }
                   onPress={handleUseCanvas}
                   size="md"
                   variant="secondary"
@@ -259,7 +267,13 @@ export function PracticeSessionScreen() {
                 disabled={!hasHandwritingEvidence}
                 fullWidth
                 label={t("dailyPractice.completeCta")}
-                onPress={session.complete}
+                onPress={() => {
+                  void session.complete({
+                    attachmentCount: attachments.attachments.length,
+                    extractedText: attachments.extractedText,
+                    usedCanvas: startedCanvas,
+                  });
+                }}
                 size="md"
                 variant="primary"
               />

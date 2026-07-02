@@ -6,18 +6,17 @@ import {
   assertPremiumFeatureAccess,
   canAccessPremiumFeature,
 } from "../features/subscriptions/entitlement-authorization";
+import {
+  mapStudentBadgesListApiResponse,
+  mapStudentProgressApiResponse,
+  mapStudentSkillDetailApiResponse,
+  mapWeeklyReviewDetailApiResponse,
+} from "../mappers/progress.mapper";
 import { authorizeStudentScopeRead, requirePrincipal } from "../runtime/authorization";
 import { createResourceNotFoundError } from "../runtime/errors";
 import { validateRequestParams, validateRequestQuery } from "../runtime/validation";
 import {
   currentWeekRange,
-  emptyProgressTotals,
-  gradeBandFor,
-  mapBadgeProgress,
-  mapProgressTotals,
-  mapSkillProgress,
-  mapStreak,
-  mapWeeklyReviewSummary,
   writingSkillSchema,
 } from "./dashboards-shared";
 
@@ -51,39 +50,27 @@ export async function registerProgressRoutes(
       "extended_progress_history",
     );
 
-    const [totalsRows, skills, badges, studentBadges, weeklyReview] = await Promise.all([
+    const now = new Date();
+    const week = currentWeekRange(now);
+    const [totalsRows, skills, badges, studentBadges, weeklyReview, activityDays] = await Promise.all([
       database.listProgressTotalsForStudents([profile.id]),
       database.listSkillProgressForStudents([profile.id]),
       database.listActiveBadges(badgeCatalogLimit),
       database.listStudentBadges(profile.id),
       includeExtendedProgress ? database.getLatestWeeklyReview(profile.id) : Promise.resolve(null),
+      database.listActivityDaysForStudents([profile.id], week),
     ]);
 
-    const now = new Date();
-    const totals = totalsRows[0] ?? emptyProgressTotals(profile.id);
-    const hasAnyProgress = totalsRows.length > 0 || skills.length > 0;
-
-    return {
-      badges: mapBadgeProgress(badges, studentBadges),
-      connectionStatus: "online",
-      emptyState: hasAnyProgress
-        ? null
-        : {
-            body: {
-              fallback: "Progress shows up here after the first writing session.",
-              key: "progress.emptyState.body",
-            },
-            title: { fallback: "No writing activity yet", key: "progress.emptyState.title" },
-          },
+    return mapStudentProgressApiResponse({
+      activityDays,
+      badges,
       generatedAt: now.toISOString(),
-      gradeBand: gradeBandFor(profile.gradeLevel),
-      gradeLevel: profile.gradeLevel,
-      skills: skills.map((record) => mapSkillProgress(record)),
-      streak: mapStreak(totals, now.toISOString().slice(0, 10)),
-      studentId: profile.id,
-      totals: mapProgressTotals(totals),
-      weeklyReview: weeklyReview ? mapWeeklyReviewSummary(weeklyReview) : null,
-    };
+      profile,
+      skills,
+      studentBadges,
+      totals: totalsRows[0],
+      weeklyReview,
+    });
   });
 
   app.get(
@@ -107,20 +94,12 @@ export async function registerProgressRoutes(
       // per-skill rollup beyond the score columns.
       const week = currentWeekRange();
       const activityDays = await database.listActivityDaysForStudents([profile.id], week);
-      const recentActivity = activityDays
-        .filter((day) => day.practicedSkills.includes(params.skillId))
-        .map((day) => ({
-          date: day.activityDate,
-          minutesPracticed: day.minutesPracticed,
-          wordsWritten: day.wordsWritten,
-        }));
-
-      return {
-        ...mapSkillProgress(skill),
-        recentActivity,
+      return mapStudentSkillDetailApiResponse({
+        activityDays,
+        skill,
+        skillId: params.skillId,
         studentId: profile.id,
-        updatedAt: skill.updatedAt,
-      };
+      });
     },
   );
 
@@ -135,12 +114,7 @@ export async function registerProgressRoutes(
       database.listStudentBadges(profile.id),
     ]);
 
-    return {
-      items: mapBadgeProgress(badges, studentBadges),
-      // Cursor pagination is not implemented yet; responses are capped at the
-      // first `limit` active badges.
-      nextCursor: null,
-    };
+    return mapStudentBadgesListApiResponse({ badges, studentBadges });
   });
 
   app.get("/students/:studentId/weekly-review", { preHandler: authenticate }, async (request) => {
@@ -165,15 +139,10 @@ export async function registerProgressRoutes(
       toDate: weeklyReview.weekEnd,
     });
 
-    return {
-      ...mapWeeklyReviewSummary(weeklyReview),
+    return mapWeeklyReviewDetailApiResponse({
+      activityDays,
       studentId: profile.id,
-      totals: {
-        assignmentsCompleted: activityDays.reduce((sum, day) => sum + day.assignmentsCompleted, 0),
-        minutesPracticed: activityDays.reduce((sum, day) => sum + day.minutesPracticed, 0),
-        revisionsCompleted: activityDays.reduce((sum, day) => sum + day.revisionsCompleted, 0),
-        wordsWritten: activityDays.reduce((sum, day) => sum + day.wordsWritten, 0),
-      },
-    };
+      weeklyReview,
+    });
   });
 }

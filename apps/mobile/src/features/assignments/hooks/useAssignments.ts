@@ -16,6 +16,7 @@ import type {
   AssignmentRecord,
   AssignmentSubmissionResponse,
 } from "../types";
+import type { AssignmentAttachment } from "../services/attachmentTypes";
 
 export type AssignmentHistoryDataState =
   | { status: "loading"; gradeBand: GradeBand; refetch: () => void }
@@ -38,7 +39,12 @@ export type AssignmentHistoryDataState =
 export type AssignmentDetailDataState =
   | { status: "loading"; gradeBand: GradeBand; refetch: () => void }
   | { status: "error"; gradeBand: GradeBand; refetch: () => void }
-  | { status: "missing"; gradeBand: GradeBand; refetch: () => void; viewModel: AssignmentDetailViewModel }
+  | {
+      status: "missing";
+      gradeBand: GradeBand;
+      refetch: () => void;
+      viewModel: AssignmentDetailViewModel;
+    }
   | {
       status: "success";
       gradeBand: GradeBand;
@@ -52,7 +58,12 @@ export type AssignmentDetailDataState =
 export type AssignmentSubmissionDataState =
   | { status: "loading"; gradeBand: GradeBand; refetch: () => void }
   | { status: "error"; gradeBand: GradeBand; refetch: () => void }
-  | { status: "missing"; gradeBand: GradeBand; refetch: () => void; viewModel: AssignmentDetailViewModel }
+  | {
+      status: "missing";
+      gradeBand: GradeBand;
+      refetch: () => void;
+      viewModel: AssignmentDetailViewModel;
+    }
   | {
       status: "success";
       gradeBand: GradeBand;
@@ -60,7 +71,10 @@ export type AssignmentSubmissionDataState =
       refetch: () => void;
       submitStatus: "idle" | "loading" | "error" | "success";
       submitResult: AssignmentSubmissionResponse | null;
-      submitAssignment: () => Promise<AssignmentSubmissionResponse | null>;
+      submitAssignment: (input?: {
+        attachments?: AssignmentAttachment[];
+        typedText?: string;
+      }) => Promise<AssignmentSubmissionResponse | null>;
       viewModel: AssignmentDetailViewModel;
     };
 
@@ -68,7 +82,9 @@ function getFallbackGradeBand(gradeLevel?: number): GradeBand {
   return gradeLevel ? typography.getGradeBandForGrade(gradeLevel) : "middle";
 }
 
-export function useAssignmentHistoryData(selectedTab: AssignmentHistoryTab): AssignmentHistoryDataState {
+export function useAssignmentHistoryData(
+  selectedTab: AssignmentHistoryTab,
+): AssignmentHistoryDataState {
   const { session } = useAuthSession();
   const studentId = session?.user.id ?? "local-student";
   const gradeLevel = session?.user.gradeLevel;
@@ -119,7 +135,9 @@ export function useAssignmentHistoryData(selectedTab: AssignmentHistoryTab): Ass
   };
 }
 
-export function useAssignmentDetailData(assignmentId?: string): AssignmentDetailDataState {
+export function useAssignmentDetailData(
+  assignmentId?: string,
+): AssignmentDetailDataState {
   const { session } = useAuthSession();
   const queryClient = useQueryClient();
   const studentId = session?.user.id ?? "local-student";
@@ -127,14 +145,28 @@ export function useAssignmentDetailData(assignmentId?: string): AssignmentDetail
   const fallbackGradeBand = getFallbackGradeBand(gradeLevel);
   const query = useQuery({
     enabled: Boolean(session && assignmentId),
-    queryFn: () => assignmentsApi.getAssignmentDetail({ assignmentId: assignmentId ?? "", gradeLevel, studentId }),
+    queryFn: () =>
+      assignmentsApi.getAssignmentDetail({
+        assignmentId: assignmentId ?? "",
+        gradeLevel,
+        studentId,
+      }),
     queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId],
   });
   const startMutation = useMutation({
-    mutationFn: () => assignmentsApi.startAssignment({ assignmentId: assignmentId ?? "", gradeLevel, studentId }),
+    mutationFn: () =>
+      assignmentsApi.startAssignment({
+        assignmentId: assignmentId ?? "",
+        gradeLevel,
+        studentId,
+      }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["assignments", studentId, gradeLevel] });
-      await queryClient.invalidateQueries({ queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["assignments", studentId, gradeLevel],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId],
+      });
     },
   });
   const refetch = () => {
@@ -188,7 +220,9 @@ export function useAssignmentDetailData(assignmentId?: string): AssignmentDetail
   };
 }
 
-export function useAssignmentSubmissionData(assignmentId?: string): AssignmentSubmissionDataState {
+export function useAssignmentSubmissionData(
+  assignmentId?: string,
+): AssignmentSubmissionDataState {
   const { session } = useAuthSession();
   const queryClient = useQueryClient();
   const studentId = session?.user.id ?? "local-student";
@@ -196,14 +230,33 @@ export function useAssignmentSubmissionData(assignmentId?: string): AssignmentSu
   const fallbackGradeBand = getFallbackGradeBand(gradeLevel);
   const query = useQuery({
     enabled: Boolean(session && assignmentId),
-    queryFn: () => assignmentsApi.getAssignmentDetail({ assignmentId: assignmentId ?? "", gradeLevel, studentId }),
+    queryFn: () =>
+      assignmentsApi.getAssignmentDetail({
+        assignmentId: assignmentId ?? "",
+        gradeLevel,
+        studentId,
+      }),
     queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId],
   });
   const submitMutation = useMutation({
-    mutationFn: () => assignmentsApi.submitAssignment({ assignmentId: assignmentId ?? "", gradeLevel, studentId }),
+    mutationFn: (input?: {
+      attachments?: AssignmentAttachment[];
+      typedText?: string;
+    }) =>
+      assignmentsApi.submitAssignment({
+        attachments: input?.attachments,
+        assignmentId: assignmentId ?? "",
+        gradeLevel,
+        studentId,
+        typedText: input?.typedText,
+      }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["assignments", studentId, gradeLevel] });
-      await queryClient.invalidateQueries({ queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["assignments", studentId, gradeLevel],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["assignment-detail", studentId, gradeLevel, assignmentId],
+      });
     },
   });
   const refetch = () => {
@@ -239,9 +292,12 @@ export function useAssignmentSubmissionData(assignmentId?: string): AssignmentSu
     isRefreshing: query.isFetching,
     refetch,
     status: "success",
-    submitAssignment: async () => {
+    submitAssignment: async (input?: {
+      attachments?: AssignmentAttachment[];
+      typedText?: string;
+    }) => {
       try {
-        return await submitMutation.mutateAsync();
+        return await submitMutation.mutateAsync(input);
       } catch {
         return null;
       }

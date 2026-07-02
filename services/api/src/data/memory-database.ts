@@ -23,6 +23,7 @@ import type {
   ListSubmissionQueueOptions,
   ParentLinkedStudentRecord,
   PublishFeedbackInput,
+  RecordAiCoachInteractionInput,
   RevisionTaskRecord,
   ReviewJobRecord,
   RubricCriterionRecord,
@@ -103,6 +104,11 @@ export interface MemoryDatabaseSeed {
   weeklyReviews?: WeeklyReviewRecord[];
 }
 
+export interface MemoryAiCoachInteraction extends RecordAiCoachInteractionInput {
+  createdAt: string;
+  id: string;
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -117,6 +123,7 @@ function nowIso(): string {
  */
 export class MemoryDatabase implements Database {
   readonly activityDays: StudentActivityDayRecord[];
+  readonly aiCoachInteractions: MemoryAiCoachInteraction[] = [];
   readonly assignments: AssignmentRecord[];
   readonly badges: BadgeRecord[];
   readonly canvasDocuments: CanvasDocumentRecord[];
@@ -1037,6 +1044,14 @@ export class MemoryDatabase implements Database {
     }
 
     return details;
+  }
+
+  async recordAiCoachInteraction(input: RecordAiCoachInteractionInput): Promise<void> {
+    this.aiCoachInteractions.push({
+      ...input,
+      createdAt: nowIso(),
+      id: randomUUID(),
+    });
   }
 
   async saveDraft(input: SaveDraftInput): Promise<DraftRecord> {

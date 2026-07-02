@@ -69,6 +69,34 @@ Motion tokens use explicit names:
 
 These tokens are available from `apps/mobile/src/design/tokens/motion.ts`.
 
+## Responsive Layout
+
+The shared layout tokens in `apps/mobile/src/design/tokens/spacing.ts` define
+tablet-first breakpoints and screen widths:
+
+- `layout.breakpoints.tablet` is `768`.
+- `layout.breakpoints.desktop` is `1024`.
+- `layout.screenPadding.phone` is `20`.
+- `layout.screenPadding.tablet` is `40`.
+- `layout.maxContentWidth` is the phone/narrow fallback content width.
+- `layout.maxTabletContentWidth` is the default tablet content canvas.
+- `layout.maxReadableWidth` keeps headings and long educational copy readable.
+
+`Screen` defaults to `contentWidth="wide"`, so tablet screens use the wider
+tablet canvas automatically while title/subtitle copy remains readable. Use
+`contentWidth="readable"` for focused forms or long-form text, and
+`contentWidth="full"` only for intentional full-bleed tools such as drawing or
+immersive practice surfaces.
+
+Shared responsive helpers live in:
+
+```txt
+apps/mobile/src/shared/utils/responsive.ts
+```
+
+Feature screens should use `getResponsiveColumnCount` for archive grids and
+summary lists instead of hardcoding tablet breakpoints locally.
+
 ## Shared Components
 
 Shared, feature-agnostic UI components live in:

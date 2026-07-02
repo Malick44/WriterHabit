@@ -1,4 +1,8 @@
-import type { GradeLevel, WritingGoal, WritingSkill } from "@WriterHabit/shared";
+import type {
+  GradeLevel,
+  WritingGoal,
+  WritingSkill,
+} from "@WriterHabit/shared";
 import { z } from "zod";
 
 import { apiClient } from "@/core/api/apiClient";
@@ -19,6 +23,7 @@ import {
   type DailyAssignmentHistoryItem,
   type DailyAssignmentTemplate,
 } from "../services/dailyAssignmentService";
+import type { AssignmentAttachment } from "../services/attachmentTypes";
 
 /** Newest-first cap so history fetches stay bounded for long-running students. */
 const ASSIGNMENT_HISTORY_PAGE_SIZE = 50;
@@ -33,11 +38,28 @@ interface AssignmentDetailRequestInput extends AssignmentRequestInput {
 }
 
 interface AssignmentSubmitRequestInput extends AssignmentDetailRequestInput {
+  attachments?: AssignmentAttachment[];
   canvasDocumentIds?: string[];
   clientDraftVersion?: number;
   idempotencyKey?: string;
   typedText?: string;
 }
+
+export type SubmissionAttachmentMetadataRow = {
+  client_attachment_id: string;
+  extracted_text_excerpt: string | null;
+  extraction_status: AssignmentAttachment["extraction"]["status"];
+  kind: AssignmentAttachment["kind"];
+  mime_type: string | null;
+  name: string;
+  size_bytes: number | null;
+  storage_bucket: "submission-attachments";
+  storage_object_path: string | null;
+  student_profile_id: string;
+  submission_id: string;
+  upload_status: "failed" | "not_uploaded" | "uploaded";
+  uploaded_at: string | null;
+};
 
 interface AssignmentDraftSaveRequestInput extends AssignmentDetailRequestInput {
   autosaveVersion: number;
@@ -59,6 +81,18 @@ const backendSubmissionResponseSchema = z.object({
   studentAssignmentId: z.string().min(1),
 });
 
+const maxAttachmentNameLength = 240;
+const maxAttachmentMimeTypeLength = 120;
+const maxAttachmentTextExcerptLength = 1000;
+const maxSubmissionAttachmentSizeBytes = 10_000_000;
+const submissionAttachmentStorageBucket = "submission-attachments";
+
+type SubmissionAttachmentUploadResult = {
+  objectPath: string | null;
+  status: SubmissionAttachmentMetadataRow["upload_status"];
+  uploadedAt: string | null;
+};
+
 function encodePathSegment(value: string): string {
   return encodeURIComponent(value);
 }
@@ -67,8 +101,206 @@ function createClientIdempotencyKey(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function compactWhitespace(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function truncateText(value: string, maxLength: number): string {
+  return value.length <= maxLength
+    ? value
+    : value.slice(0, maxLength).trimEnd();
+}
+
+function sanitizeStorageSegment(value: string): string {
+  const sanitized = value
+    .normalize("NFKD")
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+
+  return sanitized || "attachment";
+}
+
+function inferAttachmentMimeType(attachment: AssignmentAttachment): string {
+  if (attachment.mimeType) {
+    return attachment.mimeType;
+  }
+
+  const lowerName = attachment.name.toLowerCase();
+
+  if (lowerName.endsWith(".pdf")) {
+    return "application/pdf";
+  }
+
+  if (lowerName.endsWith(".png")) {
+    return "image/png";
+  }
+
+  if (lowerName.endsWith(".heic")) {
+    return "image/heic";
+  }
+
+  if (lowerName.endsWith(".heif")) {
+    return "image/heif";
+  }
+
+  return "image/jpeg";
+}
+
+function getAttachmentStorageObjectPath(input: {
+  attachment: AssignmentAttachment;
+  submissionId: string;
+  userId: string;
+}): string {
+  const nameParts = input.attachment.name.split(".");
+  const extension = nameParts.length > 1 ? nameParts.pop() : inferAttachmentMimeType(input.attachment).split("/").pop();
+  const baseName = nameParts.join(".") || input.attachment.name;
+  const suffix = extension ? `.${sanitizeStorageSegment(extension).slice(0, 16)}` : "";
+
+  return [
+    input.userId,
+    "submissions",
+    input.submissionId,
+    `${sanitizeStorageSegment(input.attachment.id)}-${sanitizeStorageSegment(baseName)}${suffix}`,
+  ].join("/");
+}
+
+async function uploadSubmissionAttachment(input: {
+  attachment: AssignmentAttachment;
+  submissionId: string;
+  userId: string;
+}): Promise<SubmissionAttachmentUploadResult> {
+  if (
+    input.attachment.sizeBytes !== undefined &&
+    input.attachment.sizeBytes > maxSubmissionAttachmentSizeBytes
+  ) {
+    return { objectPath: null, status: "failed", uploadedAt: null };
+  }
+
+  const objectPath = getAttachmentStorageObjectPath(input);
+
+  try {
+    const response = await fetch(input.attachment.uri);
+    if (!response.ok) {
+      throw new Error("Attachment file could not be read for upload");
+    }
+
+    const blob = await response.blob();
+    const { error } = await supabase.storage
+      .from(submissionAttachmentStorageBucket)
+      .upload(objectPath, blob, {
+        contentType: inferAttachmentMimeType(input.attachment),
+        upsert: true,
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      objectPath,
+      status: "uploaded",
+      uploadedAt: new Date().toISOString(),
+    };
+  } catch {
+    return { objectPath, status: "failed", uploadedAt: null };
+  }
+}
+
+async function uploadSubmissionAttachments(input: {
+  attachments?: AssignmentAttachment[];
+  submissionId: string;
+  userId: string;
+}): Promise<Map<string, SubmissionAttachmentUploadResult>> {
+  const results = new Map<string, SubmissionAttachmentUploadResult>();
+
+  if (!input.attachments || input.attachments.length === 0) {
+    return results;
+  }
+
+  await Promise.all(
+    input.attachments.map(async (attachment) => {
+      results.set(
+        attachment.id,
+        await uploadSubmissionAttachment({
+          attachment,
+          submissionId: input.submissionId,
+          userId: input.userId,
+        }),
+      );
+    }),
+  );
+
+  return results;
+}
+
+export function buildSubmissionAttachmentMetadataRows(input: {
+  attachments: AssignmentAttachment[];
+  studentProfileId: string;
+  submissionId: string;
+  uploadResults?: Map<string, SubmissionAttachmentUploadResult>;
+}): SubmissionAttachmentMetadataRow[] {
+  return input.attachments.map((attachment) => {
+    const extractedText = compactWhitespace(attachment.extraction.text);
+    const mimeType = attachment.mimeType
+      ? truncateText(attachment.mimeType, maxAttachmentMimeTypeLength)
+      : null;
+    const uploadResult = input.uploadResults?.get(attachment.id);
+
+    return {
+      client_attachment_id: attachment.id,
+      extracted_text_excerpt: extractedText
+        ? truncateText(extractedText, maxAttachmentTextExcerptLength)
+        : null,
+      extraction_status: attachment.extraction.status,
+      kind: attachment.kind,
+      mime_type: mimeType,
+      name: truncateText(
+        compactWhitespace(attachment.name) || attachment.kind,
+        maxAttachmentNameLength,
+      ),
+      size_bytes: Number.isFinite(attachment.sizeBytes)
+        ? Math.max(0, Math.floor(attachment.sizeBytes ?? 0))
+        : null,
+      storage_bucket: submissionAttachmentStorageBucket,
+      storage_object_path: uploadResult?.objectPath ?? null,
+      student_profile_id: input.studentProfileId,
+      submission_id: input.submissionId,
+      upload_status: uploadResult?.status ?? "not_uploaded",
+      uploaded_at: uploadResult?.uploadedAt ?? null,
+    };
+  });
+}
+
+async function persistSubmissionAttachmentMetadata(input: {
+  attachments?: AssignmentAttachment[];
+  studentProfileId: string;
+  submissionId: string;
+  uploadResults?: Map<string, SubmissionAttachmentUploadResult>;
+}): Promise<void> {
+  if (!input.attachments || input.attachments.length === 0) {
+    return;
+  }
+
+  const rows = buildSubmissionAttachmentMetadataRows({
+    attachments: input.attachments,
+    studentProfileId: input.studentProfileId,
+    submissionId: input.submissionId,
+    uploadResults: input.uploadResults,
+  });
+  const { error } = await supabase.from("submission_attachments").upsert(rows, {
+    onConflict: "submission_id,client_attachment_id",
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
 function readScenario(): AssignmentScenario {
-  const parsed = assignmentScenarioSchema.safeParse(process.env.EXPO_PUBLIC_WriterHabit_ASSIGNMENTS_SCENARIO);
+  const parsed = assignmentScenarioSchema.safeParse(
+    process.env.EXPO_PUBLIC_WriterHabit_ASSIGNMENTS_SCENARIO,
+  );
 
   return parsed.success ? parsed.data : "success";
 }
@@ -79,7 +311,11 @@ function getGradeLevel(input: AssignmentRequestInput): GradeLevel {
 
 function getDailyAssignmentGoals(gradeLevel: GradeLevel): WritingGoal[] {
   if (gradeLevel <= 5) {
-    return ["write_better_sentences", "creative_writing", "improve_handwriting"];
+    return [
+      "write_better_sentences",
+      "creative_writing",
+      "improve_handwriting",
+    ];
   }
 
   if (gradeLevel <= 8) {
@@ -113,7 +349,9 @@ function getDailyPracticeMinutes(gradeLevel: GradeLevel): number {
   return 25;
 }
 
-function createDailyAssignmentHistory(gradeLevel: GradeLevel): DailyAssignmentHistoryItem[] {
+function createDailyAssignmentHistory(
+  gradeLevel: GradeLevel,
+): DailyAssignmentHistoryItem[] {
   if (gradeLevel <= 5) {
     return [
       {
@@ -198,7 +436,8 @@ function createCurrentDraft(
     return {
       canvasPageCount: 0,
       lastEditedLabel: "Saved 18 minutes ago",
-      preview: "Practice matters more because people can improve with feedback...",
+      preview:
+        "Practice matters more because people can improve with feedback...",
       revisionNumber: 1,
       wordCount: 96,
     };
@@ -207,7 +446,8 @@ function createCurrentDraft(
   return {
     canvasPageCount: 0,
     lastEditedLabel: "Saved 25 minutes ago",
-    preview: "Technology affects learning most when it gives students faster feedback...",
+    preview:
+      "Technology affects learning most when it gives students faster feedback...",
     revisionNumber: 2,
     wordCount: 184,
   };
@@ -217,7 +457,10 @@ function getCurrentSubmissionId(assignmentId: string): string {
   return `submission-${assignmentId.replace(/^daily-/, "")}`;
 }
 
-function createCurrentAssignment(gradeLevel: GradeLevel, scenario: AssignmentScenario): AssignmentRecord {
+function createCurrentAssignment(
+  gradeLevel: GradeLevel,
+  scenario: AssignmentScenario,
+): AssignmentRecord {
   const status = scenario === "submitted" ? "submitted" : "in_progress";
   const selection = selectDailyAssignment({
     dailyMinutes: getDailyPracticeMinutes(gradeLevel),
@@ -232,7 +475,10 @@ function createCurrentAssignment(gradeLevel: GradeLevel, scenario: AssignmentSce
   return {
     assignedLabel: "Today",
     assignmentType: assignment.assignmentType,
-    currentSubmissionId: scenario === "submitted" ? getCurrentSubmissionId(assignment.id) : undefined,
+    currentSubmissionId:
+      scenario === "submitted"
+        ? getCurrentSubmissionId(assignment.id)
+        : undefined,
     difficulty: assignment.difficulty,
     draft: createCurrentDraft(assignment, gradeLevel),
     dueLabel: "Today",
@@ -271,11 +517,22 @@ function createReviewedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
       gradeLevelMax: 5,
       gradeLevelMin: 1,
       id: "reviewed-story-detail",
-      instructions: ["Read the feedback.", "Choose one sentence to make stronger."],
+      instructions: [
+        "Read the feedback.",
+        "Choose one sentence to make stronger.",
+      ],
       prompt: "Write a short story opening with two details about the setting.",
       rubric: [
-        { description: "The opening names a setting.", id: "setting", label: "Setting" },
-        { description: "Details help the reader picture the place.", id: "details", label: "Details" },
+        {
+          description: "The opening names a setting.",
+          id: "setting",
+          label: "Setting",
+        },
+        {
+          description: "Details help the reader picture the place.",
+          id: "details",
+          label: "Details",
+        },
       ],
       rubricId: "rubric-story-detail",
       skillFocus: ["creativity", "vocabulary"],
@@ -304,7 +561,10 @@ function createReviewedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
     estimatedMinutes: gradeLevel <= 8 ? 18 : 30,
     gradeLevelMax: gradeLevel <= 8 ? 8 : 12,
     gradeLevelMin: gradeLevel <= 8 ? 6 : 9,
-    id: gradeLevel <= 8 ? "reviewed-reading-response" : "reviewed-argument-response",
+    id:
+      gradeLevel <= 8
+        ? "reviewed-reading-response"
+        : "reviewed-argument-response",
     instructions: [
       "Review the strength and improvement note.",
       "Complete one revision task in your own words.",
@@ -315,22 +575,46 @@ function createReviewedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
         ? "Explain how daily reading affects vocabulary growth."
         : "Argue whether community service should be a graduation requirement.",
     rubric: [
-      { description: "The response has a focused claim.", id: "claim", label: "Claim" },
-      { description: "Details support the claim.", id: "support", label: "Support" },
-      { description: "Revision addresses feedback.", id: "revision", label: "Revision" },
+      {
+        description: "The response has a focused claim.",
+        id: "claim",
+        label: "Claim",
+      },
+      {
+        description: "Details support the claim.",
+        id: "support",
+        label: "Support",
+      },
+      {
+        description: "Revision addresses feedback.",
+        id: "revision",
+        label: "Revision",
+      },
     ],
-    rubricId: gradeLevel <= 8 ? "rubric-reading-response" : "rubric-argument-response",
-    skillFocus: gradeLevel <= 8 ? ["clarity", "organization"] : ["argument_strength", "evidence_usage"],
+    rubricId:
+      gradeLevel <= 8 ? "rubric-reading-response" : "rubric-argument-response",
+    skillFocus:
+      gradeLevel <= 8
+        ? ["clarity", "organization"]
+        : ["argument_strength", "evidence_usage"],
     status: "feedback_ready",
     submittedLabel: "Reviewed yesterday",
-    title: gradeLevel <= 8 ? "Reading response feedback" : "Argument response feedback",
+    title:
+      gradeLevel <= 8
+        ? "Reading response feedback"
+        : "Argument response feedback",
   };
 }
 
 function createSubmittedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
   return {
     assignedLabel: "This week",
-    assignmentType: gradeLevel <= 5 ? "handwriting_practice" : gradeLevel <= 8 ? "reading_response" : "test_prep",
+    assignmentType:
+      gradeLevel <= 5
+        ? "handwriting_practice"
+        : gradeLevel <= 8
+          ? "reading_response"
+          : "test_prep",
     currentSubmissionId: "submission-under-review",
     difficulty: gradeLevel <= 5 ? "easy" : "moderate",
     draft: {
@@ -348,17 +632,29 @@ function createSubmittedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
     gradeLevelMax: gradeLevel <= 5 ? 5 : gradeLevel <= 8 ? 8 : 12,
     gradeLevelMin: gradeLevel <= 5 ? 1 : gradeLevel <= 8 ? 6 : 9,
     id: "submitted-under-review",
-    instructions: ["Wait for feedback.", "You can review the assignment details while it is being checked."],
+    instructions: [
+      "Wait for feedback.",
+      "You can review the assignment details while it is being checked.",
+    ],
     prompt:
       gradeLevel <= 5
         ? "Practice writing five clear words on lined paper."
         : "Write a focused response using one detail from the passage.",
     rubric: [
-      { description: "The work responds to the prompt.", id: "prompt", label: "Prompt response" },
-      { description: "The response is ready for review.", id: "ready", label: "Ready for review" },
+      {
+        description: "The work responds to the prompt.",
+        id: "prompt",
+        label: "Prompt response",
+      },
+      {
+        description: "The response is ready for review.",
+        id: "ready",
+        label: "Ready for review",
+      },
     ],
     rubricId: "rubric-submitted-review",
-    skillFocus: gradeLevel <= 5 ? ["handwriting"] : ["reading_response", "clarity"],
+    skillFocus:
+      gradeLevel <= 5 ? ["handwriting"] : ["reading_response", "clarity"],
     status: "reviewing",
     submittedLabel: "Submitted 2 days ago",
     title: gradeLevel <= 5 ? "Handwriting practice" : "Reading response check",
@@ -368,7 +664,12 @@ function createSubmittedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
 function createNotStartedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
   return {
     assignedLabel: "Today",
-    assignmentType: gradeLevel <= 5 ? "creative_writing" : gradeLevel <= 8 ? "paragraph_writing" : "essay_writing",
+    assignmentType:
+      gradeLevel <= 5
+        ? "creative_writing"
+        : gradeLevel <= 8
+          ? "paragraph_writing"
+          : "essay_writing",
     difficulty: gradeLevel <= 5 ? "easy" : "moderate",
     draft: null,
     dueLabel: "Due in 3 days",
@@ -385,17 +686,32 @@ function createNotStartedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
         ? "Write a short story about a character who finds something surprising on the way to school."
         : "Write a narrative about a moment that changed how a character sees the world.",
     rubric: [
-      { description: "The writing has a clear beginning, middle, and ending.", id: "structure", label: "Structure" },
-      { description: "Details help the reader picture the story.", id: "details", label: "Details" },
+      {
+        description: "The writing has a clear beginning, middle, and ending.",
+        id: "structure",
+        label: "Structure",
+      },
+      {
+        description: "Details help the reader picture the story.",
+        id: "details",
+        label: "Details",
+      },
     ],
     rubricId: "rubric-not-started-narrative",
-    skillFocus: gradeLevel <= 5 ? ["creativity", "organization"] : ["organization", "clarity"],
+    skillFocus:
+      gradeLevel <= 5
+        ? ["creativity", "organization"]
+        : ["organization", "clarity"],
     status: "not_started",
-    title: gradeLevel <= 5 ? "My Surprising Morning" : "A Moment That Changed Me",
+    title:
+      gradeLevel <= 5 ? "My Surprising Morning" : "A Moment That Changed Me",
   };
 }
 
-function createAssignments(input: AssignmentRequestInput, scenario: AssignmentScenario): AssignmentRecord[] {
+function createAssignments(
+  input: AssignmentRequestInput,
+  scenario: AssignmentScenario,
+): AssignmentRecord[] {
   const gradeLevel = getGradeLevel(input);
 
   if (scenario === "empty") {
@@ -410,7 +726,10 @@ function createAssignments(input: AssignmentRequestInput, scenario: AssignmentSc
   ];
 }
 
-function createHistoryResponse(input: AssignmentRequestInput, scenario: AssignmentScenario): AssignmentHistoryResponse {
+function createHistoryResponse(
+  input: AssignmentRequestInput,
+  scenario: AssignmentScenario,
+): AssignmentHistoryResponse {
   const response: AssignmentHistoryResponse = {
     assignments: createAssignments(input, scenario),
     connectionStatus: scenario === "offline" ? "offline_cached" : "online",
@@ -423,7 +742,9 @@ function createHistoryResponse(input: AssignmentRequestInput, scenario: Assignme
 }
 
 export const assignmentsApi = {
-  async getBackendDraft(input: AssignmentDetailRequestInput): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
+  async getBackendDraft(
+    input: AssignmentDetailRequestInput,
+  ): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
     const detail = await this.getAssignmentDetail(input);
     const studentAssignmentId = detail.assignment?.studentAssignmentId;
 
@@ -432,15 +753,20 @@ export const assignmentsApi = {
     }
 
     try {
-      return await apiClient.get(`/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`, {
-        schema: backendDraftResponseSchema,
-      });
+      return await apiClient.get(
+        `/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`,
+        {
+          schema: backendDraftResponseSchema,
+        },
+      );
     } catch {
       return null;
     }
   },
 
-  async saveBackendDraft(input: AssignmentDraftSaveRequestInput): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
+  async saveBackendDraft(
+    input: AssignmentDraftSaveRequestInput,
+  ): Promise<z.infer<typeof backendDraftResponseSchema> | null> {
     const detail = await this.getAssignmentDetail(input);
     const studentAssignmentId = detail.assignment?.studentAssignmentId;
 
@@ -463,7 +789,9 @@ export const assignmentsApi = {
     }
   },
 
-  async getAssignments(input: AssignmentRequestInput): Promise<AssignmentHistoryResponse> {
+  async getAssignments(
+    input: AssignmentRequestInput,
+  ): Promise<AssignmentHistoryResponse> {
     const scenario = readScenario();
 
     if (scenario === "error") {
@@ -485,7 +813,13 @@ export const assignmentsApi = {
         .single();
 
       if (!profile) {
-        return createHistoryResponse(input, scenario);
+        return assignmentHistoryResponseSchema.parse({
+          assignments: [],
+          connectionStatus: "online",
+          generatedAt: new Date().toISOString(),
+          gradeLevel: getGradeLevel(input),
+          studentId: input.studentId,
+        });
       }
 
       const { data: saList } = await supabase
@@ -496,7 +830,13 @@ export const assignmentsApi = {
         .limit(ASSIGNMENT_HISTORY_PAGE_SIZE);
 
       if (!saList || saList.length === 0) {
-        return createHistoryResponse(input, scenario);
+        return assignmentHistoryResponseSchema.parse({
+          assignments: [],
+          connectionStatus: "online",
+          generatedAt: new Date().toISOString(),
+          gradeLevel: profile.grade_level as GradeLevel,
+          studentId: input.studentId,
+        });
       }
 
       const list: AssignmentRecord[] = await Promise.all(
@@ -504,11 +844,15 @@ export const assignmentsApi = {
           // Fetch draft details if any
           const { data: draft } = await supabase
             .from("writing_drafts")
-            .select("canvas_document_ids, text_preview, revision_number, word_count")
+            .select(
+              "canvas_document_ids, text_preview, revision_number, word_count",
+            )
             .eq("student_assignment_id", sa.id)
             .maybeSingle();
 
-          const rubricItems = (sa.assignments.rubrics?.rubric_criteria ?? []).map((c: any) => ({
+          const rubricItems = (
+            sa.assignments.rubrics?.rubric_criteria ?? []
+          ).map((c: any) => ({
             id: c.id,
             label: c.label_fallback,
             description: c.description_fallback,
@@ -521,14 +865,16 @@ export const assignmentsApi = {
             difficulty: sa.assignments.difficulty,
             draft: draft
               ? {
-                canvasPageCount: draft.canvas_document_ids?.length || 0,
-                lastEditedLabel: "Saved recently",
-                preview: draft.text_preview || "Start writing...",
-                revisionNumber: draft.revision_number || 1,
-                wordCount: draft.word_count || 0,
-              }
+                  canvasPageCount: draft.canvas_document_ids?.length || 0,
+                  lastEditedLabel: "Saved recently",
+                  preview: draft.text_preview || "Start writing...",
+                  revisionNumber: draft.revision_number || 1,
+                  wordCount: draft.word_count || 0,
+                }
               : null,
-            dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
+            dueLabel: sa.due_at
+              ? new Date(sa.due_at).toLocaleDateString()
+              : "Today",
             estimatedMinutes: sa.assignments.estimated_minutes,
             gradeLevelMax: sa.assignments.grade_level_max,
             gradeLevelMin: sa.assignments.grade_level_min,
@@ -555,12 +901,16 @@ export const assignmentsApi = {
         studentId: input.studentId,
       });
     } catch (err) {
-      console.error("Failed to query assignments list, returning mock:", err);
-      return createHistoryResponse(input, scenario);
+      if ((globalThis as { __DEV__?: boolean }).__DEV__ === true) {
+        console.debug("Failed to query Supabase assignments list.", err);
+      }
+      throw err;
     }
   },
 
-  async getAssignmentDetail(input: AssignmentDetailRequestInput): Promise<AssignmentDetailResponse> {
+  async getAssignmentDetail(
+    input: AssignmentDetailRequestInput,
+  ): Promise<AssignmentDetailResponse> {
     const scenario = readScenario();
 
     if (scenario === "error") {
@@ -573,7 +923,10 @@ export const assignmentsApi = {
     if (!session) {
       const assignments = createAssignments(input, scenario);
       return {
-        assignment: assignments.find((assignment) => assignment.id === input.assignmentId) ?? null,
+        assignment:
+          assignments.find(
+            (assignment) => assignment.id === input.assignmentId,
+          ) ?? null,
         connectionStatus: scenario === "offline" ? "offline_cached" : "online",
         generatedAt: new Date().toISOString(),
         gradeLevel: getGradeLevel(input),
@@ -589,7 +942,13 @@ export const assignmentsApi = {
         .single();
 
       if (!profile) {
-        throw new Error("Student profile not found");
+        return {
+          assignment: null,
+          connectionStatus: "online",
+          generatedAt: new Date().toISOString(),
+          gradeLevel: getGradeLevel(input),
+          studentId: input.studentId,
+        };
       }
 
       const { data: sa } = await supabase
@@ -600,7 +959,13 @@ export const assignmentsApi = {
         .single();
 
       if (!sa) {
-        throw new Error("Student assignment not found");
+        return {
+          assignment: null,
+          connectionStatus: "online",
+          generatedAt: new Date().toISOString(),
+          gradeLevel: profile.grade_level as GradeLevel,
+          studentId: input.studentId,
+        };
       }
 
       const { data: draft } = await supabase
@@ -609,11 +974,13 @@ export const assignmentsApi = {
         .eq("student_assignment_id", sa.id)
         .maybeSingle();
 
-      const rubricItems = (sa.assignments.rubrics?.rubric_criteria ?? []).map((c: any) => ({
-        id: c.id,
-        label: c.label_fallback,
-        description: c.description_fallback,
-      }));
+      const rubricItems = (sa.assignments.rubrics?.rubric_criteria ?? []).map(
+        (c: any) => ({
+          id: c.id,
+          label: c.label_fallback,
+          description: c.description_fallback,
+        }),
+      );
 
       const record: AssignmentRecord = {
         assignedLabel: "Assigned",
@@ -622,14 +989,16 @@ export const assignmentsApi = {
         difficulty: sa.assignments.difficulty,
         draft: draft
           ? {
-            canvasPageCount: draft.canvas_document_ids?.length || 0,
-            lastEditedLabel: "Saved recently",
-            preview: draft.text_preview || "Start writing...",
-            revisionNumber: draft.revision_number || 1,
-            wordCount: draft.word_count || 0,
-          }
+              canvasPageCount: draft.canvas_document_ids?.length || 0,
+              lastEditedLabel: "Saved recently",
+              preview: draft.text_preview || "Start writing...",
+              revisionNumber: draft.revision_number || 1,
+              wordCount: draft.word_count || 0,
+            }
           : null,
-        dueLabel: sa.due_at ? new Date(sa.due_at).toLocaleDateString() : "Today",
+        dueLabel: sa.due_at
+          ? new Date(sa.due_at).toLocaleDateString()
+          : "Today",
         estimatedMinutes: sa.assignments.estimated_minutes,
         gradeLevelMax: sa.assignments.grade_level_max,
         gradeLevelMin: sa.assignments.grade_level_min,
@@ -654,19 +1023,16 @@ export const assignmentsApi = {
         studentId: input.studentId,
       });
     } catch (err) {
-      console.error("Failed to query assignment detail, returning mock:", err);
-      const assignments = createAssignments(input, scenario);
-      return {
-        assignment: assignments.find((assignment) => assignment.id === input.assignmentId) ?? null,
-        connectionStatus: "online",
-        generatedAt: new Date().toISOString(),
-        gradeLevel: getGradeLevel(input),
-        studentId: input.studentId,
-      };
+      if ((globalThis as { __DEV__?: boolean }).__DEV__ === true) {
+        console.debug("Failed to query Supabase assignment detail.", err);
+      }
+      throw err;
     }
   },
 
-  async startAssignment(input: AssignmentDetailRequestInput): Promise<AssignmentRecord> {
+  async startAssignment(
+    input: AssignmentDetailRequestInput,
+  ): Promise<AssignmentRecord> {
     const { data: authData } = await supabase.auth.getSession();
     const session = authData?.session;
 
@@ -685,11 +1051,14 @@ export const assignmentsApi = {
     );
 
     const updated = await this.getAssignmentDetail(input);
-    if (!updated.assignment) throw new Error("Failed to load updated assignment");
+    if (!updated.assignment)
+      throw new Error("Failed to load updated assignment");
     return updated.assignment;
   },
 
-  async submitAssignment(input: AssignmentSubmitRequestInput): Promise<AssignmentSubmissionResponse> {
+  async submitAssignment(
+    input: AssignmentSubmitRequestInput,
+  ): Promise<AssignmentSubmissionResponse> {
     const { data: authData } = await supabase.auth.getSession();
     const session = authData?.session;
 
@@ -713,19 +1082,26 @@ export const assignmentsApi = {
 
     const backendDraft =
       input.typedText === undefined
-        ? await apiClient.get(`/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`, {
-            schema: backendDraftResponseSchema,
-          })
+        ? await apiClient.get(
+            `/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`,
+            {
+              schema: backendDraftResponseSchema,
+            },
+          )
         : null;
     const typedText = input.typedText ?? backendDraft?.text ?? "";
-    const canvasDocumentIds = input.canvasDocumentIds ?? backendDraft?.canvasDocumentIds ?? [];
-    const clientDraftVersion = input.clientDraftVersion ?? backendDraft?.autosaveVersion ?? 1;
+    const canvasDocumentIds =
+      input.canvasDocumentIds ?? backendDraft?.canvasDocumentIds ?? [];
+    const clientDraftVersion =
+      input.clientDraftVersion ?? backendDraft?.autosaveVersion ?? 1;
     const response = await apiClient.post(
       `/student-assignments/${encodePathSegment(studentAssignmentId)}/submissions`,
       {
         canvasDocumentIds,
         clientDraftVersion,
-        idempotencyKey: input.idempotencyKey ?? createClientIdempotencyKey(`submit-${studentAssignmentId}`),
+        idempotencyKey:
+          input.idempotencyKey ??
+          createClientIdempotencyKey(`submit-${studentAssignmentId}`),
         typedText,
       },
       {
@@ -733,6 +1109,39 @@ export const assignmentsApi = {
         schema: backendSubmissionResponseSchema,
       },
     );
+
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from("student_profiles")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (typeof profile?.id === "string") {
+        const uploadResults = await uploadSubmissionAttachments({
+          attachments: input.attachments,
+          submissionId: response.id,
+          userId: session.user.id,
+        });
+        await persistSubmissionAttachmentMetadata({
+          attachments: input.attachments,
+          studentProfileId: profile.id,
+          submissionId: response.id,
+          uploadResults,
+        });
+      }
+    } catch (error) {
+      if ((globalThis as { __DEV__?: boolean }).__DEV__ === true) {
+        console.debug(
+          "Failed to persist submission attachment metadata.",
+          error,
+        );
+      }
+    }
 
     return {
       assignmentId: input.assignmentId,

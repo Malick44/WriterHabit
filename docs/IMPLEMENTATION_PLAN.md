@@ -144,7 +144,7 @@ Deliverables:
 - Complete launch routing.
 - Implement role-aware route guards in `apps/mobile/src/core/auth/roleGuards.ts`.
 - Persist Supabase authenticated session state through `apps/mobile/src/core/supabase/supabaseClient.ts`.
-- Store onboarding completion in Supabase auth metadata for the current foundation flow.
+- Store signed-in student onboarding completion in `student_profiles`, with minimal Supabase auth metadata retained only for the current mobile route gate.
 - Keep auth route files as thin exports.
 
 Definition of done:

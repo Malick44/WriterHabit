@@ -98,6 +98,43 @@ Last updated: 2026-06-11
   locally. `node scripts/supabase-migrations.mjs apply-and-verify` passed
   against the configured development Supabase on 2026-06-11.
 - Every task should start by reading `AGENTS.md`, `docs/00_CONTEXT_BRIEF.md`, `prompts/01_master_agent_rules.md`, and `.codex/EXECUTION_STATE.md`.
+- Current local Supabase consolidation work has moved additional signed-in
+  student surfaces off fixed fixtures: profile tab summary reads
+  `student_profiles`, `student_progress_totals`, and `student_badges`; Grade 3
+  progress, revision drafts, student messages, practice completions/evidence,
+  canvas, AI coach interactions, onboarding/profile preferences, assignments
+  including upload-flow extracted/edited response text, student home, progress
+  dashboard, parent dashboard/report/review read models, and teacher dashboard/
+  assignment/submission/class-progress/review read models have signed-in
+  Supabase/backend persistence paths for the logged dev user's student rows;
+  parent settings read/write the same user's `parent_settings` row; teacher
+  assignment creation writes teacher-owned rubric/criteria/assignment plus a
+  same-dev-student `student_assignments` row; and teacher comments insert
+  `teacher_submission_comments` through the same user's seeded teacher profile
+  and class roster. Signed-in onboarding partial recovery, including the
+  pre-grade role step, syncs through `users.onboarding_progress` added by
+  `202606110015_user_onboarding_progress.sql`. Teacher dashboard insight
+  dismissal syncs through `teacher_profiles.dashboard_preferences` added by
+  `202606110014_teacher_profile_dashboard_preferences.sql`. Signed-in
+  canvas saves now upload editable stroke-document JSON artifacts to the private
+  `canvas-artifacts` Supabase Storage bucket through
+  `202606110013_canvas_artifact_storage.sql`.
+  Practice evidence metadata is drafted in
+  `202606110011_practice_session_evidence.sql`, and signed-in submission
+  attachment evidence now writes selected file/photo bytes to the private
+  `submission-attachments` Supabase Storage bucket with bounded metadata,
+  object path, and upload status in
+  `202606110012_submission_attachment_metadata.sql`. The dev-user seed script
+  now uploads seeded canvas and submission-attachment Storage objects after SQL
+  seeding, marks the seeded attachment row uploaded, and fails if the required
+  dev-user table counts, including content/detail/progress/notification/parent
+  settings/teacher profile/dashboard preferences/class/roster/entitlement/AI
+  surfaces, Storage objects, or attachment upload state are missing.
+  `node scripts/seed-dev-user-supabase.mjs verify` reruns that verification
+  without mutating seeded data. Live migration/seed verification is currently
+  blocked until
+  `.env.supabase-admin` contains `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Completed Work
 
@@ -579,21 +616,25 @@ Test status: Jest is configured with the Expo preset and has smoke coverage for 
 - Auth feature screens, form validation, and demo-role entry points live in `apps/mobile/src/features/auth/`.
 - Student onboarding progress, validation, and plan generation live in `apps/mobile/src/features/onboarding/`.
 - Student home dashboard data, state, view-model logic, and cards live in `apps/mobile/src/features/student-home/`.
-- Current student home data is deterministic mock/API data validated with Zod. Backend revision-completion workflows now persist progress totals and activity-day updates; full dashboard read-model sync remains future work.
+- Current student home data has a signed-in Supabase read branch for the logged student's profile, progress totals, skill progress, assignments, drafts, and recent feedback; no-session/demo dashboard data remains deterministic/mock. Backend revision-completion workflows persist progress totals and activity-day updates.
 - Assignment history, detail, status transitions, and submission confirmation live in `apps/mobile/src/features/assignments/`.
-- Current assignment data is deterministic mock/API data validated with Zod. Authenticated start/submission/review/revision-completion mutations are backend-owned workflow transitions.
-- Typed writing workspace, local draft autosave, recovery states, writing metrics, rubric checklist, canvas preview, and safe coach entry points live in `apps/mobile/src/features/writing-workspace/`.
-- Current writing drafts are device-local, non-secret data persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and capped before storage. Backend draft persistence remains future work.
+- Current assignment history/detail reads have signed-in Supabase branches for the logged student's seeded assignment rows; no-session/demo assignment data remains deterministic/mock. Authenticated start/submission/review/revision-completion mutations are backend-owned workflow transitions.
+- Typed writing workspace, Supabase-backed signed-in draft autosave, local recovery states, writing metrics, rubric checklist, canvas preview, and safe coach entry points live in `apps/mobile/src/features/writing-workspace/`.
+- Current writing drafts persist to Supabase `writing_drafts` for signed-in sessions and fall back to `apps/mobile/src/services/storage/localJsonStorage.ts` for no-session or failed remote saves. Drafts are validated with Zod and capped before storage.
 - Student writing submission currently validates non-empty student text and calls the backend submission workflow before routing to AI review loading. Backend feedback review uses a deterministic mock AI provider until production model/provider infrastructure is wired.
 - Canvas home, template picker, handwriting/drawing adapter, toolbar, local autosave, attachment, bounded undo/redo, and canvas persistence live in `apps/mobile/src/features/canvas/`.
-- Current canvas documents are device-local, non-secret stroke documents persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and bounded to 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots. Backend canvas sync, preview image export, object storage, and handwriting recognition remain future work.
+- Current canvas documents are local-first, non-secret stroke documents persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`, validated with Zod, and bounded to 24 documents per student, 240 strokes per document, 16 points per stroke, and 12 undo snapshots. Signed-in sessions now sync canvas metadata and editable stroke JSON through backend canvas routes; preview image export, object storage upload/download, and handwriting recognition remain future work.
 - Prompt 26 adds same-student/same-assignment recovery for oversized local drafts, same-student canvas recovery for oversized stored stroke documents, per-summary canvas index filtering, shared offline/retry UI primitives, loading skeletons, bounded TanStack Query cache defaults, and history pagination placeholders. The mobile app still does not include a real network status listener dependency.
-- AI coach drawer, action state, bounded context builder, grade-aware prompt builder, policy service, deterministic mock API, and safety tests live in `apps/mobile/src/features/ai-coach/`.
-- Current AI coach responses are local deterministic mock coaching packets validated with Zod. They support explicit idle, loading, empty, error, offline, safety-blocked, and success states. Backend AI calls, usage limits, and metadata logging remain future work.
-- Current onboarding completion writes public Supabase auth metadata keys only; dedicated student profile tables/API persistence are future backend work.
+- AI coach drawer, action state, bounded context builder, grade-aware prompt builder, policy service, signed-in backend bridge, deterministic demo fallback, and safety tests live in `apps/mobile/src/features/ai-coach/`.
+- Signed-in AI coach requests call backend routes under `services/api/src/routes/ai-coach.ts`, use the deterministic backend AI provider for now, and persist request outcome metadata to `ai_coach_interactions`. Demo/no-session responses remain local deterministic coaching packets validated with Zod. Production external provider calls, durable workers, and production usage metering remain future work.
+- Current onboarding keeps local recovery data but syncs signed-in partial progress to `users.onboarding_progress`; once grade-level data exists, student progress and completion fields also sync to `student_profiles`. Public Supabase auth metadata remains only a non-secret mobile route-gate compatibility signal. Parent/teacher onboarding profiles and broader production profile hydration remain future backend work.
+- Grade 3 Writing Adventure progress now persists to Supabase `grade3_writing_progress` for signed-in student sessions through `apps/mobile/src/features/grade3-writing-adventure/services/grade3WritingProgressService.ts`, with the original Expo SQLite table retained for no-session and failed remote save fallback. Migration `202606110007_grade3_writing_progress.sql` adds the student-owned table, RLS policies, and indexes. The dev seed script includes sample Grade 3 rows once `.env.supabase-admin` is configured.
+- Feedback revision draft autosave now persists to Supabase `submission_revision_drafts` for signed-in student sessions through `apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`, with local JSON recovery retained for no-session and failed remote saves. Migration `202606110008_submission_revision_drafts.sql` adds the student-owned draft table. Final revision completion remains backend workflow-owned through `submission_revisions`.
+- Student messages now read Supabase `student_messages` for signed-in student sessions through `apps/mobile/src/features/messages/hooks/useStudentMessages.ts`, with localized demo fallback only when there is no auth session. Migration `202606110009_student_messages.sql` adds a student-visible, admin-managed messages table, and the dev seed script includes teacher/coach message rows.
+- Daily practice completion now persists to Supabase `practice_sessions` for signed-in student sessions through `apps/mobile/src/features/practice/hooks/usePracticeSession.ts`, with the visible completion streak derived from recent completed practice dates. Migration `202606110010_practice_sessions.sql` adds the student-owned practice completion table, and the dev seed script includes recent practice session rows.
 - Canonical localization lives in `apps/mobile/src/shared/i18n/`.
 - Accessibility helpers live in `apps/mobile/src/shared/utils/accessibility.ts`.
-- Accessibility settings are owned by `apps/mobile/src/features/profile-settings/accessibility/` and persisted through `apps/mobile/src/services/storage/preferencesStorage.ts`.
+- Accessibility settings are owned by `apps/mobile/src/features/profile-settings/accessibility/`, persisted locally through `apps/mobile/src/services/storage/preferencesStorage.ts` for recovery, and synced to `student_profiles.accessibility_settings` for signed-in student sessions.
 - Design token documentation and implementation use the canonical path:
 
 `apps/mobile/src/design/tokens/`

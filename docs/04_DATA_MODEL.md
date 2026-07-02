@@ -4,7 +4,9 @@ The planned backend database schema and relationship map now live in
 `services/api/docs/DATABASE_SCHEMA.md` and
 `services/api/docs/DATA_RELATIONSHIPS.md`, with draft Supabase/Postgres
 migrations in `services/api/migrations/`. This document continues to describe
-the product and mobile/API-facing TypeScript models.
+the product and mobile/API-facing TypeScript models. The current cross-layer
+TypeScript, Zod, local persistence, and backend record map is documented in
+`docs/DATA_STRUCTURES.md`.
 
 ## Core Entities
 
@@ -44,7 +46,7 @@ interface StudentProfile {
 }
 ```
 
-Current mobile onboarding persists in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts`. Completion writes non-secret public Supabase auth metadata keys: `onboarding_complete`, `grade_level`, `writing_goals`, `confidence_level`, and `daily_practice_minutes`; it does not write role or entitlement metadata. Mobile UX role and subscription state are mapped from trusted server-owned `app_metadata` only, with missing or invalid values defaulting to `student` and `free`. Student edit, goals, and language settings now sync through Supabase RPCs in `services/api/migrations/202606100001_profile_settings_notification_sync.sql`; broader onboarding records, parent links, teacher approvals, and production API hydration remain future backend work.
+Current mobile onboarding keeps recoverable in-progress setup locally through `apps/mobile/src/features/onboarding/stores/onboardingStore.ts` and syncs signed-in student profile progress to `student_profiles` when a profile/grade exists. Completion writes grade, writing goals, writing level, daily goal, and `onboarding_completed_at` to `student_profiles`; non-secret public Supabase auth metadata keeps only `onboarding_complete` and `grade_level` as current route-gate compatibility signals and does not include role, entitlement, writing-goal, confidence, or daily-practice values. Mobile UX role and subscription state are mapped from trusted server-owned `app_metadata` only, with missing or invalid values defaulting to `student` and `free`. Student edit, goals, language settings, and accessibility settings sync to `student_profiles` through Supabase RPCs or RLS-protected profile updates; parent links, teacher approvals, and production API hydration remain future backend work.
 
 Notification preferences are validated settings owned by
 `apps/mobile/src/features/profile-settings/services/notificationPreferencesService.ts`.
@@ -64,7 +66,14 @@ interface NotificationPreferences {
   weeklyReport: {
     enabled: boolean;
     timeOfDay: string;
-    weekday: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+    weekday:
+      | "sunday"
+      | "monday"
+      | "tuesday"
+      | "wednesday"
+      | "thursday"
+      | "friday"
+      | "saturday";
   };
 }
 ```
@@ -185,42 +194,55 @@ handwriting canvas entry, image/file upload entry, and guarded submission
 confirmation. Student-facing writing assignments and daily practice are
 handwriting-first: primary writing actions open canvas or upload/photo capture,
 while typed text remains a saved copy/transcription and compatibility path.
-Data is deterministic mock data; real assignment persistence and submission APIs
-remain future backend work.
+Signed-in assignment history/detail reads use Supabase assignment rows, and
+signed-in submissions call the backend workflow that persists
+`submissions`/`submission_contents` under the authenticated student profile.
+When the upload flow extracts or lets the student edit response text, that text
+is submitted through the same workflow. Signed-in upload submissions also store
+selected photo/file bytes in the private `submission-attachments` Supabase
+Storage bucket and bounded attachment metadata in `submission_attachments`,
+including upload status and object path, so the submitted evidence record does
+not disappear after the screen unmounts.
+No-session/demo assignment data remains deterministic mock data.
 
-### Grade 3 Writing Adventure Local Progress
+### Grade 3 Writing Adventure Progress
 
-The Grade 3 Writing Adventure is a local-first, no-login 30-day reading and
-writing program under `apps/mobile/src/features/grade3-writing-adventure/`.
+The Grade 3 Writing Adventure is a 30-day reading and writing program under
+`apps/mobile/src/features/grade3-writing-adventure/`.
 Program content is bundled in
 `apps/mobile/src/features/grade3-writing-adventure/content/grade3WritingProgram.content.ts`.
-Student progress is stored only on the device through Expo SQLite; it does not
-sync to Supabase and does not use AI grading.
+Signed-in student progress is stored in Supabase `grade3_writing_progress`
+under the student's `student_profile_id`. No-session and failed remote saves
+fall back to Expo SQLite. The flow does not use AI grading.
 
 ```sql
-CREATE TABLE IF NOT EXISTS grade3_writing_progress (
-  day INTEGER PRIMARY KEY NOT NULL,
-  draft TEXT,
-  stronger_sentence TEXT,
-  favorite_sentence TEXT,
-  checklist_json TEXT,
-  planning_json TEXT,
-  completed INTEGER DEFAULT 0,
-  updated_at TEXT NOT NULL
+create table if not exists public.grade3_writing_progress (
+  id uuid primary key default gen_random_uuid(),
+  student_profile_id uuid not null references public.student_profiles(id) on delete cascade,
+  day smallint not null,
+  draft text not null default '',
+  stronger_sentence text not null default '',
+  favorite_sentence text not null default '',
+  checklist jsonb not null default '{}'::jsonb,
+  planning jsonb not null default '{}'::jsonb,
+  completed boolean not null default false,
+  client_updated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 ```
 
 Day 1 is unlocked by default. Each next day unlocks after the previous day has
 `completed = 1`. The Grade 3 lesson route renders a focused internal step flow:
 Read, Talk, Plan, Write, Check, Submit, then a local celebration state.
-`planning_json` stores the Talk idea and beginning/middle/end planner fields.
+`planning` stores the Talk idea and beginning/middle/end planner fields.
 The `draft` field stores the student's typed daily writing and is sufficient for
 submission when the stronger sentence and checklist requirements are complete.
 Canvas and image upload remain optional handwriting supports, not required
-completion evidence. Library and badge screens read from the same local table.
+completion evidence. Library and badge screens read from the same progress
+service, which prefers Supabase for signed-in users and SQLite for fallback.
 The progress summary derives completed days, unlocked days, saved draft days,
-the ordered Day 1-forward streak, and named milestone badges from this local
-table.
+the ordered Day 1-forward streak, and named milestone badges from these rows.
 
 Daily assignment selection now lives in
 `apps/mobile/src/features/assignments/services/dailyAssignmentService.ts`. The
@@ -287,11 +309,11 @@ implementation work.
 
 ### WritingDraft
 
-The typed writing workspace currently uses a feature-owned local draft model in
-`apps/mobile/src/features/writing-workspace/types.ts`. Drafts are validated with
-Zod and persisted through `apps/mobile/src/services/storage/localJsonStorage.ts`,
-which uses the Expo SQLite localStorage install already available to the mobile
-runtime.
+The typed writing workspace uses a feature-owned draft model in
+`apps/mobile/src/features/writing-workspace/types.ts`. Signed-in drafts persist
+to Supabase `writing_drafts`; no-session and failed remote saves fall back to
+`apps/mobile/src/services/storage/localJsonStorage.ts`, which uses the Expo
+SQLite localStorage install already available to the mobile runtime.
 
 ```ts
 interface WritingDraft {
@@ -378,11 +400,12 @@ indexed per student, capped at 24 local documents, and each document is capped a
 
 Canvas sync orchestration lives in
 `apps/mobile/src/features/canvas/services/canvasSyncService.ts`. It saves local
-work before any backend attempt, tracks client/backend versions, records a
-placeholder object-storage path, and preserves the local document with
-`sync_failed` when backend sync fails. Deterministic signed upload and preview
-export placeholders exist; actual image/PDF generation, object upload execution,
-and handwriting recognition are future work.
+work before any backend attempt, tracks client/backend versions, uploads the
+editable stroke-document JSON artifact to the private `canvas-artifacts`
+Supabase Storage bucket for signed-in saves, and preserves the local document
+with `sync_failed` when backend sync fails. Deterministic preview export
+placeholders exist; actual image/PDF generation, preview object upload, and
+handwriting recognition are future work.
 
 Canvas attachment currently sets `assignmentId` locally and exposes a compact
 summary to the typed writing workspace so the assignment preview can show the
@@ -464,13 +487,14 @@ interface FeedbackReview {
 }
 ```
 
-Revision submission currently validates one focused student-written revised
-passage and returns a local completion payload. In-progress revision text is
-stored locally through
-`apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`
-and removed after successful revision submission. Progress earned is a
-local completion payload that can be viewed in the Prompt 15 progress dashboard;
-backend progress persistence and sync remain future API work.
+Revision submission validates one focused student-written revised passage.
+Signed-in completion goes through the backend revision workflow and writes
+`submission_revisions` plus progress side effects; no-session demo paths still
+return local completion payloads. In-progress revision text is stored in
+Supabase `submission_revision_drafts` for signed-in students through
+`apps/mobile/src/features/feedback-review/services/revisionPersistenceService.ts`,
+falls back to local recovery storage when needed, and is removed after
+successful revision submission.
 
 ### ProgressDashboard
 
@@ -523,10 +547,7 @@ production-ready.
 
 ```ts
 type NotificationType =
-  | "daily_assignment"
-  | "streak"
-  | "incomplete_assignment"
-  | "weekly_report";
+  "daily_assignment" | "streak" | "incomplete_assignment" | "weekly_report";
 
 interface PreparedNotification {
   id: string;
@@ -726,7 +747,12 @@ interface TeacherAssignmentSummary {
   skillFocus: WritingSkill[];
   dueDate: string;
   dueLabel: string;
-  rubric: { id: string; label: string; description: string; maxScore: number }[];
+  rubric: {
+    id: string;
+    label: string;
+    description: string;
+    maxScore: number;
+  }[];
   allowCanvas: boolean;
   status: "draft" | "active" | "closed";
   submissionsCount: number;

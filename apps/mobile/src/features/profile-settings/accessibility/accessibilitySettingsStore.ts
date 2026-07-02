@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { create } from "zustand";
 
+import { supabase } from "@/core/supabase/supabaseClient";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
+import { storageKeys } from "@/services/storage/storageKeys";
 import {
   defaultAccessibilitySettings,
   type AccessibilitySettings,
   type AccessibilitySettingsError,
   type AccessibilityTextSize,
 } from "@/shared/utils/accessibility";
-
-const ACCESSIBILITY_SETTINGS_KEY = "profile-settings.accessibility";
 
 const accessibilitySettingsSchema = z.object({
   textSize: z.enum(["default", "large", "extraLarge"]).catch(defaultAccessibilitySettings.textSize),
@@ -45,7 +45,49 @@ function parseAccessibilitySettings(value: unknown): AccessibilitySettings {
 }
 
 async function persistSettings(settings: AccessibilitySettings): Promise<void> {
-  await preferencesStorage.setPreference(ACCESSIBILITY_SETTINGS_KEY, settings);
+  await preferencesStorage.setPreference(storageKeys.accessibilitySettings, settings);
+}
+
+async function getRemoteAccessibilitySettings(): Promise<AccessibilitySettings | null> {
+  const { data: authData } = await supabase.auth.getSession();
+  const session = authData.session;
+
+  if (!session) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("student_profiles")
+    .select("accessibility_settings")
+    .eq("user_id", session.user.id)
+    .maybeSingle<{ accessibility_settings: unknown }>();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return parseAccessibilitySettings(data.accessibility_settings);
+}
+
+async function persistRemoteAccessibilitySettings(settings: AccessibilitySettings): Promise<void> {
+  const { data: authData } = await supabase.auth.getSession();
+  const session = authData.session;
+
+  if (!session) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("student_profiles")
+    .update({
+      accessibility_settings: settings,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", session.user.id);
+
+  if (error) {
+    throw error;
+  }
 }
 
 export const useAccessibilitySettingsStore = create<AccessibilitySettingsStore>()((set, get) => ({
@@ -59,13 +101,21 @@ export const useAccessibilitySettingsStore = create<AccessibilitySettingsStore>(
 
     try {
       const storedSettings = await preferencesStorage.getPreference<unknown>(
-        ACCESSIBILITY_SETTINGS_KEY,
+        storageKeys.accessibilitySettings,
         defaultAccessibilitySettings,
       );
+      const localSettings = parseAccessibilitySettings(storedSettings);
+      const remoteSettings = await getRemoteAccessibilitySettings();
+      const settings = remoteSettings ?? localSettings;
+
+      if (remoteSettings) {
+        await persistSettings(remoteSettings);
+      }
+
       set({
         error: null,
         hydrated: true,
-        settings: parseAccessibilitySettings(storedSettings),
+        settings,
       });
     } catch {
       set({
@@ -88,6 +138,7 @@ export const useAccessibilitySettingsStore = create<AccessibilitySettingsStore>(
 
     try {
       await persistSettings(nextSettings);
+      await persistRemoteAccessibilitySettings(nextSettings);
     } catch {
       set({ error: "write_failed" });
     }
@@ -102,7 +153,8 @@ export const useAccessibilitySettingsStore = create<AccessibilitySettingsStore>(
     });
 
     try {
-      await preferencesStorage.removePreference(ACCESSIBILITY_SETTINGS_KEY);
+      await preferencesStorage.removePreference(storageKeys.accessibilitySettings);
+      await persistRemoteAccessibilitySettings(defaultAccessibilitySettings);
     } catch {
       set({ error: "write_failed" });
     }

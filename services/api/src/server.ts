@@ -7,6 +7,7 @@ import { createDatabaseFromConfig, type Database } from "./data";
 import { createAuthenticateHook, createSupabaseJwtVerifier, type AuthVerifier } from "./runtime/auth";
 import { loadConfig, type ApiConfig } from "./runtime/config";
 import { createErrorHandler, createNotFoundHandler } from "./runtime/errors";
+import { implementedAiCoachEndpoints, registerAiCoachRoutes } from "./routes/ai-coach";
 import { registerAiReviewRoutes } from "./routes/ai-review";
 import { registerAssignmentRoutes } from "./routes/assignments";
 import { implementedCanvasEndpoints, registerCanvasRoutes } from "./routes/canvas";
@@ -128,6 +129,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
         await registerAssignmentRoutes(v1, authenticate, database);
         await registerCanvasRoutes(v1, authenticate, database);
         await registerSubmissionRoutes(v1, authenticate, database);
+        await registerAiCoachRoutes(v1, authenticate, database);
         await registerAiReviewRoutes(v1, authenticate, database);
         await registerProgressRoutes(v1, authenticate, database);
         await registerParentRoutes(v1, authenticate, database);
@@ -143,6 +145,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
                 ...dashboardImplementedEndpoints,
                 ...implementedSubscriptionEndpoints,
                 ...implementedCanvasEndpoints,
+                ...implementedAiCoachEndpoints,
               ]),
             }
           : {}),

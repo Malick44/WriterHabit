@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -11,6 +11,7 @@ import { Button } from "@/shared/components/buttons";
 import { EmptyState, ErrorState, LoadingState, OfflineBanner, useTopAlert } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
 import { BOTTOM_MENU_SCROLL_EVENT_THROTTLE, useBottomMenuScrollHandler } from "@/shared/components/navigation";
+import { getResponsiveColumnCount } from "@/shared/utils/responsive";
 
 import { CanvasDocumentCard } from "../components";
 import { useCanvasHomeData } from "../hooks/useCanvas";
@@ -70,18 +71,22 @@ export function CanvasHomeScreen() {
 function CanvasArchiveList() {
   const router = useRouter();
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
   const state = useCanvasHomeData();
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
   const documents = state.status === "success" || state.status === "error" ? state.viewModel?.documents ?? [] : [];
   const hasDocuments = documents.length > 0;
+  const columnCount = getResponsiveColumnCount(width, { maxColumns: 2, minColumnWidth: 380 });
 
   const renderDocument = useCallback(
     ({ item }: { item: CanvasDocumentSummary }) => (
-      <CanvasDocumentCard
-        document={item}
-        gradeBand={state.gradeBand}
-        onOpen={() => router.push(getCanvasDocumentRoute(item.id, item.assignmentId))}
-      />
+      <View style={styles.gridItem}>
+        <CanvasDocumentCard
+          document={item}
+          gradeBand={state.gradeBand}
+          onOpen={() => router.push(getCanvasDocumentRoute(item.id, item.assignmentId))}
+        />
+      </View>
     ),
     [router, state.gradeBand],
   );
@@ -140,9 +145,12 @@ function CanvasArchiveList() {
 
       {state.status === "success" || (state.status === "error" && hasDocuments) ? (
         <FlatList
+          key={`canvas-archive-${columnCount}`}
           data={documents}
           keyExtractor={(document) => document.id}
           renderItem={renderDocument}
+          numColumns={columnCount}
+          columnWrapperStyle={columnCount > 1 ? styles.columnWrapper : undefined}
           ItemSeparatorComponent={ItemSeparator}
           contentContainerStyle={styles.listContent}
           onScroll={handleBottomMenuScroll}
@@ -199,6 +207,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   archiveShell: {
+    flex: 1,
+  },
+  columnWrapper: {
+    gap: spacing.md,
+  },
+  gridItem: {
     flex: 1,
   },
   itemSeparator: {

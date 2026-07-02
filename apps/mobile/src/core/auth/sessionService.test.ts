@@ -41,6 +41,8 @@ jest.mock("@/core/supabase/supabaseClient", () => ({
       signUp: jest.fn(),
       updateUser: jest.fn(),
     },
+    from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
@@ -74,6 +76,17 @@ type SupabaseAuthMock = {
 };
 
 const authMock = supabase.auth as unknown as SupabaseAuthMock;
+type SupabaseUpdateChain = {
+  eq: jest.MockedFunction<(column: string, value: string) => Promise<{ error: Error | null }>>;
+};
+type SupabaseTableChain = {
+  update: jest.MockedFunction<(patch: Record<string, unknown>) => SupabaseUpdateChain>;
+};
+const supabaseMock = supabase as unknown as {
+  from: jest.MockedFunction<(table: string) => SupabaseTableChain>;
+  rpc: jest.MockedFunction<(name: string, params?: Record<string, unknown>) => Promise<{ error: Error | null }>>;
+};
+let profileUpdateMock: SupabaseTableChain["update"];
 const appleAuthMock = AppleAuthentication as unknown as {
   isAvailableAsync: jest.MockedFunction<() => Promise<boolean>>;
   signInAsync: jest.MockedFunction<(input: unknown) => Promise<{
@@ -184,6 +197,15 @@ describe("sessionService role metadata writes", () => {
     jest.clearAllMocks();
   });
 
+  beforeEach(() => {
+    supabaseMock.rpc.mockResolvedValue({ error: null });
+    const eqMock: SupabaseUpdateChain["eq"] = jest.fn(async (_column, _value) => ({ error: null }));
+    profileUpdateMock = jest.fn((_patch) => ({ eq: eqMock }));
+    supabaseMock.from.mockReturnValue({
+      update: profileUpdateMock,
+    });
+  });
+
   it("does not send role or entitlement fields during mobile sign-up", async () => {
     authMock.signUp.mockResolvedValueOnce({
       data: {
@@ -225,6 +247,12 @@ describe("sessionService role metadata writes", () => {
       },
       error: null,
     });
+    authMock.getSession.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+      error: null,
+    });
 
     await sessionService.completeOnboarding({
       confidenceLevel: "steady",
@@ -240,14 +268,26 @@ describe("sessionService role metadata writes", () => {
         }
       | undefined;
 
-    expect(updateInput?.data).toMatchObject({
-      confidence_level: "steady",
-      daily_practice_minutes: 15,
+    expect(updateInput?.data).toEqual({
       grade_level: 7,
       onboarding_complete: true,
-      writing_goals: ["write_essays"],
     });
     expect(updateInput?.data).not.toHaveProperty("role");
+    expect(updateInput?.data).not.toHaveProperty("writing_goals");
+    expect(updateInput?.data).not.toHaveProperty("confidence_level");
+    expect(updateInput?.data).not.toHaveProperty("daily_practice_minutes");
+    expect(supabaseMock.rpc).toHaveBeenCalledWith("ensure_own_student_profile", {
+      p_grade_level: 7,
+    });
+    expect(supabaseMock.from).toHaveBeenCalledWith("student_profiles");
+    expect(profileUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        daily_goal_minutes: 15,
+        grade_level: 7,
+        writing_goals: ["write_essays"],
+        writing_level: "steady",
+      }),
+    );
   });
 
   it("exchanges Apple identity tokens without writing role or entitlement metadata", async () => {

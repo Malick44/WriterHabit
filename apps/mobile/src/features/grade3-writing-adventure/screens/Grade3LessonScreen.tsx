@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Text } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 
 import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
 import { ErrorState, LoadingState } from "@/shared/components";
+import { typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
+import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { CelebrationStep } from "../components/lesson-flow/CelebrationStep";
 import { CheckStep } from "../components/lesson-flow/CheckStep";
@@ -96,6 +99,8 @@ type Grade3LessonWorkspaceProps = {
 function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3LessonWorkspaceProps) {
   const router = useRouter();
   const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+  const accessibleColors = getAccessibleColors(settings);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<LessonStep>("read");
   const [furthestStepIndex, setFurthestStepIndex] = useState(0);
@@ -309,7 +314,7 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
   const getNextLabel = () => {
     switch (currentStep) {
       case "read":
-        return t("grade3WritingAdventure.lessonFlow.cta.nextTalk");
+        return t("grade3WritingAdventure.lessonFlow.cta.iReadIt");
       case "talk":
         return t("grade3WritingAdventure.lessonFlow.cta.nextPlan");
       case "plan":
@@ -347,15 +352,32 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
           nextLoading={submitting}
           onBack={goBack}
           onNext={goNext}
-          saveLabel={saveLabel}
+          readAloudText={currentStep === "read" ? lesson.reading : undefined}
+          saveLabel={currentStep === "read" ? undefined : saveLabel}
         />
       }
-      subtitle={t("grade3WritingAdventure.lesson.subtitle", {
-        minutes: lesson.estimatedMinutes,
-        skill: lesson.miniSkill,
-      })}
-      title={t("grade3WritingAdventure.lesson.title", { day: lesson.day, title: lesson.title })}
+      contentPaddingTop={currentStep === "read" ? 32 : undefined}
+      subtitle={
+        currentStep === "read"
+          ? undefined
+          : t("grade3WritingAdventure.lesson.subtitle", {
+              minutes: lesson.estimatedMinutes,
+              skill: lesson.miniSkill,
+            })
+      }
+      title={currentStep === "read" ? undefined : t("grade3WritingAdventure.lesson.title", { day: lesson.day, title: lesson.title })}
     >
+      {currentStep === "read" ? (
+        <Text
+          accessibilityRole="header"
+          style={[
+            getAccessibleTextStyle(typography.gradeBands.elementary.bodyStrong, settings),
+            { color: accessibleColors.text, fontSize: 17, lineHeight: 22 },
+          ]}
+        >
+          {t("grade3WritingAdventure.lessonFlow.read.screenTitle", { day: lesson.day })}
+        </Text>
+      ) : null}
       <LessonStepTracker currentStep={currentStep} furthestStepIndex={furthestStepIndex} />
       {renderStep()}
     </Grade3Screen>

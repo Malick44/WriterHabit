@@ -1,4 +1,5 @@
 import type { GradeLevel, WritingSkill } from "@WriterHabit/shared";
+import { gradeLevelSchema, writingSkillSchema } from "@WriterHabit/shared";
 import { z } from "zod";
 
 import type { GradeBand } from "@/design/tokens";
@@ -10,25 +11,7 @@ export type ProgressScenario = z.infer<typeof progressScenarioSchema>;
 export const progressConnectionStatusSchema = z.enum(["online", "offline_cached"]);
 export type ProgressConnectionStatus = z.infer<typeof progressConnectionStatusSchema>;
 
-const gradeLevelSchema = z.custom<GradeLevel>(
-  (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 12,
-);
-
-export const writingSkillSchema = z.enum([
-  "spelling",
-  "grammar",
-  "punctuation",
-  "sentence_structure",
-  "vocabulary",
-  "organization",
-  "creativity",
-  "clarity",
-  "evidence_usage",
-  "argument_strength",
-  "revision_quality",
-  "handwriting",
-  "reading_response",
-]);
+export { writingSkillSchema };
 
 export const progressMetricIdSchema = z.enum([
   "assignments_completed",

@@ -11,7 +11,13 @@ config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules ?? {}),
   "@": path.resolve(projectRoot, "src"),
   "@WriterHabit/shared": path.resolve(sharedPackageRoot, "src"),
+  zod: path.resolve(projectRoot, "node_modules/zod"),
 };
+
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, "node_modules"),
+  path.resolve(projectRoot, "../../node_modules"),
+];
 
 config.watchFolders = [
   ...(config.watchFolders ?? []),

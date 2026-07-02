@@ -7,6 +7,7 @@ import type {
   SubscriptionPlanId,
   UpsertEntitlementInput,
 } from "../../data";
+import { mapEntitlementApiResponse } from "../../mappers/subscriptions.mapper";
 import type { AuthPrincipal } from "../../runtime/auth";
 import type { ApiConfig } from "../../runtime/config";
 import { ApiHttpError } from "../../runtime/errors";
@@ -15,9 +16,7 @@ import {
   getBillingPeriodForPlan,
   getPlanById,
   getPlanIdFromProductId,
-  normalizeEntitlementStatus,
   subscriptionFeatures,
-  subscriptionPlans,
   type CheckoutResponse,
   type EntitlementsResponse,
   type RestoreResponse,
@@ -50,11 +49,6 @@ interface RevenueCatSubscriberResponse {
     subscriptions?: Record<string, unknown>;
   };
 }
-
-const trustLinks = {
-  privacyUrl: "https://WriterHabit.app/privacy",
-  termsUrl: "https://WriterHabit.app/terms",
-};
 
 const activeEventTypes = new Set([
   "INITIAL_PURCHASE",
@@ -564,25 +558,11 @@ export class SubscriptionsService {
     principal: Pick<AuthPrincipal, "id" | "role">,
     entitlement: EntitlementRecord | null,
   ): EntitlementsResponse {
-    const status = normalizeEntitlementStatus(entitlement?.status);
-    const canAccessPremium = entitlement ? entitlementAllowsPremium(entitlement) : false;
-
-    return {
-      canAccessPremium,
-      connectionStatus: "online",
-      currentPeriodEndsAt: entitlement?.currentPeriodEndsAt ?? null,
-      currentPlanId: entitlement?.currentPlanId ?? null,
-      features: subscriptionFeatures,
+    return mapEntitlementApiResponse({
+      entitlement,
       generatedAt: new Date().toISOString(),
-      managementUrl: entitlement?.managementUrl ?? null,
-      plans: subscriptionPlans,
-      renewalLabel: null,
-      role: principal.role,
-      status: entitlement ? status : "free",
-      trialEndsAt: entitlement?.trialEndsAt ?? null,
-      trustLinks,
-      userId: principal.id,
-    };
+      principal,
+    });
   }
 
   private async fetchRevenueCatSubscriber(appUserId: string): Promise<RevenueCatSubscriberResponse> {

@@ -1,3 +1,6 @@
+import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
+
+import { supabase } from "@/core/supabase/supabaseClient";
 import type {
   CreateTeacherAssignmentInput,
   TeacherAssignmentSummary,
@@ -8,6 +11,7 @@ import type {
   TeacherScenario,
   TeacherSkillTrend,
   TeacherStudentProgress,
+  TeacherSubmissionReviewApiResponse,
   TeacherSubmissionReview,
   TeacherSubmissionSummary,
 } from "../types";
@@ -39,6 +43,103 @@ interface TeacherCommentInput extends TeacherSubmissionReviewInput {
 const generatedAt = "2026-06-09T09:00:00.000Z";
 const safetyNote =
   "Teacher feedback should identify a strength, one improvement, and one next student revision task. It should not rewrite the assignment for the student.";
+
+type TeacherAssignmentJoinRow = {
+  allow_canvas: boolean | null;
+  assignment_type: AssignmentType;
+  created_at: string;
+  due_at: string | null;
+  grade_level_max: number;
+  grade_level_min: number;
+  id: string;
+  prompt_fallback: string;
+  skill_focus: WritingSkill[] | null;
+  status: string;
+  title_fallback: string;
+};
+
+type TeacherStudentAssignmentRow = {
+  assignments: TeacherAssignmentJoinRow | TeacherAssignmentJoinRow[] | null;
+  completed_at: string | null;
+  current_submission_id: string | null;
+  id: string;
+  status: string;
+  submitted_at: string | null;
+};
+
+type TeacherSubmissionRow = {
+  id: string;
+  status: string;
+  student_assignment_id: string;
+  submitted_at: string;
+  typed_text_excerpt: string;
+  word_count: number | null;
+};
+
+type TeacherFeedbackRow = {
+  id: string;
+  improvement_fallback: string;
+  next_revision_task_fallback: string;
+  strength_fallback: string;
+  submission_id: string;
+};
+
+type TeacherRubricCriterionJoinRow = {
+  description_fallback: string;
+  id: string;
+  label_fallback: string;
+  max_score: number;
+};
+
+type TeacherRubricScoreRow = {
+  coaching_note_fallback: string;
+  feedback_id: string;
+  id: string;
+  max_score: number;
+  rubric_criteria: TeacherRubricCriterionJoinRow | TeacherRubricCriterionJoinRow[] | null;
+  score: number;
+};
+
+type TeacherSkillProgressRow = {
+  current_score: number | string | null;
+  previous_score: number | string | null;
+  skill: WritingSkill;
+};
+
+type TeacherProgressTotalRow = {
+  assignments_completed: number | null;
+  minutes_this_week: number | null;
+  revisions_completed: number | null;
+};
+
+type TeacherCanvasRow = {
+  id: string;
+  student_assignment_id: string | null;
+  title: string;
+};
+
+type TeacherCommentRow = {
+  comment_text: string;
+  submission_id: string;
+};
+
+type TeacherSupabaseData = {
+  assignmentRows: TeacherStudentAssignmentRow[];
+  canvasRows: TeacherCanvasRow[];
+  classId: string;
+  className: string;
+  commentRows: TeacherCommentRow[];
+  feedbackRows: TeacherFeedbackRow[];
+  gradeLevel: GradeLevel;
+  progressTotal: TeacherProgressTotalRow | null;
+  rubricRows: TeacherRubricScoreRow[];
+  skillRows: TeacherSkillProgressRow[];
+  studentDisplayName: string;
+  studentId: string;
+  submissionRows: TeacherSubmissionRow[];
+  teacherProfileId: string;
+  teacherId: string;
+};
 
 const teacherClasses: TeacherClassSummary[] = [
   {
@@ -673,6 +774,485 @@ function assertNotErrorScenario(scenario: TeacherScenario): void {
   }
 }
 
+function toGradeLevel(value: number): GradeLevel {
+  return value >= 1 && value <= 12 ? (value as GradeLevel) : 7;
+}
+
+function toInteger(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? Math.round(parsed) : fallback;
+}
+
+function getDisplayNameFromEmail(email?: string): string {
+  return email?.split("@")[0]?.replace(/[._-]+/g, " ").trim() || "Dev Student";
+}
+
+function getSubmittedLabel(value?: string | null): string {
+  if (!value) return "Saved";
+
+  const submitted = new Date(value);
+  const diffDays = Math.max(0, Math.floor((Date.now() - submitted.getTime()) / 86_400_000));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return submitted.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function getSkillLabel(skill: WritingSkill): string {
+  const labels: Record<WritingSkill, string> = {
+    argument_strength: "Argument",
+    clarity: "Clarity",
+    creativity: "Creativity",
+    evidence_usage: "Evidence",
+    grammar: "Grammar",
+    handwriting: "Handwriting",
+    organization: "Organization",
+    punctuation: "Punctuation",
+    reading_response: "Reading response",
+    revision_quality: "Revision",
+    sentence_structure: "Sentences",
+    spelling: "Spelling",
+    vocabulary: "Vocabulary",
+  };
+
+  return labels[skill];
+}
+
+function getSkillAction(skill: WritingSkill): string {
+  const actions: Record<WritingSkill, string> = {
+    argument_strength: "Ask the student to test whether the claim can be argued from another side.",
+    clarity: "Ask the student to add one concrete example after the topic sentence.",
+    creativity: "Ask the student to add one surprising but relevant detail.",
+    evidence_usage: "Ask the student to explain why the evidence proves the claim.",
+    grammar: "Have the student review one sentence for the target grammar pattern.",
+    handwriting: "Use the lined canvas for one short response before submitting.",
+    organization: "Have the student underline the topic sentence and match each detail to it.",
+    punctuation: "Ask the student to read one sentence aloud and check the ending mark.",
+    reading_response: "Ask the student to keep text evidence in passage order.",
+    revision_quality: "Ask the student to revise one sentence for a clearer reason.",
+    sentence_structure: "Have the student combine two short ideas into one clearer sentence.",
+    spelling: "Ask the student to circle one word to check before submitting.",
+    vocabulary: "Ask the student to replace one vague word with a stronger word.",
+  };
+
+  return actions[skill];
+}
+
+function getAssignmentFromRow(row: TeacherStudentAssignmentRow): TeacherAssignmentJoinRow | null {
+  if (Array.isArray(row.assignments)) {
+    return row.assignments[0] ?? null;
+  }
+
+  return row.assignments;
+}
+
+function getRubricCriterion(row: TeacherRubricScoreRow): TeacherRubricCriterionJoinRow | null {
+  if (Array.isArray(row.rubric_criteria)) {
+    return row.rubric_criteria[0] ?? null;
+  }
+
+  return row.rubric_criteria;
+}
+
+function buildDevClassSummary(data: TeacherSupabaseData): TeacherClassSummary {
+  const completionCount = data.assignmentRows.filter((row) => row.status === "completed").length;
+  const assignmentCount = data.assignmentRows.length;
+  const averageScore =
+    data.skillRows.length > 0
+      ? Math.round(data.skillRows.reduce((total, row) => total + toInteger(row.current_score), 0) / data.skillRows.length)
+      : 0;
+
+  return {
+    activeAssignmentCount: assignmentCount,
+    averageCompletionPercent: assignmentCount > 0 ? Math.round((completionCount / assignmentCount) * 100) : 0,
+    averageSkillScore: averageScore,
+    gradeLevel: data.gradeLevel,
+    id: data.classId,
+    name: data.className,
+    studentCount: 1,
+    submissionsNeedingReview: data.submissionRows.filter((row) => row.status === "submitted" || row.status === "reviewing").length,
+    trendLabel: data.skillRows[0] ? `${getSkillLabel(data.skillRows[0].skill)} is the current focus` : "Writing practice is active",
+    weeklyWritingMinutes: toInteger(data.progressTotal?.minutes_this_week),
+  };
+}
+
+function getAssignmentScorePercent(feedback: TeacherFeedbackRow | undefined, rubricRows: TeacherRubricScoreRow[]): number {
+  const rows = rubricRows.filter((row) => row.feedback_id === feedback?.id);
+  const earned = rows.reduce((total, row) => total + row.score, 0);
+  const possible = rows.reduce((total, row) => total + row.max_score, 0);
+
+  return possible > 0 ? Math.round((earned / possible) * 100) : 0;
+}
+
+async function getSignedInTeacherSupabaseData(teacherId: string): Promise<TeacherSupabaseData | null> {
+  const { data: authData } = await supabase.auth.getSession();
+  const user = authData.session?.user;
+
+  if (!user || user.id !== teacherId) {
+    return null;
+  }
+
+  const { data: profileRows, error: profileError } = await supabase
+    .from("student_profiles")
+    .select("id,grade_level")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  if (profileError) throw profileError;
+
+  const profile = ((profileRows ?? []) as { grade_level: number; id: string }[])[0];
+
+  if (!profile) {
+    return null;
+  }
+
+  const { data: teacherProfileRows, error: teacherProfileError } = await supabase
+    .from("teacher_profiles")
+    .select("id,display_name")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  if (teacherProfileError) throw teacherProfileError;
+
+  const teacherProfile = ((teacherProfileRows ?? []) as { display_name: string; id: string }[])[0];
+
+  if (!teacherProfile) {
+    return null;
+  }
+
+  const { data: classRows, error: classError } = await supabase
+    .from("classes")
+    .select("id,name")
+    .eq("teacher_profile_id", teacherProfile.id)
+    .eq("status", "active")
+    .limit(1);
+
+  if (classError) throw classError;
+
+  const classRow = ((classRows ?? []) as { id: string; name: string }[])[0];
+
+  if (!classRow) {
+    return null;
+  }
+
+  const [
+    progressResult,
+    skillsResult,
+    assignmentsResult,
+    submissionsResult,
+    feedbackResult,
+    canvasResult,
+    commentsResult,
+  ] = await Promise.all([
+    supabase
+      .from("student_progress_totals")
+      .select("assignments_completed,minutes_this_week,revisions_completed")
+      .eq("student_profile_id", profile.id)
+      .maybeSingle(),
+    supabase
+      .from("student_skill_progress")
+      .select("skill,current_score,previous_score")
+      .eq("student_profile_id", profile.id),
+    supabase
+      .from("student_assignments")
+      .select("id,status,submitted_at,completed_at,current_submission_id,assignments(id,title_fallback,prompt_fallback,assignment_type,skill_focus,grade_level_min,grade_level_max,status,allow_canvas,due_at,created_at)")
+      .eq("student_profile_id", profile.id)
+      .order("updated_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("submissions")
+      .select("id,student_assignment_id,status,typed_text_excerpt,word_count,submitted_at")
+      .eq("student_profile_id", profile.id)
+      .order("submitted_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("feedback")
+      .select("id,submission_id,strength_fallback,improvement_fallback,next_revision_task_fallback")
+      .eq("student_profile_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("canvas_documents")
+      .select("id,student_assignment_id,title")
+      .eq("student_profile_id", profile.id)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("teacher_submission_comments")
+      .select("submission_id,comment_text,created_at")
+      .eq("teacher_profile_id", teacherProfile.id)
+      .order("created_at", { ascending: false })
+      .limit(24),
+  ]);
+
+  if (progressResult.error) throw progressResult.error;
+  if (skillsResult.error) throw skillsResult.error;
+  if (assignmentsResult.error) throw assignmentsResult.error;
+  if (submissionsResult.error) throw submissionsResult.error;
+  if (feedbackResult.error) throw feedbackResult.error;
+  if (canvasResult.error) throw canvasResult.error;
+  if (commentsResult.error) throw commentsResult.error;
+
+  const feedbackRows = (feedbackResult.data ?? []) as TeacherFeedbackRow[];
+  const feedbackIds = feedbackRows.map((row) => row.id);
+  let rubricRows: TeacherRubricScoreRow[] = [];
+
+  if (feedbackIds.length > 0) {
+    const { data: rubricData, error: rubricError } = await supabase
+      .from("feedback_rubric_scores")
+      .select("id,feedback_id,score,max_score,coaching_note_fallback,rubric_criteria(id,label_fallback,description_fallback,max_score)")
+      .in("feedback_id", feedbackIds);
+
+    if (rubricError) throw rubricError;
+
+    rubricRows = (rubricData ?? []) as TeacherRubricScoreRow[];
+  }
+
+  return {
+    assignmentRows: (assignmentsResult.data ?? []) as TeacherStudentAssignmentRow[],
+    canvasRows: (canvasResult.data ?? []) as TeacherCanvasRow[],
+    classId: classRow.id,
+    className: classRow.name,
+    commentRows: (commentsResult.data ?? []) as TeacherCommentRow[],
+    feedbackRows,
+    gradeLevel: toGradeLevel(profile.grade_level),
+    progressTotal: (progressResult.data as TeacherProgressTotalRow | null) ?? null,
+    rubricRows,
+    skillRows: (skillsResult.data ?? []) as TeacherSkillProgressRow[],
+    studentDisplayName:
+      typeof user.user_metadata?.display_name === "string"
+        ? user.user_metadata.display_name
+        : getDisplayNameFromEmail(user.email),
+    studentId: profile.id,
+    submissionRows: (submissionsResult.data ?? []) as TeacherSubmissionRow[],
+    teacherProfileId: teacherProfile.id,
+    teacherId,
+  };
+}
+
+function buildSupabaseTeacherAssignments(data: TeacherSupabaseData): TeacherAssignmentSummary[] {
+  const classSummary = buildDevClassSummary(data);
+
+  return data.assignmentRows.flatMap((studentAssignment) => {
+    const assignment = getAssignmentFromRow(studentAssignment);
+
+    if (!assignment) {
+      return [];
+    }
+
+    const submissionsCount = data.submissionRows.filter((row) => row.student_assignment_id === studentAssignment.id).length;
+    const rubricRows = data.rubricRows.slice(0, 4);
+
+    return [
+      {
+        allowCanvas: Boolean(assignment.allow_canvas),
+        assignmentType: assignment.assignment_type,
+        classId: classSummary.id,
+        className: classSummary.name,
+        completionPercent: studentAssignment.status === "completed" ? 100 : submissionsCount > 0 ? 75 : 0,
+        createdAt: assignment.created_at,
+        dueDate: assignment.due_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+        dueLabel: assignment.due_at ? `Due ${assignment.due_at.slice(0, 10)}` : "No due date",
+        gradeLevel: data.gradeLevel,
+        id: assignment.id,
+        prompt: assignment.prompt_fallback,
+        rubric:
+          rubricRows.length > 0
+            ? rubricRows.map((row) => {
+                const criterion = getRubricCriterion(row);
+
+                return {
+                  description: criterion?.description_fallback ?? "Writing skill",
+                  id: criterion?.id ?? row.id,
+                  label: criterion?.label_fallback ?? "Writing",
+                  maxScore: criterion?.max_score ?? row.max_score,
+                };
+              })
+            : [
+                {
+                  description: "Student writing has one clear next revision focus.",
+                  id: "revision-focus",
+                  label: "Revision focus",
+                  maxScore: 4,
+                },
+              ],
+        skillFocus: assignment.skill_focus && assignment.skill_focus.length > 0 ? assignment.skill_focus : ["clarity"],
+        status: assignment.status === "archived" ? "closed" : assignment.status === "draft" ? "draft" : "active",
+        submissionsCount,
+        title: assignment.title_fallback,
+      },
+    ];
+  });
+}
+
+function buildSupabaseTeacherSubmissions(data: TeacherSupabaseData): TeacherSubmissionSummary[] {
+  const classSummary = buildDevClassSummary(data);
+
+  return data.submissionRows.flatMap((submission) => {
+    const studentAssignment = data.assignmentRows.find((row) => row.id === submission.student_assignment_id);
+    const assignment = studentAssignment ? getAssignmentFromRow(studentAssignment) : null;
+
+    if (!studentAssignment || !assignment) {
+      return [];
+    }
+
+    const feedback = data.feedbackRows.find((row) => row.submission_id === submission.id);
+    const scorePercent = feedback ? getAssignmentScorePercent(feedback, data.rubricRows) : null;
+
+    return [
+      {
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.title_fallback,
+        classId: classSummary.id,
+        className: classSummary.name,
+        gradeLevel: data.gradeLevel,
+        hasCanvas: data.canvasRows.some((row) => row.student_assignment_id === studentAssignment.id),
+        id: submission.id,
+        priority: feedback ? "normal" : "high",
+        scorePercent,
+        status:
+          submission.status === "completed"
+            ? "completed"
+            : submission.status === "revision_in_progress"
+              ? "revision_requested"
+              : feedback
+                ? "reviewed"
+                : "awaiting_review",
+        studentId: data.studentId,
+        studentName: data.studentDisplayName,
+        submittedLabel: getSubmittedLabel(submission.submitted_at),
+        wordCount: toInteger(submission.word_count),
+      },
+    ];
+  });
+}
+
+function buildSupabaseTeacherClassProgress(data: TeacherSupabaseData): TeacherClassProgressApiResponse {
+  const classSummary = buildDevClassSummary(data);
+  const assignmentCompletionPercent = classSummary.averageCompletionPercent;
+  const averageRubricScore =
+    data.rubricRows.length > 0
+      ? Math.round(
+          (data.rubricRows.reduce((total, row) => total + row.score, 0) /
+            data.rubricRows.reduce((total, row) => total + row.max_score, 0)) *
+            100,
+        )
+      : classSummary.averageSkillScore;
+  const focusSkill =
+    data.skillRows.slice().sort((a, b) => toInteger(a.current_score) - toInteger(b.current_score))[0]?.skill ?? "clarity";
+  const skillTrends = data.skillRows.map((row) => {
+    const current = toInteger(row.current_score);
+    const previous = toInteger(row.previous_score);
+    const delta = current - previous;
+
+    return {
+      averageScore: current,
+      changeLabel: delta > 0 ? `+${delta} this week` : delta < 0 ? `${delta} this week` : "steady",
+      label: getSkillLabel(row.skill),
+      skill: row.skill,
+      studentCount: 1,
+    };
+  });
+
+  return teacherClassProgressApiResponseSchema.parse({
+    classSummary,
+    connectionStatus: "online",
+    generatedAt: new Date().toISOString(),
+    instructionalGroups: [
+      {
+        action: getSkillAction(focusSkill),
+        description: "This logged dev student has a current Supabase focus skill from progress data.",
+        id: `dev-${focusSkill}`,
+        skill: focusSkill,
+        studentNames: [data.studentDisplayName],
+        title: `${getSkillLabel(focusSkill)} focus`,
+      },
+    ],
+    skillTrends,
+    students: [
+      {
+        assignmentCompletionPercent,
+        averageRubricScore,
+        displayName: data.studentDisplayName,
+        focusSkill,
+        gradeLevel: data.gradeLevel,
+        id: data.studentId,
+        lastSubmissionLabel: getSubmittedLabel(data.submissionRows[0]?.submitted_at),
+        needsSupport: averageRubricScore < 70,
+        revisionRatePercent: Math.min(100, toInteger(data.progressTotal?.revisions_completed) * 25),
+      },
+    ],
+  });
+}
+
+function buildSupabaseTeacherReview(data: TeacherSupabaseData, submissionId?: string): TeacherSubmissionReviewApiResponse {
+  const submission =
+    data.submissionRows.find((row) => row.id === submissionId) ??
+    data.submissionRows.find((row) => data.feedbackRows.some((feedback) => feedback.submission_id === row.id));
+
+  if (!submission) {
+    return teacherSubmissionReviewApiResponseSchema.parse({
+      connectionStatus: "online",
+      generatedAt: new Date().toISOString(),
+      review: null,
+    });
+  }
+
+  const classSummary = buildDevClassSummary(data);
+  const studentAssignment = data.assignmentRows.find((row) => row.id === submission.student_assignment_id);
+  const assignment = studentAssignment ? getAssignmentFromRow(studentAssignment) : null;
+  const feedback = data.feedbackRows.find((row) => row.submission_id === submission.id);
+  const canvas = data.canvasRows.find((row) => row.student_assignment_id === studentAssignment?.id);
+  const rubricRows = data.rubricRows.filter((row) => row.feedback_id === feedback?.id);
+  const teacherComment = data.commentRows.find((row) => row.submission_id === submission.id)?.comment_text;
+
+  return teacherSubmissionReviewApiResponseSchema.parse({
+    connectionStatus: "online",
+    generatedAt: new Date().toISOString(),
+    review: {
+      assignmentPrompt: assignment?.prompt_fallback ?? "Review the saved student response.",
+      assignmentTitle: assignment?.title_fallback ?? "WriterHabit assignment",
+      canvasPreview: canvas ? { pageCount: 1, title: canvas.title } : null,
+      className: classSummary.name,
+      gradeLevel: data.gradeLevel,
+      id: submission.id,
+      revisionTask: feedback?.next_revision_task_fallback ?? "Ask the student to revise one sentence for clarity.",
+      rubric:
+        rubricRows.length > 0
+          ? rubricRows.map((row) => {
+              const criterion = getRubricCriterion(row);
+
+              return {
+                coachingNote: row.coaching_note_fallback,
+                criterionId: criterion?.id ?? row.id,
+                label: criterion?.label_fallback ?? "Writing",
+                maxScore: row.max_score,
+                score: row.score,
+              };
+            })
+          : [
+              {
+                coachingNote: "Use one strength and one next revision task.",
+                criterionId: "revision-focus",
+                label: "Revision focus",
+                maxScore: 4,
+                score: 3,
+              },
+            ],
+      safetyNote,
+      studentName: data.studentDisplayName,
+      submittedLabel: getSubmittedLabel(submission.submitted_at),
+      teacherComment: teacherComment ?? feedback?.improvement_fallback ?? "",
+      writingPreview: submission.typed_text_excerpt || feedback?.strength_fallback || "Student writing preview unavailable.",
+      wordCount: toInteger(submission.word_count),
+    },
+  });
+}
+
 function getClass(classId?: string): TeacherClassSummary | null {
   return teacherClasses.find((classSummary) => classSummary.id === classId) ?? null;
 }
@@ -721,11 +1301,152 @@ function buildAssignmentFromInput(
   };
 }
 
+async function createSignedInTeacherAssignment(
+  input: CreateTeacherAssignmentInput & TeacherRequestInput,
+): Promise<TeacherAssignmentSummary | null> {
+  const data = await getSignedInTeacherSupabaseData(input.teacherId);
+
+  if (!data || input.classId !== data.classId) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const { data: rubric, error: rubricError } = await supabase
+    .from("rubrics")
+    .insert({
+      assignment_type: input.assignmentType,
+      created_by_user_id: input.teacherId,
+      grade_level_max: input.gradeLevel,
+      grade_level_min: input.gradeLevel,
+      name_fallback: `${input.title} rubric`,
+      name_key: "teacher.created.rubric.name",
+      status: "active",
+    })
+    .select("id")
+    .single();
+
+  if (rubricError) throw rubricError;
+
+  const rubricId = (rubric as { id: string }).id;
+  const criteriaRows = input.rubric.map((criterion, index) => ({
+    description_fallback: criterion,
+    description_key: "teacher.created.rubric.criterion.description",
+    label_fallback: criterion,
+    label_key: "teacher.created.rubric.criterion.label",
+    max_score: 4,
+    rubric_id: rubricId,
+    skill: input.skillFocus[index] ?? input.skillFocus[0] ?? "clarity",
+    sort_order: index + 1,
+  }));
+
+  const { error: criteriaError } = await supabase.from("rubric_criteria").insert(criteriaRows);
+
+  if (criteriaError) throw criteriaError;
+
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("assignments")
+    .insert({
+      allow_canvas: input.allowCanvas,
+      assignment_type: input.assignmentType,
+      class_id: data.classId,
+      created_by_user_id: input.teacherId,
+      difficulty: "moderate",
+      due_at: `${input.dueDate}T23:59:00.000Z`,
+      estimated_minutes: input.gradeLevel <= 5 ? 10 : input.gradeLevel <= 8 ? 15 : 25,
+      grade_level_max: input.gradeLevel,
+      grade_level_min: input.gradeLevel,
+      instructions: [],
+      prompt_fallback: input.prompt,
+      prompt_key: "teacher.created.assignment.prompt",
+      prompt_safety_status: "approved",
+      published_at: now,
+      rubric_id: rubricId,
+      skill_focus: input.skillFocus,
+      status: "published",
+      title_fallback: input.title,
+      title_key: "teacher.created.assignment.title",
+    })
+    .select("id,created_at")
+    .single();
+
+  if (assignmentError) throw assignmentError;
+
+  const assignmentId = (assignment as { created_at: string; id: string }).id;
+  const createdAt = (assignment as { created_at: string; id: string }).created_at;
+
+  await supabase.from("student_assignments").upsert(
+    {
+      assignment_id: assignmentId,
+      class_id: data.classId,
+      daily_selection_metadata: {},
+      due_at: `${input.dueDate}T23:59:00.000Z`,
+      status: "not_started",
+      student_profile_id: data.studentId,
+    },
+    { onConflict: "student_profile_id,assignment_id,class_id" },
+  );
+
+  return teacherAssignmentsApiResponseSchema.shape.assignments.element.parse({
+    allowCanvas: input.allowCanvas,
+    assignmentType: input.assignmentType,
+    classId: data.classId,
+    className: data.className,
+    completionPercent: 0,
+    createdAt,
+    dueDate: input.dueDate,
+    dueLabel: `Due ${input.dueDate}`,
+    gradeLevel: input.gradeLevel,
+    id: assignmentId,
+    prompt: input.prompt,
+    rubric: input.rubric.map((criterion, index) => ({
+      description: criterion,
+      id: `${rubricId}-${index + 1}`,
+      label: criterion,
+      maxScore: 4,
+    })),
+    skillFocus: input.skillFocus,
+    status: "active",
+    submissionsCount: 0,
+    title: input.title,
+  });
+}
+
+async function updateSignedInTeacherSubmissionComment(
+  input: TeacherCommentInput,
+): Promise<TeacherSubmissionReviewApiResponse | null> {
+  const data = await getSignedInTeacherSupabaseData(input.teacherId);
+  const comment = input.comment.trim();
+
+  if (!data || !input.submissionId || !comment) {
+    return null;
+  }
+
+  const { error } = await supabase.from("teacher_submission_comments").insert({
+    comment_text: comment.slice(0, 2000),
+    submission_id: input.submissionId,
+    teacher_profile_id: data.teacherProfileId,
+  });
+
+  if (error) throw error;
+
+  const refreshed = await getSignedInTeacherSupabaseData(input.teacherId);
+
+  return refreshed ? buildSupabaseTeacherReview(refreshed, input.submissionId) : null;
+}
+
 export const teacherApi = {
   async createAssignment(input: CreateTeacherAssignmentInput & TeacherRequestInput) {
     const scenario = readScenario();
 
     assertNotErrorScenario(scenario);
+
+    if (scenario !== "empty") {
+      const signedInResponse = await createSignedInTeacherAssignment(input);
+
+      if (signedInResponse) {
+        return signedInResponse;
+      }
+    }
 
     const response = buildAssignmentFromInput(input, input.teacherId);
 
@@ -736,6 +1457,20 @@ export const teacherApi = {
     const scenario = readScenario();
 
     assertNotErrorScenario(scenario);
+
+    const supabaseData = scenario === "empty" ? null : await getSignedInTeacherSupabaseData(input.teacherId);
+
+    if (supabaseData) {
+      const classSummary = buildDevClassSummary(supabaseData);
+
+      return teacherAssignmentsApiResponseSchema.parse({
+        assignments: buildSupabaseTeacherAssignments(supabaseData),
+        classes: [classSummary],
+        connectionStatus: getConnectionStatus(scenario),
+        generatedAt: new Date().toISOString(),
+        teacherId: input.teacherId,
+      });
+    }
 
     const response = {
       assignments: scenario === "empty" ? [] : teacherAssignments,
@@ -752,6 +1487,15 @@ export const teacherApi = {
     const scenario = readScenario();
 
     assertNotErrorScenario(scenario);
+
+    const supabaseData = scenario === "empty" ? null : await getSignedInTeacherSupabaseData(input.teacherId);
+
+    if (supabaseData && input.classId === supabaseData.classId) {
+      return teacherClassProgressApiResponseSchema.parse({
+        ...buildSupabaseTeacherClassProgress(supabaseData),
+        connectionStatus: getConnectionStatus(scenario),
+      });
+    }
 
     const classSummary = scenario === "empty" ? null : getClass(input.classId);
     const progress = input.classId ? classProgressByClassId[input.classId] : null;
@@ -776,6 +1520,20 @@ export const teacherApi = {
       return teacherDashboardApiResponseSchema.parse(getEmptyDashboard(input));
     }
 
+    const supabaseData = await getSignedInTeacherSupabaseData(input.teacherId);
+
+    if (supabaseData) {
+      return teacherDashboardApiResponseSchema.parse({
+        assignments: buildSupabaseTeacherAssignments(supabaseData),
+        classes: [buildDevClassSummary(supabaseData)],
+        connectionStatus: getConnectionStatus(scenario),
+        generatedAt: new Date().toISOString(),
+        safetyNote,
+        submissions: buildSupabaseTeacherSubmissions(supabaseData),
+        teacherId: input.teacherId,
+      });
+    }
+
     const response: TeacherDashboardApiResponse = {
       assignments: teacherAssignments,
       classes: teacherClasses,
@@ -794,6 +1552,15 @@ export const teacherApi = {
 
     assertNotErrorScenario(scenario);
 
+    const supabaseData = scenario === "empty" ? null : await getSignedInTeacherSupabaseData(input.teacherId);
+
+    if (supabaseData) {
+      return teacherSubmissionReviewApiResponseSchema.parse({
+        ...buildSupabaseTeacherReview(supabaseData, input.submissionId),
+        connectionStatus: getConnectionStatus(scenario),
+      });
+    }
+
     const response = {
       connectionStatus: getConnectionStatus(scenario),
       generatedAt,
@@ -810,6 +1577,17 @@ export const teacherApi = {
     const scenario = readScenario();
 
     assertNotErrorScenario(scenario);
+
+    const supabaseData = scenario === "empty" ? null : await getSignedInTeacherSupabaseData(input.teacherId);
+
+    if (supabaseData) {
+      return teacherSubmissionsApiResponseSchema.parse({
+        connectionStatus: getConnectionStatus(scenario),
+        generatedAt: new Date().toISOString(),
+        submissions: buildSupabaseTeacherSubmissions(supabaseData),
+        teacherId: input.teacherId,
+      });
+    }
 
     const response = {
       connectionStatus: getConnectionStatus(scenario),
@@ -828,6 +1606,14 @@ export const teacherApi = {
 
     if (!input.submissionId) {
       throw new Error("Submission id is required.");
+    }
+
+    if (scenario !== "empty") {
+      const signedInResponse = await updateSignedInTeacherSubmissionComment(input);
+
+      if (signedInResponse) {
+        return signedInResponse;
+      }
     }
 
     return teacherSubmissionReviewApiResponseSchema.parse({

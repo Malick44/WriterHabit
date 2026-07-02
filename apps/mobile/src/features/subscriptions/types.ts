@@ -1,20 +1,13 @@
 import { z } from "zod";
+import { subscriptionPlanIdSchema, subscriptionStatusSchema, userRoleSchema } from "@WriterHabit/shared";
+import type { SubscriptionPlanId, SubscriptionStatus } from "@WriterHabit/shared";
 
 import type { AuthSession, NavigableUserRole } from "@/core/auth/authTypes";
 import type { GradeBand } from "@/design/tokens";
 import type { TranslationKey } from "@/i18n";
 
-export const subscriptionStatusSchema = z.enum([
-  "free",
-  "trial",
-  "active",
-  "past_due",
-  "canceled",
-  "expired",
-  "refunded",
-  "grace_period",
-]);
-export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
+export { subscriptionPlanIdSchema, subscriptionStatusSchema };
+export type { SubscriptionPlanId, SubscriptionStatus };
 
 export const subscriptionScenarioSchema = z.enum([
   "success",
@@ -29,9 +22,6 @@ export type SubscriptionScenario = z.infer<typeof subscriptionScenarioSchema>;
 
 export const subscriptionConnectionStatusSchema = z.enum(["online", "offline_cached"]);
 export type SubscriptionConnectionStatus = z.infer<typeof subscriptionConnectionStatusSchema>;
-
-export const subscriptionPlanIdSchema = z.enum(["WriterHabit_plus_monthly", "WriterHabit_plus_yearly"]);
-export type SubscriptionPlanId = z.infer<typeof subscriptionPlanIdSchema>;
 
 export const subscriptionFeatureIdSchema = z.enum([
   "safe_ai_coach",
@@ -66,7 +56,7 @@ export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 export const subscriptionFeatureSchema = z.object({
   id: subscriptionFeatureIdSchema,
   includedIn: z.enum(["free", "plus"]),
-  supportedRoles: z.array(z.enum(["student", "parent", "teacher", "admin"])).min(1),
+  supportedRoles: z.array(userRoleSchema).min(1),
 });
 export type SubscriptionFeature = z.infer<typeof subscriptionFeatureSchema> & {
   supportedRoles: NavigableUserRole[];
@@ -88,7 +78,7 @@ export const subscriptionApiResponseSchema = z.object({
   managementUrl: z.string().url().nullable(),
   plans: z.array(subscriptionPlanSchema),
   renewalLabel: z.string().min(1).nullable(),
-  role: z.enum(["student", "parent", "teacher", "admin"]),
+  role: userRoleSchema,
   status: subscriptionStatusSchema,
   trialEndsAt: z.string().datetime().nullable().optional(),
   trustLinks: subscriptionTrustLinksSchema,

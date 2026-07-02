@@ -106,8 +106,9 @@ logs, committed files, or client-visible payloads.
 
 ## Signed URL Requirements
 
-Current state: canvas storage/sync is scaffolded and local-first; no production
-object upload service exists yet.
+Current state: canvas storage/sync is local-first and signed-in metadata/stroke
+sync goes through authenticated backend routes; no production object upload
+service exists yet.
 
 Future signed URL requirements:
 

@@ -3,8 +3,7 @@ import { z } from "zod";
 
 import { supabase } from "@/core/supabase/supabaseClient";
 import { preferencesStorage } from "@/services/storage/preferencesStorage";
-
-const STUDENT_PROFILE_SETTINGS_KEY_PREFIX = "profile-settings.student-profile";
+import { storageKeys } from "@/services/storage/storageKeys";
 
 // Only locales with a real dictionary are selectable. Legacy stored values
 // from when es/fr were offered coerce back to a supported locale on parse.
@@ -67,7 +66,7 @@ export function getDefaultStudentProfileSettingsPreferences(input?: {
 }
 
 function getProfileSettingsKey(studentId: string): string {
-  return `${STUDENT_PROFILE_SETTINGS_KEY_PREFIX}.${studentId}`;
+  return storageKeys.studentProfileSettings(studentId);
 }
 
 function isWritingGoal(value: unknown): value is WritingGoal {
@@ -216,9 +215,6 @@ async function updateRemoteProfileSettings(
     data: {
       display_name: preferences.displayName,
       grade_level: preferences.gradeLevel,
-      language: preferences.language,
-      writing_goals: preferences.writingGoals,
-      daily_practice_minutes: preferences.dailyPracticeMinutes,
     },
   });
 

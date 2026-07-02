@@ -1,11 +1,15 @@
 import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 
-import type { Database, FeedbackWithDetails, PublishFeedbackInput, SubmissionRecord } from "../data/types";
+import type { Database, PublishFeedbackInput, SubmissionRecord } from "../data/types";
 import {
   AiReviewService,
 } from "../features/ai/review/ai-review.service";
 import { canAccessPremiumFeature } from "../features/subscriptions/entitlement-authorization";
+import {
+  mapFeedbackProcessingApiResponse,
+  mapFeedbackResponseApiResponse,
+} from "../mappers/feedback.mapper";
 import {
   createLocalizedCopy,
   isGradeLevel,
@@ -121,82 +125,6 @@ function toPublishFeedbackInput(input: {
     safetyFlags: input.safetyFlags,
     studentProfileId: input.studentProfileId,
     submissionId: input.submissionId,
-  };
-}
-
-function createFeedbackReview(
-  details: FeedbackWithDetails,
-  options: { includeRubricScores: boolean } = { includeRubricScores: true },
-) {
-  const feedback = details.feedback;
-  const revisionTask = details.revisionTask;
-
-  if (!revisionTask) {
-    throw createResourceNotFoundError({ feedbackId: feedback.id, reason: "revision_task_missing" });
-  }
-
-  return {
-    assignmentId: details.assignment.id,
-    assignmentPrompt: details.assignment.promptFallback,
-    assignmentTitle: details.assignment.titleFallback,
-    assignmentType: details.assignment.assignmentType,
-    connectionStatus: "online",
-    createdAt: feedback.createdAt,
-    gradeLevel: feedback.gradeLevel,
-    grammarSuggestions: details.grammarSuggestions.map((suggestion) => ({
-      explanation: suggestion.explanationFallback,
-      id: suggestion.id,
-      originalExcerpt: suggestion.originalExcerpt,
-      studentAction: suggestion.studentActionFallback,
-      title: suggestion.titleFallback,
-    })),
-    id: feedback.id,
-    progressEarned: {
-      minutes: feedback.progressMinutes,
-      points: feedback.progressPoints,
-      skill: feedback.progressSkill,
-    },
-    revisionTask: {
-      focusLabel: revisionTask.targetSkill.replace(/_/g, " "),
-      guidingQuestion: revisionTask.guidingQuestionFallback,
-      id: revisionTask.id,
-      instruction: revisionTask.instructionFallback,
-      originalExcerpt: revisionTask.originalExcerpt,
-      targetSkill: revisionTask.targetSkill,
-    },
-    rubricScores: options.includeRubricScores
-      ? details.rubricScores.map((score) => ({
-          coachingNote: score.coachingNoteFallback,
-          criterionId: score.criterionId,
-          description: score.criterionDescriptionFallback,
-          label: score.criterionLabelFallback,
-          level: score.level,
-          maxScore: 4,
-          score: score.score,
-        }))
-      : [],
-    status: "completed",
-    studentId: feedback.studentProfileId,
-    submissionId: feedback.submissionId,
-    submittedTextExcerpt: feedback.submittedTextExcerpt,
-    summary: {
-      improvement: feedback.improvementFallback,
-      nextRevisionTask: feedback.nextRevisionTaskFallback,
-      strength: feedback.strengthFallback,
-    },
-  };
-}
-
-function createFeedbackResponse(
-  details: FeedbackWithDetails,
-  options: { includeRubricScores: boolean } = { includeRubricScores: true },
-) {
-  return {
-    generatedAt: new Date().toISOString(),
-    review: createFeedbackReview(details, options),
-    reviewJobStatus: "completed",
-    status: "completed",
-    submissionId: details.submission.id,
   };
 }
 
@@ -368,17 +296,18 @@ export async function registerAiReviewRoutes(
     ]);
 
     if (!feedback) {
-      return {
+      return mapFeedbackProcessingApiResponse({
         generatedAt: new Date().toISOString(),
-        review: null,
         reviewJobStatus: reviewJob?.status ?? "queued",
-        status: reviewJob?.status === "failed" || reviewJob?.status === "safety_blocked" ? reviewJob.status : "processing",
         submissionId: submission.id,
-      };
+      });
     }
 
     const includeRubricScores = await canAccessPremiumFeature(database, principal, "rubric_detail");
 
-    return createFeedbackResponse(feedback, { includeRubricScores });
+    return mapFeedbackResponseApiResponse(feedback, {
+      generatedAt: new Date().toISOString(),
+      includeRubricScores,
+    });
   });
 }

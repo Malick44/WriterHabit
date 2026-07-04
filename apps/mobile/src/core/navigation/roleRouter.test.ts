@@ -8,8 +8,10 @@ describe("roleRouter", () => {
     expect(getLaunchRoute(null)).toBe(routes.authWelcome);
   });
 
-  it("routes incomplete users to onboarding", () => {
-    expect(getLaunchRoute(createMockSession("student", false))).toBe(routes.onboardingRoleSelection);
+  it("routes incomplete users to onboarding (skipped in dev builds)", () => {
+    expect(getLaunchRoute(createMockSession("student", false))).toBe(
+      __DEV__ ? routes.studentHome : routes.onboardingRoleSelection,
+    );
   });
 
   it("routes authenticated roles to their home areas", () => {
@@ -18,10 +20,8 @@ describe("roleRouter", () => {
     expect(getLaunchRoute(createMockSession("teacher", true))).toBe(routes.teacherDashboard);
   });
 
-  it("routes dev post-login sessions to onboarding", () => {
-    expect(getPostLoginRoute(createMockSession("student", true))).toBe(
-      __DEV__ ? routes.onboardingRoleSelection : routes.studentHome,
-    );
+  it("routes post-login sessions to their role home", () => {
+    expect(getPostLoginRoute(createMockSession("student", true))).toBe(routes.studentHome);
   });
 
   it("blocks role mismatches and returns the role home redirect", () => {
@@ -36,7 +36,7 @@ describe("roleRouter", () => {
     expect(getRouteAccessDecision(null, "auth")).toEqual({ allowed: true });
     expect(getRouteAccessDecision(createMockSession("student", true), "auth")).toEqual({
       allowed: false,
-      redirectTo: __DEV__ ? routes.onboardingRoleSelection : routes.studentHome,
+      redirectTo: routes.studentHome,
       reason: "already_authenticated",
     });
   });
@@ -53,16 +53,17 @@ describe("roleRouter", () => {
     );
   });
 
-  it("requires onboarding before role-specific and paywall routes", () => {
-    expect(getRouteAccessDecision(createMockSession("student", false), "student")).toEqual({
+  it("requires onboarding before role-specific and paywall routes (skipped in dev builds)", () => {
+    const blocked = {
       allowed: false,
       redirectTo: routes.onboardingRoleSelection,
       reason: "onboarding_incomplete",
-    });
-    expect(getRouteAccessDecision(createMockSession("student", false), "paywall")).toEqual({
-      allowed: false,
-      redirectTo: routes.onboardingRoleSelection,
-      reason: "onboarding_incomplete",
-    });
+    };
+    expect(getRouteAccessDecision(createMockSession("student", false), "student")).toEqual(
+      __DEV__ ? { allowed: true } : blocked,
+    );
+    expect(getRouteAccessDecision(createMockSession("student", false), "paywall")).toEqual(
+      __DEV__ ? { allowed: true } : blocked,
+    );
   });
 });

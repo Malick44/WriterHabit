@@ -7,7 +7,7 @@ import { useI18n } from "@/i18n";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { Grade3AdventureCard } from "../components/Grade3AdventureCard";
-import { Grade3Screen } from "../components/Grade3Screen";
+import { Grade3AdventureShell } from "../components/Grade3AdventureShell";
 import { Grade3TopActions } from "../components/Grade3TopActions";
 import { grade3WritingProgram } from "../content/grade3WritingProgram.content";
 import { useGrade3WritingProgress } from "../hooks/useGrade3WritingProgress";
@@ -22,25 +22,25 @@ export function Grade3LibraryScreen() {
 
   if (progressState.status === "loading") {
     return (
-      <Grade3Screen>
+      <Grade3AdventureShell titleKey="grade3WritingAdventure.library.title">
         <LoadingState
           label={t("grade3WritingAdventure.states.loadingTitle")}
           description={t("grade3WritingAdventure.states.loadingDescription")}
         />
-      </Grade3Screen>
+      </Grade3AdventureShell>
     );
   }
 
   if (progressState.status === "error") {
     return (
-      <Grade3Screen>
+      <Grade3AdventureShell titleKey="grade3WritingAdventure.library.title">
         <ErrorState
           description={t("grade3WritingAdventure.states.errorDescription")}
           onActionPress={progressState.refresh}
           actionLabel={t("common.retry")}
           title={t("grade3WritingAdventure.states.errorTitle")}
         />
-      </Grade3Screen>
+      </Grade3AdventureShell>
     );
   }
 
@@ -49,9 +49,9 @@ export function Grade3LibraryScreen() {
   );
 
   return (
-    <Grade3Screen
+    <Grade3AdventureShell
       subtitle={t("grade3WritingAdventure.library.subtitle")}
-      title={t("grade3WritingAdventure.library.title")}
+      titleKey="grade3WritingAdventure.library.title"
     >
       <Grade3TopActions />
       {savedDrafts.length === 0 ? (
@@ -98,6 +98,6 @@ export function Grade3LibraryScreen() {
           );
         })
       )}
-    </Grade3Screen>
+    </Grade3AdventureShell>
   );
 }

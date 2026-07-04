@@ -29,27 +29,29 @@ export function getHomeRouteForRole(role: UserRole): AppRoute {
   }
 }
 
+/**
+ * TEMPORARY dev/simulator convenience: dev builds (simulator runs) skip the
+ * onboarding flow entirely — sign-in lands straight on the role home even
+ * when the account has not completed onboarding. The onboarding screens stay
+ * directly reachable in dev (see the "onboarding" area decision below) so the
+ * flow can still be exercised from the dev panel. Set to `false` to test the
+ * real first-run experience; release builds are unaffected.
+ */
+const SKIP_ONBOARDING_IN_DEV_BUILDS = __DEV__;
+
 export function getLaunchRoute(session: AuthSession | null): AppRoute {
   if (!isAuthenticatedSession(session)) {
     return routes.authWelcome;
   }
 
-  if (!hasCompletedOnboarding(session)) {
+  if (!SKIP_ONBOARDING_IN_DEV_BUILDS && !hasCompletedOnboarding(session)) {
     return routes.onboardingRoleSelection;
   }
 
   return getHomeRouteForRole(session.user.role);
 }
 
-function shouldForceOnboardingAfterDevLogin(session: AuthSession | null): session is AuthSession {
-  return Boolean(__DEV__ && isAuthenticatedSession(session));
-}
-
 export function getPostLoginRoute(session: AuthSession | null): AppRoute {
-  if (shouldForceOnboardingAfterDevLogin(session)) {
-    return routes.onboardingRoleSelection;
-  }
-
   return getLaunchRoute(session);
 }
 
@@ -94,7 +96,7 @@ export function getRouteAccessDecision(session: AuthSession | null, area: RouteA
     };
   }
 
-  if (!session.onboardingComplete) {
+  if (!SKIP_ONBOARDING_IN_DEV_BUILDS && !session.onboardingComplete) {
     return {
       allowed: false,
       redirectTo: routes.onboardingRoleSelection,

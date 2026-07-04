@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
@@ -95,12 +96,7 @@ export function AssignmentHistoryScreen() {
 
   return (
     <ComposerSurface>
-      <Screen
-        backgroundColor="transparent"
-        gradeBand={state.gradeBand}
-        scroll={false}
-        testID="assignment-history-screen"
-      >
+      <SafeAreaView edges={["top"]}>
         <AppHeader
           gradeBand={state.gradeBand}
           leftAction={{
@@ -110,9 +106,17 @@ export function AssignmentHistoryScreen() {
           showSafeArea={false}
           style={styles.header}
           titleKey="assignments.history.title"
-          variant="transparent"
+          variant="compact"
         />
+      </SafeAreaView>
 
+      <Screen
+        backgroundColor="transparent"
+        contentPaddingTop={spacing.md}
+        gradeBand={state.gradeBand}
+        scroll={false}
+        testID="assignment-history-screen"
+      >
         {state.status === "loading" ? (
           <LoadingState
             accessibilityLabel={t("assignments.history.loadingAccessibility")}
@@ -214,10 +218,8 @@ function ItemSeparator() {
 
 const styles = StyleSheet.create({
   header: {
+    backgroundColor: "transparent",
     borderBottomWidth: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    paddingTop: 0,
   },
   columnWrapper: {
     gap: spacing.md,

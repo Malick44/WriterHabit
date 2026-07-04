@@ -43,6 +43,7 @@ export function mapDraftResponse(draft: DraftRecord) {
     ...mapDraftSummary(draft),
     autosaveVersion: draft.autosaveVersion,
     canvasDocumentIds: draft.canvasDocumentIds,
+    rubricChecks: draft.rubricChecks ?? {},
     text: draft.textContent,
   };
 }

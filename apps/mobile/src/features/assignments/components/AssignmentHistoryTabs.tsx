@@ -1,6 +1,12 @@
 import { Pressable, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -30,7 +36,9 @@ export function AssignmentHistoryTabs({
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const accent = settings.highContrast ? accessibleColors.actionBackground : colors.gradeBand[gradeBand].accentStrong;
+  const accent = settings.highContrast
+    ? accessibleColors.actionBackground
+    : colors.gradeBand[gradeBand].accentStrong;
 
   return (
     <View
@@ -71,7 +79,9 @@ export function AssignmentHistoryTabs({
                 paddingVertical: spacing.sm,
                 justifyContent: "center",
               },
-              pressed && !selected ? { backgroundColor: colors.background.subtle } : null,
+              pressed && !selected
+                ? { backgroundColor: colors.background.subtle }
+                : null,
             ]}
           >
             <Text

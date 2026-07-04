@@ -91,8 +91,6 @@ export interface AppHeaderProgressConfig {
 export interface AppHeaderProps {
   titleKey?: TranslationKey;
   titleParams?: TranslationParams;
-  subtitleKey?: TranslationKey;
-  subtitleParams?: TranslationParams;
   variant?: AppHeaderVariant;
   colorScheme?: AppHeaderColorScheme;
   /** Merged over the variant/scheme palette; values win over resolved colors. */

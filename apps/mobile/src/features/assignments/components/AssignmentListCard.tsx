@@ -23,12 +23,18 @@ interface AssignmentListCardProps {
   onPress: () => void;
 }
 
-export function AssignmentListCard({ assignment, gradeBand, onPress }: AssignmentListCardProps) {
+export function AssignmentListCard({
+  assignment,
+  gradeBand,
+  onPress,
+}: AssignmentListCardProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const ctaLabel = t(`assignments.history.cta.${getStatusCta(assignment.status)}`);
+  const ctaLabel = t(
+    `assignments.history.cta.${getStatusCta(assignment.status)}`,
+  );
   const skillLabel = t(`assignments.skills.${assignment.skillFocus[0]}`);
   const showDifficulty = gradeBand !== "elementary";
 
@@ -51,7 +57,9 @@ export function AssignmentListCard({ assignment, gradeBand, onPress }: Assignmen
           <Text
             numberOfLines={1}
             selectable
-            style={[getAccessibleTextStyle(styles.feedbackBannerText, settings)]}
+            style={[
+              getAccessibleTextStyle(styles.feedbackBannerText, settings),
+            ]}
           >
             {t("assignments.history.feedbackReadyBanner")}
           </Text>
@@ -59,7 +67,10 @@ export function AssignmentListCard({ assignment, gradeBand, onPress }: Assignmen
       ) : null}
 
       <View style={styles.statusRow}>
-        <AssignmentStatusBadge gradeBand={gradeBand} status={assignment.status} />
+        <AssignmentStatusBadge
+          gradeBand={gradeBand}
+          status={assignment.status}
+        />
         <Text
           selectable
           style={[getAccessibleTextStyle(styles.dueLabel, settings)]}
@@ -82,22 +93,34 @@ export function AssignmentListCard({ assignment, gradeBand, onPress }: Assignmen
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
           <Ionicons color={dashboard.outline} name="time-outline" size={13} />
-          <Text selectable style={getAccessibleTextStyle(styles.metaText, settings)}>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.metaText, settings)}
+          >
             {t("common.minutes", { count: assignment.estimatedMinutes })}
           </Text>
         </View>
         {showDifficulty ? (
-          <Text selectable style={getAccessibleTextStyle(styles.metaText, settings)}>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.metaText, settings)}
+          >
             {t(`assignments.difficulty.${assignment.difficulty}`)}
           </Text>
         ) : null}
-        <Text selectable style={getAccessibleTextStyle(styles.metaText, settings)}>
+        <Text
+          selectable
+          style={getAccessibleTextStyle(styles.metaText, settings)}
+        >
           {t("assignments.history.skillLabel", { skill: skillLabel })}
         </Text>
       </View>
 
       <View style={styles.ctaRow}>
-        <Text selectable={false} style={getAccessibleTextStyle(styles.ctaText, settings)}>
+        <Text
+          selectable={false}
+          style={getAccessibleTextStyle(styles.ctaText, settings)}
+        >
           {ctaLabel}
         </Text>
         <Ionicons color={dashboard.primary} name="chevron-forward" size={17} />

@@ -10,6 +10,7 @@ import type {
   CanvasDocumentRecord,
   ClassRecord,
   ClassRosterStudentRecord,
+  CompleteGrade3DayInput,
   CreateSubmissionInput,
   CreateSubmissionRevisionInput,
   Database,
@@ -19,6 +20,8 @@ import type {
   FeedbackRecord,
   FeedbackRubricScoreRecord,
   FeedbackWithDetails,
+  Grade3DayCompletionResult,
+  Grade3WritingProgressRecord,
   GrammarSuggestionRecord,
   ListStudentAssignmentsOptions,
   ListSubmissionQueueOptions,
@@ -116,7 +119,7 @@ const studentAssignmentSelect = [
 ].join(", ");
 
 const draftSelect =
-  "id, student_assignment_id, student_profile_id, text_content, text_preview, canvas_document_ids, autosave_version, word_count, sentence_count, paragraph_count, revision_number, created_at, updated_at";
+  "id, student_assignment_id, student_profile_id, text_content, text_preview, canvas_document_ids, autosave_version, word_count, sentence_count, paragraph_count, revision_number, rubric_checks, created_at, updated_at";
 
 const canvasDocumentSelect =
   "id, student_profile_id, assignment_id, student_assignment_id, template, title, sync_status, client_version, object_path, preview_image_path, recognition_status, attached_at, created_at, updated_at, canvas_document_contents(strokes, recognized_text, stroke_count)";
@@ -215,6 +218,7 @@ function mapDraftRow(row: Record<string, unknown>): DraftRecord {
     id: row.id as string,
     paragraphCount: row.paragraph_count as number,
     revisionNumber: row.revision_number as number,
+    rubricChecks: (row.rubric_checks as Record<string, boolean> | null) ?? {},
     sentenceCount: row.sentence_count as number,
     studentAssignmentId: row.student_assignment_id as string,
     studentProfileId: row.student_profile_id as string,
@@ -1324,6 +1328,66 @@ export class SupabaseDatabase implements Database {
     return ((data as Record<string, unknown>[] | null) ?? []).map((row) => mapBadgeRow(row));
   }
 
+  async getGrade3Progress(
+    studentProfileId: string,
+    day: number,
+  ): Promise<Grade3WritingProgressRecord | null> {
+    const { data, error } = await this.client
+      .from("grade3_writing_progress")
+      .select("id, student_profile_id, day, draft, completed, completed_at, updated_at")
+      .eq("student_profile_id", studentProfileId)
+      .eq("day", day)
+      .maybeSingle();
+
+    if (error) {
+      throw toDatabaseError(error, "grade3_writing_progress.get");
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    const row = data as Record<string, unknown>;
+
+    return {
+      completed: row.completed === true,
+      completedAt: (row.completed_at as string | null) ?? null,
+      day: Number(row.day),
+      draft: (row.draft as string | null) ?? "",
+      id: String(row.id),
+      studentProfileId: String(row.student_profile_id),
+      updatedAt: String(row.updated_at),
+    };
+  }
+
+  async completeGrade3Day(input: CompleteGrade3DayInput): Promise<Grade3DayCompletionResult> {
+    const { data, error } = await this.client.rpc("writerhabit_complete_grade3_day_workflow", {
+      p_day: input.day,
+      p_minutes: input.minutes,
+      p_student_profile_id: input.studentProfileId,
+    });
+
+    if (error || !data) {
+      throw toDatabaseError(error ?? { message: "missing grade3 completion row" }, "workflow.grade3Complete");
+    }
+
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+
+    if (!row) {
+      throw toDatabaseError({ message: "missing grade3 completion row" }, "workflow.grade3Complete");
+    }
+
+    return {
+      alreadyCompleted: row.already_completed === true,
+      completed: row.completed === true,
+      completedAt: (row.completed_at as string | null) ?? null,
+      day: Number(row.day),
+      id: String(row.id),
+      studentProfileId: String(row.student_profile_id),
+      updatedAt: String(row.updated_at),
+    };
+  }
+
   async listActivityDaysForStudents(
     studentProfileIds: readonly string[],
     range: ActivityDateRange,
@@ -1695,6 +1759,7 @@ export class SupabaseDatabase implements Database {
           client_updated_at: new Date().toISOString(),
           paragraph_count: input.paragraphCount,
           revision_number: input.revisionNumber,
+          rubric_checks: input.rubricChecks ?? {},
           sentence_count: input.sentenceCount,
           student_assignment_id: input.studentAssignmentId,
           student_profile_id: input.studentProfileId,

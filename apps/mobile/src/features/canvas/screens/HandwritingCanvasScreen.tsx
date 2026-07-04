@@ -11,10 +11,20 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getAssignmentDetailRoute, getCanvasCreateRoute } from "@/core/navigation/deepLinks";
+import {
+  getAssignmentDetailRoute,
+  getCanvasCreateRoute,
+} from "@/core/navigation/deepLinks";
 import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
-import { EmptyState, ErrorState, LoadingState, OfflineBanner, StatusState, SuccessState } from "@/shared/components/feedback";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  OfflineBanner,
+  StatusState,
+  SuccessState,
+} from "@/shared/components/feedback";
 import { Screen } from "@/shared/components/layout";
 
 import {
@@ -28,7 +38,11 @@ import {
 } from "../components";
 import { useCanvasWorkspace } from "../hooks/useCanvas";
 import { useCanvasToolStore } from "../stores/canvasToolStore";
-import { CANVAS_HEIGHT_LEVELS, CANVAS_PAGE_COUNTS, type CanvasBannerPosition } from "../types";
+import {
+  CANVAS_HEIGHT_LEVELS,
+  CANVAS_PAGE_COUNTS,
+  type CanvasBannerPosition,
+} from "../types";
 
 const EDGE_TAP_THICKNESS = 18;
 /** Inset that keeps tool popovers clear of the banner's thickness. */
@@ -40,59 +54,103 @@ type ActivePopover = "color" | "height" | "position" | null;
 type DragOffset = { x: number; y: number };
 type CanvasAreaSize = { height: number; width: number };
 
-function getParamValue(value: string | string[] | undefined): string | undefined {
+function getParamValue(
+  value: string | string[] | undefined,
+): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getBannerCenter(position: CanvasBannerPosition, size: CanvasAreaSize): DragOffset {
+function getBannerCenter(
+  position: CanvasBannerPosition,
+  size: CanvasAreaSize,
+): DragOffset {
   switch (position) {
     case "top":
       return { x: size.width / 2, y: BANNER_EDGE_CENTER_INSET };
     case "bottom":
-      return { x: size.width / 2, y: Math.max(BANNER_EDGE_CENTER_INSET, size.height - BANNER_EDGE_CENTER_INSET) };
+      return {
+        x: size.width / 2,
+        y: Math.max(
+          BANNER_EDGE_CENTER_INSET,
+          size.height - BANNER_EDGE_CENTER_INSET,
+        ),
+      };
     case "left":
       return { x: BANNER_EDGE_CENTER_INSET, y: size.height / 2 };
     case "right":
-      return { x: Math.max(BANNER_EDGE_CENTER_INSET, size.width - BANNER_EDGE_CENTER_INSET), y: size.height / 2 };
+      return {
+        x: Math.max(
+          BANNER_EDGE_CENTER_INSET,
+          size.width - BANNER_EDGE_CENTER_INSET,
+        ),
+        y: size.height / 2,
+      };
   }
 }
 
-function getNearestBannerPosition(point: DragOffset, size: CanvasAreaSize): CanvasBannerPosition {
+function getNearestBannerPosition(
+  point: DragOffset,
+  size: CanvasAreaSize,
+): CanvasBannerPosition {
   const distances = [
     { distance: point.y, position: "top" as const },
-    { distance: Math.max(0, size.height - point.y), position: "bottom" as const },
+    {
+      distance: Math.max(0, size.height - point.y),
+      position: "bottom" as const,
+    },
     { distance: point.x, position: "left" as const },
     { distance: Math.max(0, size.width - point.x), position: "right" as const },
   ];
 
-  return distances.reduce((nearest, candidate) => (candidate.distance < nearest.distance ? candidate : nearest)).position;
+  return distances.reduce((nearest, candidate) =>
+    candidate.distance < nearest.distance ? candidate : nearest,
+  ).position;
 }
 
 export function HandwritingCanvasScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ assignmentId?: string | string[]; canvasId?: string | string[] }>();
-  const canvasId = useMemo(() => getParamValue(params.canvasId), [params.canvasId]);
-  const assignmentId = useMemo(() => getParamValue(params.assignmentId), [params.assignmentId]);
+  const params = useLocalSearchParams<{
+    assignmentId?: string | string[];
+    canvasId?: string | string[];
+  }>();
+  const canvasId = useMemo(
+    () => getParamValue(params.canvasId),
+    [params.canvasId],
+  );
+  const assignmentId = useMemo(
+    () => getParamValue(params.assignmentId),
+    [params.assignmentId],
+  );
   const state = useCanvasWorkspace(canvasId, assignmentId);
 
   const bannerHidden = useCanvasToolStore((store) => store.bannerHidden);
   const bannerPosition = useCanvasToolStore((store) => store.bannerPosition);
   const heightLevel = useCanvasToolStore((store) => store.heightLevel);
   const toggleBanner = useCanvasToolStore((store) => store.toggleBanner);
-  const setBannerPosition = useCanvasToolStore((store) => store.setBannerPosition);
+  const setBannerPosition = useCanvasToolStore(
+    (store) => store.setBannerPosition,
+  );
   const setBannerHidden = useCanvasToolStore((store) => store.setBannerHidden);
 
   const [activePopover, setActivePopover] = useState<ActivePopover>(null);
-  const [bannerDragOffset, setBannerDragOffset] = useState<DragOffset | null>(null);
+  const [bannerDragOffset, setBannerDragOffset] = useState<DragOffset | null>(
+    null,
+  );
   const [canvasAreaSize, setCanvasAreaSize] = useState<CanvasAreaSize>({
     height: Math.max(360, Dimensions.get("window").height - 160),
     width: Math.max(320, Dimensions.get("window").width),
   });
-  const [viewportHeight, setViewportHeight] = useState(() => Math.max(360, Dimensions.get("window").height - 160));
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "error">("idle");
-  const [attachStatus, setAttachStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [viewportHeight, setViewportHeight] = useState(() =>
+    Math.max(360, Dimensions.get("window").height - 160),
+  );
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "error">(
+    "idle",
+  );
+  const [attachStatus, setAttachStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const bannerDragPositionRef = useRef(bannerPosition);
   const canvasAreaSizeRef = useRef(canvasAreaSize);
   const closePopover = useCallback(() => setActivePopover(null), []);
@@ -110,7 +168,8 @@ export function HandwritingCanvasScreen() {
       // eslint-disable-next-line react-hooks/refs -- refs are only read inside gesture callbacks after render
       PanResponder.create({
         onMoveShouldSetPanResponder: (_event, gestureState) =>
-          Math.abs(gestureState.dx) > BANNER_DRAG_THRESHOLD || Math.abs(gestureState.dy) > BANNER_DRAG_THRESHOLD,
+          Math.abs(gestureState.dx) > BANNER_DRAG_THRESHOLD ||
+          Math.abs(gestureState.dy) > BANNER_DRAG_THRESHOLD,
         onPanResponderGrant: () => {
           closePopover();
           setBannerDragOffset({ x: 0, y: 0 });
@@ -141,9 +200,15 @@ export function HandwritingCanvasScreen() {
       return;
     }
 
+    // With an assignment to return to, the success state carries the
+    // "Back to assignment" action — keep it visible until the student acts.
+    if (assignmentId) {
+      return;
+    }
+
     const timeout = setTimeout(() => setAttachStatus("idle"), 2500);
     return () => clearTimeout(timeout);
-  }, [attachStatus]);
+  }, [assignmentId, attachStatus]);
 
   // Closing the banner also dismisses any open tool popover.
   useEffect(() => {
@@ -172,7 +237,8 @@ export function HandwritingCanvasScreen() {
       return;
     }
 
-    const targetAssignmentId = assignmentId ?? state.viewModel.document.assignmentId;
+    const targetAssignmentId =
+      assignmentId ?? state.viewModel.document.assignmentId;
 
     if (!targetAssignmentId) {
       setAttachStatus("error");
@@ -186,7 +252,9 @@ export function HandwritingCanvasScreen() {
 
   if (state.status === "success" && state.viewModel.document) {
     const { document, syncStatus } = state.viewModel;
-    const pageCount = CANVAS_PAGE_COUNTS[heightLevel] ?? CANVAS_PAGE_COUNTS[CANVAS_HEIGHT_LEVELS[0]];
+    const pageCount =
+      CANVAS_PAGE_COUNTS[heightLevel] ??
+      CANVAS_PAGE_COUNTS[CANVAS_HEIGHT_LEVELS[0]];
 
     return (
       <View
@@ -207,7 +275,10 @@ export function HandwritingCanvasScreen() {
           syncStatus={syncStatus}
         />
 
-        {state.viewModel.isOffline || syncStatus === "sync_failed" || saveStatus === "error" || attachStatus === "success" ? (
+        {state.viewModel.isOffline ||
+        syncStatus === "sync_failed" ||
+        saveStatus === "error" ||
+        attachStatus === "success" ? (
           <View style={styles.statusStack}>
             {state.viewModel.isOffline ? (
               <OfflineBanner
@@ -238,11 +309,21 @@ export function HandwritingCanvasScreen() {
 
             {attachStatus === "success" ? (
               <SuccessState
-                actionLabel={assignmentId ? t("canvas.workspace.backToWritingCta") : undefined}
-                accessibilityLabel={t("canvas.workspace.attachSuccessAccessibility")}
+                actionLabel={
+                  assignmentId
+                    ? t("canvas.workspace.backToWritingCta")
+                    : undefined
+                }
+                accessibilityLabel={t(
+                  "canvas.workspace.attachSuccessAccessibility",
+                )}
                 description={t("canvas.workspace.attachSuccessDescription")}
                 gradeBand={state.gradeBand}
-                onActionPress={assignmentId ? () => router.push(getAssignmentDetailRoute(assignmentId)) : undefined}
+                onActionPress={
+                  assignmentId
+                    ? () => router.push(getAssignmentDetailRoute(assignmentId))
+                    : undefined
+                }
                 title={t("canvas.workspace.attachSuccessTitle")}
               />
             ) : null}
@@ -261,8 +342,12 @@ export function HandwritingCanvasScreen() {
             contentContainerStyle={[
               styles.canvasScroll,
               {
-                paddingBottom: bannerPosition === "bottom" && !bannerHidden ? 88 : spacing.xl,
-                paddingTop: bannerPosition === "top" && !bannerHidden ? 58 : spacing.lg,
+                paddingBottom:
+                  bannerPosition === "bottom" && !bannerHidden
+                    ? 88
+                    : spacing.xl,
+                paddingTop:
+                  bannerPosition === "top" && !bannerHidden ? 58 : spacing.lg,
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -293,7 +378,14 @@ export function HandwritingCanvasScreen() {
               style={[
                 styles.bannerLayer,
                 bannerAnchorStyle(bannerPosition, insets),
-                bannerDragOffset ? { transform: [{ translateX: bannerDragOffset.x }, { translateY: bannerDragOffset.y }] } : null,
+                bannerDragOffset
+                  ? {
+                      transform: [
+                        { translateX: bannerDragOffset.x },
+                        { translateY: bannerDragOffset.y },
+                      ],
+                    }
+                  : null,
               ]}
               {...bannerPanResponder.panHandlers}
             >
@@ -320,11 +412,27 @@ export function HandwritingCanvasScreen() {
                 style={styles.dismissOverlay}
                 testID="canvas-popover-dismiss"
               />
-              <View pointerEvents="box-none" style={[styles.bannerLayer, popoverAnchorStyle(bannerPosition, insets)]}>
-                {activePopover === "color" ? <ColorPickerPopover gradeBand={state.gradeBand} onClose={closePopover} /> : null}
-                {activePopover === "height" ? <CanvasHeightControl gradeBand={state.gradeBand} /> : null}
+              <View
+                pointerEvents="box-none"
+                style={[
+                  styles.bannerLayer,
+                  popoverAnchorStyle(bannerPosition, insets),
+                ]}
+              >
+                {activePopover === "color" ? (
+                  <ColorPickerPopover
+                    gradeBand={state.gradeBand}
+                    onClose={closePopover}
+                  />
+                ) : null}
+                {activePopover === "height" ? (
+                  <CanvasHeightControl gradeBand={state.gradeBand} />
+                ) : null}
                 {activePopover === "position" ? (
-                  <BannerPositionPicker gradeBand={state.gradeBand} onClose={closePopover} />
+                  <BannerPositionPicker
+                    gradeBand={state.gradeBand}
+                    onClose={closePopover}
+                  />
                 ) : null}
               </View>
             </>
@@ -375,7 +483,9 @@ export function HandwritingCanvasScreen() {
           accessibilityLabel={t("canvas.workspace.missingAccessibility")}
           description={t("canvas.workspace.missingDescription")}
           gradeBand={state.gradeBand}
-          onActionPress={() => router.replace(getCanvasCreateRoute(assignmentId))}
+          onActionPress={() =>
+            router.replace(getCanvasCreateRoute(assignmentId))
+          }
           testID="canvas-workspace-missing"
           title={t("canvas.workspace.missingTitle")}
         />
@@ -390,10 +500,22 @@ function EdgeTapZones({ onToggle }: { onToggle: () => void }) {
   const { t } = useI18n();
   const label = t("canvas.handwriting.edgeTap.accessibility");
   const edges: { key: CanvasBannerPosition; style: ViewStyle }[] = [
-    { key: "top", style: { height: EDGE_TAP_THICKNESS, left: 0, right: 0, top: 0 } },
-    { key: "bottom", style: { bottom: 0, height: EDGE_TAP_THICKNESS, left: 0, right: 0 } },
-    { key: "left", style: { bottom: 0, left: 0, top: 0, width: EDGE_TAP_THICKNESS } },
-    { key: "right", style: { bottom: 0, right: 0, top: 0, width: EDGE_TAP_THICKNESS } },
+    {
+      key: "top",
+      style: { height: EDGE_TAP_THICKNESS, left: 0, right: 0, top: 0 },
+    },
+    {
+      key: "bottom",
+      style: { bottom: 0, height: EDGE_TAP_THICKNESS, left: 0, right: 0 },
+    },
+    {
+      key: "left",
+      style: { bottom: 0, left: 0, top: 0, width: EDGE_TAP_THICKNESS },
+    },
+    {
+      key: "right",
+      style: { bottom: 0, right: 0, top: 0, width: EDGE_TAP_THICKNESS },
+    },
   ];
 
   return (
@@ -412,29 +534,70 @@ function EdgeTapZones({ onToggle }: { onToggle: () => void }) {
   );
 }
 
-function bannerAnchorStyle(position: CanvasBannerPosition, insets: { bottom: number; left: number; right: number }): ViewStyle {
+function bannerAnchorStyle(
+  position: CanvasBannerPosition,
+  insets: { bottom: number; left: number; right: number },
+): ViewStyle {
   switch (position) {
     case "bottom":
-      return { alignItems: "center", bottom: insets.bottom + spacing.md, left: 0, right: 0 };
+      return {
+        alignItems: "center",
+        bottom: insets.bottom + spacing.md,
+        left: 0,
+        right: 0,
+      };
     case "top":
       return { alignItems: "center", left: 0, right: 0, top: spacing.sm };
     case "left":
-      return { bottom: 0, justifyContent: "center", left: insets.left + spacing.md, top: 0 };
+      return {
+        bottom: 0,
+        justifyContent: "center",
+        left: insets.left + spacing.md,
+        top: 0,
+      };
     case "right":
-      return { bottom: 0, justifyContent: "center", right: insets.right + spacing.md, top: 0 };
+      return {
+        bottom: 0,
+        justifyContent: "center",
+        right: insets.right + spacing.md,
+        top: 0,
+      };
   }
 }
 
-function popoverAnchorStyle(position: CanvasBannerPosition, insets: { bottom: number; left: number; right: number }): ViewStyle {
+function popoverAnchorStyle(
+  position: CanvasBannerPosition,
+  insets: { bottom: number; left: number; right: number },
+): ViewStyle {
   switch (position) {
     case "bottom":
-      return { alignItems: "center", bottom: insets.bottom + POPOVER_BANNER_INSET, left: 0, right: 0 };
+      return {
+        alignItems: "center",
+        bottom: insets.bottom + POPOVER_BANNER_INSET,
+        left: 0,
+        right: 0,
+      };
     case "top":
-      return { alignItems: "center", left: 0, right: 0, top: POPOVER_BANNER_INSET };
+      return {
+        alignItems: "center",
+        left: 0,
+        right: 0,
+        top: POPOVER_BANNER_INSET,
+      };
     case "left":
-      return { bottom: 0, justifyContent: "center", left: insets.left + POPOVER_BANNER_INSET, top: 0 };
+      return {
+        bottom: 0,
+        justifyContent: "center",
+        left: insets.left + POPOVER_BANNER_INSET,
+        top: 0,
+      };
     case "right":
-      return { bottom: 0, justifyContent: "center", right: insets.right + POPOVER_BANNER_INSET, top: 0 };
+      return {
+        bottom: 0,
+        justifyContent: "center",
+        right: insets.right + POPOVER_BANNER_INSET,
+        top: 0,
+      };
   }
 }
 

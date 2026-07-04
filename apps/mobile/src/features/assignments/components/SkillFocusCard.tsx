@@ -2,7 +2,13 @@ import { Text, View } from "react-native";
 
 import { Card } from "@/shared/components/cards";
 import { Inline, Stack } from "@/shared/components/layout";
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -31,7 +37,13 @@ export function SkillFocusCard({ assignment, gradeBand }: SkillFocusCardProps) {
       title={t("assignments.detail.skillsTitle")}
     >
       <Stack gap="md">
-        <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.bodySmall, settings),
+            { color: accessibleColors.mutedText },
+          ]}
+        >
           {gradeBand === "elementary"
             ? t("assignments.detail.skillsDescriptionElementary")
             : gradeBand === "middle"

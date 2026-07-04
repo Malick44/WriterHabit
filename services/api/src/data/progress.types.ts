@@ -96,3 +96,30 @@ export interface ListSubmissionQueueOptions {
   limit: number;
   statuses?: readonly SubmissionStatus[];
 }
+
+export interface Grade3WritingProgressRecord {
+  completed: boolean;
+  completedAt: string | null;
+  day: number;
+  draft: string;
+  id: string;
+  studentProfileId: string;
+  updatedAt: string;
+}
+
+export interface CompleteGrade3DayInput {
+  day: number;
+  /** Practice minutes credited toward the streak; clamped server-side. */
+  minutes: number;
+  studentProfileId: string;
+}
+
+export interface Grade3DayCompletionResult {
+  alreadyCompleted: boolean;
+  completed: boolean;
+  completedAt: string | null;
+  day: number;
+  id: string;
+  studentProfileId: string;
+  updatedAt: string;
+}

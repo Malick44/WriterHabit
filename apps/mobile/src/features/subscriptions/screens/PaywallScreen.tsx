@@ -45,7 +45,6 @@ export function PaywallScreen() {
         }}
         showSafeArea={false}
         style={styles.header}
-        subtitleKey={isPremium ? "subscriptions.paywall.activeSubtitle" : "subscriptions.paywall.subtitle"}
         titleKey={isPremium ? "subscriptions.paywall.activeTitle" : "subscriptions.paywall.title"}
         variant="transparent"
       />

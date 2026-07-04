@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
+import { create } from "zustand";
 
 import type {
   AssignmentAttachment,
@@ -21,6 +22,38 @@ export type {
 };
 
 export type AttachmentError = "permission" | "failed";
+
+const EMPTY_ATTACHMENTS: AssignmentAttachment[] = [];
+
+interface AttachmentStoreState {
+  byScope: Record<string, AssignmentAttachment[]>;
+  clearScope: (scope: string) => void;
+  setScoped: (
+    scope: string,
+    updater: (previous: AssignmentAttachment[]) => AssignmentAttachment[],
+  ) => void;
+}
+
+/**
+ * Attachments live in a module-level store keyed by scope (usually the
+ * assignment id) so photos added on one screen — e.g. the assignment detail
+ * typed-copy step — are still there when the submission screen mounts.
+ */
+const useAttachmentStore = create<AttachmentStoreState>()((set) => ({
+  byScope: {},
+  clearScope: (scope) =>
+    set((state) => {
+      const { [scope]: _removed, ...rest } = state.byScope;
+      return { byScope: rest };
+    }),
+  setScoped: (scope, updater) =>
+    set((state) => ({
+      byScope: {
+        ...state.byScope,
+        [scope]: updater(state.byScope[scope] ?? EMPTY_ATTACHMENTS),
+      },
+    })),
+}));
 
 let attachmentCounter = 0;
 
@@ -77,11 +110,37 @@ export interface AssignmentAttachmentsState {
  * runs text extraction on each one. Wraps expo-image-picker (camera + library),
  * expo-document-picker, and the text-extraction service. URIs stay local;
  * uploading bytes to a backend is handled by the submit flow.
+ *
+ * Pass a `scopeKey` (usually the assignment id) to share the same attachment
+ * list across screens; without one the list is private to this mount and
+ * cleared on unmount, matching the previous local-state behavior.
  */
-export function useAssignmentAttachments(): AssignmentAttachmentsState {
-  const [attachments, setAttachments] = useState<AssignmentAttachment[]>([]);
+export function useAssignmentAttachments(
+  scopeKey?: string,
+): AssignmentAttachmentsState {
+  const [ephemeralScope] = useState(() => `ephemeral-${createAttachmentId()}`);
+  const scope = scopeKey ?? ephemeralScope;
+  const attachments = useAttachmentStore(
+    (state) => state.byScope[scope] ?? EMPTY_ATTACHMENTS,
+  );
+  const setScoped = useAttachmentStore((state) => state.setScoped);
+  const clearScope = useAttachmentStore((state) => state.clearScope);
+  const setAttachments = useCallback(
+    (updater: (previous: AssignmentAttachment[]) => AssignmentAttachment[]) =>
+      setScoped(scope, updater),
+    [scope, setScoped],
+  );
   const [isPicking, setIsPicking] = useState(false);
   const [error, setError] = useState<AttachmentError | null>(null);
+
+  // Unscoped (per-mount) attachment lists don't outlive their screen.
+  useEffect(() => {
+    if (scopeKey) {
+      return;
+    }
+
+    return () => clearScope(ephemeralScope);
+  }, [clearScope, ephemeralScope, scopeKey]);
 
   const attachmentsRef = useRef(attachments);
   useEffect(() => {
@@ -96,7 +155,7 @@ export function useAssignmentAttachments(): AssignmentAttachmentsState {
         ),
       );
     },
-    [],
+    [setAttachments],
   );
 
   const runExtraction = useCallback(
@@ -123,7 +182,7 @@ export function useAssignmentAttachments(): AssignmentAttachmentsState {
         void runExtraction(item);
       });
     },
-    [runExtraction],
+    [runExtraction, setAttachments],
   );
 
   const takePhoto = useCallback(async () => {
@@ -199,11 +258,14 @@ export function useAssignmentAttachments(): AssignmentAttachmentsState {
     }
   }, [append]);
 
-  const remove = useCallback((id: string) => {
-    setAttachments((previous) =>
-      previous.filter((attachment) => attachment.id !== id),
-    );
-  }, []);
+  const remove = useCallback(
+    (id: string) => {
+      setAttachments((previous) =>
+        previous.filter((attachment) => attachment.id !== id),
+      );
+    },
+    [setAttachments],
+  );
 
   const retryExtraction = useCallback(
     (id: string) => {

@@ -50,7 +50,13 @@ export function AssignmentActionPanel({
       title={t("assignments.detail.actionsTitle")}
     >
       <Stack gap="md">
-        <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.bodySmall, settings),
+            { color: accessibleColors.mutedText },
+          ]}
+        >
           {t("assignments.detail.actionsDescription")}
         </Text>
 
@@ -67,10 +73,16 @@ export function AssignmentActionPanel({
         <Inline align="stretch" gap="sm">
           <Button
             accessibilityHint={t("assignments.detail.startWritingHint")}
-            accessibilityLabel={t("assignments.detail.startWritingAccessibility")}
+            accessibilityLabel={t(
+              "assignments.detail.startWritingAccessibility",
+            )}
             disabled={!canStartWriting}
             gradeBand={gradeBand}
-            label={assignment.status === "not_started" ? t("assignments.startWriting") : t("assignments.continueDraft")}
+            label={
+              assignment.status === "not_started"
+                ? t("assignments.startWriting")
+                : t("assignments.continueDraft")
+            }
             loading={startStatus === "loading"}
             onPress={onStartWriting}
             size={gradeBand === "elementary" ? "lg" : "md"}
@@ -78,7 +90,9 @@ export function AssignmentActionPanel({
           />
           <Button
             accessibilityHint={t("assignments.detail.startCanvasHint")}
-            accessibilityLabel={t("assignments.detail.startCanvasAccessibility")}
+            accessibilityLabel={t(
+              "assignments.detail.startCanvasAccessibility",
+            )}
             disabled={!canStartCanvas}
             gradeBand={gradeBand}
             label={t("assignments.detail.startCanvasCta")}
@@ -91,7 +105,11 @@ export function AssignmentActionPanel({
         </Inline>
 
         <Button
-          accessibilityHint={canSubmit ? t("assignments.submit.hint") : t("assignments.submit.disabledHint")}
+          accessibilityHint={
+            canSubmit
+              ? t("assignments.submit.hint")
+              : t("assignments.submit.disabledHint")
+          }
           accessibilityLabel={t("assignments.submit.ctaAccessibility")}
           disabled={!canSubmit}
           gradeBand={gradeBand}
@@ -101,7 +119,13 @@ export function AssignmentActionPanel({
           variant={canSubmit ? "secondary" : "ghost"}
         />
 
-        <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: colors.text.muted }]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.caption, settings),
+            { color: colors.text.muted },
+          ]}
+        >
           {t("assignments.detail.safetyNote")}
         </Text>
       </Stack>

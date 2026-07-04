@@ -205,6 +205,7 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
         completed: true,
         day: lesson.day,
         draft,
+        estimatedMinutes: lesson.estimatedMinutes,
         favoriteSentence,
         planning,
         strongerSentence,

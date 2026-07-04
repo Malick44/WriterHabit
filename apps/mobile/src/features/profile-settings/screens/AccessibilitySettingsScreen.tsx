@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { AccessibilityTextSize } from "@/shared/utils/accessibility";
+import { spacing } from "@/design/tokens";
+import { getAccessibleColors, type AccessibilityTextSize } from "@/shared/utils/accessibility";
 import { Button } from "@/shared/components/buttons";
 import { ErrorState, LoadingState, SuccessState } from "@/shared/components/feedback";
 import { ChoiceCard, SettingsToggleRow } from "@/shared/components/forms";
@@ -41,156 +43,144 @@ export function AccessibilitySettingsScreen() {
   const t = useT();
   const { error, hydrated, resetSettings, setTextSize, settings, updateSettings } = useAccessibilitySettingsStore();
   const [hasChanged, setHasChanged] = useState(false);
+  const backgroundColor = getAccessibleColors(settings).background;
 
-  if (!hydrated) {
-    return (
-      <Screen>
+  return (
+    <View style={{ backgroundColor, flex: 1 }}>
+      <SafeAreaView edges={["top"]}>
         <AppHeader
           leftAction={{
             accessibilityLabelKey: "common.back",
             type: "back",
           }}
           showSafeArea={false}
-          style={styles.header}
+          style={[styles.header, { backgroundColor }]}
           titleKey="accessibility.screen.title"
-          variant="transparent"
+          variant="compact"
         />
-        <LoadingState
-          description={t("accessibility.screen.loadingDescription")}
-          label={t("accessibility.screen.loadingTitle")}
-        />
-      </Screen>
-    );
-  }
+      </SafeAreaView>
 
-  return (
-    <Screen>
-      <AppHeader
-        leftAction={{
-          accessibilityLabelKey: "common.back",
-          type: "back",
-        }}
-        showSafeArea={false}
-        style={styles.header}
-        subtitleKey="accessibility.screen.subtitle"
-        titleKey="accessibility.screen.title"
-        variant="transparent"
-      />
-      <Stack gap="lg">
-        {error ? (
-          <ErrorState
-            description={t("accessibility.screen.errorDescription")}
-            title={t("accessibility.screen.errorTitle")}
+      <Screen backgroundColor={backgroundColor} contentPaddingTop={spacing.md}>
+        {!hydrated ? (
+          <LoadingState
+            description={t("accessibility.screen.loadingDescription")}
+            label={t("accessibility.screen.loadingTitle")}
           />
-        ) : null}
-        {!error && hasChanged ? (
-          <SuccessState
-            description={t("accessibility.screen.savedDescription")}
-            title={t("accessibility.screen.savedTitle")}
-          />
-        ) : null}
-
-        <PageSection
-          subtitle={t("accessibility.textSize.description")}
-          title={t("accessibility.textSize.label")}
-        >
-          <Stack gap="sm">
-            {textSizeOptions.map((textSize) => (
-              <ChoiceCard
-                key={textSize}
-                description={t(getTextSizeDescriptionKey(textSize))}
-                label={t(getTextSizeLabelKey(textSize))}
-                onPress={() => {
-                  setHasChanged(true);
-                  void setTextSize(textSize);
-                }}
-                selected={settings.textSize === textSize}
+        ) : (
+          <Stack gap="lg">
+            {error ? (
+              <ErrorState
+                description={t("accessibility.screen.errorDescription")}
+                title={t("accessibility.screen.errorTitle")}
               />
-            ))}
+            ) : null}
+            {!error && hasChanged ? (
+              <SuccessState
+                description={t("accessibility.screen.savedDescription")}
+                title={t("accessibility.screen.savedTitle")}
+              />
+            ) : null}
+
+            <PageSection
+              subtitle={t("accessibility.textSize.description")}
+              title={t("accessibility.textSize.label")}
+            >
+              <Stack gap="sm">
+                {textSizeOptions.map((textSize) => (
+                  <ChoiceCard
+                    key={textSize}
+                    description={t(getTextSizeDescriptionKey(textSize))}
+                    label={t(getTextSizeLabelKey(textSize))}
+                    onPress={() => {
+                      setHasChanged(true);
+                      void setTextSize(textSize);
+                    }}
+                    selected={settings.textSize === textSize}
+                  />
+                ))}
+              </Stack>
+            </PageSection>
+
+            <Stack gap="md">
+              <SettingsToggleRow
+                description={t("accessibility.toggles.dyslexiaFriendlyFont.description")}
+                label={t("accessibility.toggles.dyslexiaFriendlyFont.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ dyslexiaFriendlyFont: value });
+                }}
+                value={settings.dyslexiaFriendlyFont}
+                variant="outlined"
+              />
+              <SettingsToggleRow
+                description={t("accessibility.toggles.highContrast.description")}
+                label={t("accessibility.toggles.highContrast.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ highContrast: value });
+                }}
+                value={settings.highContrast}
+                variant="outlined"
+              />
+              <SettingsToggleRow
+                description={t("accessibility.toggles.reducedMotion.description")}
+                label={t("accessibility.toggles.reducedMotion.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ reducedMotion: value });
+                }}
+                value={settings.reducedMotion}
+                variant="outlined"
+              />
+              <SettingsToggleRow
+                description={t("accessibility.toggles.textToSpeech.description")}
+                label={t("accessibility.toggles.textToSpeech.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ textToSpeech: value });
+                }}
+                value={settings.textToSpeech}
+                variant="outlined"
+              />
+              <SettingsToggleRow
+                description={t("accessibility.toggles.speechToText.description")}
+                label={t("accessibility.toggles.speechToText.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ speechToText: value });
+                }}
+                value={settings.speechToText}
+                variant="outlined"
+              />
+              <SettingsToggleRow
+                description={t("accessibility.toggles.simplifiedUi.description")}
+                label={t("accessibility.toggles.simplifiedUi.label")}
+                onValueChange={(value) => {
+                  setHasChanged(true);
+                  void updateSettings({ simplifiedUi: value });
+                }}
+                value={settings.simplifiedUi}
+                variant="outlined"
+              />
+            </Stack>
+
+            <Button
+              label={t("accessibility.screen.resetCta")}
+              onPress={() => {
+                setHasChanged(true);
+                void resetSettings();
+              }}
+              variant="secondary"
+            />
           </Stack>
-        </PageSection>
-
-        <Stack gap="md">
-          <SettingsToggleRow
-            description={t("accessibility.toggles.dyslexiaFriendlyFont.description")}
-            label={t("accessibility.toggles.dyslexiaFriendlyFont.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ dyslexiaFriendlyFont: value });
-            }}
-            value={settings.dyslexiaFriendlyFont}
-            variant="outlined"
-          />
-          <SettingsToggleRow
-            description={t("accessibility.toggles.highContrast.description")}
-            label={t("accessibility.toggles.highContrast.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ highContrast: value });
-            }}
-            value={settings.highContrast}
-            variant="outlined"
-          />
-          <SettingsToggleRow
-            description={t("accessibility.toggles.reducedMotion.description")}
-            label={t("accessibility.toggles.reducedMotion.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ reducedMotion: value });
-            }}
-            value={settings.reducedMotion}
-            variant="outlined"
-          />
-          <SettingsToggleRow
-            description={t("accessibility.toggles.textToSpeech.description")}
-            label={t("accessibility.toggles.textToSpeech.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ textToSpeech: value });
-            }}
-            value={settings.textToSpeech}
-            variant="outlined"
-          />
-          <SettingsToggleRow
-            description={t("accessibility.toggles.speechToText.description")}
-            label={t("accessibility.toggles.speechToText.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ speechToText: value });
-            }}
-            value={settings.speechToText}
-            variant="outlined"
-          />
-          <SettingsToggleRow
-            description={t("accessibility.toggles.simplifiedUi.description")}
-            label={t("accessibility.toggles.simplifiedUi.label")}
-            onValueChange={(value) => {
-              setHasChanged(true);
-              void updateSettings({ simplifiedUi: value });
-            }}
-            value={settings.simplifiedUi}
-            variant="outlined"
-          />
-        </Stack>
-
-        <Button
-          label={t("accessibility.screen.resetCta")}
-          onPress={() => {
-            setHasChanged(true);
-            void resetSettings();
-          }}
-          variant="secondary"
-        />
-      </Stack>
-    </Screen>
+        )}
+      </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
     borderBottomWidth: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    paddingTop: 0,
   },
 });

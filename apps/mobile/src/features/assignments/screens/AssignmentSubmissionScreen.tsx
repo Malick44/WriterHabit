@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getAssignmentDetailRoute } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors } from "@/design/tokens";
+import { colors, spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   EmptyState,
@@ -12,6 +14,7 @@ import {
   StatusState,
 } from "@/shared/components/feedback";
 import { PageSection, Screen, Stack } from "@/shared/components/layout";
+import { AppHeader } from "@/shared/components/navigation";
 
 import {
   AssignmentAttachmentUploader,
@@ -46,7 +49,9 @@ export function AssignmentSubmissionScreen() {
     [params.assignmentId],
   );
   const state = useAssignmentSubmissionData(assignmentId);
-  const attachmentsState = useAssignmentAttachments();
+  // Scoped by assignment so photos added on the detail screen's typed-copy
+  // step are already here when the student reaches the final review.
+  const attachmentsState = useAssignmentAttachments(assignmentId);
   // Until the student edits, the response mirrors the extracted text (so reading
   // their photo fills in the work live). Once edited, their text wins; reset
   // clears the override to follow the extracted text again.
@@ -70,135 +75,160 @@ export function AssignmentSubmissionScreen() {
     router.replace(routes.studentAssignmentsHistory);
   };
 
+  const backgroundColor = colors.gradeBand[state.gradeBand].background;
+
   return (
-    <Screen
-      backgroundColor={colors.gradeBand[state.gradeBand].background}
-      gradeBand={state.gradeBand}
-      subtitle={t("assignments.submit.subtitle")}
-      testID="assignment-submission-screen"
-      title={t("assignments.submit.screenTitle")}
-    >
-      {state.status === "loading" ? (
-        <LoadingState
-          accessibilityLabel={t("assignments.submit.loadingAccessibility")}
-          description={t("assignments.submit.loadingDescription")}
+    <View style={{ backgroundColor, flex: 1 }}>
+      <SafeAreaView edges={["top"]}>
+        <AppHeader
           gradeBand={state.gradeBand}
-          label={t("assignments.submit.loadingTitle")}
-          testID="assignment-submission-loading"
+          leftAction={{
+            accessibilityLabelKey: "common.back",
+            onPress: backToAssignment,
+            type: "back",
+          }}
+          showSafeArea={false}
+          style={[styles.header, { backgroundColor }]}
+          titleKey="assignments.submit.screenTitle"
+          variant="compact"
         />
-      ) : null}
+      </SafeAreaView>
 
-      {state.status === "error" ? (
-        <ErrorState
-          actionLabel={t("common.retry")}
-          accessibilityLabel={t("assignments.submit.errorAccessibility")}
-          description={t("assignments.submit.loadErrorDescription")}
-          gradeBand={state.gradeBand}
-          onActionPress={state.refetch}
-          testID="assignment-submission-error"
-          title={t("assignments.submit.errorTitle")}
-        />
-      ) : null}
-
-      {state.status === "missing" ? (
-        <EmptyState
-          actionLabel={t("assignments.detail.missingAction")}
-          accessibilityLabel={t("assignments.detail.missingAccessibility")}
-          description={t("assignments.detail.missingDescription")}
-          gradeBand={state.gradeBand}
-          onActionPress={() => router.replace(routes.studentAssignmentsHistory)}
-          testID="assignment-submission-missing"
-          title={t("assignments.detail.missingTitle")}
-        />
-      ) : null}
-
-      {state.status === "success" && state.viewModel.assignment ? (
-        <Stack gap="lg">
-          {state.viewModel.isOffline ? (
-            <StatusState
-              actionLabel={t("assignments.submit.offlineAction")}
-              accessibilityLabel={t("assignments.submit.offlineAccessibility")}
-              description={t("assignments.submit.offlineDescription")}
-              gradeBand={state.gradeBand}
-              onActionPress={state.refetch}
-              title={t("assignments.submit.offlineTitle")}
-              tone="warning"
-            />
-          ) : null}
-
-          <PageSection
+      <Screen
+        backgroundColor={backgroundColor}
+        contentPaddingTop={spacing.md}
+        gradeBand={state.gradeBand}
+        subtitle={t("assignments.submit.subtitle")}
+        testID="assignment-submission-screen"
+      >
+        {state.status === "loading" ? (
+          <LoadingState
+            accessibilityLabel={t("assignments.submit.loadingAccessibility")}
+            description={t("assignments.submit.loadingDescription")}
             gradeBand={state.gradeBand}
-            subtitle={t("assignments.submit.assignmentSubtitle")}
-            title={t("assignments.submit.assignmentTitle")}
-          >
-            <AssignmentPromptCard
-              assignment={state.viewModel.assignment}
-              gradeAdaptation={state.viewModel.gradeAdaptation}
-              gradeBand={state.gradeBand}
-            />
-          </PageSection>
+            label={t("assignments.submit.loadingTitle")}
+            testID="assignment-submission-loading"
+          />
+        ) : null}
 
-          <PageSection
+        {state.status === "error" ? (
+          <ErrorState
+            actionLabel={t("common.retry")}
+            accessibilityLabel={t("assignments.submit.errorAccessibility")}
+            description={t("assignments.submit.loadErrorDescription")}
             gradeBand={state.gradeBand}
-            title={t("assignments.attachments.sectionTitle")}
-          >
-            <AssignmentAttachmentUploader
-              attachments={attachmentsState.attachments}
-              error={attachmentsState.error}
-              gradeBand={state.gradeBand}
-              isPicking={attachmentsState.isPicking}
-              onPickFile={() => {
-                void attachmentsState.pickFile();
-              }}
-              onPickPhoto={() => {
-                void attachmentsState.pickPhoto();
-              }}
-              onRemove={attachmentsState.remove}
-              onRetryExtraction={attachmentsState.retryExtraction}
-              onTakePhoto={() => {
-                void attachmentsState.takePhoto();
-              }}
-            />
-          </PageSection>
+            onActionPress={state.refetch}
+            testID="assignment-submission-error"
+            title={t("assignments.submit.errorTitle")}
+          />
+        ) : null}
 
-          {attachmentsState.attachments.length > 0 ? (
+        {state.status === "missing" ? (
+          <EmptyState
+            actionLabel={t("assignments.detail.missingAction")}
+            accessibilityLabel={t("assignments.detail.missingAccessibility")}
+            description={t("assignments.detail.missingDescription")}
+            gradeBand={state.gradeBand}
+            onActionPress={() => router.replace(routes.studentAssignmentsHistory)}
+            testID="assignment-submission-missing"
+            title={t("assignments.detail.missingTitle")}
+          />
+        ) : null}
+
+        {state.status === "success" && state.viewModel.assignment ? (
+          <Stack gap="lg">
+            {state.viewModel.isOffline ? (
+              <StatusState
+                actionLabel={t("assignments.submit.offlineAction")}
+                accessibilityLabel={t("assignments.submit.offlineAccessibility")}
+                description={t("assignments.submit.offlineDescription")}
+                gradeBand={state.gradeBand}
+                onActionPress={state.refetch}
+                title={t("assignments.submit.offlineTitle")}
+                tone="warning"
+              />
+            ) : null}
+
             <PageSection
               gradeBand={state.gradeBand}
-              title={t("assignments.attachments.extractedSectionTitle")}
+              subtitle={t("assignments.submit.assignmentSubtitle")}
+              title={t("assignments.submit.assignmentTitle")}
             >
-              <AssignmentExtractedText
+              <AssignmentPromptCard
+                assignment={state.viewModel.assignment}
+                gradeAdaptation={state.viewModel.gradeAdaptation}
                 gradeBand={state.gradeBand}
-                isEdited={responseEdited}
-                isExtracting={attachmentsState.isExtracting}
-                onChangeText={handleChangeResponse}
-                onReset={handleResetResponse}
-                value={responseText}
               />
             </PageSection>
-          ) : null}
 
-          <PageSection
-            gradeBand={state.gradeBand}
-            subtitle={t("assignments.submit.checklistSubtitle")}
-            title={t("assignments.submit.checklistTitle")}
-          >
-            <SubmissionChecklist
-              attachmentCount={attachmentsState.attachments.length}
+            <PageSection
               gradeBand={state.gradeBand}
-              onBackToAssignment={backToAssignment}
-              onSubmit={() => {
-                void state.submitAssignment({
-                  attachments: attachmentsState.attachments,
-                  typedText: attachmentSubmissionText,
-                });
-              }}
-              submitResult={state.submitResult}
-              submitStatus={state.submitStatus}
-              viewModel={state.viewModel}
-            />
-          </PageSection>
-        </Stack>
-      ) : null}
-    </Screen>
+              title={t("assignments.attachments.sectionTitle")}
+            >
+              <AssignmentAttachmentUploader
+                attachments={attachmentsState.attachments}
+                error={attachmentsState.error}
+                gradeBand={state.gradeBand}
+                isPicking={attachmentsState.isPicking}
+                onPickFile={() => {
+                  void attachmentsState.pickFile();
+                }}
+                onPickPhoto={() => {
+                  void attachmentsState.pickPhoto();
+                }}
+                onRemove={attachmentsState.remove}
+                onRetryExtraction={attachmentsState.retryExtraction}
+                onTakePhoto={() => {
+                  void attachmentsState.takePhoto();
+                }}
+              />
+            </PageSection>
+
+            {attachmentsState.attachments.length > 0 ? (
+              <PageSection
+                gradeBand={state.gradeBand}
+                title={t("assignments.attachments.extractedSectionTitle")}
+              >
+                <AssignmentExtractedText
+                  gradeBand={state.gradeBand}
+                  isEdited={responseEdited}
+                  isExtracting={attachmentsState.isExtracting}
+                  onChangeText={handleChangeResponse}
+                  onReset={handleResetResponse}
+                  value={responseText}
+                />
+              </PageSection>
+            ) : null}
+
+            <PageSection
+              gradeBand={state.gradeBand}
+              subtitle={t("assignments.submit.checklistSubtitle")}
+              title={t("assignments.submit.checklistTitle")}
+            >
+              <SubmissionChecklist
+                attachmentCount={attachmentsState.attachments.length}
+                gradeBand={state.gradeBand}
+                onBackToAssignment={backToAssignment}
+                onSubmit={() => {
+                  void state.submitAssignment({
+                    attachments: attachmentsState.attachments,
+                    typedText: attachmentSubmissionText,
+                  });
+                }}
+                submitResult={state.submitResult}
+                submitStatus={state.submitStatus}
+                viewModel={state.viewModel}
+              />
+            </PageSection>
+          </Stack>
+        ) : null}
+      </Screen>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 0,
+  },
+});

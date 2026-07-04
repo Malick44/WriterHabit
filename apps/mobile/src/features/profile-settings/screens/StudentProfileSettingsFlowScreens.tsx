@@ -112,18 +112,15 @@ const languageChoices = profileLanguageOptions.map((value) => ({
 function ProfileSettingsScaffold({
   backAccessibilityLabelKey,
   children,
-  subtitle,
   testID,
   titleKey,
 }: {
   backAccessibilityLabelKey: TranslationKey;
   children: ReactNode;
-  subtitle: string;
   testID: string;
   titleKey: TranslationKey;
 }) {
   const insets = useSafeAreaInsets();
-  const { settings } = useAccessibilityContext();
 
   return (
     <View style={styles.root}>
@@ -132,8 +129,8 @@ function ProfileSettingsScaffold({
           accessibilityLabelKey: backAccessibilityLabelKey,
           type: "back",
         }}
-        style={styles.header}
         titleKey={titleKey}
+        variant="transparent"
       />
       <ScrollView
         contentContainerStyle={[
@@ -146,15 +143,7 @@ function ProfileSettingsScaffold({
         showsVerticalScrollIndicator={false}
         testID={testID}
       >
-        <View style={styles.content}>
-          <Text
-            selectable
-            style={[getAccessibleTextStyle(typography.gradeBands.middle.body, settings), styles.subtitle]}
-          >
-            {subtitle}
-          </Text>
-          {children}
-        </View>
+        <View style={styles.content}>{children}</View>
       </ScrollView>
     </View>
   );
@@ -390,7 +379,6 @@ export function EditProfileSettingsScreen() {
   return (
     <ProfileSettingsScaffold
       backAccessibilityLabelKey="profileSettings.editProfile.headerBackAccessibility"
-      subtitle={t("profileSettings.editProfile.subtitle")}
       testID="student-edit-profile-settings-screen"
       titleKey="profileSettings.editProfile.title"
     >
@@ -527,7 +515,6 @@ export function WritingGoalsSettingsScreen() {
   return (
     <ProfileSettingsScaffold
       backAccessibilityLabelKey="profileSettings.goals.headerBackAccessibility"
-      subtitle={t("profileSettings.goals.subtitle")}
       testID="student-writing-goals-settings-screen"
       titleKey="profileSettings.goals.title"
     >
@@ -695,7 +682,6 @@ export function NotificationSettingsScreen() {
   return (
     <ProfileSettingsScaffold
       backAccessibilityLabelKey="profileSettings.notifications.headerBackAccessibility"
-      subtitle={t("profileSettings.notifications.subtitle")}
       testID="student-notification-settings-screen"
       titleKey="profileSettings.notifications.title"
     >
@@ -824,7 +810,6 @@ export function LanguageSettingsScreen() {
   return (
     <ProfileSettingsScaffold
       backAccessibilityLabelKey="profileSettings.language.headerBackAccessibility"
-      subtitle={t("profileSettings.language.subtitle")}
       testID="student-language-settings-screen"
       titleKey="profileSettings.language.title"
     >
@@ -881,10 +866,6 @@ const styles = StyleSheet.create({
     maxWidth: layout.maxContentWidth,
     width: "100%",
   },
-  header: {
-    backgroundColor: settingsFlowColors.background,
-    borderBottomColor: settingsFlowColors.border,
-  },
   iconBadge: {
     alignItems: "center",
     backgroundColor: settingsFlowColors.surfaceSoft,
@@ -911,8 +892,5 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: settingsFlowColors.text,
-  },
-  subtitle: {
-    color: settingsFlowColors.muted,
   },
 });

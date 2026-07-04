@@ -19,8 +19,6 @@ function isVisibleAction(action: HeaderAction | undefined): action is Exclude<He
 export const AppHeader = memo(function AppHeader({
   titleKey,
   titleParams,
-  subtitleKey,
-  subtitleParams,
   variant = "default",
   colorScheme = "light",
   colorOverrides,
@@ -96,8 +94,6 @@ export const AppHeader = memo(function AppHeader({
           centered={centered}
           colors={headerColors}
           gradeBand={gradeBand}
-          subtitleKey={subtitleKey}
-          subtitleParams={subtitleParams}
           titleKey={titleKey}
           titleParams={titleParams}
           titleRole={variantStyle.titleRole}

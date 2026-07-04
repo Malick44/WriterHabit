@@ -7,11 +7,16 @@ import type {
   AssignmentStatus,
 } from "../types";
 
-const draftStatuses: AssignmentStatus[] = ["in_progress", "revision_in_progress"];
+const draftStatuses: AssignmentStatus[] = [
+  "in_progress",
+  "revision_in_progress",
+];
 const submittedStatuses: AssignmentStatus[] = ["submitted", "reviewing"];
 const reviewedStatuses: AssignmentStatus[] = ["feedback_ready", "completed"];
 
-export function getAssignmentGradeAdaptation(gradeLevel: number): AssignmentGradeAdaptation {
+export function getAssignmentGradeAdaptation(
+  gradeLevel: number,
+): AssignmentGradeAdaptation {
   const band = typography.getGradeBandForGrade(gradeLevel);
 
   switch (band) {
@@ -39,7 +44,9 @@ export function getAssignmentGradeAdaptation(gradeLevel: number): AssignmentGrad
   }
 }
 
-export function getAssignmentHistoryTabForStatus(status: AssignmentStatus): AssignmentHistoryTab | null {
+export function getAssignmentHistoryTabForStatus(
+  status: AssignmentStatus,
+): AssignmentHistoryTab | null {
   if (draftStatuses.includes(status)) {
     return "drafts";
   }
@@ -63,7 +70,10 @@ export function filterAssignmentsByTab(
     return assignments;
   }
 
-  return assignments.filter((assignment) => getAssignmentHistoryTabForStatus(assignment.status) === selectedTab);
+  return assignments.filter(
+    (assignment) =>
+      getAssignmentHistoryTabForStatus(assignment.status) === selectedTab,
+  );
 }
 
 /**
@@ -81,13 +91,17 @@ const statusListPriority: Record<AssignmentStatus, number> = {
   submitted: 3,
 };
 
-export function sortAssignmentsForHistory(assignments: AssignmentRecord[]): AssignmentRecord[] {
+export function sortAssignmentsForHistory(
+  assignments: AssignmentRecord[],
+): AssignmentRecord[] {
   return [...assignments].sort(
     (a, b) => statusListPriority[a.status] - statusListPriority[b.status],
   );
 }
 
-export function getAssignmentHistoryCounts(assignments: AssignmentRecord[]): Record<AssignmentHistoryTab, number> {
+export function getAssignmentHistoryCounts(
+  assignments: AssignmentRecord[],
+): Record<AssignmentHistoryTab, number> {
   return assignments.reduce<Record<AssignmentHistoryTab, number>>(
     (counts, assignment) => {
       counts.all += 1;
@@ -109,10 +123,17 @@ export function getAssignmentHistoryCounts(assignments: AssignmentRecord[]): Rec
 }
 
 export function canStartAssignmentWork(status: AssignmentStatus): boolean {
-  return status === "not_started" || status === "in_progress" || status === "feedback_ready" || status === "revision_in_progress";
+  return (
+    status === "not_started" ||
+    status === "in_progress" ||
+    status === "feedback_ready" ||
+    status === "revision_in_progress"
+  );
 }
 
-export function getNextStatusOnStart(status: AssignmentStatus): AssignmentStatus | null {
+export function getNextStatusOnStart(
+  status: AssignmentStatus,
+): AssignmentStatus | null {
   switch (status) {
     case "not_started":
       return "in_progress";
@@ -129,13 +150,16 @@ export function getNextStatusOnStart(status: AssignmentStatus): AssignmentStatus
 }
 
 export function canSubmitAssignment(assignment: AssignmentRecord): boolean {
-  if (assignment.status !== "in_progress" && assignment.status !== "revision_in_progress") {
+  if (
+    assignment.status !== "in_progress" &&
+    assignment.status !== "revision_in_progress"
+  ) {
     return false;
   }
 
   return Boolean(
     assignment.draft &&
-      (assignment.draft.wordCount > 0 || assignment.draft.canvasPageCount > 0),
+    (assignment.draft.wordCount > 0 || assignment.draft.canvasPageCount > 0),
   );
 }
 
@@ -166,7 +190,9 @@ export function getStatusCta(status: AssignmentStatus): AssignmentStatusCta {
   }
 }
 
-export function getStatusTone(status: AssignmentStatus): "neutral" | "info" | "success" | "warning" {
+export function getStatusTone(
+  status: AssignmentStatus,
+): "neutral" | "info" | "success" | "warning" {
   switch (status) {
     case "not_started":
       return "neutral";

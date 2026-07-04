@@ -12,6 +12,5 @@ export const APP_HEADER_TEST_IDS = {
   avatar: "app-header-avatar",
   progress: "app-header-progress",
   root: "app-header",
-  subtitle: "app-header-subtitle",
   title: "app-header-title",
 } as const;

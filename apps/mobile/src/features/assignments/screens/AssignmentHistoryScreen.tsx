@@ -58,7 +58,10 @@ export function AssignmentHistoryScreen() {
     useState<AssignmentListFilter>("all");
   const state = useAssignmentHistoryData("all");
   const handleBottomMenuScroll = useBottomMenuScrollHandler();
-  const columnCount = getResponsiveColumnCount(width, { maxColumns: 2, minColumnWidth: 400 });
+  const columnCount = getResponsiveColumnCount(width, {
+    maxColumns: 2,
+    minColumnWidth: 400,
+  });
   const handleStartPractice = useCallback(() => {
     router.navigate(routes.studentPractice);
   }, [router]);
@@ -139,7 +142,9 @@ export function AssignmentHistoryScreen() {
             keyExtractor={(assignment) => assignment.id}
             renderItem={renderAssignment}
             numColumns={columnCount}
-            columnWrapperStyle={columnCount > 1 ? styles.columnWrapper : undefined}
+            columnWrapperStyle={
+              columnCount > 1 ? styles.columnWrapper : undefined
+            }
             ItemSeparatorComponent={ItemSeparator}
             contentContainerStyle={styles.listContent}
             onScroll={handleBottomMenuScroll}

@@ -18,7 +18,13 @@ export function DailyAssignmentCard({ assignment }: DailyAssignmentCardProps) {
       <Text selectable style={[type.body, { color: colors.text.secondary }]}>
         {assignment.prompt}
       </Text>
-      <Text selectable style={[type.caption, { color: colors.text.muted, marginTop: spacing.xs }]}>
+      <Text
+        selectable
+        style={[
+          type.caption,
+          { color: colors.text.muted, marginTop: spacing.xs },
+        ]}
+      >
         {assignment.estimatedMinutes} min
       </Text>
     </InfoCard>

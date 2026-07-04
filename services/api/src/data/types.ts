@@ -48,6 +48,9 @@ import type {
 import type {
   ActivityDateRange,
   BadgeRecord,
+  CompleteGrade3DayInput,
+  Grade3DayCompletionResult,
+  Grade3WritingProgressRecord,
   ListSubmissionQueueOptions,
   StudentActivityDayRecord,
   StudentBadgeRecord,
@@ -129,6 +132,16 @@ export interface Database {
     studentProfileIds: readonly string[],
     range: ActivityDateRange,
   ): Promise<StudentActivityDayRecord[]>;
+  /**
+   * Server-owned Grade 3 day completion: marks the day complete and updates
+   * streak totals + activity days transactionally. Idempotent — completing
+   * an already-completed day returns it without counting anything twice.
+   */
+  completeGrade3Day(input: CompleteGrade3DayInput): Promise<Grade3DayCompletionResult>;
+  getGrade3Progress(
+    studentProfileId: string,
+    day: number,
+  ): Promise<Grade3WritingProgressRecord | null>;
   /** Active class enrollments with student display names, bounded by limit. */
   listClassStudents(classId: string, limit: number): Promise<ClassRosterStudentRecord[]>;
   listParentLinkedStudentProfileIds(parentUserId: string): Promise<string[]>;

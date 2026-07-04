@@ -2,7 +2,13 @@ import { Text, View } from "react-native";
 
 import { Card } from "@/shared/components/cards";
 import { Stack } from "@/shared/components/layout";
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -18,12 +24,19 @@ interface AssignmentPlanCardProps {
   gradeBand: GradeBand;
 }
 
-export function AssignmentPlanCard({ assignment, gradeAdaptation, gradeBand }: AssignmentPlanCardProps) {
+export function AssignmentPlanCard({
+  assignment,
+  gradeAdaptation,
+  gradeBand,
+}: AssignmentPlanCardProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const instructions = assignment.instructions.slice(0, gradeAdaptation.visibleInstructionCount);
+  const instructions = assignment.instructions.slice(
+    0,
+    gradeAdaptation.visibleInstructionCount,
+  );
 
   return (
     <Card

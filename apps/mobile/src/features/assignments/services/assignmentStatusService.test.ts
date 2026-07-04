@@ -40,7 +40,10 @@ const baseAssignment: AssignmentRecord = {
   title: "Paragraph practice",
 };
 
-function assignmentWithStatus(status: AssignmentRecord["status"], id: string): AssignmentRecord {
+function assignmentWithStatus(
+  status: AssignmentRecord["status"],
+  id: string,
+): AssignmentRecord {
   return {
     ...baseAssignment,
     id,
@@ -51,7 +54,9 @@ function assignmentWithStatus(status: AssignmentRecord["status"], id: string): A
 describe("assignmentStatusService", () => {
   it("groups assignment statuses into history tabs", () => {
     expect(getAssignmentHistoryTabForStatus("in_progress")).toBe("drafts");
-    expect(getAssignmentHistoryTabForStatus("revision_in_progress")).toBe("drafts");
+    expect(getAssignmentHistoryTabForStatus("revision_in_progress")).toBe(
+      "drafts",
+    );
     expect(getAssignmentHistoryTabForStatus("submitted")).toBe("submitted");
     expect(getAssignmentHistoryTabForStatus("reviewing")).toBe("submitted");
     expect(getAssignmentHistoryTabForStatus("feedback_ready")).toBe("reviewed");
@@ -72,7 +77,11 @@ describe("assignmentStatusService", () => {
       reviewed: 1,
       submitted: 1,
     });
-    expect(filterAssignmentsByTab(assignments, "drafts").map((assignment) => assignment.id)).toEqual(["draft"]);
+    expect(
+      filterAssignmentsByTab(assignments, "drafts").map(
+        (assignment) => assignment.id,
+      ),
+    ).toEqual(["draft"]);
   });
 
   it("orders the history list feedback-ready first and completed last", () => {
@@ -85,14 +94,9 @@ describe("assignmentStatusService", () => {
       assignmentWithStatus("not_started", "fresh"),
     ];
 
-    expect(sortAssignmentsForHistory(assignments).map((assignment) => assignment.id)).toEqual([
-      "feedback",
-      "draft-a",
-      "draft-b",
-      "fresh",
-      "waiting",
-      "done",
-    ]);
+    expect(
+      sortAssignmentsForHistory(assignments).map((assignment) => assignment.id),
+    ).toEqual(["feedback", "draft-a", "draft-b", "fresh", "waiting", "done"]);
     expect(assignments[0]?.id).toBe("done");
   });
 
@@ -124,7 +128,9 @@ describe("assignmentStatusService", () => {
         },
       }),
     ).toBe(false);
-    expect(canSubmitAssignment({ ...baseAssignment, status: "submitted" })).toBe(false);
+    expect(
+      canSubmitAssignment({ ...baseAssignment, status: "submitted" }),
+    ).toBe(false);
     expect(
       canSubmitAssignment({
         ...baseAssignment,

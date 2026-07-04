@@ -68,6 +68,19 @@ After that, read the task-specific implementation prompt, screen prompt, project
   against the configured development Supabase. Native RevenueCat SDK
   purchase launch, owner app keys, store products, transfer/alias QA, and
   sandbox store QA remain required before paid plans can be enabled.
+- Grade 3 Writing Adventure day completion is a server-owned workflow
+  (2026-07-04): `POST /api/v1/students/:studentId/grade3-days/:day/complete`
+  runs `writerhabit_complete_grade3_day_workflow`, which validates the day,
+  stamps `completed`/`completed_at`, and transactionally updates the
+  parent/teacher-visible streak in `student_progress_totals` plus
+  `student_activity_days`. Public clients cannot write the completion columns
+  (guard trigger); drafts still autosave directly under owner-only RLS.
+  Linked parents/teachers read completion signals through the
+  `grade3_progress_summary` view (never the child's draft text — base-table
+  reads narrowed to owner/admin). The mobile service queues offline
+  completions locally (`completed_synced`) and replays them idempotently.
+  Migrations through `202606110018_grade3_workflow_variable_conflict_fix.sql`
+  have been applied and verified against the configured development Supabase.
 - Next recommended engineering step: close remaining P0/P1 release blockers in
   `docs/KNOWN_ISSUES.md`, starting with native RevenueCat store setup/mobile
   E2E automation, production AI provider/worker integration, canvas storage

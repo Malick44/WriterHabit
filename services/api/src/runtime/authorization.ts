@@ -100,6 +100,30 @@ export async function authorizeStudentScopeRead(
   }
 }
 
+/**
+ * Owner-only student scope: only the student whose verified JWT subject owns
+ * the profile may act. Parents and teachers read through summary surfaces but
+ * never mutate a student's work (e.g. Grade 3 day completion).
+ */
+export async function authorizeOwnedStudentScope(
+  database: Database,
+  principal: AuthPrincipal,
+  studentId: string,
+): Promise<StudentProfileRecord> {
+  if (principal.role === "student") {
+    const profile = await resolveOwnedStudentProfile(database, principal, studentId);
+
+    if (profile) {
+      return profile;
+    }
+  }
+
+  throw createForbiddenError({
+    code: "authorization.student_scope_denied",
+    details: { studentId },
+  });
+}
+
 export interface OwnedStudentAssignmentContext {
   profile: StudentProfileRecord;
   studentAssignment: StudentAssignmentWithAssignment;

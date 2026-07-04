@@ -1,21 +1,23 @@
 import {
   Fragment,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -39,17 +41,33 @@ import {
   LoadingState,
   StatusState,
 } from "@/shared/components/feedback";
-import { ComposerSurface } from "@/shared/components/layout";
+import { ComposerSurface, Screen } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
-import { TextActionBar, useTextActionBar } from "@/shared/components/text";
+import {
+  ReadAloudText,
+  TextActionBar,
+  useTextActionBar,
+} from "@/shared/components/text";
 import {
   buildAccessibilityLabel,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
-import { RubricChecklist } from "../components";
-import { useAssignmentDetailData } from "../hooks/useAssignments";
+import type { CanvasDocumentSummary } from "@/features/canvas/types";
+
+import { AssignmentAttachmentUploader, RubricChecklist } from "../components";
+import {
+  useAssignmentCanvasWork,
+  useAssignmentDetailData,
+} from "../hooks/useAssignments";
+import {
+  useAssignmentAttachments,
+  type AssignmentAttachmentsState,
+} from "../hooks/useAssignmentAttachments";
+import { useAssignmentRubricChecklist } from "../hooks/useAssignmentRubricChecklist";
+import { useTypedCopyDraft } from "../hooks/useTypedCopyDraft";
+import { useTypedCopyInputPreference } from "../services/typedCopyInputPreference";
 import type {
   AssignmentGradeAdaptation,
   AssignmentRecord,
@@ -157,14 +175,18 @@ function getAssignmentWorkStageIndex(status: AssignmentStatus): number {
 }
 
 function isAssignmentWorkStageEnabled({
-  assignment,
   canStartWriting,
   canSubmit,
+  hasWork,
+  rubricComplete,
   stage,
 }: {
-  assignment: AssignmentRecord;
   canStartWriting: boolean;
   canSubmit: boolean;
+  /** Any saved work: typed draft, attached canvas, or pending photo/file. */
+  hasWork: boolean;
+  /** Every rubric self-check ticked on the revise step. */
+  rubricComplete: boolean;
   stage: AssignmentWorkStage;
 }) {
   switch (stage) {
@@ -173,9 +195,9 @@ function isAssignmentWorkStageEnabled({
     case "draft":
       return canStartWriting;
     case "revise":
-      return canStartWriting && Boolean(assignment.draft);
+      return canStartWriting && hasWork;
     case "submit":
-      return canSubmit;
+      return (canSubmit || (canStartWriting && hasWork)) && rubricComplete;
   }
 }
 
@@ -187,13 +209,17 @@ function AssignmentStageTabs({
   assignment,
   canStartWriting,
   canSubmit,
+  hasWork,
   onSelectStage,
+  rubricComplete,
 }: {
   activeStage: AssignmentWorkStage;
   assignment: AssignmentRecord;
   canStartWriting: boolean;
   canSubmit: boolean;
+  hasWork: boolean;
   onSelectStage: (stage: AssignmentWorkStage) => void;
+  rubricComplete: boolean;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
@@ -214,9 +240,10 @@ function AssignmentStageTabs({
         const isEnabled =
           index <= progressIndex ||
           isAssignmentWorkStageEnabled({
-            assignment,
             canStartWriting,
             canSubmit,
+            hasWork,
+            rubricComplete,
             stage: stage.id,
           });
 
@@ -367,9 +394,7 @@ function AssignmentPromptCard({
     <View style={styles.card} testID="assignment-detail-prompt">
       {assignment.promptImageUrl ? (
         <View
-          accessibilityLabel={t(
-            "assignments.detail.promptImageAccessibility",
-          )}
+          accessibilityLabel={t("assignments.detail.promptImageAccessibility")}
           accessibilityRole="image"
           style={styles.promptImageBox}
           testID="assignment-detail-prompt-image"
@@ -388,7 +413,7 @@ function AssignmentPromptCard({
       >
         {t("assignments.detail.promptTitle")}
       </Text>
-      <Text
+      <ReadAloudText
         accessibilityLabel={buildAccessibilityLabel([
           t("assignments.detail.promptAccessibility"),
           assignment.prompt,
@@ -399,9 +424,8 @@ function AssignmentPromptCard({
             ? getAccessibleTextStyle(styles.storyPromptText, settings)
             : getAccessibleTextStyle(styles.promptText, settings)
         }
-      >
-        {assignment.prompt}
-      </Text>
+        text={assignment.prompt}
+      />
       <TextActionBar
         {...actionBar.actionBarProps}
         gradeBand={gradeBand}
@@ -414,19 +438,54 @@ function AssignmentPromptCard({
   );
 }
 
+// Canvas-only work has zero typed words; describe it by its pages instead.
+function getDraftSummaryLine(
+  draft: NonNullable<AssignmentRecord["draft"]>,
+  t: ReturnType<typeof useI18n>["t"],
+): string {
+  return draft.wordCount === 0 && draft.canvasPageCount > 0
+    ? t("assignments.detail.draftCanvasSummary", {
+        count: draft.canvasPageCount,
+        label: draft.lastEditedLabel,
+      })
+    : t("assignments.history.draftSummary", {
+        count: draft.wordCount,
+        label: draft.lastEditedLabel,
+      });
+}
+
 function DraftStepContent({
   assignment,
+  attachedCanvas,
+  attachmentsState,
   canWork,
+  gradeBand,
   onOpenCanvas,
-  onUploadWork,
+  onTypedCopyChange,
+  typedCopyEnabled,
+  typedCopyText,
 }: {
   assignment: AssignmentRecord;
+  attachedCanvas: CanvasDocumentSummary | null;
+  attachmentsState: AssignmentAttachmentsState;
   canWork: boolean;
+  gradeBand: GradeBand;
   onOpenCanvas: () => void;
-  onUploadWork: () => void;
+  onTypedCopyChange: (text: string) => void;
+  typedCopyEnabled: boolean;
+  typedCopyText: string;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
+  // The server draft already counts canvas pages once it knows about them;
+  // only add the separate canvas line while that link hasn't synced yet.
+  const showCanvasLine =
+    attachedCanvas !== null &&
+    !(assignment.draft && assignment.draft.canvasPageCount > 0);
+  const hasSavedWork =
+    Boolean(assignment.draft) ||
+    showCanvasLine ||
+    attachmentsState.attachments.length > 0;
 
   return (
     <>
@@ -452,19 +511,59 @@ function DraftStepContent({
         label={t("assignments.detail.useCanvasCta")}
         onPress={onOpenCanvas}
       />
-      <WorkOptionTile
-        accessibilityLabel={t("assignments.detail.uploadWorkAccessibility")}
-        description={t("assignments.detail.uploadWorkDescription")}
-        disabled={!canWork}
-        icon="cloud-upload-outline"
-        label={t("assignments.detail.uploadWorkCta")}
-        onPress={onUploadWork}
-      />
-      {assignment.draft ? (
+      {canWork ? (
+        <AssignmentAttachmentUploader
+          attachments={attachmentsState.attachments}
+          error={attachmentsState.error}
+          gradeBand={gradeBand}
+          isPicking={attachmentsState.isPicking}
+          onPickFile={() => {
+            void attachmentsState.pickFile();
+          }}
+          onPickPhoto={() => {
+            void attachmentsState.pickPhoto();
+          }}
+          onRemove={attachmentsState.remove}
+          onRetryExtraction={attachmentsState.retryExtraction}
+          onTakePhoto={() => {
+            void attachmentsState.takePhoto();
+          }}
+        />
+      ) : null}
+      {typedCopyEnabled ? (
+        <View style={styles.card} testID="assignment-detail-typed-copy">
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+          >
+            {t("writingWorkspace.sections.draft")}
+          </Text>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.stepDescription, settings)}
+          >
+            {t("writingWorkspace.editor.inputHint")}
+          </Text>
+          <TextInput
+            accessibilityLabel={t("writingWorkspace.editor.inputAccessibility")}
+            editable={canWork}
+            multiline
+            onChangeText={onTypedCopyChange}
+            placeholder={t("writingWorkspace.editor.placeholder")}
+            placeholderTextColor={dashboard.outline}
+            style={[
+              getAccessibleTextStyle(styles.typedCopyInput, settings),
+              styles.typedCopyInputBox,
+            ]}
+            testID="assignment-detail-typed-copy-input"
+            textAlignVertical="top"
+            value={typedCopyText}
+          />
+        </View>
+      ) : null}
+      {hasSavedWork ? (
         <View
-          accessibilityLabel={t(
-            "assignments.detail.draftSummaryAccessibility",
-          )}
+          accessibilityLabel={t("assignments.detail.draftSummaryAccessibility")}
           accessible
           style={styles.card}
           testID="assignment-detail-draft-summary"
@@ -475,28 +574,55 @@ function DraftStepContent({
           >
             {t("assignments.detail.draftSummaryTitle")}
           </Text>
-          <Text
-            selectable
-            style={getAccessibleTextStyle(styles.promptText, settings)}
-          >
-            {assignment.draft.preview}
-          </Text>
-          <Text
-            selectable
-            style={getAccessibleTextStyle(styles.draftMeta, settings)}
-          >
-            {t("assignments.history.draftSummary", {
-              count: assignment.draft.wordCount,
-              label: assignment.draft.lastEditedLabel,
-            })}
-          </Text>
+          {assignment.draft ? (
+            <>
+              <Text
+                selectable
+                style={getAccessibleTextStyle(styles.promptText, settings)}
+              >
+                {assignment.draft.preview}
+              </Text>
+              <Text
+                selectable
+                style={getAccessibleTextStyle(styles.draftMeta, settings)}
+              >
+                {getDraftSummaryLine(assignment.draft, t)}
+              </Text>
+            </>
+          ) : null}
+          {showCanvasLine ? (
+            <Text
+              selectable
+              style={getAccessibleTextStyle(styles.draftMeta, settings)}
+            >
+              {t("assignments.detail.savedCanvasLine", {
+                label: attachedCanvas.updatedLabel,
+              })}
+            </Text>
+          ) : null}
+          {attachmentsState.attachments.length > 0 ? (
+            <Text
+              selectable
+              style={getAccessibleTextStyle(styles.draftMeta, settings)}
+            >
+              {t("assignments.detail.savedAttachmentsLine", {
+                count: attachmentsState.attachments.length,
+              })}
+            </Text>
+          ) : null}
         </View>
       ) : null}
     </>
   );
 }
 
-function SubmitStepContent({ assignment }: { assignment: AssignmentRecord }) {
+function SubmitStepContent({
+  assignment,
+  hasLocalWork,
+}: {
+  assignment: AssignmentRecord;
+  hasLocalWork: boolean;
+}) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
 
@@ -519,11 +645,10 @@ function SubmitStepContent({ assignment }: { assignment: AssignmentRecord }) {
         style={getAccessibleTextStyle(styles.draftMeta, settings)}
       >
         {assignment.draft
-          ? t("assignments.history.draftSummary", {
-              count: assignment.draft.wordCount,
-              label: assignment.draft.lastEditedLabel,
-            })
-          : t("assignments.submit.disabledHint")}
+          ? getDraftSummaryLine(assignment.draft, t)
+          : hasLocalWork
+            ? t("assignments.detail.stepLocalWorkSummary")
+            : t("assignments.submit.disabledHint")}
       </Text>
       <Text
         selectable
@@ -538,30 +663,51 @@ function SubmitStepContent({ assignment }: { assignment: AssignmentRecord }) {
 function AssignmentContent({
   activeStage,
   assignment,
+  attachedCanvas,
+  attachmentsState,
   canStartWriting,
   canSubmit,
+  checkedRubricIds,
   gradeAdaptation,
   gradeBand,
+  hasLocalWork,
   isOffline,
+  footer,
   onOpenCanvas,
   onRefresh,
   onSelectStage,
-  onUploadWork,
+  onToggleRubric,
+  onTypedCopyChange,
+  rubricComplete,
+  typedCopyEnabled,
+  typedCopyText,
 }: {
   activeStage: AssignmentWorkStage;
   assignment: AssignmentRecord;
+  attachedCanvas: CanvasDocumentSummary | null;
+  attachmentsState: AssignmentAttachmentsState;
   canStartWriting: boolean;
   canSubmit: boolean;
+  checkedRubricIds: Record<string, boolean>;
+  footer: ReactNode;
   gradeAdaptation: AssignmentGradeAdaptation;
   gradeBand: GradeBand;
+  hasLocalWork: boolean;
   isOffline: boolean;
   onOpenCanvas: () => void;
   onRefresh: () => void;
   onSelectStage: (stage: AssignmentWorkStage) => void;
-  onUploadWork: () => void;
+  onToggleRubric: (criterionId: string) => void;
+  onTypedCopyChange: (text: string) => void;
+  rubricComplete: boolean;
+  typedCopyEnabled: boolean;
+  typedCopyText: string;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
+  // Collapsed by default: the facts are secondary reference info, so the
+  // prompt keeps the visual priority on the understand step.
+  const [factsExpanded, setFactsExpanded] = useState(false);
   const skillFocus = assignment.skillFocus
     .map((skill) => t(`assignments.skills.${skill}`))
     .join(", ");
@@ -579,10 +725,12 @@ function AssignmentContent({
         variant="centered"
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
+      <Screen
+        backgroundColor="transparent"
+        contentPaddingTop={spacing.lg}
+        footer={footer}
+        gradeBand={gradeBand}
+        keyboardAvoiding
         testID="assignment-detail-screen"
       >
         <View style={styles.content}>
@@ -602,7 +750,9 @@ function AssignmentContent({
             assignment={assignment}
             canStartWriting={canStartWriting}
             canSubmit={canSubmit}
+            hasWork={hasLocalWork}
             onSelectStage={onSelectStage}
+            rubricComplete={rubricComplete}
           />
 
           {activeStage === "understand" ? (
@@ -613,37 +763,60 @@ function AssignmentContent({
               />
 
               <View
-                accessibilityLabel={t("assignments.detail.factsAccessibility")}
-                accessible
                 style={[styles.card, styles.factsCard]}
                 testID="assignment-detail-facts"
               >
-                <FactRow
-                  label={t("assignments.detail.skillFocusLabel")}
-                  value={skillFocus || t("assignments.detail.generalWriting")}
-                />
-                {rubricFocus ? (
-                  <FactRow
-                    label={t("assignments.detail.rubricFocusLabel")}
-                    value={rubricFocus}
+                <Pressable
+                  accessibilityLabel={t("assignments.detail.factsAccessibility")}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: factsExpanded }}
+                  hitSlop={layout.hitSlop}
+                  onPress={() => setFactsExpanded((expanded) => !expanded)}
+                  style={[styles.factsToggle, factsExpanded ? styles.factRowDivider : null]}
+                  testID="assignment-detail-facts-toggle"
+                >
+                  <Text
+                    selectable
+                    style={getAccessibleTextStyle(styles.factLabel, settings)}
+                  >
+                    {t("assignments.detail.factsTitle")}
+                  </Text>
+                  <Ionicons
+                    color={dashboard.outline}
+                    name={factsExpanded ? "chevron-up" : "chevron-down"}
+                    size={16}
                   />
+                </Pressable>
+                {factsExpanded ? (
+                  <>
+                    <FactRow
+                      label={t("assignments.detail.skillFocusLabel")}
+                      value={skillFocus || t("assignments.detail.generalWriting")}
+                    />
+                    {rubricFocus ? (
+                      <FactRow
+                        label={t("assignments.detail.rubricFocusLabel")}
+                        value={rubricFocus}
+                      />
+                    ) : null}
+                    <FactRow
+                      label={t("assignments.detail.estimatedTimeLabel")}
+                      value={t("assignments.detail.estimatedTime", {
+                        count: assignment.estimatedMinutes,
+                      })}
+                    />
+                    <FactRow
+                      label={t("assignments.detail.difficultyLabel")}
+                      value={t(`assignments.difficulty.${assignment.difficulty}`)}
+                      valueChip
+                    />
+                    <FactRow
+                      divider={false}
+                      label={t("assignments.detail.dueDateLabel")}
+                      value={assignment.dueLabel}
+                    />
+                  </>
                 ) : null}
-                <FactRow
-                  label={t("assignments.detail.estimatedTimeLabel")}
-                  value={t("assignments.detail.estimatedTime", {
-                    count: assignment.estimatedMinutes,
-                  })}
-                />
-                <FactRow
-                  label={t("assignments.detail.difficultyLabel")}
-                  value={t(`assignments.difficulty.${assignment.difficulty}`)}
-                  valueChip
-                />
-                <FactRow
-                  divider={false}
-                  label={t("assignments.detail.dueDateLabel")}
-                  value={assignment.dueLabel}
-                />
               </View>
 
               <View style={styles.coachBanner}>
@@ -670,25 +843,35 @@ function AssignmentContent({
           {activeStage === "draft" ? (
             <DraftStepContent
               assignment={assignment}
+              attachedCanvas={attachedCanvas}
+              attachmentsState={attachmentsState}
               canWork={canStartWriting}
+              gradeBand={gradeBand}
               onOpenCanvas={onOpenCanvas}
-              onUploadWork={onUploadWork}
+              onTypedCopyChange={onTypedCopyChange}
+              typedCopyEnabled={typedCopyEnabled}
+              typedCopyText={typedCopyText}
             />
           ) : null}
 
           {activeStage === "revise" ? (
             <RubricChecklist
               assignment={assignment}
+              checkedIds={checkedRubricIds}
               gradeAdaptation={gradeAdaptation}
               gradeBand={gradeBand}
+              onToggle={onToggleRubric}
             />
           ) : null}
 
           {activeStage === "submit" ? (
-            <SubmitStepContent assignment={assignment} />
+            <SubmitStepContent
+              assignment={assignment}
+              hasLocalWork={hasLocalWork}
+            />
           ) : null}
         </View>
-      </ScrollView>
+      </Screen>
     </>
   );
 }
@@ -705,11 +888,57 @@ export function AssignmentDetailScreen() {
     [params.assignmentId],
   );
   const state = useAssignmentDetailData(assignmentId);
+  // Canvas work saves local-first, so ask the canvas store directly instead
+  // of relying on the server draft summary alone.
+  const canvasWork = useAssignmentCanvasWork(assignmentId);
+  // Scoped by assignment so the same photos are visible on the submission
+  // screen later.
+  const attachmentsState = useAssignmentAttachments(assignmentId);
+  // Typed copy box is opt-in from app settings; the draft hook stays idle
+  // (no hydration, no saves) while the preference is off.
+  const typedCopyEnabled = useTypedCopyInputPreference(
+    (store) => store.enabled,
+  );
+  const hydrateTypedCopyPreference = useTypedCopyInputPreference(
+    (store) => store.hydrate,
+  );
+  useEffect(() => {
+    void hydrateTypedCopyPreference();
+  }, [hydrateTypedCopyPreference]);
+  const typedCopy = useTypedCopyDraft(
+    typedCopyEnabled ? assignmentId : undefined,
+  );
+  // Persisted per assignment: hydrated from device storage / the server
+  // draft, written back on every toggle.
+  const rubricChecklist = useAssignmentRubricChecklist({
+    assignmentId,
+    serverChecks:
+      state.status === "success"
+        ? state.viewModel.assignment?.draft?.rubricChecks
+        : undefined,
+  });
+  const checkedRubricIds = rubricChecklist.checkedIds;
   const contentWidth = Math.min(width, 480);
   // Which step the student is viewing. Null means "follow the assignment's
   // progress" so a reopened assignment lands on its current step.
-  const [selectedStage, setSelectedStage] = useState<AssignmentWorkStage | null>(
-    null,
+  const [selectedStage, setSelectedStage] =
+    useState<AssignmentWorkStage | null>(null);
+
+  // Canvas work happens on a pushed screen that doesn't remount this one on
+  // return, so refetch on focus to pick up newly saved work — otherwise
+  // step 2's gate would keep showing stale "no draft" data.
+  const refetchRef = useRef({
+    canvas: canvasWork.refetch,
+    detail: state.refetch,
+  });
+  useEffect(() => {
+    refetchRef.current = { canvas: canvasWork.refetch, detail: state.refetch };
+  });
+  useFocusEffect(
+    useCallback(() => {
+      refetchRef.current.detail();
+      refetchRef.current.canvas();
+    }, []),
   );
 
   const openSubmit = useCallback(() => {
@@ -738,24 +967,6 @@ export function AssignmentDetailScreen() {
     }
 
     router.push(getCanvasCreateRoute(state.viewModel.assignment.id));
-  }, [router, state]);
-
-  const openUploadWork = useCallback(async () => {
-    if (state.status !== "success" || !state.viewModel.assignment) {
-      return;
-    }
-
-    if (state.viewModel.assignment.status === "not_started") {
-      const startedAssignment = await state.startAssignment();
-
-      if (startedAssignment) {
-        router.push(getAssignmentSubmissionRoute(startedAssignment.id));
-      }
-
-      return;
-    }
-
-    router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
   const handleStageSelect = useCallback((stage: AssignmentWorkStage) => {
@@ -831,6 +1042,21 @@ export function AssignmentDetailScreen() {
   const progressIndex = assignment
     ? getAssignmentWorkStageIndex(assignment.status)
     : 0;
+  // Work can live in four places: the server draft, the canvas store
+  // (local-first handwriting), pending photo/file attachments, and the
+  // opt-in typed copy box.
+  const hasLocalWork =
+    Boolean(assignment?.draft) ||
+    Boolean(canvasWork.attachedCanvas) ||
+    attachmentsState.attachments.length > 0 ||
+    (typedCopyEnabled && typedCopy.text.trim().length > 0);
+  // Every rubric criterion must be self-checked on the revise step before the
+  // student can move on to submit.
+  const rubricComplete = Boolean(
+    assignment?.rubric.every((criterion) => checkedRubricIds[criterion.id]),
+  );
+  const submitEligible = canSubmit || (canStartWriting && hasLocalWork);
+  const canProceedToReview = submitEligible && rubricComplete;
   const requestedStage =
     selectedStage ?? assignmentWorkStages[progressIndex].id;
   const requestedIndex = assignmentWorkStages.findIndex(
@@ -842,9 +1068,10 @@ export function AssignmentDetailScreen() {
     assignment &&
     (requestedIndex <= progressIndex ||
       isAssignmentWorkStageEnabled({
-        assignment,
         canStartWriting,
         canSubmit,
+        hasWork: hasLocalWork,
+        rubricComplete,
         stage: requestedStage,
       }))
       ? requestedStage
@@ -862,7 +1089,7 @@ export function AssignmentDetailScreen() {
                   "assignments.detail.startWritingAccessibility",
                 ),
                 disabled: false,
-                label: assignment.draft
+                label: hasLocalWork
                   ? t("assignments.continueDraft")
                   : t("assignments.startWriting"),
                 loading: state.startStatus === "loading",
@@ -874,14 +1101,14 @@ export function AssignmentDetailScreen() {
           case "draft":
             return {
               back: { onPress: () => setSelectedStage("understand") },
-              helperText: assignment.draft
+              helperText: hasLocalWork
                 ? undefined
                 : t("assignments.detail.stepDraftHelper"),
               next: {
                 accessibilityLabel: t(
                   "assignments.detail.stepNextAccessibility",
                 ),
-                disabled: !assignment.draft,
+                disabled: !hasLocalWork,
                 label: t("writingWorkspace.stages.nextRevise"),
                 loading: false,
                 onPress: () => setSelectedStage("revise"),
@@ -890,12 +1117,14 @@ export function AssignmentDetailScreen() {
           case "revise":
             return {
               back: { onPress: () => setSelectedStage("draft") },
-              helperText: undefined as string | undefined,
+              helperText: rubricComplete
+                ? undefined
+                : t("assignments.detail.stepReviseHelper"),
               next: {
                 accessibilityLabel: t(
                   "assignments.detail.stepNextAccessibility",
                 ),
-                disabled: false,
+                disabled: !rubricComplete,
                 label: t("writingWorkspace.stages.nextSubmit"),
                 loading: false,
                 onPress: () => setSelectedStage("submit"),
@@ -904,12 +1133,18 @@ export function AssignmentDetailScreen() {
           case "submit":
             return {
               back: { onPress: () => setSelectedStage("revise") },
-              helperText: canSubmit
+              // Pick the helper by what is actually blocking: no work at all,
+              // an unfinished rubric check, or work already in review.
+              helperText: canProceedToReview
                 ? undefined
-                : t("assignments.submit.disabledHint"),
+                : !hasLocalWork
+                  ? t("assignments.submit.disabledHint")
+                  : !submitEligible
+                    ? t("assignments.detail.stepSubmittedHelper")
+                    : t("assignments.detail.stepReviseHelper"),
               next: {
                 accessibilityLabel: t("assignments.submit.ctaAccessibility"),
-                disabled: !canSubmit,
+                disabled: !canProceedToReview,
                 label: t("assignments.submit.reviewCta"),
                 loading: false,
                 onPress: openSubmit,
@@ -927,69 +1162,74 @@ export function AssignmentDetailScreen() {
             <AssignmentContent
               activeStage={activeStage}
               assignment={assignment}
+              attachedCanvas={canvasWork.attachedCanvas}
+              attachmentsState={attachmentsState}
               canStartWriting={canStartWriting}
               canSubmit={canSubmit}
+              checkedRubricIds={checkedRubricIds}
+              footer={
+                stepBar ? (
+                  <View
+                    style={[
+                      styles.bottomBarSurface,
+                      { paddingBottom: Math.max(insets.bottom, spacing.lg) },
+                    ]}
+                  >
+                    {stepBar.helperText ? (
+                      <Text
+                        selectable
+                        style={getAccessibleTextStyle(
+                          styles.helperText,
+                          settings,
+                        )}
+                      >
+                        {stepBar.helperText}
+                      </Text>
+                    ) : null}
+                    <View style={styles.bottomButtonRow}>
+                      {stepBar.back ? (
+                        <Button
+                          accessibilityLabel={t(
+                            "assignments.detail.stepBackAccessibility",
+                          )}
+                          label={t("common.back")}
+                          onPress={stepBar.back.onPress}
+                          size="md"
+                          style={styles.backButton}
+                          variant="secondary"
+                        />
+                      ) : null}
+                      <Button
+                        accessibilityLabel={stepBar.next.accessibilityLabel}
+                        disabled={stepBar.next.disabled}
+                        label={stepBar.next.label}
+                        loading={stepBar.next.loading}
+                        onPress={stepBar.next.onPress}
+                        size="md"
+                        style={styles.primaryButton}
+                        variant="primary"
+                      />
+                    </View>
+                  </View>
+                ) : null
+              }
               gradeAdaptation={state.viewModel.gradeAdaptation}
               gradeBand={state.gradeBand}
+              hasLocalWork={hasLocalWork}
               isOffline={state.viewModel.isOffline}
               onOpenCanvas={() => {
                 void openCanvas();
               }}
               onRefresh={state.refetch}
               onSelectStage={handleStageSelect}
-              onUploadWork={() => {
-                void openUploadWork();
-              }}
+              onToggleRubric={rubricChecklist.toggle}
+              onTypedCopyChange={typedCopy.setText}
+              rubricComplete={rubricComplete}
+              typedCopyEnabled={typedCopyEnabled}
+              typedCopyText={typedCopy.text}
             />
           ) : null}
         </View>
-        {stepBar ? (
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.footerFrame,
-              {
-                maxWidth: contentWidth,
-                paddingBottom: Math.max(insets.bottom, spacing.lg),
-              },
-            ]}
-          >
-            <View style={styles.bottomBarSurface}>
-              {stepBar.helperText ? (
-                <Text
-                  selectable
-                  style={getAccessibleTextStyle(styles.helperText, settings)}
-                >
-                  {stepBar.helperText}
-                </Text>
-              ) : null}
-              <View style={styles.bottomButtonRow}>
-                {stepBar.back ? (
-                  <Button
-                    accessibilityLabel={t(
-                      "assignments.detail.stepBackAccessibility",
-                    )}
-                    label={t("common.back")}
-                    onPress={stepBar.back.onPress}
-                    size="md"
-                    style={styles.backButton}
-                    variant="secondary"
-                  />
-                ) : null}
-                <Button
-                  accessibilityLabel={stepBar.next.accessibilityLabel}
-                  disabled={stepBar.next.disabled}
-                  label={stepBar.next.label}
-                  loading={stepBar.next.loading}
-                  onPress={stepBar.next.onPress}
-                  size="md"
-                  style={styles.primaryButton}
-                  variant="primary"
-                />
-              </View>
-            </View>
-          </View>
-        ) : null}
       </View>
     </ComposerSurface>
   );
@@ -1064,10 +1304,9 @@ const styles = StyleSheet.create({
   coachTextFlex: {
     flex: 1,
   },
+  // Horizontal and top padding come from the shared Screen scroll container.
   content: {
     gap: spacing.lg,
-    paddingHorizontal: 16,
-    paddingTop: spacing.lg,
     width: "100%",
   },
   factChip: {
@@ -1090,6 +1329,13 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   factRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 14,
+    justifyContent: "space-between",
+    paddingVertical: 13,
+  },
+  factsToggle: {
     alignItems: "center",
     flexDirection: "row",
     gap: 14,
@@ -1119,14 +1365,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 16,
     marginTop: spacing.sm,
-  },
-  footerFrame: {
-    alignSelf: "center",
-    bottom: 0,
-    left: 0,
-    position: "absolute",
-    right: 0,
-    width: "100%",
   },
   header: {
     backgroundColor: dashboard.backgroundOverlay,
@@ -1250,6 +1488,21 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: spacing.xs,
   },
+  typedCopyInput: {
+    color: dashboard.onSurface,
+    fontSize: 15.5,
+    lineHeight: 22,
+  },
+  typedCopyInputBox: {
+    backgroundColor: dashboard.surfaceContainerLow,
+    borderColor: dashboard.outlineVariant,
+    borderCurve: "continuous",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+    minHeight: 140,
+    padding: spacing.md,
+  },
   /**
    * Storybook reading style for elementary students, matching the Grade 3
    * lesson read step: larger than body, extra leading and letter spacing so
@@ -1265,9 +1518,6 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: "transparent",
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 168,
   },
   stateContent: {
     alignSelf: "center",

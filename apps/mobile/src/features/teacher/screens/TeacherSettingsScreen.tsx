@@ -31,7 +31,6 @@ export function TeacherSettingsScreen() {
       <AppHeader
         showSafeArea={false}
         style={styles.header}
-        subtitleKey="teacher.settings.subtitle"
         titleKey="teacher.settings.title"
         variant="transparent"
       />

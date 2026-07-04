@@ -98,8 +98,53 @@ const actionDefinitions: ActionDefinition[] = [
 ];
 
 const iconSizes: Record<TextActionBarSize, number> = {
-  sm: 18,
-  md: 20,
+  sm: 15,
+  md: 17,
+};
+
+/**
+ * Visible button box — deliberately about half the accessible touch target
+ * so the bar stays a slim footer. The full 44–52px target is preserved by
+ * extending hitSlop around the visual circle.
+ */
+const visualSizes: Record<TextActionBarSize, number> = {
+  sm: 26,
+  md: 30,
+};
+
+/**
+ * Soft per-action tints (token roles) so each button reads as a friendly
+ * colored chip for young students instead of a bare gray glyph.
+ */
+const actionTints: Record<
+  TextActionBarAction,
+  { background: string; icon: string; pressed: string }
+> = {
+  like: {
+    background: colors.feedback.success.background,
+    icon: colors.feedback.success.icon,
+    pressed: colors.feedback.success.pressed,
+  },
+  dislike: {
+    background: colors.feedback.neutral.background,
+    icon: colors.feedback.neutral.icon,
+    pressed: colors.feedback.neutral.pressed,
+  },
+  readAloud: {
+    background: colors.feedback.info.background,
+    icon: colors.feedback.info.icon,
+    pressed: colors.feedback.info.pressed,
+  },
+  copy: {
+    background: colors.feedback.warning.background,
+    icon: colors.feedback.warning.icon,
+    pressed: colors.feedback.warning.pressed,
+  },
+  more: {
+    background: colors.feedback.neutral.background,
+    icon: colors.feedback.neutral.icon,
+    pressed: colors.feedback.neutral.pressed,
+  },
 };
 
 function ActionButton({
@@ -111,6 +156,7 @@ function ActionButton({
   minTarget,
   onPress,
   testID,
+  visualSize,
 }: {
   active: boolean;
   definition: ActionDefinition;
@@ -120,21 +166,48 @@ function ActionButton({
   minTarget: number;
   onPress: () => void;
   testID?: string;
+  visualSize: number;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const [pressed, setPressed] = useState(false);
   const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(!disabled);
+  const tint = actionTints[definition.action];
 
-  const restingColor = settings.highContrast ? accessibleColors.text : colors.text.secondary;
-  const iconColor = disabled
-    ? colors.action.ghost.disabledForeground
+  // Grow the touch area vertically to the full accessible target; keep the
+  // horizontal slop at the shared accessible default so neighbouring buttons
+  // don't fight over the same touch point.
+  const baseSlop = getAccessibleHitSlop(settings);
+  const verticalSlop = Math.max(baseSlop.top ?? 0, Math.ceil((minTarget - visualSize) / 2));
+  const hitSlop = {
+    bottom: verticalSlop,
+    left: baseSlop.left ?? 0,
+    right: baseSlop.right ?? 0,
+    top: verticalSlop,
+  };
+
+  const highContrast = settings.highContrast;
+  const backgroundColor = disabled
+    ? colors.action.secondary.disabledBackground
     : active || loading
-      ? settings.highContrast
+      ? highContrast
         ? accessibleColors.text
         : colors.action.primary.background
-      : restingColor;
+      : highContrast
+        ? accessibleColors.surface
+        : pressed
+          ? tint.pressed
+          : tint.background;
+  const iconColor = disabled
+    ? colors.action.secondary.disabledForeground
+    : active || loading
+      ? highContrast
+        ? accessibleColors.surface
+        : colors.action.primary.foreground
+      : highContrast
+        ? accessibleColors.text
+        : tint.icon;
 
   return (
     <AnimatedPressable
@@ -143,7 +216,7 @@ function ActionButton({
       accessibilityRole="button"
       accessibilityState={{ busy: loading, disabled, selected: active }}
       disabled={disabled}
-      hitSlop={getAccessibleHitSlop(settings)}
+      hitSlop={hitSlop}
       onPress={onPress}
       onPressIn={() => {
         setPressed(true);
@@ -156,12 +229,11 @@ function ActionButton({
       style={[
         {
           alignItems: "center",
-          backgroundColor:
-            pressed && !disabled ? colors.action.ghost.pressed : colors.action.ghost.background,
+          backgroundColor,
           borderRadius: radius.full,
+          height: visualSize,
           justifyContent: "center",
-          minHeight: minTarget,
-          minWidth: minTarget,
+          width: visualSize,
         },
         pressScaleStyle,
       ]}
@@ -240,7 +312,7 @@ export function TextActionBar({
           borderRadius: radius.full,
           borderWidth: 1,
           flexDirection: "row",
-          gap: size === "sm" ? spacing.xxs : spacing.xs,
+          gap: size === "sm" ? spacing.xs : spacing.sm,
           paddingHorizontal: spacing.xs,
           paddingVertical: spacing.xxs,
         },
@@ -267,6 +339,7 @@ export function TextActionBar({
             minTarget={minTarget}
             onPress={handler}
             testID={testID ? `${testID}-${definition.action}` : undefined}
+            visualSize={visualSizes[size]}
           />
         );
       })}

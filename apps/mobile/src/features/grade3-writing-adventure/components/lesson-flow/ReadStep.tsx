@@ -1,7 +1,7 @@
 import { Image, ScrollView, Text, View, useWindowDimensions } from "react-native";
 
 import { colors, fonts, radius, shadows, spacing, typography } from "@/design/tokens";
-import { TextActionBar, useTextActionBar } from "@/shared/components/text";
+import { ReadAloudText, TextActionBar, useTextActionBar } from "@/shared/components/text";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
@@ -163,12 +163,11 @@ export function ReadStep({ lesson }: ReadStepProps) {
           showsVerticalScrollIndicator
           style={{ maxHeight: storyMaxHeight }}
         >
-          <Text
+          <ReadAloudText
             selectable
             style={[getAccessibleTextStyle(storyTextStyle, settings), { color: accessibleColors.text }]}
-          >
-            {lesson.reading}
-          </Text>
+            text={lesson.reading}
+          />
         </ScrollView>
         <TextActionBar
           {...actionBar.actionBarProps}

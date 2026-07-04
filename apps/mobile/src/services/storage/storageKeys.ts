@@ -11,6 +11,8 @@ export const storageKeys = {
   accessibilitySettings: "profile-settings.accessibility",
 
   readAloudVoice: "speech.read-aloud-voice",
+  readAloudRate: "speech.read-aloud-rate",
+  readAloudWordHighlight: "speech.read-aloud-word-highlight",
 
   onboardingProgress(userId: string): string {
     return `onboarding.progress.${userId}`;
@@ -23,6 +25,16 @@ export const storageKeys = {
   studentProfileSettings(studentId: string): string {
     return `profile-settings.student-profile.${studentId}`;
   },
+
+  assignmentRubricChecks(assignmentId: string): string {
+    return `assignments.rubric-checks.${assignmentId}`;
+  },
+
+  assignmentTypedCopy(assignmentId: string): string {
+    return `assignments.typed-copy.${assignmentId}`;
+  },
+
+  typedCopyInputEnabled: "assignments.typed-copy-input-enabled",
 
   teacherDashboardInsightDismissed(userId: string): string {
     return `teacher.dashboard.insight-dismissed.${userId}`;

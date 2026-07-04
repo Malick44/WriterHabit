@@ -1,6 +1,12 @@
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   getAccessibleColors,
@@ -26,12 +32,18 @@ interface AssignmentFilterChipsProps {
   selected: AssignmentListFilter;
 }
 
-export function AssignmentFilterChips({ gradeBand, onSelect, selected }: AssignmentFilterChipsProps) {
+export function AssignmentFilterChips({
+  gradeBand,
+  onSelect,
+  selected,
+}: AssignmentFilterChipsProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
-  const accent = settings.highContrast ? accessibleColors.actionBackground : dashboard.primary;
+  const accent = settings.highContrast
+    ? accessibleColors.actionBackground
+    : dashboard.primary;
 
   return (
     <ScrollView
@@ -68,7 +80,11 @@ export function AssignmentFilterChips({ gradeBand, onSelect, selected }: Assignm
               style={[
                 getAccessibleTextStyle(type.label, settings),
                 styles.chipText,
-                { color: isSelected ? dashboard.onPrimary : dashboard.onSurfaceVariant },
+                {
+                  color: isSelected
+                    ? dashboard.onPrimary
+                    : dashboard.onSurfaceVariant,
+                },
               ]}
             >
               {t(`assignments.history.filters.${filter}`)}

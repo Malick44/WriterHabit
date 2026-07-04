@@ -46,7 +46,6 @@ export function WeeklyReviewScreen() {
         }}
         showSafeArea={false}
         style={styles.header}
-        subtitleKey="progress.weeklyReview.subtitle"
         titleKey="progress.weeklyReview.title"
         variant="transparent"
       />

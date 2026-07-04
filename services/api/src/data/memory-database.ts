@@ -18,6 +18,9 @@ import type {
   FeedbackRecord,
   FeedbackRubricScoreRecord,
   FeedbackWithDetails,
+  CompleteGrade3DayInput,
+  Grade3DayCompletionResult,
+  Grade3WritingProgressRecord,
   GrammarSuggestionRecord,
   ListStudentAssignmentsOptions,
   ListSubmissionQueueOptions,
@@ -88,6 +91,7 @@ export interface MemoryDatabaseSeed {
   entitlements?: EntitlementRecord[];
   feedback?: FeedbackRecord[];
   feedbackRubricScores?: FeedbackRubricScoreRecord[];
+  grade3Progress?: Grade3WritingProgressRecord[];
   grammarSuggestions?: GrammarSuggestionRecord[];
   parentLinks?: MemoryParentLink[];
   progressTotals?: StudentProgressTotalsRecord[];
@@ -134,6 +138,7 @@ export class MemoryDatabase implements Database {
   readonly entitlements: EntitlementRecord[];
   readonly feedback: FeedbackRecord[];
   readonly feedbackRubricScores: FeedbackRubricScoreRecord[];
+  readonly grade3Progress: Grade3WritingProgressRecord[];
   readonly grammarSuggestions: GrammarSuggestionRecord[];
   readonly parentLinks: MemoryParentLink[];
   readonly progressTotals: StudentProgressTotalsRecord[];
@@ -164,6 +169,7 @@ export class MemoryDatabase implements Database {
     this.entitlements = [...(seed.entitlements ?? [])];
     this.feedback = [...(seed.feedback ?? [])];
     this.feedbackRubricScores = [...(seed.feedbackRubricScores ?? [])];
+    this.grade3Progress = seed.grade3Progress?.map((record) => ({ ...record })) ?? [];
     this.grammarSuggestions = [...(seed.grammarSuggestions ?? [])];
     this.parentLinks = [...(seed.parentLinks ?? [])];
     this.progressTotals = [...(seed.progressTotals ?? [])];
@@ -763,6 +769,122 @@ export class MemoryDatabase implements Database {
       .map((record) => ({ ...record }));
   }
 
+  async getGrade3Progress(
+    studentProfileId: string,
+    day: number,
+  ): Promise<Grade3WritingProgressRecord | null> {
+    const record = this.grade3Progress.find(
+      (candidate) => candidate.studentProfileId === studentProfileId && candidate.day === day,
+    );
+
+    return record ? { ...record } : null;
+  }
+
+  async completeGrade3Day(input: CompleteGrade3DayInput): Promise<Grade3DayCompletionResult> {
+    const record = this.grade3Progress.find(
+      (candidate) => candidate.studentProfileId === input.studentProfileId && candidate.day === input.day,
+    );
+
+    if (!record) {
+      throw createResourceNotFoundError({ day: input.day, studentProfileId: input.studentProfileId });
+    }
+
+    if (record.draft.trim().length === 0) {
+      throw new ApiHttpError({
+        code: "validation.empty_submission",
+        details: { day: input.day },
+      });
+    }
+
+    const toResult = (alreadyCompleted: boolean): Grade3DayCompletionResult => ({
+      alreadyCompleted,
+      completed: record.completed,
+      completedAt: record.completedAt,
+      day: record.day,
+      id: record.id,
+      studentProfileId: record.studentProfileId,
+      updatedAt: record.updatedAt,
+    });
+
+    if (record.completed) {
+      return toResult(true);
+    }
+
+    const timestamp = nowIso();
+    record.completed = true;
+    record.completedAt = timestamp;
+    record.updatedAt = timestamp;
+
+    const minutes = Math.min(Math.max(input.minutes, 1), 60);
+    const wordCount = record.draft.trim().split(/\s+/).filter(Boolean).length;
+    const today = timestamp.slice(0, 10);
+    const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+
+    const totals = this.progressTotals.find(
+      (candidate) => candidate.studentProfileId === input.studentProfileId,
+    );
+
+    if (totals) {
+      const currentStreakDays =
+        totals.practicedTodayOn === today
+          ? Math.max(totals.currentStreakDays, 1)
+          : totals.practicedTodayOn === yesterday
+            ? totals.currentStreakDays + 1
+            : 1;
+      totals.bestStreakDays = Math.max(totals.bestStreakDays, currentStreakDays);
+      totals.currentStreakDays = currentStreakDays;
+      totals.minutesThisWeek += minutes;
+      totals.practicedTodayOn = today;
+      totals.streakStatus = "continued";
+      totals.wordsWritten += wordCount;
+    } else {
+      this.progressTotals.push({
+        aiFeedbackApplied: 0,
+        assignmentsCompleted: 0,
+        bestStreakDays: 1,
+        currentStreakDays: 1,
+        handwritingMinutes: 0,
+        minutesThisWeek: minutes,
+        practicedTodayOn: today,
+        revisionsCompleted: 0,
+        rubricImprovement: 0,
+        streakStatus: "continued",
+        studentProfileId: input.studentProfileId,
+        weeklyMinutesGoal: 0,
+        wordsWritten: wordCount,
+      });
+    }
+
+    const activityDay = this.activityDays.find(
+      (candidate) =>
+        candidate.studentProfileId === input.studentProfileId && candidate.activityDate === today,
+    );
+
+    if (activityDay) {
+      activityDay.minutesPracticed += minutes;
+      activityDay.wordsWritten += wordCount;
+      if (!activityDay.practicedSkills.includes("sentence_structure")) {
+        activityDay.practicedSkills.push("sentence_structure");
+      }
+    } else {
+      this.activityDays.push({
+        activityDate: today,
+        assignmentsCompleted: 0,
+        feedbackApplied: 0,
+        handwritingMinutes: 0,
+        minutesPracticed: minutes,
+        practicedSkills: ["sentence_structure"],
+        revisionsCompleted: 0,
+        studentProfileId: input.studentProfileId,
+        wordsWritten: wordCount,
+      });
+    }
+
+    return toResult(false);
+  }
+
   async listActivityDaysForStudents(
     studentProfileIds: readonly string[],
     range: ActivityDateRange,
@@ -1063,6 +1185,7 @@ export class MemoryDatabase implements Database {
       existing.canvasDocumentIds = [...input.canvasDocumentIds];
       existing.paragraphCount = input.paragraphCount;
       existing.revisionNumber = input.revisionNumber;
+      existing.rubricChecks = { ...(input.rubricChecks ?? existing.rubricChecks ?? {}) };
       existing.sentenceCount = input.sentenceCount;
       existing.textContent = input.textContent;
       existing.textPreview = input.textPreview;
@@ -1078,6 +1201,7 @@ export class MemoryDatabase implements Database {
       id: randomUUID(),
       paragraphCount: input.paragraphCount,
       revisionNumber: input.revisionNumber,
+      rubricChecks: { ...(input.rubricChecks ?? {}) },
       sentenceCount: input.sentenceCount,
       studentAssignmentId: input.studentAssignmentId,
       studentProfileId: input.studentProfileId,

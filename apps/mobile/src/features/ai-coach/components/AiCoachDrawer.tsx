@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Inline, Stack } from "@/shared/components/layout";
-import { TextActionBar, useTextActionBar } from "@/shared/components/text";
+import { ReadAloudText, TextActionBar, useTextActionBar } from "@/shared/components/text";
 import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
@@ -115,9 +115,11 @@ function ResponseRow({
       >
         {label}
       </Text>
-      <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-        {value}
-      </Text>
+      <ReadAloudText
+        selectable
+        style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
+        text={value}
+      />
     </View>
   );
 }

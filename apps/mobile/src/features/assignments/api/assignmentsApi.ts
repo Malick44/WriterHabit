@@ -64,12 +64,14 @@ export type SubmissionAttachmentMetadataRow = {
 interface AssignmentDraftSaveRequestInput extends AssignmentDetailRequestInput {
   autosaveVersion: number;
   canvasDocumentIds: string[];
+  rubricChecks?: Record<string, boolean>;
   text: string;
 }
 
 const backendDraftResponseSchema = z.object({
   autosaveVersion: z.number().int().min(1),
   canvasDocumentIds: z.array(z.string().min(1)),
+  rubricChecks: z.record(z.string(), z.boolean()).optional(),
   text: z.string(),
   updatedAt: z.string().datetime().optional(),
 });
@@ -153,9 +155,14 @@ function getAttachmentStorageObjectPath(input: {
   userId: string;
 }): string {
   const nameParts = input.attachment.name.split(".");
-  const extension = nameParts.length > 1 ? nameParts.pop() : inferAttachmentMimeType(input.attachment).split("/").pop();
+  const extension =
+    nameParts.length > 1
+      ? nameParts.pop()
+      : inferAttachmentMimeType(input.attachment).split("/").pop();
   const baseName = nameParts.join(".") || input.attachment.name;
-  const suffix = extension ? `.${sanitizeStorageSegment(extension).slice(0, 16)}` : "";
+  const suffix = extension
+    ? `.${sanitizeStorageSegment(extension).slice(0, 16)}`
+    : "";
 
   return [
     input.userId,
@@ -743,6 +750,58 @@ function createHistoryResponse(
   return assignmentHistoryResponseSchema.parse(response);
 }
 
+type DraftRow = {
+  canvas_document_ids: string[] | null;
+  revision_number: number | null;
+  rubric_checks?: Record<string, boolean> | null;
+  text_preview: string | null;
+  word_count: number | null;
+};
+
+/**
+ * Canvas handwriting is stored in canvas_documents and does not create a
+ * writing_drafts row on its own. Count attached canvas pages as saved work so
+ * step gating and submission checks unlock for handwriting-first students.
+ */
+async function buildDraftSummaryWithCanvasFallback(input: {
+  assignmentId: string;
+  draft: DraftRow | null;
+  studentProfileId: string;
+}): Promise<AssignmentRecord["draft"]> {
+  const { draft } = input;
+  const draftCanvasCount = draft?.canvas_document_ids?.length || 0;
+  const draftWordCount = draft?.word_count || 0;
+  let canvasPageCount = draftCanvasCount;
+
+  // Only look up attached canvas documents when the draft alone shows no work.
+  if (draftCanvasCount === 0 && draftWordCount === 0) {
+    const { count } = await supabase
+      .from("canvas_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("student_profile_id", input.studentProfileId)
+      .eq("assignment_id", input.assignmentId);
+
+    canvasPageCount = count || 0;
+  }
+
+  if (!draft && canvasPageCount === 0) {
+    return null;
+  }
+
+  return {
+    canvasPageCount,
+    lastEditedLabel: "Saved recently",
+    preview:
+      draft?.text_preview ||
+      (canvasPageCount > 0
+        ? "Handwritten canvas work attached."
+        : "Start writing..."),
+    revisionNumber: draft?.revision_number || (draft ? 1 : 0),
+    rubricChecks: draft?.rubric_checks ?? undefined,
+    wordCount: draftWordCount,
+  };
+}
+
 export const assignmentsApi = {
   async getBackendDraft(
     input: AssignmentDetailRequestInput,
@@ -782,12 +841,90 @@ export const assignmentsApi = {
         {
           autosaveVersion: input.autosaveVersion,
           canvasDocumentIds: input.canvasDocumentIds,
+          ...(input.rubricChecks ? { rubricChecks: input.rubricChecks } : {}),
           text: input.text,
         },
         { schema: backendDraftResponseSchema },
       );
     } catch {
       return null;
+    }
+  },
+
+  /**
+   * Best-effort sync of the typed-copy text onto the backend draft. Reads the
+   * current draft first so canvas links (and server-preserved rubric checks)
+   * are kept; fails silently — the device-local copy is the primary store.
+   */
+  async saveTypedCopy(
+    input: AssignmentDetailRequestInput & { text: string },
+  ): Promise<boolean> {
+    try {
+      const detail = await this.getAssignmentDetail(input);
+      const studentAssignmentId = detail.assignment?.studentAssignmentId;
+
+      if (!studentAssignmentId) {
+        return false;
+      }
+
+      const draftPath = `/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`;
+      const current = await apiClient
+        .get(draftPath, { schema: backendDraftResponseSchema })
+        .catch(() => null);
+
+      await apiClient.put(
+        draftPath,
+        {
+          autosaveVersion: (current?.autosaveVersion ?? 0) + 1,
+          canvasDocumentIds: current?.canvasDocumentIds ?? [],
+          text: input.text,
+        },
+        { schema: backendDraftResponseSchema },
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Best-effort sync of revise-step rubric checkmarks onto the backend draft.
+   * Reads the current draft first so text and canvas links are preserved, and
+   * fails silently — the device-local copy is the primary store.
+   */
+  async saveRubricChecks(
+    input: AssignmentDetailRequestInput & {
+      rubricChecks: Record<string, boolean>;
+    },
+  ): Promise<boolean> {
+    try {
+      const detail = await this.getAssignmentDetail(input);
+      const studentAssignmentId = detail.assignment?.studentAssignmentId;
+
+      if (!studentAssignmentId) {
+        return false;
+      }
+
+      const draftPath = `/student-assignments/${encodePathSegment(studentAssignmentId)}/draft`;
+      const current = await apiClient
+        .get(draftPath, { schema: backendDraftResponseSchema })
+        .catch(() => null);
+
+      await apiClient.put(
+        draftPath,
+        {
+          autosaveVersion: (current?.autosaveVersion ?? 0) + 1,
+          canvasDocumentIds: current?.canvasDocumentIds ?? [],
+          rubricChecks: input.rubricChecks,
+          text: current?.text ?? "",
+        },
+        { schema: backendDraftResponseSchema },
+      );
+
+      return true;
+    } catch {
+      return false;
     }
   },
 
@@ -865,15 +1002,11 @@ export const assignmentsApi = {
             assignmentType: sa.assignments.assignment_type,
             currentSubmissionId: sa.current_submission_id || undefined,
             difficulty: sa.assignments.difficulty,
-            draft: draft
-              ? {
-                  canvasPageCount: draft.canvas_document_ids?.length || 0,
-                  lastEditedLabel: "Saved recently",
-                  preview: draft.text_preview || "Start writing...",
-                  revisionNumber: draft.revision_number || 1,
-                  wordCount: draft.word_count || 0,
-                }
-              : null,
+            draft: await buildDraftSummaryWithCanvasFallback({
+              assignmentId: sa.assignment_id,
+              draft,
+              studentProfileId: profile.id,
+            }),
             dueLabel: sa.due_at
               ? new Date(sa.due_at).toLocaleDateString()
               : "Today",
@@ -990,15 +1123,11 @@ export const assignmentsApi = {
         assignmentType: sa.assignments.assignment_type,
         currentSubmissionId: sa.current_submission_id || undefined,
         difficulty: sa.assignments.difficulty,
-        draft: draft
-          ? {
-              canvasPageCount: draft.canvas_document_ids?.length || 0,
-              lastEditedLabel: "Saved recently",
-              preview: draft.text_preview || "Start writing...",
-              revisionNumber: draft.revision_number || 1,
-              wordCount: draft.word_count || 0,
-            }
-          : null,
+        draft: await buildDraftSummaryWithCanvasFallback({
+          assignmentId: input.assignmentId,
+          draft,
+          studentProfileId: profile.id,
+        }),
         dueLabel: sa.due_at
           ? new Date(sa.due_at).toLocaleDateString()
           : "Today",

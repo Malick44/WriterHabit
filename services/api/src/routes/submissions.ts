@@ -36,6 +36,9 @@ const submissionParamsSchema = z.object({
 const saveDraftBodySchema = z.strictObject({
   autosaveVersion: z.number().int().min(1),
   canvasDocumentIds: z.array(z.string().min(1).max(128)).max(20).default([]),
+  // Optional so autosave clients that don't manage rubric state can omit it
+  // without clobbering saved checkmarks.
+  rubricChecks: z.record(z.string(), z.boolean()).optional(),
   text: z.string().max(20_000),
 });
 
@@ -141,6 +144,7 @@ export async function registerSubmissionRoutes(
       canvasDocumentIds: body.canvasDocumentIds,
       paragraphCount: stats.paragraphCount,
       revisionNumber: existing?.revisionNumber ?? 1,
+      rubricChecks: body.rubricChecks ?? existing?.rubricChecks ?? {},
       sentenceCount: stats.sentenceCount,
       studentAssignmentId: studentAssignment.id,
       studentProfileId: profile.id,

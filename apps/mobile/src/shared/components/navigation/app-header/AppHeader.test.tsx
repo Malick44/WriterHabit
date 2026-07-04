@@ -24,7 +24,7 @@ describe("AppHeader", () => {
     mockBack.mockClear();
   });
 
-  it("renders localized title, subtitle, and text action copy", async () => {
+  it("renders localized title and text action copy", async () => {
     const onPress = jest.fn();
 
     const rendered = await renderHeader(
@@ -37,7 +37,6 @@ describe("AppHeader", () => {
             type: "text",
           },
         ]}
-        subtitleKey="studentHome.description"
         titleKey="studentHome.title"
       />,
     );
@@ -48,7 +47,6 @@ describe("AppHeader", () => {
     expect(titleStyle.fontSize).toBe(18);
     expect(titleStyle.fontWeight).toBe("500");
     expect(titleStyle.letterSpacing).toBe(0);
-    expect(rendered.getByText("Daily assignments, draft status, and coaching next steps.")).toBeTruthy();
     await fireEvent.press(rendered.getByText("View"));
     expect(onPress).toHaveBeenCalledTimes(1);
   });

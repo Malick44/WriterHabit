@@ -16,6 +16,7 @@ import { registerHealthRoutes } from "./routes/health";
 import { registerParentRoutes } from "./routes/parents";
 import { registerPlaceholderRoutes } from "./routes/placeholders";
 import { registerProfileRoutes } from "./routes/profile";
+import { registerGrade3Routes } from "./routes/grade3";
 import { registerProgressRoutes } from "./routes/progress";
 import { registerSubmissionRoutes } from "./routes/submissions";
 import { registerSubscriptionRoutes } from "./routes/subscriptions";
@@ -132,6 +133,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
         await registerAiCoachRoutes(v1, authenticate, database);
         await registerAiReviewRoutes(v1, authenticate, database);
         await registerProgressRoutes(v1, authenticate, database);
+        await registerGrade3Routes(v1, authenticate, database);
         await registerParentRoutes(v1, authenticate, database);
         await registerTeacherRoutes(v1, authenticate, database);
         await registerSubscriptionRoutes(v1, authenticate, database, config.payments);

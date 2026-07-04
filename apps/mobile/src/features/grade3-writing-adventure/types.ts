@@ -30,6 +30,8 @@ export type Grade3WritingProgressInput = {
   checklist?: Grade3ChecklistState;
   planning?: Grade3PlanningState;
   completed?: boolean;
+  /** Practice minutes credited to the streak when completing (server-clamped). */
+  estimatedMinutes?: number;
 };
 
 export type Grade3ProgressSummary = {

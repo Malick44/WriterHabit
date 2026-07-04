@@ -39,7 +39,6 @@ export function Grade3ParentGuideScreen() {
           }}
           showSafeArea={false}
           style={{ backgroundColor: grade3Theme.screen.background }}
-          subtitleKey="grade3WritingAdventure.parentGuide.subtitle"
           titleKey="grade3WritingAdventure.parentGuide.title"
           variant="compact"
         />

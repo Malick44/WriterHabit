@@ -41,7 +41,6 @@ export function BadgesScreen() {
         }}
         showSafeArea={false}
         style={styles.header}
-        subtitleKey="progress.badges.subtitle"
         titleKey="progress.badges.title"
         variant="transparent"
       />

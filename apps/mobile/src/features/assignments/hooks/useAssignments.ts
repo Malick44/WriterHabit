@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { typography, type GradeBand } from "@/design/tokens";
+import { canvasApi } from "@/features/canvas";
+import type { CanvasDocumentSummary } from "@/features/canvas/types";
 
 import { assignmentsApi } from "../api/assignmentsApi";
 import {
@@ -316,4 +318,40 @@ export function useAssignmentSubmissionData(
 
 export function useAssignments() {
   return useAssignmentHistoryData("all");
+}
+
+export interface AssignmentCanvasWorkState {
+  attachedCanvas: CanvasDocumentSummary | null;
+  refetch: () => void;
+}
+
+/**
+ * Canvas work saves local-first and only reaches the backend when sync is
+ * available, so the server-side draft summary can miss it. This checks the
+ * canvas store directly (remote with local fallback) so step gating on the
+ * assignment detail screen unlocks as soon as a canvas is attached.
+ */
+export function useAssignmentCanvasWork(
+  assignmentId?: string,
+): AssignmentCanvasWorkState {
+  const { session } = useAuthSession();
+  const studentId = session?.user.id ?? "local-student";
+  const gradeLevel = session?.user.gradeLevel;
+  const query = useQuery({
+    enabled: Boolean(assignmentId),
+    queryFn: () =>
+      canvasApi.getAttachedCanvasSummary({
+        assignmentId: assignmentId ?? "",
+        gradeLevel,
+        studentId,
+      }),
+    queryKey: ["assignment-attached-canvas", studentId, assignmentId],
+  });
+
+  return {
+    attachedCanvas: query.data ?? null,
+    refetch: () => {
+      void query.refetch();
+    },
+  };
 }

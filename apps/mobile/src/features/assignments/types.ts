@@ -1,4 +1,8 @@
-import type { AssignmentType, GradeLevel, WritingSkill } from "@WriterHabit/shared";
+import type {
+  AssignmentType,
+  GradeLevel,
+  WritingSkill,
+} from "@WriterHabit/shared";
 import {
   assignmentTypeSchema,
   gradeLevelSchema,
@@ -9,17 +13,32 @@ import { z } from "zod";
 
 import type { GradeBand } from "@/design/tokens";
 
-export const assignmentScenarioSchema = z.enum(["success", "empty", "error", "offline", "submitted"]);
+export const assignmentScenarioSchema = z.enum([
+  "success",
+  "empty",
+  "error",
+  "offline",
+  "submitted",
+]);
 export type AssignmentScenario = z.infer<typeof assignmentScenarioSchema>;
 
 export const assignmentStatusSchema = studentAssignmentStatusSchema;
 
 export type AssignmentStatus = z.infer<typeof assignmentStatusSchema>;
 
-export const assignmentHistoryTabSchema = z.enum(["all", "drafts", "submitted", "reviewed"]);
+export const assignmentHistoryTabSchema = z.enum([
+  "all",
+  "drafts",
+  "submitted",
+  "reviewed",
+]);
 export type AssignmentHistoryTab = z.infer<typeof assignmentHistoryTabSchema>;
 
-export const assignmentDifficultySchema = z.enum(["easy", "moderate", "challenging"]);
+export const assignmentDifficultySchema = z.enum([
+  "easy",
+  "moderate",
+  "challenging",
+]);
 export type AssignmentDifficulty = z.infer<typeof assignmentDifficultySchema>;
 
 export const assignmentRubricCriterionSchema = z.object({
@@ -33,6 +52,8 @@ export const assignmentDraftSummarySchema = z.object({
   lastEditedLabel: z.string().min(1),
   preview: z.string().min(1),
   revisionNumber: z.number().int().nonnegative(),
+  /** Server-saved revise-step checkmarks per rubric criterion id. */
+  rubricChecks: z.record(z.string(), z.boolean()).optional(),
   wordCount: z.number().int().nonnegative(),
 });
 
@@ -83,23 +104,33 @@ export const assignmentSubmissionResponseSchema = z.object({
   submissionId: z.string().min(1),
 });
 
-export type AssignmentRubricCriterion = z.infer<typeof assignmentRubricCriterionSchema>;
-export type AssignmentDraftSummary = z.infer<typeof assignmentDraftSummarySchema>;
+export type AssignmentRubricCriterion = z.infer<
+  typeof assignmentRubricCriterionSchema
+>;
+export type AssignmentDraftSummary = z.infer<
+  typeof assignmentDraftSummarySchema
+>;
 export type AssignmentRecord = z.infer<typeof assignmentRecordSchema> & {
   assignmentType: AssignmentType;
   gradeLevelMax: GradeLevel;
   gradeLevelMin: GradeLevel;
   skillFocus: WritingSkill[];
 };
-export type AssignmentHistoryResponse = z.infer<typeof assignmentHistoryResponseSchema> & {
+export type AssignmentHistoryResponse = z.infer<
+  typeof assignmentHistoryResponseSchema
+> & {
   assignments: AssignmentRecord[];
   gradeLevel: GradeLevel;
 };
-export type AssignmentDetailResponse = z.infer<typeof assignmentDetailResponseSchema> & {
+export type AssignmentDetailResponse = z.infer<
+  typeof assignmentDetailResponseSchema
+> & {
   assignment: AssignmentRecord | null;
   gradeLevel: GradeLevel;
 };
-export type AssignmentSubmissionResponse = z.infer<typeof assignmentSubmissionResponseSchema>;
+export type AssignmentSubmissionResponse = z.infer<
+  typeof assignmentSubmissionResponseSchema
+>;
 
 export interface AssignmentGradeAdaptation {
   band: GradeBand;

@@ -64,6 +64,9 @@ async function ensurePlayerReady(): Promise<boolean> {
           appKilledPlaybackBehavior:
             tp.AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
         },
+        // Drives read-along word highlighting; ~4 Hz keeps word boundaries
+        // responsive without measurable overhead.
+        progressUpdateEventInterval: 0.25,
       });
       return true;
     })().catch((error) => {
@@ -78,6 +81,8 @@ async function ensurePlayerReady(): Promise<boolean> {
 export interface SpeechPlaybackHandlers {
   onDone?: () => void;
   onError?: (error: unknown) => void;
+  /** ~4 Hz while playing: which queued clip is active and where within it. */
+  onProgress?: (clipIndex: number, positionSec: number) => void;
 }
 
 export interface SpeechPlaybackSession {
@@ -153,6 +158,17 @@ export async function startSpeechPlayback(
       void cleanup().then(() => handlers.onError?.(event));
     }),
   );
+
+  if (handlers.onProgress) {
+    const onProgress = handlers.onProgress;
+    subscriptions.push(
+      TrackPlayer.addEventListener(tp.Event.PlaybackProgressUpdated, (event) => {
+        if (!ended && typeof event.track === "number" && event.track >= 0) {
+          onProgress(event.track, event.position);
+        }
+      }),
+    );
+  }
 
   const session: SpeechPlaybackSession = {
     get isActive() {

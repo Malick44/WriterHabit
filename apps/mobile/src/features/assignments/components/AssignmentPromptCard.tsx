@@ -2,7 +2,13 @@ import { Text, View } from "react-native";
 
 import { Card } from "@/shared/components/cards";
 import { Inline, Stack } from "@/shared/components/layout";
-import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   buildAccessibilityLabel,
@@ -32,7 +38,10 @@ export function AssignmentPromptCard({
 
   return (
     <Card
-      accessibilityLabel={buildAccessibilityLabel([t("assignments.detail.promptAccessibility"), assignment.title])}
+      accessibilityLabel={buildAccessibilityLabel([
+        t("assignments.detail.promptAccessibility"),
+        assignment.title,
+      ])}
       gradeBand={gradeBand}
       testID="assignment-detail-prompt"
       variant="accent"
@@ -40,22 +49,49 @@ export function AssignmentPromptCard({
       <Stack gap="md">
         <Inline align="flex-start" justify="space-between">
           <Stack gap="xs" style={{ flex: 1 }}>
-            <Text selectable style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}>
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(type.title, settings),
+                { color: accessibleColors.text },
+              ]}
+            >
               {assignment.title}
             </Text>
-            <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(type.bodySmall, settings),
+                { color: accessibleColors.mutedText },
+              ]}
+            >
               {assignment.dueLabel}
             </Text>
           </Stack>
-          <AssignmentStatusBadge gradeBand={gradeBand} status={assignment.status} />
+          <AssignmentStatusBadge
+            gradeBand={gradeBand}
+            status={assignment.status}
+          />
         </Inline>
 
-        <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
+        <Text
+          selectable
+          style={[
+            getAccessibleTextStyle(type.body, settings),
+            { color: accessibleColors.text },
+          ]}
+        >
           {assignment.prompt}
         </Text>
 
         {assignment.teacherNote ? (
-          <Text selectable style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
+          <Text
+            selectable
+            style={[
+              getAccessibleTextStyle(type.bodySmall, settings),
+              { color: accessibleColors.mutedText },
+            ]}
+          >
             {assignment.teacherNote}
           </Text>
         ) : null}
@@ -71,8 +107,16 @@ export function AssignmentPromptCard({
               paddingVertical: spacing.xs,
             }}
           >
-            <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
-              {t("assignments.detail.estimatedTime", { count: assignment.estimatedMinutes })}
+            <Text
+              selectable
+              style={[
+                getAccessibleTextStyle(type.caption, settings),
+                { color: accessibleColors.mutedText },
+              ]}
+            >
+              {t("assignments.detail.estimatedTime", {
+                count: assignment.estimatedMinutes,
+              })}
             </Text>
           </View>
           {gradeAdaptation.showDifficulty ? (
@@ -86,9 +130,17 @@ export function AssignmentPromptCard({
                 paddingVertical: spacing.xs,
               }}
             >
-              <Text selectable style={[getAccessibleTextStyle(type.caption, settings), { color: accessibleColors.mutedText }]}>
+              <Text
+                selectable
+                style={[
+                  getAccessibleTextStyle(type.caption, settings),
+                  { color: accessibleColors.mutedText },
+                ]}
+              >
                 {t("assignments.detail.difficulty", {
-                  difficulty: t(`assignments.difficulty.${assignment.difficulty}`),
+                  difficulty: t(
+                    `assignments.difficulty.${assignment.difficulty}`,
+                  ),
                 })}
               </Text>
             </View>

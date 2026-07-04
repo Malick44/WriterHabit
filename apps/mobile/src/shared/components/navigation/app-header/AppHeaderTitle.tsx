@@ -15,8 +15,6 @@ const APP_HEADER_TITLE_LINE_HEIGHT_SCALE = 0.93;
 interface AppHeaderTitleProps {
   titleKey?: TranslationKey;
   titleParams?: TranslationParams;
-  subtitleKey?: TranslationKey;
-  subtitleParams?: TranslationParams;
   colors: AppHeaderResolvedColors;
   centered: boolean;
   gradeBand: GradeBand;
@@ -44,8 +42,6 @@ function getCompactTitleStyle(style: TextStyle): TextStyle {
 export const AppHeaderTitle = memo(function AppHeaderTitle({
   titleKey,
   titleParams,
-  subtitleKey,
-  subtitleParams,
   colors: headerColors,
   centered,
   gradeBand,
@@ -56,7 +52,6 @@ export const AppHeaderTitle = memo(function AppHeaderTitle({
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const title = titleKey ? t(titleKey, titleParams).toUpperCase() : undefined;
-  const subtitle = subtitleKey ? t(subtitleKey, subtitleParams) : undefined;
   const numberOfTitleLines = variant === "compact" ? 1 : variant === "large" ? 3 : 2;
   const titleStyle = useMemo(
     () =>
@@ -72,12 +67,8 @@ export const AppHeaderTitle = memo(function AppHeaderTitle({
       ),
     [settings, type],
   );
-  const subtitleStyle = useMemo(
-    () => getAccessibleTextStyle(type.bodySmall, settings),
-    [settings, type],
-  );
 
-  if (!title && !subtitle) {
+  if (!title) {
     return <View style={styles.titleBlock} />;
   }
 
@@ -89,45 +80,24 @@ export const AppHeaderTitle = memo(function AppHeaderTitle({
         I18nManager.isRTL && !centered ? styles.titleBlockRtl : null,
       ]}
     >
-      {title ? (
-        <Text
-          accessibilityLabel={title}
-          accessibilityRole="header"
-          numberOfLines={numberOfTitleLines}
-          selectable
-          style={[
-            titleStyle,
-            styles.titleText,
-            {
-              color: headerColors.mutedText,
-              textAlign: "center",
-              writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
-            },
-          ]}
-          testID={APP_HEADER_TEST_IDS.title}
-        >
-          {title}
-        </Text>
-      ) : null}
-
-      {subtitle ? (
-        <Text
-          numberOfLines={variant === "compact" ? 1 : 2}
-          selectable
-          style={[
-            subtitleStyle,
-            styles.subtitleText,
-            {
-              color: headerColors.mutedText,
-              textAlign: centered ? "center" : I18nManager.isRTL ? "right" : "left",
-              writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
-            },
-          ]}
-          testID={APP_HEADER_TEST_IDS.subtitle}
-        >
-          {subtitle}
-        </Text>
-      ) : null}
+      <Text
+        accessibilityLabel={title}
+        accessibilityRole="header"
+        numberOfLines={numberOfTitleLines}
+        selectable
+        style={[
+          titleStyle,
+          styles.titleText,
+          {
+            color: headerColors.mutedText,
+            textAlign: "center",
+            writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
+          },
+        ]}
+        testID={APP_HEADER_TEST_IDS.title}
+      >
+        {title}
+      </Text>
     </View>
   );
 });

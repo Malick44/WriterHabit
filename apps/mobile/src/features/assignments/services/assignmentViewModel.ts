@@ -24,7 +24,9 @@ export function buildAssignmentHistoryViewModel({
   response,
   selectedTab,
 }: BuildAssignmentHistoryViewModelInput): AssignmentHistoryViewModel {
-  const assignments = sortAssignmentsForHistory(filterAssignmentsByTab(response.assignments, selectedTab));
+  const assignments = sortAssignmentsForHistory(
+    filterAssignmentsByTab(response.assignments, selectedTab),
+  );
 
   return {
     assignments,
@@ -36,7 +38,9 @@ export function buildAssignmentHistoryViewModel({
   };
 }
 
-export function buildAssignmentDetailViewModel(response: AssignmentDetailResponse): AssignmentDetailViewModel {
+export function buildAssignmentDetailViewModel(
+  response: AssignmentDetailResponse,
+): AssignmentDetailViewModel {
   const { assignment } = response;
 
   if (!assignment) {

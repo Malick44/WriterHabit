@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
 import { readAloud, stopReadAloud } from "@/services/speech/readAloudService";
 import { Button } from "@/shared/components";
+import { ReadAloudText } from "@/shared/components/text";
 import { spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
@@ -50,9 +51,11 @@ export function ReadAloudCard({ reading, title }: ReadAloudCardProps) {
       title={title}
       variant="sky"
     >
-      <Text selectable style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}>
-        {reading}
-      </Text>
+      <ReadAloudText
+        selectable
+        style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
+        text={reading}
+      />
       <View style={{ alignItems: "flex-start", marginTop: spacing.xs }}>
         <Button
           gradeBand="elementary"

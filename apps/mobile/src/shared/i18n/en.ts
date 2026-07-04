@@ -41,10 +41,9 @@ export const en = {
   readAloudVoice: {
     screen: {
       title: "Coach voice",
-      subtitle: "Pick the voice that reads coaching text aloud.",
       loading: "Loading your voice choice",
-      sectionTitle: "Voices",
-      sectionSubtitle: "Tap a voice to hear a preview. Your choice applies everywhere read-aloud is used.",
+      voiceLabel: "Voice",
+      voiceHint: "Shows or hides the voice list.",
       choiceHint: "Selects this voice and plays a short preview.",
     },
     previewLine: "Hi! I'm your writing coach. Let's make your story amazing.",
@@ -60,6 +59,16 @@ export const en = {
       male4: "Voice 9 · Male",
       male5: "Voice 10 · Male",
       coachBlend: "WriterHabit Coach · Custom",
+    },
+    speed: {
+      label: "Speed",
+      choiceHint: "Sets this reading speed and plays a short preview.",
+      slow: "Slow",
+      normal: "Normal",
+      fast: "Fast",
+    },
+    wordHighlight: {
+      label: "Highlight words",
     },
   },
   modal: {
@@ -1465,6 +1474,7 @@ export const en = {
       rubricFocusLabel: "Rubric focus",
       dueDateLabel: "Due date",
       factsAccessibility: "Assignment facts",
+      factsTitle: "Assignment details",
       statusSectionTitle: "Status",
       statusJourneyAccessibility: "Assignment progress, {{current}} stage",
       journey: {
@@ -1482,7 +1492,14 @@ export const en = {
       promptImageAccessibility: "Picture for this assignment prompt",
       draftSummaryTitle: "Your saved work",
       draftSummaryAccessibility: "Saved draft summary",
+      draftCanvasSummary: "{{count}} canvas pages, {{label}}",
+      savedCanvasLine: "Canvas attached · {{label}}",
+      savedAttachmentsLine: "{{count}} photos or files ready to submit",
+      stepLocalWorkSummary: "Your canvas or photo work is ready to review.",
       stepDraftHelper: "Add canvas or typed work to continue.",
+      stepReviseHelper: "Check off each goal after you review your work.",
+      stepSubmittedHelper:
+        "This work is already in for review. You can revisit each step while it is checked.",
       stepBackAccessibility: "Go back one step",
       stepNextAccessibility: "Go to the next step",
     },
@@ -1551,6 +1568,8 @@ export const en = {
       sectionTitle: "Add a photo or file",
       sectionSubtitle:
         "Upload a picture of your handwritten work, or attach a PDF.",
+      addCta: "Add photo or file",
+      addAccessibility: "Add a photo or file of your handwritten work",
       takePhoto: "Take photo",
       choosePhoto: "Choose photo",
       uploadFile: "Upload file",
@@ -3733,6 +3752,7 @@ export const en = {
         coachVoice: "Coach Voice",
         english: "English",
         fontSize: "Font Size",
+        typedCopyInput: "Show typed copy box",
         title: "Preferences",
       },
       support: {
@@ -3742,6 +3762,7 @@ export const en = {
         title: "Support",
       },
       title: "Settings",
+      subtitle: "Manage your account, preferences, and support.",
       unavailableDescription:
         "This setting is prepared in the interface and will open when the production account service is connected.",
       unavailableTitle: "Setting not connected yet",

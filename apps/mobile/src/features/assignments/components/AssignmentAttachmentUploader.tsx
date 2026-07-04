@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -34,13 +35,13 @@ const dashboard = colors.dashboard;
 interface SourceTile {
   icon: keyof typeof Ionicons.glyphMap;
   labelKey:
-  | "assignments.attachments.takePhoto"
-  | "assignments.attachments.choosePhoto"
-  | "assignments.attachments.uploadFile";
+    | "assignments.attachments.takePhoto"
+    | "assignments.attachments.choosePhoto"
+    | "assignments.attachments.uploadFile";
   accessibilityKey:
-  | "assignments.attachments.takePhotoAccessibility"
-  | "assignments.attachments.choosePhotoAccessibility"
-  | "assignments.attachments.uploadFileAccessibility";
+    | "assignments.attachments.takePhotoAccessibility"
+    | "assignments.attachments.choosePhotoAccessibility"
+    | "assignments.attachments.uploadFileAccessibility";
   onPress: () => void;
 }
 
@@ -70,6 +71,8 @@ export function AssignmentAttachmentUploader({
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
+  // One "add" button by default; the three source options only appear on tap.
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const tiles: SourceTile[] = [
     {
@@ -100,36 +103,81 @@ export function AssignmentAttachmentUploader({
         {t("assignments.attachments.sectionSubtitle")}
       </Text>
 
-      <View style={styles.sourceRow}>
-        {tiles.map((tile) => (
-          <Pressable
-            accessibilityLabel={t(tile.accessibilityKey)}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: isPicking }}
-            disabled={isPicking}
-            hitSlop={getAccessibleHitSlop(settings)}
-            key={tile.labelKey}
-            onPress={tile.onPress}
-            style={({ pressed }) => [
-              styles.tile,
-              pressed ? styles.tilePressed : null,
-              isPicking ? styles.tileDisabled : null,
-            ]}
-          >
-            <View style={styles.tileIcon}>
-              <Ionicons color={dashboard.primary} name={tile.icon} size={20} />
-            </View>
-            <Text
-              style={[
-                getAccessibleTextStyle(type.caption, settings),
-                styles.tileLabel,
+      <Pressable
+        accessibilityLabel={t("assignments.attachments.addAccessibility")}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isPicking, expanded: sourcesOpen }}
+        disabled={isPicking}
+        hitSlop={getAccessibleHitSlop(settings)}
+        onPress={() => setSourcesOpen((open) => !open)}
+        style={({ pressed }) => [
+          styles.addButton,
+          pressed ? styles.tilePressed : null,
+          isPicking ? styles.tileDisabled : null,
+        ]}
+        testID="assignment-attachment-add"
+      >
+        <View style={styles.tileIcon}>
+          <Ionicons
+            color={dashboard.primary}
+            name="cloud-upload-outline"
+            size={20}
+          />
+        </View>
+        <Text
+          style={[
+            getAccessibleTextStyle(type.bodyStrong, settings),
+            styles.addLabel,
+          ]}
+        >
+          {t("assignments.attachments.addCta")}
+        </Text>
+        <Ionicons
+          color={dashboard.outline}
+          name={sourcesOpen ? "chevron-up" : "chevron-down"}
+          size={18}
+        />
+      </Pressable>
+
+      {sourcesOpen ? (
+        <View style={styles.sourceRow}>
+          {tiles.map((tile) => (
+            <Pressable
+              accessibilityLabel={t(tile.accessibilityKey)}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isPicking }}
+              disabled={isPicking}
+              hitSlop={getAccessibleHitSlop(settings)}
+              key={tile.labelKey}
+              onPress={() => {
+                setSourcesOpen(false);
+                tile.onPress();
+              }}
+              style={({ pressed }) => [
+                styles.tile,
+                pressed ? styles.tilePressed : null,
+                isPicking ? styles.tileDisabled : null,
               ]}
             >
-              {t(tile.labelKey)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+              <View style={styles.tileIcon}>
+                <Ionicons
+                  color={dashboard.primary}
+                  name={tile.icon}
+                  size={20}
+                />
+              </View>
+              <Text
+                style={[
+                  getAccessibleTextStyle(type.caption, settings),
+                  styles.tileLabel,
+                ]}
+              >
+                {t(tile.labelKey)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       {isPicking ? (
         <View
@@ -334,6 +382,22 @@ export function AssignmentAttachmentUploader({
 }
 
 const styles = StyleSheet.create({
+  addButton: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderCurve: "continuous",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  addLabel: {
+    color: dashboard.onSurface,
+    flex: 1,
+  },
   container: {
     gap: spacing.md,
   },

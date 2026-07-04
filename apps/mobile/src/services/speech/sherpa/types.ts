@@ -38,7 +38,7 @@ export interface RegisteredSherpaModel extends SherpaModelDescriptor {
    * this path lives in.
    */
   modelPath: string;
-  /** Absolute path to voice.bin (the 10 packed voice styles). */
+  /** Absolute path to voice.bin (the packed voice styles). */
   voiceBinPath: string;
   registeredAt: number;
 }

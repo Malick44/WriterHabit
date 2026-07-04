@@ -15,7 +15,10 @@ function historyItem(
     assignmentType,
     completedAt,
     difficulty: assignmentType === "essay_writing" ? "challenging" : "moderate",
-    skillFocus: assignmentType === "reading_response" ? ["reading_response", "clarity"] : ["organization"],
+    skillFocus:
+      assignmentType === "reading_response"
+        ? ["reading_response", "clarity"]
+        : ["organization"],
   };
 }
 
@@ -31,7 +34,11 @@ describe("selectDailyAssignment", () => {
     });
 
     expect(result.assignment.id).toBe("daily-paragraph-evidence");
-    expect(result.matchedWeakSkills).toEqual(["organization", "clarity", "revision_quality"]);
+    expect(result.matchedWeakSkills).toEqual([
+      "organization",
+      "clarity",
+      "revision_quality",
+    ]);
     expect(result.reasonCodes).toContain("goal_match");
     expect(result.reasonCodes).toContain("weak_skill_match");
   });

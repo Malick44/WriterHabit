@@ -18,15 +18,17 @@ interface SherpaGeneratedAudio {
   sampleRate: number;
 }
 
+interface SherpaGenerateOptions {
+  sid: number;
+  speed: number;
+}
+
 interface SherpaTtsEngine {
-  generateSpeech(
-    text: string,
-    options: { sid: number; speed: number },
-  ): Promise<SherpaGeneratedAudio>;
+  generateSpeech(text: string, options: SherpaGenerateOptions): Promise<SherpaGeneratedAudio>;
   generateSpeechToFile?(
     text: string,
     filePath: string,
-    options: { sid: number; speed: number },
+    options: SherpaGenerateOptions,
   ): Promise<{ numSamples?: number; sampleRate?: number }>;
   destroy?(): Promise<void>;
 }
@@ -81,7 +83,7 @@ async function getEngine(model: RegisteredSherpaModel): Promise<SherpaTtsEngine>
   enginePromise = ttsModule
     .createTTS({
       modelPath: { type: "file", path: modelDir },
-      modelType: "supertonic",
+      modelType: model.family,
       maxNumSentences: 1,
       numThreads: 2,
       // Supertonic ships int8 ONNX models: CoreML/NNAPI either fail to
@@ -109,13 +111,12 @@ async function runSynthesis(
   ttsModule: SherpaTtsModule,
   text: string,
   outputPath: string,
-  sid: number,
-  speed: number,
+  options: SherpaGenerateOptions,
 ): Promise<number> {
   // Android (with the generateTtsToFile patch) writes the WAV natively,
   // avoiding large sample arrays crossing the bridge.
   if (Platform.OS === "android" && typeof engine.generateSpeechToFile === "function") {
-    const generated = await engine.generateSpeechToFile(text, outputPath, { sid, speed });
+    const generated = await engine.generateSpeechToFile(text, outputPath, options);
     const sampleRate =
       typeof generated.sampleRate === "number" && generated.sampleRate > 0
         ? generated.sampleRate
@@ -123,7 +124,7 @@ async function runSynthesis(
     return (generated.numSamples ?? 0) / sampleRate;
   }
 
-  const generated = await engine.generateSpeech(text, { sid, speed });
+  const generated = await engine.generateSpeech(text, options);
   if (typeof ttsModule.saveAudioToFile !== "function") {
     throw new Error("saveAudioToFile is unavailable in react-native-sherpa-onnx/tts");
   }
@@ -134,8 +135,8 @@ async function runSynthesis(
 
 /**
  * Synthesize `text` to a WAV file at `outputPath` (plain path, no file://).
- * Throws when output is implausibly short so callers can fall back to the
- * platform speech engine instead of playing corrupted audio.
+ * Throws when output is implausibly short so callers can react instead of
+ * playing corrupted audio.
  */
 export async function synthesizeToWav(
   text: string,
@@ -153,14 +154,10 @@ export async function synthesizeToWav(
   const prepared = text.normalize("NFC").trim();
   const plainOutput = toPlainPath(outputPath);
 
-  const durationSeconds = await runSynthesis(
-    engine,
-    ttsModule,
-    prepared,
-    plainOutput,
-    model.speakerId,
+  const durationSeconds = await runSynthesis(engine, ttsModule, prepared, plainOutput, {
+    sid: model.speakerId,
     speed,
-  );
+  });
   if (durationSeconds < minimumPlausibleDuration(prepared)) {
     throw new Error(
       `On-device voice produced implausibly short audio (${durationSeconds.toFixed(2)}s) for ${prepared.length} chars.`,

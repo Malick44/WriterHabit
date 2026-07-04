@@ -1,7 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors, radius, shadows, typography, type GradeBand } from "@/design/tokens";
+import {
+  colors,
+  radius,
+  shadows,
+  typography,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
   buildAccessibilityLabel,
@@ -19,7 +25,10 @@ type BadgeTone = "due" | "active" | "done";
 
 const badgeTokens: Record<BadgeTone, { bg: string; text: string }> = {
   due: { bg: dashboard.tertiaryContainer, text: dashboard.tertiaryText },
-  active: { bg: dashboard.secondaryContainerSoft, text: dashboard.onSecondaryContainer },
+  active: {
+    bg: dashboard.secondaryContainerSoft,
+    text: dashboard.onSecondaryContainer,
+  },
   done: { bg: dashboard.secondaryContainer, text: dashboard.secondary },
 };
 
@@ -41,43 +50,79 @@ interface AssignmentSummaryCardProps {
   onPress: () => void;
 }
 
-export function AssignmentSummaryCard({ assignment, gradeBand, onPress }: AssignmentSummaryCardProps) {
+export function AssignmentSummaryCard({
+  assignment,
+  gradeBand,
+  onPress,
+}: AssignmentSummaryCardProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const type = typography.gradeBands[gradeBand];
   const accessibleColors = getAccessibleColors(settings);
   const tone = badgeTokens[getBadgeTone(assignment.status)];
   const statusLabel = t(`assignments.status.${assignment.status}`);
-  const ctaLabel = t(`assignments.history.cta.${getStatusCta(assignment.status)}`);
-  const minutesLabel = t("common.minutes", { count: assignment.estimatedMinutes });
+  const ctaLabel = t(
+    `assignments.history.cta.${getStatusCta(assignment.status)}`,
+  );
+  const minutesLabel = t("common.minutes", {
+    count: assignment.estimatedMinutes,
+  });
 
   return (
     <Pressable
       accessibilityHint={t("assignments.history.openHint")}
-      accessibilityLabel={buildAccessibilityLabel([statusLabel, assignment.title, minutesLabel, ctaLabel])}
+      accessibilityLabel={buildAccessibilityLabel([
+        statusLabel,
+        assignment.title,
+        minutesLabel,
+        ctaLabel,
+      ])}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
+      style={({ pressed }) => [
+        styles.card,
+        pressed ? styles.cardPressed : null,
+      ]}
       testID={`assignment-card-${assignment.id}`}
     >
       <View style={styles.cardHeader}>
         <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-          <Text style={[getAccessibleTextStyle(type.caption, settings), styles.badgeText, { color: tone.text }]}>
+          <Text
+            style={[
+              getAccessibleTextStyle(type.caption, settings),
+              styles.badgeText,
+              { color: tone.text },
+            ]}
+          >
             {statusLabel}
           </Text>
         </View>
-        <Text style={[getAccessibleTextStyle(type.caption, settings), styles.minutes]}>{minutesLabel}</Text>
+        <Text
+          style={[
+            getAccessibleTextStyle(type.caption, settings),
+            styles.minutes,
+          ]}
+        >
+          {minutesLabel}
+        </Text>
       </View>
 
       <Text
         selectable
-        style={[getAccessibleTextStyle(type.title, settings), styles.title, { color: accessibleColors.text }]}
+        style={[
+          getAccessibleTextStyle(type.title, settings),
+          styles.title,
+          { color: accessibleColors.text },
+        ]}
       >
         {assignment.title}
       </Text>
 
       <View style={styles.ctaRow}>
-        <Text selectable={false} style={[getAccessibleTextStyle(type.label, settings), styles.ctaText]}>
+        <Text
+          selectable={false}
+          style={[getAccessibleTextStyle(type.label, settings), styles.ctaText]}
+        >
           {ctaLabel}
         </Text>
         <Ionicons color={dashboard.primary} name="chevron-forward" size={18} />

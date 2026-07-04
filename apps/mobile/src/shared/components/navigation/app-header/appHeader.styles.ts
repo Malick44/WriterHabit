@@ -227,7 +227,4 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     letterSpacing: 0,
   },
-  subtitleText: {
-    flexShrink: 1,
-  },
 });

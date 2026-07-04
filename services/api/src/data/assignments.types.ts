@@ -78,6 +78,8 @@ export interface DraftRecord {
   id: string;
   paragraphCount: number;
   revisionNumber: number;
+  /** Self-review checkmarks per rubric criterion id for the revise step. */
+  rubricChecks?: Record<string, boolean>;
   sentenceCount: number;
   studentAssignmentId: string;
   studentProfileId: string;
@@ -92,6 +94,7 @@ export interface SaveDraftInput {
   canvasDocumentIds: string[];
   paragraphCount: number;
   revisionNumber: number;
+  rubricChecks?: Record<string, boolean>;
   sentenceCount: number;
   studentAssignmentId: string;
   studentProfileId: string;

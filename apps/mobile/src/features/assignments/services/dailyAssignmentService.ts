@@ -1,4 +1,9 @@
-import type { AssignmentType, GradeLevel, WritingGoal, WritingSkill } from "@WriterHabit/shared";
+import type {
+  AssignmentType,
+  GradeLevel,
+  WritingGoal,
+  WritingSkill,
+} from "@WriterHabit/shared";
 
 import type { AssignmentDifficulty, AssignmentRubricCriterion } from "../types";
 
@@ -80,7 +85,11 @@ const difficultyRank = {
   challenging: 2,
 } satisfies Record<AssignmentDifficulty, number>;
 
-const difficultyByRank = ["easy", "moderate", "challenging"] as const satisfies AssignmentDifficulty[];
+const difficultyByRank = [
+  "easy",
+  "moderate",
+  "challenging",
+] as const satisfies AssignmentDifficulty[];
 
 const writingGoalProfiles: Record<WritingGoal, GoalProfile> = {
   creative_writing: {
@@ -112,7 +121,12 @@ const writingGoalProfiles: Record<WritingGoal, GoalProfile> = {
     types: ["sentence_practice", "grammar_practice"],
   },
   write_essays: {
-    skills: ["argument_strength", "evidence_usage", "organization", "revision_quality"],
+    skills: [
+      "argument_strength",
+      "evidence_usage",
+      "organization",
+      "revision_quality",
+    ],
     types: ["essay_writing", "test_prep"],
   },
   write_paragraphs: {
@@ -134,7 +148,8 @@ export const dailyAssignmentCatalog = [
       "Add one describing word to each sentence.",
       "Reread your favorite sentence before you submit.",
     ],
-    prompt: "Write three sentences about a place you know. Add one describing word to each sentence.",
+    prompt:
+      "Write three sentences about a place you know. Add one describing word to each sentence.",
     rubric: [
       {
         description: "Each sentence shares a complete idea.",
@@ -147,14 +162,16 @@ export const dailyAssignmentCatalog = [
         label: "Describing word",
       },
       {
-        description: "Sentences start with capital letters and end with punctuation.",
+        description:
+          "Sentences start with capital letters and end with punctuation.",
         id: "sentence-care",
         label: "Sentence care",
       },
     ],
     rubricId: "rubric-sentence-details",
     skillFocus: ["sentence_structure", "vocabulary"],
-    teacherNote: "Use your own memory of the place. A hint can help you choose details.",
+    teacherNote:
+      "Use your own memory of the place. A hint can help you choose details.",
     title: "Add details to sentences",
   },
   {
@@ -169,10 +186,19 @@ export const dailyAssignmentCatalog = [
       "Write each word slowly on the canvas or paper.",
       "Circle the word that looks clearest.",
     ],
-    prompt: "Practice writing five clear words from your day, then choose your clearest word.",
+    prompt:
+      "Practice writing five clear words from your day, then choose your clearest word.",
     rubric: [
-      { description: "Letters are spaced so each word is readable.", id: "spacing", label: "Word spacing" },
-      { description: "The student chooses one clear word to review.", id: "self-check", label: "Self check" },
+      {
+        description: "Letters are spaced so each word is readable.",
+        id: "spacing",
+        label: "Word spacing",
+      },
+      {
+        description: "The student chooses one clear word to review.",
+        id: "self-check",
+        label: "Self check",
+      },
     ],
     rubricId: "rubric-handwriting-clear-words",
     skillFocus: ["handwriting", "spelling"],
@@ -191,14 +217,24 @@ export const dailyAssignmentCatalog = [
       "Use it in your own sentence.",
       "Draw or write one detail that explains the word.",
     ],
-    prompt: "Choose a describing word and write one sentence that shows what it means.",
+    prompt:
+      "Choose a describing word and write one sentence that shows what it means.",
     rubric: [
-      { description: "The sentence uses the chosen word correctly.", id: "word-use", label: "Word use" },
-      { description: "A detail helps explain the word.", id: "detail", label: "Detail" },
+      {
+        description: "The sentence uses the chosen word correctly.",
+        id: "word-use",
+        label: "Word use",
+      },
+      {
+        description: "A detail helps explain the word.",
+        id: "detail",
+        label: "Detail",
+      },
     ],
     rubricId: "rubric-vocabulary-detail-word",
     skillFocus: ["vocabulary", "sentence_structure"],
-    teacherNote: "The coach can ask a question if the student needs help choosing a detail.",
+    teacherNote:
+      "The coach can ask a question if the student needs help choosing a detail.",
     title: "Show a describing word",
   },
   {
@@ -213,14 +249,24 @@ export const dailyAssignmentCatalog = [
       "Write three events in order.",
       "Add one feeling word.",
     ],
-    prompt: "Plan a short story with a character, a setting, and three events in order.",
+    prompt:
+      "Plan a short story with a character, a setting, and three events in order.",
     rubric: [
-      { description: "The plan names a character and setting.", id: "story-parts", label: "Story parts" },
-      { description: "Events are listed in an order that makes sense.", id: "sequence", label: "Sequence" },
+      {
+        description: "The plan names a character and setting.",
+        id: "story-parts",
+        label: "Story parts",
+      },
+      {
+        description: "Events are listed in an order that makes sense.",
+        id: "sequence",
+        label: "Sequence",
+      },
     ],
     rubricId: "rubric-picture-story-plan",
     skillFocus: ["creativity", "organization", "vocabulary"],
-    teacherNote: "Keep this as a plan so the student's own story can grow from it.",
+    teacherNote:
+      "Keep this as a plan so the student's own story can grow from it.",
     title: "Plan a tiny story",
   },
   {
@@ -235,7 +281,8 @@ export const dailyAssignmentCatalog = [
       "Add two details that support your reason.",
       "Revise one sentence so the reason is clearer.",
     ],
-    prompt: "Write a paragraph explaining whether practice or talent matters more when learning a skill.",
+    prompt:
+      "Write a paragraph explaining whether practice or talent matters more when learning a skill.",
     rubric: [
       {
         description: "The first sentence states a focused opinion.",
@@ -255,7 +302,8 @@ export const dailyAssignmentCatalog = [
     ],
     rubricId: "rubric-paragraph-evidence",
     skillFocus: ["organization", "clarity", "revision_quality"],
-    teacherNote: "A coach hint can ask a question, but the paragraph should stay in your words.",
+    teacherNote:
+      "A coach hint can ask a question, but the paragraph should stay in your words.",
     title: "Support a paragraph idea",
   },
   {
@@ -270,10 +318,19 @@ export const dailyAssignmentCatalog = [
       "Add one detail that helped you decide.",
       "Explain how the detail connects to the main idea.",
     ],
-    prompt: "Write a short response explaining the main idea of something you read recently.",
+    prompt:
+      "Write a short response explaining the main idea of something you read recently.",
     rubric: [
-      { description: "The response names a main idea.", id: "main-idea", label: "Main idea" },
-      { description: "A detail supports the main idea.", id: "supporting-detail", label: "Supporting detail" },
+      {
+        description: "The response names a main idea.",
+        id: "main-idea",
+        label: "Main idea",
+      },
+      {
+        description: "A detail supports the main idea.",
+        id: "supporting-detail",
+        label: "Supporting detail",
+      },
     ],
     rubricId: "rubric-reading-response-main-idea",
     skillFocus: ["reading_response", "clarity", "organization"],
@@ -292,10 +349,19 @@ export const dailyAssignmentCatalog = [
       "Combine them into one clearer sentence.",
       "Check punctuation before submitting.",
     ],
-    prompt: "Combine two related sentences into one clearer sentence in your own words.",
+    prompt:
+      "Combine two related sentences into one clearer sentence in your own words.",
     rubric: [
-      { description: "The combined sentence keeps the original meaning.", id: "meaning", label: "Meaning" },
-      { description: "Punctuation supports the combined sentence.", id: "punctuation", label: "Punctuation" },
+      {
+        description: "The combined sentence keeps the original meaning.",
+        id: "meaning",
+        label: "Meaning",
+      },
+      {
+        description: "Punctuation supports the combined sentence.",
+        id: "punctuation",
+        label: "Punctuation",
+      },
     ],
     rubricId: "rubric-grammar-combine-sentences",
     skillFocus: ["grammar", "punctuation", "sentence_structure"],
@@ -316,12 +382,21 @@ export const dailyAssignmentCatalog = [
     ],
     prompt: "Plan a short argument with one claim and two reasons.",
     rubric: [
-      { description: "The claim is clear and debatable.", id: "claim", label: "Claim" },
-      { description: "Reasons connect to the claim.", id: "reasons", label: "Reasons" },
+      {
+        description: "The claim is clear and debatable.",
+        id: "claim",
+        label: "Claim",
+      },
+      {
+        description: "Reasons connect to the claim.",
+        id: "reasons",
+        label: "Reasons",
+      },
     ],
     rubricId: "rubric-middle-essay-plan",
     skillFocus: ["argument_strength", "organization", "revision_quality"],
-    teacherNote: "This is planning practice for a future essay, not a finished essay.",
+    teacherNote:
+      "This is planning practice for a future essay, not a finished essay.",
     title: "Plan a short argument",
   },
   {
@@ -337,7 +412,8 @@ export const dailyAssignmentCatalog = [
       "Add analysis after the evidence.",
       "Check the rubric before submitting.",
     ],
-    prompt: "Draft a thesis and one evidence-based body paragraph about how technology affects learning.",
+    prompt:
+      "Draft a thesis and one evidence-based body paragraph about how technology affects learning.",
     rubric: [
       {
         description: "The thesis makes a specific, arguable claim.",
@@ -355,14 +431,21 @@ export const dailyAssignmentCatalog = [
         label: "Analysis",
       },
       {
-        description: "Revision improves clarity or reasoning before submission.",
+        description:
+          "Revision improves clarity or reasoning before submission.",
         id: "revision-quality",
         label: "Revision quality",
       },
     ],
     rubricId: "rubric-essay-thesis-evidence",
-    skillFocus: ["argument_strength", "evidence_usage", "organization", "revision_quality"],
-    teacherNote: "Use coach questions for planning and revision choices, not a finished response.",
+    skillFocus: [
+      "argument_strength",
+      "evidence_usage",
+      "organization",
+      "revision_quality",
+    ],
+    teacherNote:
+      "Use coach questions for planning and revision choices, not a finished response.",
     title: "Strengthen a thesis and evidence",
   },
   {
@@ -377,10 +460,19 @@ export const dailyAssignmentCatalog = [
       "Add one piece of evidence.",
       "Write one analysis sentence that explains why the evidence matters.",
     ],
-    prompt: "Write one evidence paragraph about whether technology helps students learn independently.",
+    prompt:
+      "Write one evidence paragraph about whether technology helps students learn independently.",
     rubric: [
-      { description: "The paragraph includes a focused claim.", id: "claim", label: "Claim" },
-      { description: "Evidence is followed by student analysis.", id: "analysis", label: "Analysis" },
+      {
+        description: "The paragraph includes a focused claim.",
+        id: "claim",
+        label: "Claim",
+      },
+      {
+        description: "Evidence is followed by student analysis.",
+        id: "analysis",
+        label: "Analysis",
+      },
     ],
     rubricId: "rubric-evidence-analysis-paragraph",
     skillFocus: ["evidence_usage", "clarity", "organization"],
@@ -399,14 +491,24 @@ export const dailyAssignmentCatalog = [
       "Write a direct claim.",
       "Add one evidence detail and one explanation sentence.",
     ],
-    prompt: "Write a short test-style response with one claim, one evidence detail, and one explanation.",
+    prompt:
+      "Write a short test-style response with one claim, one evidence detail, and one explanation.",
     rubric: [
-      { description: "The answer directly responds to the prompt.", id: "direct-answer", label: "Direct answer" },
-      { description: "Evidence is explained in the student's own words.", id: "explained-evidence", label: "Explained evidence" },
+      {
+        description: "The answer directly responds to the prompt.",
+        id: "direct-answer",
+        label: "Direct answer",
+      },
+      {
+        description: "Evidence is explained in the student's own words.",
+        id: "explained-evidence",
+        label: "Explained evidence",
+      },
     ],
     rubricId: "rubric-test-prep-claim-evidence",
     skillFocus: ["evidence_usage", "reading_response", "clarity"],
-    teacherNote: "This keeps test prep focused on structure and student reasoning.",
+    teacherNote:
+      "This keeps test prep focused on structure and student reasoning.",
     title: "Build a claim and evidence response",
   },
   {
@@ -421,14 +523,24 @@ export const dailyAssignmentCatalog = [
       "Name what the sentence is trying to prove.",
       "Revise it so the reasoning is clearer.",
     ],
-    prompt: "Revise one argument sentence so it explains the reason more clearly.",
+    prompt:
+      "Revise one argument sentence so it explains the reason more clearly.",
     rubric: [
-      { description: "The revised sentence keeps the student's idea.", id: "student-idea", label: "Student idea" },
-      { description: "The reason is clearer after revision.", id: "clear-reason", label: "Clear reason" },
+      {
+        description: "The revised sentence keeps the student's idea.",
+        id: "student-idea",
+        label: "Student idea",
+      },
+      {
+        description: "The reason is clearer after revision.",
+        id: "clear-reason",
+        label: "Clear reason",
+      },
     ],
     rubricId: "rubric-revision-argument-focus",
     skillFocus: ["revision_quality", "argument_strength", "clarity"],
-    teacherNote: "This revision task should improve one student-written sentence.",
+    teacherNote:
+      "This revision task should improve one student-written sentence.",
     title: "Revise an argument sentence",
   },
 ] as const satisfies DailyAssignmentTemplate[];
@@ -440,51 +552,88 @@ function parseDate(value: string): Date {
 }
 
 function getDaysBetween(referenceDate: string, pastDate: string): number {
-  return Math.max(0, Math.floor((parseDate(referenceDate).getTime() - parseDate(pastDate).getTime()) / DAY_MS));
+  return Math.max(
+    0,
+    Math.floor(
+      (parseDate(referenceDate).getTime() - parseDate(pastDate).getTime()) /
+        DAY_MS,
+    ),
+  );
 }
 
-function getRecentHistory(input: DailyAssignmentSelectionInput): DailyAssignmentHistoryItem[] {
+function getRecentHistory(
+  input: DailyAssignmentSelectionInput,
+): DailyAssignmentHistoryItem[] {
   return [...input.history]
-    .filter((item) => getDaysBetween(input.referenceDate, item.completedAt) >= 0)
+    .filter(
+      (item) => getDaysBetween(input.referenceDate, item.completedAt) >= 0,
+    )
     .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 }
 
-function getInactivityDays(input: DailyAssignmentSelectionInput): number | null {
+function getInactivityDays(
+  input: DailyAssignmentSelectionInput,
+): number | null {
   const mostRecent = getRecentHistory(input)[0];
 
-  return mostRecent ? getDaysBetween(input.referenceDate, mostRecent.completedAt) : null;
+  return mostRecent
+    ? getDaysBetween(input.referenceDate, mostRecent.completedAt)
+    : null;
 }
 
-function getBaseDifficulty(gradeLevel: GradeLevel, dailyMinutes: number): AssignmentDifficulty {
+function getBaseDifficulty(
+  gradeLevel: GradeLevel,
+  dailyMinutes: number,
+): AssignmentDifficulty {
   if (gradeLevel <= 5) {
     return dailyMinutes >= 15 ? "moderate" : "easy";
   }
 
   if (gradeLevel <= 8) {
-    return dailyMinutes >= 22 ? "challenging" : dailyMinutes <= 12 ? "easy" : "moderate";
+    return dailyMinutes >= 22
+      ? "challenging"
+      : dailyMinutes <= 12
+        ? "easy"
+        : "moderate";
   }
 
   return dailyMinutes >= 25 ? "challenging" : "moderate";
 }
 
-function shiftDifficulty(difficulty: AssignmentDifficulty, amount: -1 | 0 | 1): AssignmentDifficulty {
-  const nextRank = Math.min(2, Math.max(0, difficultyRank[difficulty] + amount));
+function shiftDifficulty(
+  difficulty: AssignmentDifficulty,
+  amount: -1 | 0 | 1,
+): AssignmentDifficulty {
+  const nextRank = Math.min(
+    2,
+    Math.max(0, difficultyRank[difficulty] + amount),
+  );
 
   return difficultyByRank[nextRank];
 }
 
-function getRecentCompletionCount(input: DailyAssignmentSelectionInput): number {
-  return getRecentHistory(input).filter((item) => getDaysBetween(input.referenceDate, item.completedAt) <= 7).length;
+function getRecentCompletionCount(
+  input: DailyAssignmentSelectionInput,
+): number {
+  return getRecentHistory(input).filter(
+    (item) => getDaysBetween(input.referenceDate, item.completedAt) <= 7,
+  ).length;
 }
 
 function getTargetDifficulty(input: DailyAssignmentSelectionInput): {
   reasonCode: DailyAssignmentReasonCode | null;
   targetDifficulty: AssignmentDifficulty;
 } {
-  const baseDifficulty = getBaseDifficulty(input.gradeLevel, input.dailyMinutes);
+  const baseDifficulty = getBaseDifficulty(
+    input.gradeLevel,
+    input.dailyMinutes,
+  );
   const inactivityDays = getInactivityDays(input);
 
-  if (inactivityDays !== null && inactivityDays >= INACTIVITY_EASIER_AFTER_DAYS) {
+  if (
+    inactivityDays !== null &&
+    inactivityDays >= INACTIVITY_EASIER_AFTER_DAYS
+  ) {
     return {
       reasonCode: "difficulty_step_down",
       targetDifficulty: shiftDifficulty(baseDifficulty, -1),
@@ -504,17 +653,26 @@ function getTargetDifficulty(input: DailyAssignmentSelectionInput): {
   };
 }
 
-function getRecentTypeCount(input: DailyAssignmentSelectionInput, assignmentType: AssignmentType): number {
+function getRecentTypeCount(
+  input: DailyAssignmentSelectionInput,
+  assignmentType: AssignmentType,
+): number {
   return getRecentHistory(input)
     .slice(0, RECENT_TYPE_WINDOW)
     .filter((item) => item.assignmentType === assignmentType).length;
 }
 
-function getMatchedWeakSkills(candidate: DailyAssignmentTemplate, weakSkills: WritingSkill[]): WritingSkill[] {
+function getMatchedWeakSkills(
+  candidate: DailyAssignmentTemplate,
+  weakSkills: WritingSkill[],
+): WritingSkill[] {
   return weakSkills.filter((skill) => candidate.skillFocus.includes(skill));
 }
 
-function getMatchedGoals(candidate: DailyAssignmentTemplate, goals: WritingGoal[]): WritingGoal[] {
+function getMatchedGoals(
+  candidate: DailyAssignmentTemplate,
+  goals: WritingGoal[],
+): WritingGoal[] {
   return goals.filter((goal) => {
     const profile = writingGoalProfiles[goal];
 
@@ -525,8 +683,14 @@ function getMatchedGoals(candidate: DailyAssignmentTemplate, goals: WritingGoal[
   });
 }
 
-function isGradeEligible(candidate: DailyAssignmentTemplate, gradeLevel: GradeLevel): boolean {
-  return candidate.gradeLevelMin <= gradeLevel && candidate.gradeLevelMax >= gradeLevel;
+function isGradeEligible(
+  candidate: DailyAssignmentTemplate,
+  gradeLevel: GradeLevel,
+): boolean {
+  return (
+    candidate.gradeLevelMin <= gradeLevel &&
+    candidate.gradeLevelMax >= gradeLevel
+  );
 }
 
 function scoreCandidate(input: {
@@ -540,9 +704,18 @@ function scoreCandidate(input: {
 }): { reasonCodes: DailyAssignmentReasonCode[]; score: number } {
   const reasonCodes: DailyAssignmentReasonCode[] = ["grade_match"];
   let score = 100;
-  const difficultyDistance = Math.abs(difficultyRank[input.candidate.difficulty] - difficultyRank[input.targetDifficulty]);
-  const minutesOver = Math.max(0, input.candidate.estimatedMinutes - input.dailyMinutes);
-  const minutesUnder = Math.max(0, input.dailyMinutes - input.candidate.estimatedMinutes);
+  const difficultyDistance = Math.abs(
+    difficultyRank[input.candidate.difficulty] -
+      difficultyRank[input.targetDifficulty],
+  );
+  const minutesOver = Math.max(
+    0,
+    input.candidate.estimatedMinutes - input.dailyMinutes,
+  );
+  const minutesUnder = Math.max(
+    0,
+    input.dailyMinutes - input.candidate.estimatedMinutes,
+  );
 
   score += input.matchedWeakSkills.length * 28;
   score += input.matchedGoals.length * 16;
@@ -569,7 +742,10 @@ function scoreCandidate(input: {
     score -= 12;
   }
 
-  if (input.inactivityDays !== null && input.inactivityDays >= INACTIVITY_EASIER_AFTER_DAYS) {
+  if (
+    input.inactivityDays !== null &&
+    input.inactivityDays >= INACTIVITY_EASIER_AFTER_DAYS
+  ) {
     reasonCodes.push("difficulty_step_down");
   }
 
@@ -579,43 +755,60 @@ function scoreCandidate(input: {
   };
 }
 
-export function selectDailyAssignment(input: DailyAssignmentSelectionInput): DailyAssignmentSelectionResult {
-  const candidates = (input.candidates ?? dailyAssignmentCatalog).filter((candidate) =>
-    isGradeEligible(candidate, input.gradeLevel),
+export function selectDailyAssignment(
+  input: DailyAssignmentSelectionInput,
+): DailyAssignmentSelectionResult {
+  const candidates = (input.candidates ?? dailyAssignmentCatalog).filter(
+    (candidate) => isGradeEligible(candidate, input.gradeLevel),
   );
 
   if (candidates.length === 0) {
-    throw new Error("No daily assignment candidates match the student's grade.");
+    throw new Error(
+      "No daily assignment candidates match the student's grade.",
+    );
   }
 
   const { reasonCode, targetDifficulty } = getTargetDifficulty(input);
   const inactivityDays = getInactivityDays(input);
-  const scoredCandidates = candidates.map<ScoredDailyAssignment>((candidate) => {
-    const matchedGoals = getMatchedGoals(candidate, input.goals);
-    const matchedWeakSkills = getMatchedWeakSkills(candidate, input.weakSkills);
-    const recentTypeCount = getRecentTypeCount(input, candidate.assignmentType);
-    const scored = scoreCandidate({
-      candidate,
-      dailyMinutes: Math.max(5, input.dailyMinutes),
-      inactivityDays,
-      matchedGoals,
-      matchedWeakSkills,
-      recentTypeCount,
-      targetDifficulty,
-    });
+  const scoredCandidates = candidates.map<ScoredDailyAssignment>(
+    (candidate) => {
+      const matchedGoals = getMatchedGoals(candidate, input.goals);
+      const matchedWeakSkills = getMatchedWeakSkills(
+        candidate,
+        input.weakSkills,
+      );
+      const recentTypeCount = getRecentTypeCount(
+        input,
+        candidate.assignmentType,
+      );
+      const scored = scoreCandidate({
+        candidate,
+        dailyMinutes: Math.max(5, input.dailyMinutes),
+        inactivityDays,
+        matchedGoals,
+        matchedWeakSkills,
+        recentTypeCount,
+        targetDifficulty,
+      });
 
-    return {
-      assignment: candidate,
-      matchedGoals,
-      matchedWeakSkills,
-      recentTypeCount,
-      reasonCodes: reasonCode ? [...new Set([...scored.reasonCodes, reasonCode])] : scored.reasonCodes,
-      score: scored.score,
-    };
-  });
+      return {
+        assignment: candidate,
+        matchedGoals,
+        matchedWeakSkills,
+        recentTypeCount,
+        reasonCodes: reasonCode
+          ? [...new Set([...scored.reasonCodes, reasonCode])]
+          : scored.reasonCodes,
+        score: scored.score,
+      };
+    },
+  );
 
   const selected = scoredCandidates.sort(
-    (a, b) => b.score - a.score || a.assignment.estimatedMinutes - b.assignment.estimatedMinutes || a.assignment.id.localeCompare(b.assignment.id),
+    (a, b) =>
+      b.score - a.score ||
+      a.assignment.estimatedMinutes - b.assignment.estimatedMinutes ||
+      a.assignment.id.localeCompare(b.assignment.id),
   )[0];
 
   return {

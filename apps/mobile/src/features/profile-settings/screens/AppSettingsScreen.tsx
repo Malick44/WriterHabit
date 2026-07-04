@@ -10,13 +10,19 @@ import { routes, type AppRoute } from "@/core/navigation/routeNames";
 import { colors, layout, radius, typography } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { AppHeader } from "@/shared/components/navigation";
-import { SettingsRow, SettingsToggleRow, type SettingsRowIconName } from "@/shared/components/forms";
+import {
+  SettingsRow,
+  SettingsToggleRow,
+  type SettingsRowIconName,
+} from "@/shared/components/forms";
 import { useTopAlert } from "@/shared/components/feedback/top-alert";
 import {
   getAccessibleTextStyle,
   useAccessibilityContext,
   type AccessibilityTextSize,
 } from "@/shared/utils/accessibility";
+
+import { useTypedCopyInputPreference } from "@/features/assignments/services/typedCopyInputPreference";
 
 import { notificationPreferencesService } from "../services/notificationPreferencesService";
 
@@ -108,13 +114,7 @@ const supportRows: readonly SettingsRowConfig[] = [
   },
 ] as const;
 
-function Section({
-  children,
-  title,
-}: {
-  children: ReactNode;
-  title: string;
-}) {
+function Section({ children, title }: { children: ReactNode; title: string }) {
   const { settings } = useAccessibilityContext();
 
   return (
@@ -122,7 +122,13 @@ function Section({
       <Text
         accessibilityRole="header"
         selectable
-        style={[getAccessibleTextStyle(typography.gradeBands.middle.caption, settings), styles.sectionTitle]}
+        style={[
+          getAccessibleTextStyle(
+            typography.gradeBands.middle.caption,
+            settings,
+          ),
+          styles.sectionTitle,
+        ]}
       >
         {title}
       </Text>
@@ -143,8 +149,22 @@ export function AppSettingsScreen() {
   const { settings } = useAccessibilityContext();
   const topAlert = useTopAlert();
   const studentId = session?.user.id ?? "preview-student";
-  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] =
+    useState(true);
   const [emailSummariesEnabled, setEmailSummariesEnabled] = useState(false);
+  const typedCopyInputEnabled = useTypedCopyInputPreference(
+    (store) => store.enabled,
+  );
+  const hydrateTypedCopyInput = useTypedCopyInputPreference(
+    (store) => store.hydrate,
+  );
+  const setTypedCopyInputEnabled = useTypedCopyInputPreference(
+    (store) => store.setEnabled,
+  );
+
+  useEffect(() => {
+    void hydrateTypedCopyInput();
+  }, [hydrateTypedCopyInput]);
 
   useEffect(() => {
     let active = true;
@@ -206,7 +226,10 @@ export function AppSettingsScreen() {
         .updatePreferences(studentId, { enabled })
         .then((nextPreferences) => {
           void notificationDeliveryService
-            .syncNotificationDelivery({ preferences: nextPreferences, studentId })
+            .syncNotificationDelivery({
+              preferences: nextPreferences,
+              studentId,
+            })
             .catch(() => undefined);
         })
         .catch(() => {
@@ -224,7 +247,10 @@ export function AppSettingsScreen() {
         .updatePreferences(studentId, { weeklyReport: { enabled } })
         .then((nextPreferences) => {
           void notificationDeliveryService
-            .syncNotificationDelivery({ preferences: nextPreferences, studentId })
+            .syncNotificationDelivery({
+              preferences: nextPreferences,
+              studentId,
+            })
             .catch(() => undefined);
         })
         .catch(() => {
@@ -233,6 +259,16 @@ export function AppSettingsScreen() {
         });
     },
     [showSaveErrorAlert, studentId],
+  );
+
+  const handleToggleTypedCopyInput = useCallback(
+    (enabled: boolean) => {
+      void setTypedCopyInputEnabled(enabled).catch(() => {
+        void setTypedCopyInputEnabled(!enabled).catch(() => undefined);
+        showSaveErrorAlert();
+      });
+    },
+    [setTypedCopyInputEnabled, showSaveErrorAlert],
   );
 
   const handleLogOut = useCallback(() => {
@@ -245,19 +281,21 @@ export function AppSettingsScreen() {
     <View style={styles.root}>
       <AppHeader
         leftAction={{
-          accessibilityLabelKey: "profileSettings.settings.headerBackAccessibility",
+          accessibilityLabelKey:
+            "profileSettings.settings.headerBackAccessibility",
           type: "back",
         }}
         rightActions={[
           {
-            accessibilityLabelKey: "profileSettings.settings.headerSearchAccessibility",
+            accessibilityLabelKey:
+              "profileSettings.settings.headerSearchAccessibility",
             icon: "search",
             onPress: showUnavailableAlert,
             type: "icon",
           },
         ]}
-        style={styles.header}
         titleKey="profileSettings.settings.title"
+        variant="transparent"
       />
       <ScrollView
         contentContainerStyle={[
@@ -321,7 +359,9 @@ export function AppSettingsScreen() {
               iconBackground={settingsColors.surfaceContainerHigh}
               iconColor={settingsColors.outline}
               label={t("profileSettings.settings.preferences.fontSize")}
-              onPress={() => handleOpenRoute(routes.studentAccessibilitySettings)}
+              onPress={() =>
+                handleOpenRoute(routes.studentAccessibilitySettings)
+              }
               value={t(textSizeValueKeys[settings.textSize])}
             />
             <Divider />
@@ -330,7 +370,18 @@ export function AppSettingsScreen() {
               iconBackground={settingsColors.primaryContainer}
               iconColor={settingsColors.onPrimaryContainer}
               label={t("profileSettings.settings.preferences.coachVoice")}
-              onPress={() => handleOpenRoute(routes.studentReadAloudVoiceSettings)}
+              onPress={() =>
+                handleOpenRoute(routes.studentReadAloudVoiceSettings)
+              }
+            />
+            <Divider />
+            <SettingsToggleRow
+              icon="create-outline"
+              iconBackground={settingsColors.primaryFixed}
+              iconColor={settingsColors.primary}
+              label={t("profileSettings.settings.preferences.typedCopyInput")}
+              onValueChange={handleToggleTypedCopyInput}
+              value={typedCopyInputEnabled}
             />
           </Section>
 
@@ -352,13 +403,22 @@ export function AppSettingsScreen() {
 
           <View style={styles.logoutSection}>
             <Pressable
-              accessibilityLabel={t("profileSettings.settings.logoutAccessibility")}
+              accessibilityLabel={t(
+                "profileSettings.settings.logoutAccessibility",
+              )}
               accessibilityRole="button"
               hitSlop={layout.hitSlop}
               onPress={handleLogOut}
-              style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
+              style={({ pressed }) => [
+                styles.logoutButton,
+                pressed ? styles.logoutButtonPressed : null,
+              ]}
             >
-              <Ionicons color={settingsColors.error} name="log-out-outline" size={22} />
+              <Ionicons
+                color={settingsColors.error}
+                name="log-out-outline"
+                size={22}
+              />
               <Text style={getAccessibleTextStyle(styles.logoutText, settings)}>
                 {t("profileSettings.settings.logout")}
               </Text>
@@ -384,10 +444,6 @@ const styles = StyleSheet.create({
     backgroundColor: settingsColors.outlineVariant,
     height: StyleSheet.hairlineWidth,
     marginHorizontal: 16,
-  },
-  header: {
-    backgroundColor: settingsColors.surface,
-    borderBottomColor: settingsColors.outlineVariant,
   },
   logoutButton: {
     alignItems: "center",

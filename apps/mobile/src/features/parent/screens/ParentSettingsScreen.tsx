@@ -81,7 +81,6 @@ export function ParentSettingsScreen() {
         gradeBand={state.gradeBand}
         showSafeArea={false}
         style={styles.header}
-        subtitleKey="parent.settings.subtitle"
         titleKey="parent.settings.title"
         variant="transparent"
       />

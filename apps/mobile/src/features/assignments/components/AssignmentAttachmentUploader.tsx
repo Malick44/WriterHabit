@@ -34,13 +34,13 @@ const dashboard = colors.dashboard;
 interface SourceTile {
   icon: keyof typeof Ionicons.glyphMap;
   labelKey:
-    | "assignments.attachments.takePhoto"
-    | "assignments.attachments.choosePhoto"
-    | "assignments.attachments.uploadFile";
+  | "assignments.attachments.takePhoto"
+  | "assignments.attachments.choosePhoto"
+  | "assignments.attachments.uploadFile";
   accessibilityKey:
-    | "assignments.attachments.takePhotoAccessibility"
-    | "assignments.attachments.choosePhotoAccessibility"
-    | "assignments.attachments.uploadFileAccessibility";
+  | "assignments.attachments.takePhotoAccessibility"
+  | "assignments.attachments.choosePhotoAccessibility"
+  | "assignments.attachments.uploadFileAccessibility";
   onPress: () => void;
 }
 

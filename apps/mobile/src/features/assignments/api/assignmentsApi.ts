@@ -685,6 +685,8 @@ function createNotStartedAssignment(gradeLevel: GradeLevel): AssignmentRecord {
       gradeLevel <= 5
         ? "Write a short story about a character who finds something surprising on the way to school."
         : "Write a narrative about a moment that changed how a character sees the world.",
+    // Mock-only illustration so the prompt image box is exercised in logged-out dev mode.
+    promptImageUrl: "https://picsum.photos/seed/writerhabit-narrative/640/360",
     rubric: [
       {
         description: "The writing has a clear beginning, middle, and ending.",
@@ -881,6 +883,7 @@ export const assignmentsApi = {
             id: sa.assignment_id,
             instructions: sa.assignments.instructions || [],
             prompt: sa.assignments.prompt_fallback,
+            promptImageUrl: sa.assignments.prompt_image_url || undefined,
             rubric: rubricItems,
             rubricId: sa.assignments.rubric_id,
             skillFocus: sa.assignments.skill_focus || [],
@@ -1005,6 +1008,7 @@ export const assignmentsApi = {
         id: sa.assignment_id,
         instructions: sa.assignments.instructions || [],
         prompt: sa.assignments.prompt_fallback,
+        promptImageUrl: sa.assignments.prompt_image_url || undefined,
         rubric: rubricItems,
         rubricId: sa.assignments.rubric_id,
         skillFocus: sa.assignments.skill_focus || [],

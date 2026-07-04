@@ -1479,6 +1479,12 @@ export const en = {
       useCanvasCta: "Use Canvas",
       submitLinkCta: "Ready to hand in? Submit for review \u203a",
       submitLinkAccessibility: "Submit this assignment for review",
+      promptImageAccessibility: "Picture for this assignment prompt",
+      draftSummaryTitle: "Your saved work",
+      draftSummaryAccessibility: "Saved draft summary",
+      stepDraftHelper: "Add canvas or typed work to continue.",
+      stepBackAccessibility: "Go back one step",
+      stepNextAccessibility: "Go to the next step",
     },
     types: {
       sentence_practice: "Sentence practice",

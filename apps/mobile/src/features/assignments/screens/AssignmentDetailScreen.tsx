@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,7 +23,14 @@ import {
   getCanvasCreateRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import { colors, fonts, layout, radius, spacing } from "@/design/tokens";
+import {
+  colors,
+  fonts,
+  layout,
+  radius,
+  spacing,
+  type GradeBand,
+} from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import {
@@ -33,14 +41,20 @@ import {
 } from "@/shared/components/feedback";
 import { ComposerSurface } from "@/shared/components/layout";
 import { AppHeader } from "@/shared/components/navigation";
+import { TextActionBar, useTextActionBar } from "@/shared/components/text";
 import {
   buildAccessibilityLabel,
   getAccessibleTextStyle,
   useAccessibilityContext,
 } from "@/shared/utils/accessibility";
 
+import { RubricChecklist } from "../components";
 import { useAssignmentDetailData } from "../hooks/useAssignments";
-import type { AssignmentRecord, AssignmentStatus } from "../types";
+import type {
+  AssignmentGradeAdaptation,
+  AssignmentRecord,
+  AssignmentStatus,
+} from "../types";
 
 const dashboard = colors.dashboard;
 
@@ -169,11 +183,13 @@ const STAGE_NODE_SIZE = 28;
 const STAGE_CONNECTOR_HEIGHT = 3;
 
 function AssignmentStageTabs({
+  activeStage,
   assignment,
   canStartWriting,
   canSubmit,
   onSelectStage,
 }: {
+  activeStage: AssignmentWorkStage;
   assignment: AssignmentRecord;
   canStartWriting: boolean;
   canSubmit: boolean;
@@ -181,7 +197,9 @@ function AssignmentStageTabs({
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
-  const currentIndex = getAssignmentWorkStageIndex(assignment.status);
+  // Like the Grade 3 tracker: the highlighted node follows the step being
+  // viewed, while checkmarks and lit connectors track actual progress.
+  const progressIndex = getAssignmentWorkStageIndex(assignment.status);
 
   return (
     <View
@@ -189,16 +207,18 @@ function AssignmentStageTabs({
       testID="assignment-detail-stage-tabs"
     >
       {assignmentWorkStages.map((stage, index) => {
-        const isCurrent = index === currentIndex;
-        const isDone = index < currentIndex;
+        const isCurrent = stage.id === activeStage;
+        const isDone = index < progressIndex;
         // The line leading into this step lights up once the previous step is done.
-        const isReached = index <= currentIndex;
-        const isEnabled = isAssignmentWorkStageEnabled({
-          assignment,
-          canStartWriting,
-          canSubmit,
-          stage: stage.id,
-        });
+        const isReached = index <= progressIndex;
+        const isEnabled =
+          index <= progressIndex ||
+          isAssignmentWorkStageEnabled({
+            assignment,
+            canStartWriting,
+            canSubmit,
+            stage: stage.id,
+          });
 
         return (
           <Fragment key={stage.id}>
@@ -328,95 +348,217 @@ function WorkOptionTile({
   );
 }
 
-function FloatingWorkMenu({
-  canStartCanvas,
-  canUploadWork,
-  expanded,
-  onOpenCanvas,
-  onToggle,
-  onUploadWork,
+function AssignmentPromptCard({
+  assignment,
+  gradeBand,
 }: {
-  canStartCanvas: boolean;
-  canUploadWork: boolean;
-  expanded: boolean;
-  onOpenCanvas: () => void;
-  onToggle: () => void;
-  onUploadWork: () => void;
+  assignment: AssignmentRecord;
+  gradeBand: GradeBand;
 }) {
   const { t } = useI18n();
-
-  const runAction = (action: () => void) => {
-    onToggle();
-    action();
-  };
+  const { settings } = useAccessibilityContext();
+  const actionBar = useTextActionBar({
+    enableFeedback: false,
+    sourceType: "reading",
+    text: assignment.prompt,
+  });
 
   return (
-    <View
-      accessibilityLabel={t("assignments.detail.inputMenuAccessibility")}
-      pointerEvents="box-none"
-      style={styles.floatingMenu}
-      testID="assignment-detail-input-menu"
-    >
-      {expanded ? (
-        <View style={styles.floatingOptions}>
-          <WorkOptionTile
-            accessibilityLabel={t("assignments.detail.uploadWorkAccessibility")}
-            description={t("assignments.detail.uploadWorkDescription")}
-            disabled={!canUploadWork}
-            icon="cloud-upload-outline"
-            label={t("assignments.detail.uploadWorkCta")}
-            onPress={() => runAction(onUploadWork)}
-          />
-          <WorkOptionTile
-            accessibilityLabel={t(
-              "assignments.detail.startCanvasAccessibility",
-            )}
-            description={t("assignments.detail.canvasWorkDescription")}
-            disabled={!canStartCanvas}
-            icon="brush-outline"
-            label={t("assignments.detail.useCanvasCta")}
-            onPress={() => runAction(onOpenCanvas)}
+    <View style={styles.card} testID="assignment-detail-prompt">
+      {assignment.promptImageUrl ? (
+        <View
+          accessibilityLabel={t(
+            "assignments.detail.promptImageAccessibility",
+          )}
+          accessibilityRole="image"
+          style={styles.promptImageBox}
+          testID="assignment-detail-prompt-image"
+        >
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="cover"
+            source={{ uri: assignment.promptImageUrl }}
+            style={styles.promptImage}
           />
         </View>
       ) : null}
-      <Pressable
-        accessibilityLabel={
-          expanded
-            ? t("assignments.detail.inputMenuCloseAccessibility")
-            : t("assignments.detail.inputMenuOpenAccessibility")
-        }
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        onPress={onToggle}
-        style={({ pressed }) => [
-          styles.floatingMenuButton,
-          pressed ? styles.floatingMenuButtonPressed : null,
-        ]}
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
       >
-        <Ionicons
-          color={dashboard.onPrimary}
-          name={expanded ? "close" : "add"}
-          size={28}
-        />
-      </Pressable>
+        {t("assignments.detail.promptTitle")}
+      </Text>
+      <Text
+        accessibilityLabel={buildAccessibilityLabel([
+          t("assignments.detail.promptAccessibility"),
+          assignment.prompt,
+        ])}
+        selectable
+        style={
+          gradeBand === "elementary"
+            ? getAccessibleTextStyle(styles.storyPromptText, settings)
+            : getAccessibleTextStyle(styles.promptText, settings)
+        }
+      >
+        {assignment.prompt}
+      </Text>
+      <TextActionBar
+        {...actionBar.actionBarProps}
+        gradeBand={gradeBand}
+        size="sm"
+        style={styles.promptActions}
+        testID="assignment-detail-prompt-actions"
+        variant="inline"
+      />
+    </View>
+  );
+}
+
+function DraftStepContent({
+  assignment,
+  canWork,
+  onOpenCanvas,
+  onUploadWork,
+}: {
+  assignment: AssignmentRecord;
+  canWork: boolean;
+  onOpenCanvas: () => void;
+  onUploadWork: () => void;
+}) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+
+  return (
+    <>
+      <View style={styles.card} testID="assignment-detail-draft-intro">
+        <Text
+          selectable
+          style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+        >
+          {t("writingWorkspace.sections.draft")}
+        </Text>
+        <Text
+          selectable
+          style={getAccessibleTextStyle(styles.stepDescription, settings)}
+        >
+          {t("assignments.detail.actionsDescription")}
+        </Text>
+      </View>
+      <WorkOptionTile
+        accessibilityLabel={t("assignments.detail.startCanvasAccessibility")}
+        description={t("assignments.detail.canvasWorkDescription")}
+        disabled={!canWork}
+        icon="brush-outline"
+        label={t("assignments.detail.useCanvasCta")}
+        onPress={onOpenCanvas}
+      />
+      <WorkOptionTile
+        accessibilityLabel={t("assignments.detail.uploadWorkAccessibility")}
+        description={t("assignments.detail.uploadWorkDescription")}
+        disabled={!canWork}
+        icon="cloud-upload-outline"
+        label={t("assignments.detail.uploadWorkCta")}
+        onPress={onUploadWork}
+      />
+      {assignment.draft ? (
+        <View
+          accessibilityLabel={t(
+            "assignments.detail.draftSummaryAccessibility",
+          )}
+          accessible
+          style={styles.card}
+          testID="assignment-detail-draft-summary"
+        >
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+          >
+            {t("assignments.detail.draftSummaryTitle")}
+          </Text>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.promptText, settings)}
+          >
+            {assignment.draft.preview}
+          </Text>
+          <Text
+            selectable
+            style={getAccessibleTextStyle(styles.draftMeta, settings)}
+          >
+            {t("assignments.history.draftSummary", {
+              count: assignment.draft.wordCount,
+              label: assignment.draft.lastEditedLabel,
+            })}
+          </Text>
+        </View>
+      ) : null}
+    </>
+  );
+}
+
+function SubmitStepContent({ assignment }: { assignment: AssignmentRecord }) {
+  const { t } = useI18n();
+  const { settings } = useAccessibilityContext();
+
+  return (
+    <View style={styles.card} testID="assignment-detail-submit-summary">
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
+      >
+        {t("assignments.submit.title")}
+      </Text>
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.stepDescription, settings)}
+      >
+        {t("assignments.submit.description")}
+      </Text>
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.draftMeta, settings)}
+      >
+        {assignment.draft
+          ? t("assignments.history.draftSummary", {
+              count: assignment.draft.wordCount,
+              label: assignment.draft.lastEditedLabel,
+            })
+          : t("assignments.submit.disabledHint")}
+      </Text>
+      <Text
+        selectable
+        style={getAccessibleTextStyle(styles.stepDescription, settings)}
+      >
+        {t("assignments.detail.safetyNote")}
+      </Text>
     </View>
   );
 }
 
 function AssignmentContent({
+  activeStage,
   assignment,
   canStartWriting,
   canSubmit,
+  gradeAdaptation,
+  gradeBand,
   isOffline,
+  onOpenCanvas,
   onRefresh,
   onSelectStage,
+  onUploadWork,
 }: {
+  activeStage: AssignmentWorkStage;
   assignment: AssignmentRecord;
   canStartWriting: boolean;
   canSubmit: boolean;
+  gradeAdaptation: AssignmentGradeAdaptation;
+  gradeBand: GradeBand;
   isOffline: boolean;
+  onOpenCanvas: () => void;
   onRefresh: () => void;
   onSelectStage: (stage: AssignmentWorkStage) => void;
+  onUploadWork: () => void;
 }) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
@@ -456,83 +598,95 @@ function AssignmentContent({
           ) : null}
 
           <AssignmentStageTabs
+            activeStage={activeStage}
             assignment={assignment}
             canStartWriting={canStartWriting}
             canSubmit={canSubmit}
             onSelectStage={onSelectStage}
           />
 
-          <View
-            accessibilityLabel={buildAccessibilityLabel([
-              t("assignments.detail.promptAccessibility"),
-              assignment.prompt,
-            ])}
-            accessible
-            style={styles.card}
-            testID="assignment-detail-prompt"
-          >
-            <Text
-              selectable
-              style={getAccessibleTextStyle(styles.cardEyebrow, settings)}
-            >
-              {t("assignments.detail.promptTitle")}
-            </Text>
-            <Text
-              selectable
-              style={getAccessibleTextStyle(styles.promptText, settings)}
-            >
-              {assignment.prompt}
-            </Text>
-          </View>
-
-          <View
-            accessibilityLabel={t("assignments.detail.factsAccessibility")}
-            accessible
-            style={[styles.card, styles.factsCard]}
-            testID="assignment-detail-facts"
-          >
-            <FactRow
-              label={t("assignments.detail.skillFocusLabel")}
-              value={skillFocus || t("assignments.detail.generalWriting")}
-            />
-            {rubricFocus ? (
-              <FactRow
-                label={t("assignments.detail.rubricFocusLabel")}
-                value={rubricFocus}
+          {activeStage === "understand" ? (
+            <>
+              <AssignmentPromptCard
+                assignment={assignment}
+                gradeBand={gradeBand}
               />
-            ) : null}
-            <FactRow
-              label={t("assignments.detail.estimatedTimeLabel")}
-              value={t("assignments.detail.estimatedTime", {
-                count: assignment.estimatedMinutes,
-              })}
-            />
-            <FactRow
-              label={t("assignments.detail.difficultyLabel")}
-              value={t(`assignments.difficulty.${assignment.difficulty}`)}
-              valueChip
-            />
-            <FactRow
-              divider={false}
-              label={t("assignments.detail.dueDateLabel")}
-              value={assignment.dueLabel}
-            />
-          </View>
 
-          <View style={styles.coachBanner}>
-            <View style={styles.coachIcon}>
-              <Ionicons color={dashboard.secondary} name="sparkles" size={16} />
-            </View>
-            <Text
-              selectable
-              style={[
-                getAccessibleTextStyle(styles.coachText, settings),
-                styles.coachTextFlex,
-              ]}
-            >
-              {t("assignments.detail.coachNote")}
-            </Text>
-          </View>
+              <View
+                accessibilityLabel={t("assignments.detail.factsAccessibility")}
+                accessible
+                style={[styles.card, styles.factsCard]}
+                testID="assignment-detail-facts"
+              >
+                <FactRow
+                  label={t("assignments.detail.skillFocusLabel")}
+                  value={skillFocus || t("assignments.detail.generalWriting")}
+                />
+                {rubricFocus ? (
+                  <FactRow
+                    label={t("assignments.detail.rubricFocusLabel")}
+                    value={rubricFocus}
+                  />
+                ) : null}
+                <FactRow
+                  label={t("assignments.detail.estimatedTimeLabel")}
+                  value={t("assignments.detail.estimatedTime", {
+                    count: assignment.estimatedMinutes,
+                  })}
+                />
+                <FactRow
+                  label={t("assignments.detail.difficultyLabel")}
+                  value={t(`assignments.difficulty.${assignment.difficulty}`)}
+                  valueChip
+                />
+                <FactRow
+                  divider={false}
+                  label={t("assignments.detail.dueDateLabel")}
+                  value={assignment.dueLabel}
+                />
+              </View>
+
+              <View style={styles.coachBanner}>
+                <View style={styles.coachIcon}>
+                  <Ionicons
+                    color={dashboard.secondary}
+                    name="sparkles"
+                    size={16}
+                  />
+                </View>
+                <Text
+                  selectable
+                  style={[
+                    getAccessibleTextStyle(styles.coachText, settings),
+                    styles.coachTextFlex,
+                  ]}
+                >
+                  {t("assignments.detail.coachNote")}
+                </Text>
+              </View>
+            </>
+          ) : null}
+
+          {activeStage === "draft" ? (
+            <DraftStepContent
+              assignment={assignment}
+              canWork={canStartWriting}
+              onOpenCanvas={onOpenCanvas}
+              onUploadWork={onUploadWork}
+            />
+          ) : null}
+
+          {activeStage === "revise" ? (
+            <RubricChecklist
+              assignment={assignment}
+              gradeAdaptation={gradeAdaptation}
+              gradeBand={gradeBand}
+            />
+          ) : null}
+
+          {activeStage === "submit" ? (
+            <SubmitStepContent assignment={assignment} />
+          ) : null}
         </View>
       </ScrollView>
     </>
@@ -552,7 +706,11 @@ export function AssignmentDetailScreen() {
   );
   const state = useAssignmentDetailData(assignmentId);
   const contentWidth = Math.min(width, 480);
-  const [inputMenuExpanded, setInputMenuExpanded] = useState(false);
+  // Which step the student is viewing. Null means "follow the assignment's
+  // progress" so a reopened assignment lands on its current step.
+  const [selectedStage, setSelectedStage] = useState<AssignmentWorkStage | null>(
+    null,
+  );
 
   const openSubmit = useCallback(() => {
     if (state.status !== "success" || !state.viewModel.assignment) {
@@ -600,37 +758,27 @@ export function AssignmentDetailScreen() {
     router.push(getAssignmentSubmissionRoute(state.viewModel.assignment.id));
   }, [router, state]);
 
-  const handleStageSelect = useCallback(
-    (stage: AssignmentWorkStage) => {
-      if (stage === "understand") {
-        return;
-      }
+  const handleStageSelect = useCallback((stage: AssignmentWorkStage) => {
+    setSelectedStage(stage);
+  }, []);
 
-      if (stage === "submit") {
-        if (state.status === "success" && state.viewModel.canSubmit) {
-          openSubmit();
-        }
-
-        return;
-      }
-
-      void openCanvas();
-    },
-    [openCanvas, openSubmit, state],
-  );
-
-  const handlePrimaryPress = useCallback(() => {
-    if (state.status !== "success") {
+  // Step 1's next button: flip a not-started assignment to in-progress before
+  // moving on so the draft tracks against it.
+  const handleUnderstandNext = useCallback(async () => {
+    if (state.status !== "success" || !state.viewModel.assignment) {
       return;
     }
 
-    if (state.viewModel.canSubmit) {
-      openSubmit();
-      return;
+    if (state.viewModel.assignment.status === "not_started") {
+      const startedAssignment = await state.startAssignment();
+
+      if (!startedAssignment) {
+        return;
+      }
     }
 
-    void openCanvas();
-  }, [openCanvas, openSubmit, state]);
+    setSelectedStage("draft");
+  }, [state]);
 
   if (state.status === "loading") {
     return (
@@ -679,9 +827,97 @@ export function AssignmentDetailScreen() {
   }
 
   const assignment = state.viewModel.assignment;
-  const primaryLabel = state.viewModel.canSubmit
-    ? t("assignments.submit.reviewCta")
-    : t("assignments.detail.useCanvasCta");
+  const { canStartWriting, canSubmit } = state.viewModel;
+  const progressIndex = assignment
+    ? getAssignmentWorkStageIndex(assignment.status)
+    : 0;
+  const requestedStage =
+    selectedStage ?? assignmentWorkStages[progressIndex].id;
+  const requestedIndex = assignmentWorkStages.findIndex(
+    (stage) => stage.id === requestedStage,
+  );
+  // A stale selection (e.g. after a refetch changed the status) falls back to
+  // the assignment's own progress step.
+  const activeStage =
+    assignment &&
+    (requestedIndex <= progressIndex ||
+      isAssignmentWorkStageEnabled({
+        assignment,
+        canStartWriting,
+        canSubmit,
+        stage: requestedStage,
+      }))
+      ? requestedStage
+      : assignmentWorkStages[progressIndex].id;
+
+  const stepBar = assignment
+    ? (() => {
+        switch (activeStage) {
+          case "understand":
+            return {
+              back: null,
+              helperText: undefined as string | undefined,
+              next: {
+                accessibilityLabel: t(
+                  "assignments.detail.startWritingAccessibility",
+                ),
+                disabled: false,
+                label: assignment.draft
+                  ? t("assignments.continueDraft")
+                  : t("assignments.startWriting"),
+                loading: state.startStatus === "loading",
+                onPress: () => {
+                  void handleUnderstandNext();
+                },
+              },
+            };
+          case "draft":
+            return {
+              back: { onPress: () => setSelectedStage("understand") },
+              helperText: assignment.draft
+                ? undefined
+                : t("assignments.detail.stepDraftHelper"),
+              next: {
+                accessibilityLabel: t(
+                  "assignments.detail.stepNextAccessibility",
+                ),
+                disabled: !assignment.draft,
+                label: t("writingWorkspace.stages.nextRevise"),
+                loading: false,
+                onPress: () => setSelectedStage("revise"),
+              },
+            };
+          case "revise":
+            return {
+              back: { onPress: () => setSelectedStage("draft") },
+              helperText: undefined as string | undefined,
+              next: {
+                accessibilityLabel: t(
+                  "assignments.detail.stepNextAccessibility",
+                ),
+                disabled: false,
+                label: t("writingWorkspace.stages.nextSubmit"),
+                loading: false,
+                onPress: () => setSelectedStage("submit"),
+              },
+            };
+          case "submit":
+            return {
+              back: { onPress: () => setSelectedStage("revise") },
+              helperText: canSubmit
+                ? undefined
+                : t("assignments.submit.disabledHint"),
+              next: {
+                accessibilityLabel: t("assignments.submit.ctaAccessibility"),
+                disabled: !canSubmit,
+                label: t("assignments.submit.reviewCta"),
+                loading: false,
+                onPress: openSubmit,
+              },
+            };
+        }
+      })()
+    : null;
 
   return (
     <ComposerSurface>
@@ -689,118 +925,71 @@ export function AssignmentDetailScreen() {
         <View style={[styles.phoneFrame, { maxWidth: contentWidth }]}>
           {assignment ? (
             <AssignmentContent
+              activeStage={activeStage}
               assignment={assignment}
-              canStartWriting={state.viewModel.canStartWriting}
-              canSubmit={state.viewModel.canSubmit}
+              canStartWriting={canStartWriting}
+              canSubmit={canSubmit}
+              gradeAdaptation={state.viewModel.gradeAdaptation}
+              gradeBand={state.gradeBand}
               isOffline={state.viewModel.isOffline}
-              onRefresh={state.refetch}
-              onSelectStage={handleStageSelect}
-            />
-          ) : null}
-        </View>
-        {assignment ? (
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.floatingMenuFrame,
-              {
-                bottom: Math.max(insets.bottom, spacing.lg) + 118,
-                right: Math.max((width - contentWidth) / 2 + 20, 20),
-              },
-            ]}
-          >
-            <FloatingWorkMenu
-              canStartCanvas={state.viewModel.canStartCanvas}
-              canUploadWork={
-                state.viewModel.canStartWriting || state.viewModel.canSubmit
-              }
-              expanded={inputMenuExpanded}
               onOpenCanvas={() => {
                 void openCanvas();
               }}
-              onToggle={() => setInputMenuExpanded((value) => !value)}
+              onRefresh={state.refetch}
+              onSelectStage={handleStageSelect}
               onUploadWork={() => {
                 void openUploadWork();
               }}
             />
+          ) : null}
+        </View>
+        {stepBar ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.footerFrame,
+              {
+                maxWidth: contentWidth,
+                paddingBottom: Math.max(insets.bottom, spacing.lg),
+              },
+            ]}
+          >
+            <View style={styles.bottomBarSurface}>
+              {stepBar.helperText ? (
+                <Text
+                  selectable
+                  style={getAccessibleTextStyle(styles.helperText, settings)}
+                >
+                  {stepBar.helperText}
+                </Text>
+              ) : null}
+              <View style={styles.bottomButtonRow}>
+                {stepBar.back ? (
+                  <Button
+                    accessibilityLabel={t(
+                      "assignments.detail.stepBackAccessibility",
+                    )}
+                    label={t("common.back")}
+                    onPress={stepBar.back.onPress}
+                    size="md"
+                    style={styles.backButton}
+                    variant="secondary"
+                  />
+                ) : null}
+                <Button
+                  accessibilityLabel={stepBar.next.accessibilityLabel}
+                  disabled={stepBar.next.disabled}
+                  label={stepBar.next.label}
+                  loading={stepBar.next.loading}
+                  onPress={stepBar.next.onPress}
+                  size="md"
+                  style={styles.primaryButton}
+                  variant="primary"
+                />
+              </View>
+            </View>
           </View>
         ) : null}
-        <View
-          pointerEvents="box-none"
-          style={[
-            styles.footerFrame,
-            {
-              maxWidth: contentWidth,
-              paddingBottom: Math.max(insets.bottom, spacing.lg),
-            },
-          ]}
-        >
-          <View style={styles.bottomBarSurface}>
-            <View style={styles.bottomButtonRow}>
-              <Button
-                accessibilityHint={
-                  state.viewModel.canSubmit
-                    ? t("assignments.submit.hint")
-                    : t("assignments.detail.startCanvasHint")
-                }
-                accessibilityLabel={
-                  state.viewModel.canSubmit
-                    ? t("assignments.submit.ctaAccessibility")
-                    : t("assignments.detail.startCanvasAccessibility")
-                }
-                disabled={
-                  !state.viewModel.canStartCanvas && !state.viewModel.canSubmit
-                }
-                label={primaryLabel}
-                loading={state.startStatus === "loading"}
-                onPress={handlePrimaryPress}
-                size="md"
-                style={styles.primaryButton}
-                variant="primary"
-              />
-              {!state.viewModel.canSubmit && state.viewModel.canStartWriting ? (
-                <Button
-                  accessibilityHint={t(
-                    "assignments.detail.uploadWorkAccessibility",
-                  )}
-                  accessibilityLabel={t(
-                    "assignments.detail.uploadWorkAccessibility",
-                  )}
-                  label={t("assignments.detail.uploadWorkCta")}
-                  onPress={() => {
-                    void openUploadWork();
-                  }}
-                  size="md"
-                  style={styles.canvasButton}
-                  variant="secondary"
-                />
-              ) : null}
-            </View>
-            {!state.viewModel.canSubmit && state.viewModel.assignment?.draft ? (
-              <Pressable
-                accessibilityLabel={t(
-                  "assignments.detail.submitLinkAccessibility",
-                )}
-                accessibilityRole="button"
-                onPress={openSubmit}
-                style={({ pressed }) => [
-                  styles.submitLink,
-                  pressed ? styles.submitLinkPressed : null,
-                ]}
-              >
-                <Text
-                  selectable={false}
-                  style={getAccessibleTextStyle(
-                    styles.submitLinkText,
-                    settings,
-                  )}
-                >
-                  {t("assignments.detail.submitLinkCta")}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
       </View>
     </ComposerSurface>
   );
@@ -823,12 +1012,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
   },
+  backButton: {
+    borderRadius: 14,
+    flex: 1,
+  },
   bottomButtonRow: {
     flexDirection: "row",
     gap: 10,
-  },
-  canvasButton: {
-    borderRadius: 14,
   },
   card: {
     backgroundColor: dashboard.card,
@@ -923,6 +1113,13 @@ const styles = StyleSheet.create({
   factsCard: {
     paddingVertical: 4,
   },
+  draftMeta: {
+    color: dashboard.outline,
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 16,
+    marginTop: spacing.sm,
+  },
   footerFrame: {
     alignSelf: "center",
     bottom: 0,
@@ -930,32 +1127,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     width: "100%",
-  },
-  floatingMenu: {
-    alignItems: "flex-end",
-  },
-  floatingMenuButton: {
-    alignItems: "center",
-    backgroundColor: dashboard.primary,
-    borderColor: dashboard.primary,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    height: 60,
-    justifyContent: "center",
-    width: 60,
-    ...cardShadow,
-  },
-  floatingMenuButtonPressed: {
-    opacity: 0.82,
-  },
-  floatingMenuFrame: {
-    position: "absolute",
-    zIndex: 20,
-  },
-  floatingOptions: {
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-    width: 286,
   },
   header: {
     backgroundColor: dashboard.backgroundOverlay,
@@ -1044,11 +1215,52 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     flex: 1,
   },
+  helperText: {
+    color: dashboard.outline,
+    fontSize: 12.5,
+    lineHeight: 17,
+    textAlign: "center",
+  },
+  promptActions: {
+    alignSelf: "flex-end",
+    marginTop: spacing.sm,
+  },
+  promptImage: {
+    height: "100%",
+    width: "100%",
+  },
+  promptImageBox: {
+    backgroundColor: dashboard.surfaceContainer,
+    borderColor: dashboard.outlineVariant,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    height: 150,
+    marginBottom: spacing.md,
+    overflow: "hidden",
+  },
   promptText: {
     color: dashboard.onSurfaceVariant,
     fontFamily: fonts.serifRegular,
     fontSize: 15.5,
     lineHeight: 24,
+  },
+  stepDescription: {
+    color: dashboard.onSurfaceVariant,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: spacing.xs,
+  },
+  /**
+   * Storybook reading style for elementary students, matching the Grade 3
+   * lesson read step: larger than body, extra leading and letter spacing so
+   * early readers can track lines.
+   */
+  storyPromptText: {
+    color: dashboard.onSurface,
+    fontFamily: fonts.sans,
+    fontSize: 21,
+    letterSpacing: 0.4,
+    lineHeight: 34,
   },
   root: {
     backgroundColor: "transparent",
@@ -1068,20 +1280,6 @@ const styles = StyleSheet.create({
   stateFrame: {
     backgroundColor: "transparent",
     flex: 1,
-  },
-  submitLink: {
-    alignItems: "center",
-    borderRadius: radius.sm,
-    padding: 6,
-  },
-  submitLinkPressed: {
-    opacity: 0.7,
-  },
-  submitLinkText: {
-    color: dashboard.outline,
-    fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 17,
   },
   workOptionDescription: {
     color: dashboard.onSurfaceVariant,

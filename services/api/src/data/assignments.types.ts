@@ -27,6 +27,8 @@ export interface AssignmentRecord {
   id: string;
   instructions: unknown;
   promptFallback: string;
+  /** Optional illustration shown above the prompt on the student detail screen. */
+  promptImageUrl?: string | null;
   promptKey: string;
   rubricId: string;
   skillFocus: string[];

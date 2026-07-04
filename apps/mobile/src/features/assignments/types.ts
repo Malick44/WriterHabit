@@ -49,6 +49,7 @@ export const assignmentRecordSchema = z.object({
   id: z.string().min(1),
   instructions: z.array(z.string().min(1)).min(1),
   prompt: z.string().min(1),
+  promptImageUrl: z.string().min(1).optional(),
   rubric: z.array(assignmentRubricCriterionSchema).min(1),
   rubricId: z.string().min(1),
   skillFocus: z.array(writingSkillSchema).min(1),

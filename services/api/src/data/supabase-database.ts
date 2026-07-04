@@ -112,7 +112,7 @@ const studentAssignmentSelect = [
   "daily_selection_metadata",
   "created_at",
   "updated_at",
-  "assignment:assignments(id, title_key, title_fallback, prompt_key, prompt_fallback, instructions, assignment_type, grade_level_min, grade_level_max, skill_focus, difficulty, estimated_minutes, rubric_id, class_id, status, due_at)",
+  "assignment:assignments(id, title_key, title_fallback, prompt_key, prompt_fallback, prompt_image_url, instructions, assignment_type, grade_level_min, grade_level_max, skill_focus, difficulty, estimated_minutes, rubric_id, class_id, status, due_at)",
 ].join(", ");
 
 const draftSelect =
@@ -169,6 +169,7 @@ function mapAssignmentRow(row: Record<string, unknown>): AssignmentRecord {
     id: row.id as string,
     instructions: row.instructions,
     promptFallback: row.prompt_fallback as string,
+    promptImageUrl: (row.prompt_image_url as string | null) ?? null,
     promptKey: row.prompt_key as string,
     rubricId: row.rubric_id as string,
     skillFocus: (row.skill_focus as string[] | null) ?? [],

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import * as Speech from "expo-speech";
 
+import { readAloud, stopReadAloud } from "@/services/speech/readAloudService";
 import { Button } from "@/shared/components";
 import { spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -23,19 +23,19 @@ export function ReadAloudCard({ reading, title }: ReadAloudCardProps) {
 
   useEffect(() => {
     return () => {
-      Speech.stop();
+      stopReadAloud();
     };
   }, []);
 
-  const toggleSpeech = async () => {
+  const toggleSpeech = () => {
     if (speaking) {
-      Speech.stop();
+      stopReadAloud();
       setSpeaking(false);
       return;
     }
 
     setSpeaking(true);
-    Speech.speak(reading, {
+    readAloud(reading, {
       language: "en-US",
       onDone: () => setSpeaking(false),
       onError: () => setSpeaking(false),

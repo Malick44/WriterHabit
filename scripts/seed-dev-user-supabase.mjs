@@ -752,21 +752,18 @@ begin
     canvas_document_id,
     student_profile_id,
     strokes,
-    recognized_text,
-    stroke_count
+    recognized_text
   )
   values (
     v_canvas_document_id,
     v_student_profile_id,
     '[{"id":"stroke-1","tool":"pen","color":"#1F2937","width":4,"createdAt":"2026-06-10T16:00:00.000Z","points":[{"x":24,"y":40,"pressure":0.5},{"x":90,"y":46,"pressure":0.6},{"x":150,"y":42,"pressure":0.55}]},{"id":"stroke-2","tool":"pen","color":"#1F2937","width":4,"createdAt":"2026-06-10T16:01:00.000Z","points":[{"x":28,"y":82,"pressure":0.5},{"x":120,"y":86,"pressure":0.6},{"x":210,"y":84,"pressure":0.55}]}]'::jsonb,
-    'Topic, two details, revise one sentence.',
-    2
+    'Topic, two details, revise one sentence.'
   )
   on conflict (canvas_document_id) do update
     set student_profile_id = excluded.student_profile_id,
         strokes = excluded.strokes,
-        recognized_text = excluded.recognized_text,
-        stroke_count = excluded.stroke_count;
+        recognized_text = excluded.recognized_text;
 
   insert into public.submissions (
     student_assignment_id,

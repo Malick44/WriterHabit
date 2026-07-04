@@ -38,7 +38,8 @@
     ],
     "expo-document-picker",
     "expo-apple-authentication",
-    "expo-router"
+    "expo-router",
+    "./plugins/withTrackPlayer"
   ],
   "ios": {
     "bundleIdentifier": "com.WriterHabit",
@@ -53,6 +54,11 @@
   "android": {
     "package": "com.WriterHabit",
     "versionCode": 1,
+    "permissions": [
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+      "android.permission.WAKE_LOCK"
+    ],
     "adaptiveIcon": {
       "foregroundImage": "./assets/images/logo.png",
       "backgroundColor": "#FFFFFF"

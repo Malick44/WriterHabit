@@ -1,6 +1,7 @@
 import { Image, Text, View } from "react-native";
 
 import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
+import { TextActionBar, useTextActionBar } from "@/shared/components/text";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
 
@@ -19,6 +20,11 @@ export function ReadStep({ lesson }: ReadStepProps) {
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands.elementary;
+  const actionBar = useTextActionBar({
+    enableFeedback: false,
+    sourceType: "reading",
+    text: lesson.reading,
+  });
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -140,6 +146,14 @@ export function ReadStep({ lesson }: ReadStepProps) {
         >
           {lesson.reading}
         </Text>
+        <TextActionBar
+          {...actionBar.actionBarProps}
+          gradeBand="elementary"
+          size="sm"
+          style={{ alignSelf: "flex-end" }}
+          testID="read-step-text-actions"
+          variant="inline"
+        />
       </View>
     </View>
   );

@@ -1,0 +1,353 @@
+diff --git a/node_modules/react-native-sherpa-onnx/android/build.gradle b/node_modules/react-native-sherpa-onnx/android/build.gradle
+index 771d8ed..7c7bafc 100644
+--- a/node_modules/react-native-sherpa-onnx/android/build.gradle
++++ b/node_modules/react-native-sherpa-onnx/android/build.gradle
+@@ -68,6 +68,7 @@ android {
+         def cmakeArgList = ["-DANDROID_STL=c++_shared"]
+         if (sherpaOnnxDisableFfmpeg) cmakeArgList.add("-DSHERPA_ONNX_DISABLE_FFMPEG=ON")
+         if (sherpaOnnxDisableLibarchive) cmakeArgList.add("-DSHERPA_ONNX_DISABLE_LIBARCHIVE=ON")
++        cmakeArgList.add("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+         arguments(*cmakeArgList)
+       }
+     }
+diff --git a/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxModule.kt b/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxModule.kt
+index 5fcbb56..ac0b54f 100644
+--- a/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxModule.kt
++++ b/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxModule.kt
+@@ -966,6 +966,13 @@ class SherpaOnnxModule(reactContext: ReactApplicationContext) :
+     ttsHelper.generateTts(instanceId, text, options, promise)
+   }
+ 
++  /**
++   * Generate speech and save it directly to a WAV file on the native side.
++   */
++  override fun generateTtsToFile(instanceId: String, text: String, options: ReadableMap?, filePath: String, promise: Promise) {
++    ttsHelper.generateTtsToFile(instanceId, text, options, filePath, promise)
++  }
++
+   /**
+    * Generate speech with subtitle/timestamp metadata.
+    */
+diff --git a/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxTtsHelper.kt b/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxTtsHelper.kt
+index c4f01eb..6fc4f4b 100644
+--- a/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxTtsHelper.kt
++++ b/node_modules/react-native-sherpa-onnx/android/src/main/java/com/sherpaonnx/SherpaOnnxTtsHelper.kt
+@@ -414,57 +414,7 @@ internal class SherpaOnnxTtsHelper(
+ 
+   fun generateTts(instanceId: String, text: String, options: ReadableMap?, promise: Promise) {
+     try {
+-      val inst = getInstance(instanceId) ?: run {
+-        Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS instance not found: $instanceId")
+-        promise.reject("TTS_GENERATE_ERROR", "TTS instance not found: $instanceId")
+-        return
+-      }
+-      if (!inst.hasEngine()) {
+-        Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS not initialized")
+-        promise.reject("TTS_GENERATE_ERROR", "TTS not initialized")
+-        return
+-      }
+-      val sid = getSid(options)
+-      val speed = getSpeed(options)
+-      val audio = when {
+-        hasReferenceAudio(options) && (inst.isZipvoice || inst.isPocket) -> {
+-          if (inst.isZipvoice) {
+-            val promptText = options!!.getString("referenceText")?.trim().orEmpty()
+-            if (promptText.isEmpty()) {
+-              Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Zipvoice voice cloning requires non-empty referenceText")
+-              promise.reject(
+-                "TTS_GENERATE_ERROR",
+-                "Zipvoice voice cloning requires non-empty referenceText (transcript of reference audio)."
+-              )
+-              return
+-            }
+-          }
+-          val config = parseGenerationConfig(options) ?: GenerationConfig(speed = speed, sid = sid)
+-          inst.tts!!.generateWithConfig(text, config)
+-        }
+-        hasReferenceAudio(options) -> {
+-          Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Reference audio is not supported for this TTS model type")
+-          promise.reject(
+-            "TTS_GENERATE_ERROR",
+-            "Reference audio is only supported for Zipvoice and Pocket TTS."
+-          )
+-          return
+-        }
+-        inst.isPocket -> {
+-          Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Pocket TTS requires reference audio for voice cloning")
+-          promise.reject(
+-            "TTS_GENERATE_ERROR",
+-            "Pocket TTS requires reference audio for voice cloning. Pass referenceAudio and referenceSampleRate (> 0) in options."
+-          )
+-          return
+-        }
+-        else -> dispatchGenerate(inst, text, sid, speed)
+-          ?: run {
+-            Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS not initialized")
+-            promise.reject("TTS_GENERATE_ERROR", "TTS not initialized")
+-            return
+-          }
+-      }
++      val audio = generateAudio(instanceId, text, options, promise) ?: return
+       val map = Arguments.createMap()
+       val samplesArray = Arguments.createArray()
+       for (sample in audio.samples) {
+@@ -479,6 +429,39 @@ internal class SherpaOnnxTtsHelper(
+     }
+   }
+ 
++  fun generateTtsToFile(
++    instanceId: String,
++    text: String,
++    options: ReadableMap?,
++    filePath: String,
++    promise: Promise
++  ) {
++    try {
++      if (filePath.isBlank()) {
++        Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: filePath is required")
++        promise.reject("TTS_GENERATE_ERROR", "filePath is required")
++        return
++      }
++
++      val audio = generateAudio(instanceId, text, options, promise) ?: return
++      val success = audio.save(filePath)
++      if (!success) {
++        Log.e("SherpaOnnxTts", "TTS_SAVE_ERROR: Failed to save generated audio to file")
++        promise.reject("TTS_SAVE_ERROR", "Failed to save generated audio to file")
++        return
++      }
++
++      val map = Arguments.createMap()
++      map.putString("filePath", filePath)
++      map.putInt("sampleRate", audio.sampleRate)
++      map.putInt("numSamples", audio.samples.size)
++      promise.resolve(map)
++    } catch (e: Exception) {
++      Log.e("SherpaOnnxTts", "generateTtsToFile error: ${e.message}", e)
++      promise.reject("TTS_GENERATE_ERROR", e.message ?: "Failed to generate speech", e)
++    }
++  }
++
+   fun generateTtsWithTimestamps(instanceId: String, text: String, options: ReadableMap?, promise: Promise) {
+     try {
+       val inst = getInstance(instanceId) ?: run {
+@@ -638,6 +621,67 @@ internal class SherpaOnnxTtsHelper(
+     }
+   }
+ 
++  private fun generateAudio(
++    instanceId: String,
++    text: String,
++    options: ReadableMap?,
++    promise: Promise
++  ): GeneratedAudio? {
++    val inst = getInstance(instanceId) ?: run {
++      Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS instance not found: $instanceId")
++      promise.reject("TTS_GENERATE_ERROR", "TTS instance not found: $instanceId")
++      return null
++    }
++    if (!inst.hasEngine()) {
++      Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS not initialized")
++      promise.reject("TTS_GENERATE_ERROR", "TTS not initialized")
++      return null
++    }
++
++    val sid = getSid(options)
++    val speed = getSpeed(options)
++
++    return when {
++      hasReferenceAudio(options) && (inst.isZipvoice || inst.isPocket) -> {
++        if (inst.isZipvoice) {
++          val promptText = options!!.getString("referenceText")?.trim().orEmpty()
++          if (promptText.isEmpty()) {
++            Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Zipvoice voice cloning requires non-empty referenceText")
++            promise.reject(
++              "TTS_GENERATE_ERROR",
++              "Zipvoice voice cloning requires non-empty referenceText (transcript of reference audio)."
++            )
++            return null
++          }
++        }
++        val config = parseGenerationConfig(options) ?: GenerationConfig(speed = speed, sid = sid)
++        inst.tts!!.generateWithConfig(text, config)
++      }
++      hasReferenceAudio(options) -> {
++        Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Reference audio is not supported for this TTS model type")
++        promise.reject(
++          "TTS_GENERATE_ERROR",
++          "Reference audio is only supported for Zipvoice and Pocket TTS."
++        )
++        null
++      }
++      inst.isPocket -> {
++        Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: Pocket TTS requires reference audio for voice cloning")
++        promise.reject(
++          "TTS_GENERATE_ERROR",
++          "Pocket TTS requires reference audio for voice cloning. Pass referenceAudio and referenceSampleRate (> 0) in options."
++        )
++        null
++      }
++      else -> dispatchGenerate(inst, text, sid, speed)
++        ?: run {
++          Log.e("SherpaOnnxTts", "TTS_GENERATE_ERROR: TTS not initialized")
++          promise.reject("TTS_GENERATE_ERROR", "TTS not initialized")
++          null
++        }
++    }
++  }
++
+   fun generateTtsStream(instanceId: String, requestId: String, text: String, options: ReadableMap?, promise: Promise) {
+     val inst = getInstance(instanceId) ?: run {
+       Log.e("SherpaOnnxTts", "TTS_STREAM_ERROR: TTS instance not found: $instanceId")
+diff --git a/node_modules/react-native-sherpa-onnx/lib/module/tts/index.js b/node_modules/react-native-sherpa-onnx/lib/module/tts/index.js
+index 399e39b..41f8af0 100644
+--- a/node_modules/react-native-sherpa-onnx/lib/module/tts/index.js
++++ b/node_modules/react-native-sherpa-onnx/lib/module/tts/index.js
+@@ -186,6 +186,19 @@ export async function createTTS(options) {
+       };
+       return SherpaOnnx.generateTts(instanceId, text, toNativeTtsOptions(optionsWithSubtitlesOff));
+     },
++    ...(typeof SherpaOnnx.generateTtsToFile === 'function' ? {
++      async generateSpeechToFile(text, filePath, opts) {
++        guard();
++        const optionsWithSubtitlesOff = {
++          ...(opts ?? {}),
++          subtitles: {
++            ...(opts?.subtitles ?? {}),
++            mode: 'off'
++          }
++        };
++        return SherpaOnnx.generateTtsToFile(instanceId, text, toNativeTtsOptions(optionsWithSubtitlesOff), filePath);
++      }
++    } : {}),
+     async generateSpeechWithTimestamps(text, opts) {
+       guard();
+       const subtitleMode = opts?.subtitles?.mode ?? 'fast';
+diff --git a/node_modules/react-native-sherpa-onnx/lib/typescript/src/NativeSherpaOnnx.d.ts b/node_modules/react-native-sherpa-onnx/lib/typescript/src/NativeSherpaOnnx.d.ts
+index 522eb87..81ebedf 100644
+--- a/node_modules/react-native-sherpa-onnx/lib/typescript/src/NativeSherpaOnnx.d.ts
++++ b/node_modules/react-native-sherpa-onnx/lib/typescript/src/NativeSherpaOnnx.d.ts
+@@ -254,6 +254,15 @@ export interface Spec extends TurboModule {
+         samples: number[];
+         sampleRate: number;
+     }>;
++    /**
++     * Generate speech and save it directly to a WAV file on the native side.
++     * This avoids marshalling large PCM sample arrays through the React Native bridge.
++     */
++    generateTtsToFile(instanceId: string, text: string, options: Object, filePath: string): Promise<{
++        filePath: string;
++        sampleRate: number;
++        numSamples: number;
++    }>;
+     /**
+      * Generate speech with subtitle/timestamp metadata.
+      * @param instanceId - Unique ID for this engine instance
+diff --git a/node_modules/react-native-sherpa-onnx/lib/typescript/src/tts/types.d.ts b/node_modules/react-native-sherpa-onnx/lib/typescript/src/tts/types.d.ts
+index 4cf2f68..d04d8e4 100644
+--- a/node_modules/react-native-sherpa-onnx/lib/typescript/src/tts/types.d.ts
++++ b/node_modules/react-native-sherpa-onnx/lib/typescript/src/tts/types.d.ts
+@@ -365,6 +365,11 @@ export interface TtsStreamHandlers {
+ export interface TtsEngine {
+     readonly instanceId: string;
+     generateSpeech(text: string, options?: TtsGenerationOptions): Promise<GeneratedAudio>;
++    generateSpeechToFile?(text: string, filePath: string, options?: TtsGenerationOptions): Promise<{
++        filePath: string;
++        sampleRate: number;
++        numSamples: number;
++    }>;
+     generateSpeechWithTimestamps(text: string, options?: TtsGenerationOptions): Promise<GeneratedAudioWithTimestamps>;
+     updateParams(options: TtsUpdateOptions): Promise<{
+         success: boolean;
+diff --git a/node_modules/react-native-sherpa-onnx/src/NativeSherpaOnnx.ts b/node_modules/react-native-sherpa-onnx/src/NativeSherpaOnnx.ts
+index e2e22a2..4dd3f35 100644
+--- a/node_modules/react-native-sherpa-onnx/src/NativeSherpaOnnx.ts
++++ b/node_modules/react-native-sherpa-onnx/src/NativeSherpaOnnx.ts
+@@ -337,6 +337,27 @@ export interface Spec extends TurboModule {
+     sampleRate: number;
+   }>;
+ 
++  /**
++   * Generate speech and save it directly to a WAV file on the native side.
++   * This avoids marshalling large PCM sample arrays through the React Native bridge.
++   *
++   * @param instanceId - Unique ID for this engine instance
++   * @param text - Text to convert to speech
++   * @param options - Same as {@link generateTts} options (cloning: Zipvoice/Pocket; Zipvoice needs `referenceText`).
++   * @param filePath - Absolute path where to save the WAV file
++   * @returns Object with filePath, sampleRate, and numSamples
++   */
++  generateTtsToFile(
++    instanceId: string,
++    text: string,
++    options: Object,
++    filePath: string
++  ): Promise<{
++    filePath: string;
++    sampleRate: number;
++    numSamples: number;
++  }>;
++
+   /**
+    * Generate speech with subtitle/timestamp metadata.
+    * @param instanceId - Unique ID for this engine instance
+diff --git a/node_modules/react-native-sherpa-onnx/src/tts/index.ts b/node_modules/react-native-sherpa-onnx/src/tts/index.ts
+index b6c21b3..25e9bf8 100644
+--- a/node_modules/react-native-sherpa-onnx/src/tts/index.ts
++++ b/node_modules/react-native-sherpa-onnx/src/tts/index.ts
+@@ -302,6 +302,35 @@ export async function createTTS(
+       );
+     },
+ 
++    ...(typeof SherpaOnnx.generateTtsToFile === 'function'
++      ? {
++          async generateSpeechToFile(
++            text: string,
++            filePath: string,
++            opts?: TtsGenerationOptions
++          ): Promise<{
++            filePath: string;
++            sampleRate: number;
++            numSamples: number;
++          }> {
++            guard();
++            const optionsWithSubtitlesOff: TtsGenerationOptions = {
++              ...(opts ?? {}),
++              subtitles: {
++                ...(opts?.subtitles ?? {}),
++                mode: 'off',
++              },
++            };
++            return SherpaOnnx.generateTtsToFile(
++              instanceId,
++              text,
++              toNativeTtsOptions(optionsWithSubtitlesOff),
++              filePath
++            );
++          },
++        }
++      : {}),
++
+     async generateSpeechWithTimestamps(
+       text: string,
+       opts?: TtsGenerationOptions
+diff --git a/node_modules/react-native-sherpa-onnx/src/tts/types.ts b/node_modules/react-native-sherpa-onnx/src/tts/types.ts
+index 95ebbed..076974c 100644
+--- a/node_modules/react-native-sherpa-onnx/src/tts/types.ts
++++ b/node_modules/react-native-sherpa-onnx/src/tts/types.ts
+@@ -438,6 +438,15 @@ export interface TtsEngine {
+     text: string,
+     options?: TtsGenerationOptions
+   ): Promise<GeneratedAudio>;
++  generateSpeechToFile?(
++    text: string,
++    filePath: string,
++    options?: TtsGenerationOptions
++  ): Promise<{
++    filePath: string;
++    sampleRate: number;
++    numSamples: number;
++  }>;
+   generateSpeechWithTimestamps(
+     text: string,
+     options?: TtsGenerationOptions

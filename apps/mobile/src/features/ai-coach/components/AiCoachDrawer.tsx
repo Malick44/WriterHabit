@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/buttons";
 import { Card } from "@/shared/components/cards";
 import { EmptyState, ErrorState, LoadingState, StatusState } from "@/shared/components/feedback";
 import { Inline, Stack } from "@/shared/components/layout";
+import { TextActionBar, useTextActionBar } from "@/shared/components/text";
 import { colors, radius, spacing, typography, type GradeBand } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import {
@@ -129,6 +130,13 @@ function AiCoachResponseView({
   response: AiCoachResponse;
 }) {
   const { t } = useI18n();
+  const coachingText = [response.strength, response.improvement, response.nextStep, response.guidingQuestion]
+    .filter((part): part is string => Boolean(part))
+    .join("\n\n");
+  const actionBar = useTextActionBar({
+    sourceType: "coach-message",
+    text: coachingText,
+  });
 
   return (
     <Stack gap="sm" testID="ai-coach-response">
@@ -136,6 +144,11 @@ function AiCoachResponseView({
       <ResponseRow gradeBand={gradeBand} label={t("aiCoach.response.improvement")} value={response.improvement} />
       <ResponseRow gradeBand={gradeBand} label={t("aiCoach.response.nextStep")} value={response.nextStep} />
       <ResponseRow gradeBand={gradeBand} label={t("aiCoach.response.question")} value={response.guidingQuestion} />
+      <TextActionBar
+        {...actionBar.actionBarProps}
+        gradeBand={gradeBand}
+        testID="ai-coach-response-actions"
+      />
     </Stack>
   );
 }

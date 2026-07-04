@@ -255,6 +255,7 @@ export function Grade3AdventureHomeScreen() {
   const type = typography.gradeBands.elementary;
   const progressState = useGrade3WritingProgress();
   const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const [showUpcoming, setShowUpcoming] = useState(false);
 
   if (progressState.status === "loading") {
     return (
@@ -297,7 +298,8 @@ export function Grade3AdventureHomeScreen() {
     (day) => progressState.progressMap.get(day.day)?.completed === true,
   );
   const readyTrailDays = grade3WritingProgram.filter((day) => {
-    const completed = progressState.progressMap.get(day.day)?.completed === true;
+    const completed =
+      progressState.progressMap.get(day.day)?.completed === true;
 
     return (
       !completed &&
@@ -369,80 +371,99 @@ export function Grade3AdventureHomeScreen() {
         </View>
       </Grade3AdventureCard>
 
-      {/* Vertical trail: one column, today's card full size, other days
-          collapsed to compact rows so the path stays scannable. */}
+      {/* Vertical trail: finished days fold into an accordion above today's
+          full-size card, upcoming days into an accordion below it. */}
       <View style={{ gap: spacing.sm }}>
-        {groupCollapsible ? (
-          <Grade3TrailCompletedGroupRow
+        {completedTrailDays.length > 0 ? (
+          <Grade3TrailGroupRow
             expanded={showAllCompleted}
-            from={1}
+            from={completedTrailDays[0].day}
             onToggle={() => setShowAllCompleted((value) => !value)}
-            to={groupedUpTo}
+            status="completed"
+            to={completedTrailDays[completedTrailDays.length - 1].day}
           />
         ) : null}
-        {grade3WritingProgram.map((day) => {
-          // Older finished days live inside the summary row until expanded.
-          if (!showAllCompleted && day.day <= groupedUpTo) {
-            return null;
-          }
-
-          const progress = progressState.progressMap.get(day.day);
-          const unlocked = isGrade3DayUnlocked(day.day, progressState.progress);
-          const completed = progress?.completed === true;
-          const isToday = day.day === nextDay?.day;
-
-          if (isToday) {
-            return (
-              <Grade3AdventureCard
-                icon={day.visualPrompt.emoji}
+        {showAllCompleted
+          ? completedTrailDays.map((day) => (
+              <Grade3TrailDayRow
+                day={day}
                 key={day.day}
-                subtitle={t("grade3WritingAdventure.home.todayBadge")}
-                title={t("grade3WritingAdventure.home.dayTitle", {
-                  day: day.day,
-                })}
-                variant="sky"
-              >
-                <Text
-                  style={[
-                    getAccessibleTextStyle(type.bodyStrong, settings),
-                    { color: accessibleColors.text },
-                  ]}
-                >
-                  {day.title}
-                </Text>
-                <Text
-                  style={[
-                    getAccessibleTextStyle(type.bodySmall, settings),
-                    { color: accessibleColors.text },
-                  ]}
-                >
-                  {day.miniSkill}
-                </Text>
-                <Button
-                  fullWidth
-                  gradeBand="elementary"
-                  label={t("grade3WritingAdventure.home.openDay")}
-                  onPress={() =>
-                    router.push(`/(student)/grade3-writing/${day.day}`)
-                  }
-                  size="lg"
-                  variant="primary"
-                />
-              </Grade3AdventureCard>
-            );
-          }
+                onPress={() =>
+                  router.push(`/(student)/grade3-writing/${day.day}`)
+                }
+                status="completed"
+              />
+            ))
+          : null}
 
-          return (
-            <Grade3TrailDayRow
-              day={day}
-              key={day.day}
+        {nextDay ? (
+          <Grade3AdventureCard
+            icon={nextDay.visualPrompt.emoji}
+            subtitle={t("grade3WritingAdventure.home.todayBadge")}
+            title={t("grade3WritingAdventure.home.dayTitle", {
+              day: nextDay.day,
+            })}
+            variant="sky"
+          >
+            <Text
+              style={[
+                getAccessibleTextStyle(type.bodyStrong, settings),
+                { color: accessibleColors.text },
+              ]}
+            >
+              {nextDay.title}
+            </Text>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.bodySmall, settings),
+                { color: accessibleColors.text },
+              ]}
+            >
+              {nextDay.miniSkill}
+            </Text>
+            <Button
+              fullWidth
+              gradeBand="elementary"
+              label={t("grade3WritingAdventure.home.openDay")}
               onPress={() =>
-                router.push(`/(student)/grade3-writing/${day.day}`)
+                router.push(`/(student)/grade3-writing/${nextDay.day}`)
               }
-              status={completed ? "completed" : unlocked ? "ready" : "locked"}
+              size="lg"
+              variant="primary"
             />
-          );
-        })}
+          </Grade3AdventureCard>
+        ) : null}
+
+        {readyTrailDays.map((day) => (
+          <Grade3TrailDayRow
+            day={day}
+            key={day.day}
+            onPress={() => router.push(`/(student)/grade3-writing/${day.day}`)}
+            status="ready"
+          />
+        ))}
+
+        {lockedTrailDays.length > 0 ? (
+          <Grade3TrailGroupRow
+            expanded={showUpcoming}
+            from={lockedTrailDays[0].day}
+            onToggle={() => setShowUpcoming((value) => !value)}
+            status="locked"
+            to={lockedTrailDays[lockedTrailDays.length - 1].day}
+          />
+        ) : null}
+        {showUpcoming
+          ? lockedTrailDays.map((day) => (
+              <Grade3TrailDayRow
+                day={day}
+                key={day.day}
+                onPress={() =>
+                  router.push(`/(student)/grade3-writing/${day.day}`)
+                }
+                status="locked"
+              />
+            ))
+          : null}
       </View>
 
       {/* Grown-up content lives at the very end, out of the child's main flow. */}

@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from "react-native";
+import { Fragment } from "react";
+import { Text, View } from "react-native";
 
 import { colors, radius, spacing, typography } from "@/design/tokens";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -12,6 +13,9 @@ type LessonStepTrackerProps = {
   furthestStepIndex: number;
 };
 
+const STEP_CIRCLE_SIZE = 28;
+const CONNECTOR_HEIGHT = 3;
+
 export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStepTrackerProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
@@ -20,19 +24,37 @@ export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStep
   const currentIndex = getLessonStepIndex(currentStep);
 
   return (
-    <ScrollView
+    <View
       accessibilityLabel={t("grade3WritingAdventure.lessonFlow.tracker.accessibility")}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: spacing.lg, paddingVertical: 0 }}
+      style={{ alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between" }}
     >
       {lessonSteps.map((step, index) => {
         const isCurrent = index === currentIndex;
         const isComplete = index < furthestStepIndex || currentStep === "celebration";
+        // The line leading into this step lights up once the previous step is done.
+        const isReached = index - 1 < furthestStepIndex || currentStep === "celebration";
         const label = t(`grade3WritingAdventure.lessonFlow.steps.${step}` as const);
 
         return (
-          <View
+          <Fragment key={step}>
+            {index > 0 ? (
+              <View
+                accessible={false}
+                importantForAccessibility="no"
+                style={{
+                  backgroundColor: isReached
+                    ? colors.feedback.success.border
+                    : grade3Theme.accent.lavenderBorder,
+                  borderRadius: radius.full,
+                  flex: 1,
+                  height: CONNECTOR_HEIGHT,
+                  marginHorizontal: spacing.xxs,
+                  marginTop: (STEP_CIRCLE_SIZE - CONNECTOR_HEIGHT) / 2,
+                  minWidth: spacing.sm,
+                }}
+              />
+            ) : null}
+            <View
             accessibilityLabel={t("grade3WritingAdventure.lessonFlow.tracker.stepAccessibility", {
               label,
               status: isCurrent
@@ -42,11 +64,10 @@ export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStep
                   : t("grade3WritingAdventure.lessonFlow.tracker.locked"),
             })}
             accessibilityRole="text"
-            key={step}
             style={{
               alignItems: "center",
               gap: spacing.xs,
-              minWidth: 52,
+              minWidth: 44,
             }}
           >
             <View
@@ -60,9 +81,9 @@ export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStep
                 borderColor: isCurrent ? grade3Theme.accent.lavender : grade3Theme.accent.lavenderBorder,
                 borderRadius: radius.full,
                 borderWidth: 1,
-                height: 28,
+                height: STEP_CIRCLE_SIZE,
                 justifyContent: "center",
-                width: 28,
+                width: STEP_CIRCLE_SIZE,
               }}
             >
               <Text
@@ -81,16 +102,17 @@ export function LessonStepTracker({ currentStep, furthestStepIndex }: LessonStep
                 getAccessibleTextStyle(type.caption, settings),
                 {
                   color: isCurrent ? grade3Theme.accent.lavender : accessibleColors.mutedText,
-                  fontSize: 12,
-                  lineHeight: 16,
+                  fontSize: 11,
+                  lineHeight: 14,
                 },
               ]}
             >
               {label}
             </Text>
           </View>
+          </Fragment>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }

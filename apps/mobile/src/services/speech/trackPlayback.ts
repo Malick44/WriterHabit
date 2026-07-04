@@ -5,7 +5,7 @@
  * appended as synthesis finishes, so the first sentence starts playing while
  * later ones are still rendering. The module requires track-player lazily and
  * degrades to "unavailable" when the native module is not linked (Expo Go,
- * Jest), letting the read-aloud facade fall back to expo-speech.
+ * Jest), letting the read-aloud facade report the failure to its caller.
  */
 import type { EmitterSubscription } from "react-native";
 

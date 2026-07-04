@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import * as Speech from "expo-speech";
 
 import { radius, spacing, typography } from "@/design/tokens";
+import { readAloud, stopReadAloud } from "@/services/speech/readAloudService";
 import { Button, TextField } from "@/shared/components";
 import { AssignmentAttachmentUploader } from "@/features/assignments/components";
 import type { AssignmentAttachmentsState } from "@/features/assignments/hooks/useAssignmentAttachments";
@@ -48,7 +48,7 @@ export function WriteStep({
 
   useEffect(() => {
     return () => {
-      Speech.stop();
+      stopReadAloud();
     };
   }, []);
 
@@ -58,7 +58,7 @@ export function WriteStep({
 
   const readDraft = () => {
     if (speaking) {
-      Speech.stop();
+      stopReadAloud();
       setSpeaking(false);
       return;
     }
@@ -68,11 +68,10 @@ export function WriteStep({
     }
 
     setSpeaking(true);
-    Speech.speak(draft, {
+    readAloud(draft, {
       language: "en-US",
       onDone: () => setSpeaking(false),
       onError: () => setSpeaking(false),
-      pitch: 1.05,
       rate: 0.88,
     });
   };

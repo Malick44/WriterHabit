@@ -5,6 +5,7 @@ import { AuthSessionProvider } from "@/core/auth/AuthSessionProvider";
 import { useAuthSession } from "@/core/auth/useAuthSession";
 import { shouldHideDevTools } from "@/core/config/devtoolsConfig";
 import { NotificationResponseHandler } from "@/core/notifications/NotificationResponseHandler";
+import { ReadAloudVoiceBootstrap } from "@/core/speech/ReadAloudVoiceBootstrap";
 import { typography } from "@/design/tokens";
 import { DevPanelFloatingLauncher } from "@/features/auth/components";
 import { AccessibilitySettingsProvider } from "@/features/profile-settings/accessibility";
@@ -33,6 +34,7 @@ export function AppProviders({ children }: PropsWithChildren) {
                 <SessionGradeBandProvider>
                   <QueryProvider>
                     <NotificationResponseHandler />
+                    <ReadAloudVoiceBootstrap />
                     {children}
                     {__DEV__ && !shouldHideDevTools ? <DevPanelFloatingLauncher /> : null}
                   </QueryProvider>

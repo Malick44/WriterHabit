@@ -33,6 +33,10 @@ export interface TextActionBarProps {
   /** Actions rendered in a highlighted state (selected thumb, reading, copied). */
   activeActions?: readonly TextActionBarAction[];
   disabledActions?: readonly TextActionBarAction[];
+  /**
+   * Actions rendered with a spinner. Still pressable so controllers can
+   * treat the press as cancel (e.g. stop preparing read-aloud).
+   */
   loadingActions?: readonly TextActionBarAction[];
   variant?: TextActionBarVariant;
   size?: TextActionBarSize;
@@ -121,13 +125,12 @@ function ActionButton({
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const [pressed, setPressed] = useState(false);
-  const isDisabled = disabled || loading;
-  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(!isDisabled);
+  const { handlePressIn, handlePressOut, pressScaleStyle } = usePressScale(!disabled);
 
   const restingColor = settings.highContrast ? accessibleColors.text : colors.text.secondary;
-  const iconColor = isDisabled
+  const iconColor = disabled
     ? colors.action.ghost.disabledForeground
-    : active
+    : active || loading
       ? settings.highContrast
         ? accessibleColors.text
         : colors.action.primary.background
@@ -136,10 +139,10 @@ function ActionButton({
   return (
     <AnimatedPressable
       accessibilityHint={t(definition.hintKey)}
-      accessibilityLabel={t(active ? definition.activeLabelKey : definition.labelKey)}
+      accessibilityLabel={t(active || loading ? definition.activeLabelKey : definition.labelKey)}
       accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: isDisabled, selected: active }}
-      disabled={isDisabled}
+      accessibilityState={{ busy: loading, disabled, selected: active }}
+      disabled={disabled}
       hitSlop={getAccessibleHitSlop(settings)}
       onPress={onPress}
       onPressIn={() => {
@@ -154,7 +157,7 @@ function ActionButton({
         {
           alignItems: "center",
           backgroundColor:
-            pressed && !isDisabled ? colors.action.ghost.pressed : colors.action.ghost.background,
+            pressed && !disabled ? colors.action.ghost.pressed : colors.action.ghost.background,
           borderRadius: radius.full,
           justifyContent: "center",
           minHeight: minTarget,

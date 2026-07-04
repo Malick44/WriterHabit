@@ -36,23 +36,24 @@ describe("TextActionBar", () => {
     expect(onLike).toHaveBeenCalledTimes(1);
   });
 
-  it("does not fire disabled or loading actions", async () => {
+  it("does not fire disabled actions", async () => {
     const onCopy = jest.fn();
-    const onReadAloud = jest.fn();
     const rendered = await renderBar(
-      <TextActionBar
-        disabledActions={["copy"]}
-        loadingActions={["readAloud"]}
-        onCopy={onCopy}
-        onReadAloud={onReadAloud}
-        testID="bar"
-      />,
+      <TextActionBar disabledActions={["copy"]} onCopy={onCopy} testID="bar" />,
     );
 
     await fireEvent.press(rendered.getByTestId("bar-copy"));
-    await fireEvent.press(rendered.getByTestId("bar-readAloud"));
     expect(onCopy).not.toHaveBeenCalled();
-    expect(onReadAloud).not.toHaveBeenCalled();
+  });
+
+  it("keeps loading actions pressable so the press can cancel", async () => {
+    const onReadAloud = jest.fn();
+    const rendered = await renderBar(
+      <TextActionBar loadingActions={["readAloud"]} onReadAloud={onReadAloud} testID="bar" />,
+    );
+
+    await fireEvent.press(rendered.getByTestId("bar-readAloud"));
+    expect(onReadAloud).toHaveBeenCalledTimes(1);
   });
 
   it("switches the read-aloud label when the action is active", async () => {

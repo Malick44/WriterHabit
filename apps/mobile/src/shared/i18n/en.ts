@@ -38,6 +38,30 @@ export const en = {
     more: "More options",
     moreHint: "Show more actions for this text.",
   },
+  readAloudVoice: {
+    screen: {
+      title: "Coach voice",
+      subtitle: "Pick the voice that reads coaching text aloud.",
+      loading: "Loading your voice choice",
+      sectionTitle: "Voices",
+      sectionSubtitle: "Tap a voice to hear a preview. Your choice applies everywhere read-aloud is used.",
+      choiceHint: "Selects this voice and plays a short preview.",
+    },
+    previewLine: "Hi! I'm your writing coach. Let's make your story amazing.",
+    styles: {
+      female1: "Voice 1 · Female",
+      female2: "Voice 2 · Female",
+      female3: "Voice 3 · Female",
+      female4: "Voice 4 · Female",
+      female5: "Voice 5 · Female",
+      male1: "Voice 6 · Male",
+      male2: "Voice 7 · Male",
+      male3: "Voice 8 · Male",
+      male4: "Voice 9 · Male",
+      male5: "Voice 10 · Male",
+      coachBlend: "WriterHabit Coach · Custom",
+    },
+  },
   modal: {
     close: "Close",
     closeHint: "Dismiss this dialog.",
@@ -3700,6 +3724,7 @@ export const en = {
       },
       preferences: {
         appLanguage: "App Language",
+        coachVoice: "Coach Voice",
         english: "English",
         fontSize: "Font Size",
         title: "Preferences",

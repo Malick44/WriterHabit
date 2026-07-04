@@ -13,3 +13,7 @@ coverage/
 dist/
 build/
 .tmp-*/
+
+# TTS voice repack workspace (large downloaded/generated archives)
+scripts/tts/.work/
+scripts/tts/dist/

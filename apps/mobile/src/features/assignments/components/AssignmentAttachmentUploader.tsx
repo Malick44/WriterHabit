@@ -163,24 +163,26 @@ export function AssignmentAttachmentUploader({
           <Ionicons
             color={dashboard.outline}
             name="cloud-upload-outline"
-            size={28}
+            size={20}
           />
-          <Text
-            style={[
-              getAccessibleTextStyle(type.bodyStrong, settings),
-              styles.emptyTitle,
-            ]}
-          >
-            {t("assignments.attachments.emptyTitle")}
-          </Text>
-          <Text
-            style={[
-              getAccessibleTextStyle(type.caption, settings),
-              styles.emptyDescription,
-            ]}
-          >
-            {t("assignments.attachments.emptyDescription")}
-          </Text>
+          <View style={styles.emptyText}>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.bodyStrong, settings),
+                styles.emptyTitle,
+              ]}
+            >
+              {t("assignments.attachments.emptyTitle")}
+            </Text>
+            <Text
+              style={[
+                getAccessibleTextStyle(type.caption, settings),
+                styles.emptyDescription,
+              ]}
+            >
+              {t("assignments.attachments.emptyDescription")}
+            </Text>
+          </View>
         </View>
       ) : (
         <View style={styles.list}>
@@ -340,16 +342,21 @@ const styles = StyleSheet.create({
     backgroundColor: dashboard.surfaceContainerLow,
     borderColor: dashboard.outlineVariant,
     borderCurve: "continuous",
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderStyle: "dashed",
-    borderWidth: 1.5,
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   emptyDescription: {
     color: dashboard.onSurfaceVariant,
-    textAlign: "center",
+  },
+  emptyText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
   },
   emptyTitle: {
     color: dashboard.onSurface,
@@ -446,12 +453,12 @@ const styles = StyleSheet.create({
     backgroundColor: dashboard.card,
     borderColor: dashboard.outlineVariant,
     borderCurve: "continuous",
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     flex: 1,
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
   },
   tileDisabled: {
     opacity: 0.5,
@@ -459,10 +466,10 @@ const styles = StyleSheet.create({
   tileIcon: {
     alignItems: "center",
     backgroundColor: dashboard.primaryContainer,
-    borderRadius: radius.md,
-    height: 36,
+    borderRadius: radius.sm,
+    height: 30,
     justifyContent: "center",
-    width: 36,
+    width: 30,
   },
   tileLabel: {
     color: dashboard.onSurface,

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Text } from "react-native";
+import { View } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getCanvasCreateRoute } from "@/core/navigation/deepLinks";
-import { ErrorState, LoadingState } from "@/shared/components";
-import { spacing, typography } from "@/design/tokens";
+import { AppHeader, ErrorState, LoadingState } from "@/shared/components";
+import { spacing } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { useAssignmentAttachments } from "@/features/assignments/hooks/useAssignmentAttachments";
-import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 
 import { CelebrationStep } from "../components/lesson-flow/CelebrationStep";
 import { CheckStep } from "../components/lesson-flow/CheckStep";
@@ -29,6 +29,7 @@ import {
 } from "../components/lesson-flow/lessonFlowTypes";
 import { Grade3Screen } from "../components/Grade3Screen";
 import { grade3WritingProgram } from "../content/grade3WritingProgram.content";
+import { grade3Theme } from "../theme/grade3Theme";
 import { useGrade3WritingProgress } from "../hooks/useGrade3WritingProgress";
 import { isGrade3DayUnlocked } from "../services/grade3WritingProgressModel";
 import type {
@@ -99,8 +100,6 @@ type Grade3LessonWorkspaceProps = {
 function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3LessonWorkspaceProps) {
   const router = useRouter();
   const { t } = useI18n();
-  const { settings } = useAccessibilityContext();
-  const accessibleColors = getAccessibleColors(settings);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentStep, setCurrentStep] = useState<LessonStep>("read");
   const [furthestStepIndex, setFurthestStepIndex] = useState(0);
@@ -342,44 +341,41 @@ function Grade3LessonWorkspace({ lesson, saveProgress, storedProgress }: Grade3L
     : undefined;
 
   return (
-    <Grade3Screen
-      footer={
-        <LessonBottomBar
-          backLabel={getBackLabel()}
-          helperText={helperText}
-          nextDisabled={!validation.canProceed && (currentStep === "write" || currentStep === "check")}
-          nextLabel={getNextLabel()}
-          nextLoading={submitting}
-          onBack={goBack}
-          onNext={goNext}
-          readAloudText={currentStep === "read" ? lesson.reading : undefined}
-          saveLabel={currentStep === "read" ? undefined : saveLabel}
+    <View style={{ backgroundColor: grade3Theme.screen.background, flex: 1 }}>
+      {/* Fixed header above the scroll area, mirroring the dashboard layout. */}
+      <SafeAreaView edges={["top"]}>
+        <AppHeader
+          gradeBand="elementary"
+          leftAction={{
+            accessibilityLabelKey: "common.back",
+            onPress: goToMap,
+            type: "back",
+          }}
+          showSafeArea={false}
+          style={{ backgroundColor: grade3Theme.screen.background }}
+          titleKey="grade3WritingAdventure.lesson.title"
+          titleParams={{ day: lesson.day, title: lesson.title }}
+          variant="compact"
         />
-      }
-      contentPaddingTop={currentStep === "read" ? spacing.xxl : undefined}
-      subtitle={
-        currentStep === "read"
-          ? undefined
-          : t("grade3WritingAdventure.lesson.subtitle", {
-              minutes: lesson.estimatedMinutes,
-              skill: lesson.miniSkill,
-            })
-      }
-      title={currentStep === "read" ? undefined : t("grade3WritingAdventure.lesson.title", { day: lesson.day, title: lesson.title })}
-    >
-      {currentStep === "read" ? (
-        <Text
-          accessibilityRole="header"
-          style={[
-            getAccessibleTextStyle(typography.gradeBands.elementary.bodyStrong, settings),
-            { color: accessibleColors.text },
-          ]}
-        >
-          {t("grade3WritingAdventure.lessonFlow.read.screenTitle", { day: lesson.day })}
-        </Text>
-      ) : null}
-      <LessonStepTracker currentStep={currentStep} furthestStepIndex={furthestStepIndex} />
-      {renderStep()}
-    </Grade3Screen>
+      </SafeAreaView>
+      <Grade3Screen
+        contentPaddingTop={spacing.md}
+        footer={
+          <LessonBottomBar
+            backLabel={getBackLabel()}
+            helperText={helperText}
+            nextDisabled={!validation.canProceed && (currentStep === "write" || currentStep === "check")}
+            nextLabel={getNextLabel()}
+            nextLoading={submitting}
+            onBack={goBack}
+            onNext={goNext}
+            saveLabel={currentStep === "read" ? undefined : saveLabel}
+          />
+        }
+      >
+        <LessonStepTracker currentStep={currentStep} furthestStepIndex={furthestStepIndex} />
+        {renderStep()}
+      </Grade3Screen>
+    </View>
   );
 }

@@ -1,7 +1,9 @@
+import { type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Button, ErrorState, LoadingState, ProgressBar } from "@/shared/components";
+import { AppHeader, Button, ErrorState, LoadingState, ProgressBar } from "@/shared/components";
 import { colors, radius, spacing, typography } from "@/design/tokens";
 import { useI18n } from "@/i18n";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
@@ -9,8 +11,30 @@ import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } 
 import { Grade3AdventureCard } from "../components/Grade3AdventureCard";
 import { Grade3Screen } from "../components/Grade3Screen";
 import { grade3WritingProgram } from "../content/grade3WritingProgram.content";
+import { grade3Theme } from "../theme/grade3Theme";
 import { useGrade3WritingProgress } from "../hooks/useGrade3WritingProgress";
 import { isGrade3DayUnlocked } from "../services/grade3WritingProgressModel";
+
+/** Dashboard-style shell: fixed compact header above the scrolling content. */
+function Grade3AdventureShell({ children, subtitle }: { children: ReactNode; subtitle?: string }) {
+  return (
+    <View style={{ backgroundColor: grade3Theme.screen.background, flex: 1 }}>
+      <SafeAreaView edges={["top"]}>
+        <AppHeader
+          gradeBand="elementary"
+          leftAction={{ accessibilityLabelKey: "common.back", type: "back" }}
+          showSafeArea={false}
+          style={{ backgroundColor: grade3Theme.screen.background }}
+          titleKey="grade3WritingAdventure.home.title"
+          variant="compact"
+        />
+      </SafeAreaView>
+      <Grade3Screen contentPaddingTop={spacing.md} subtitle={subtitle}>
+        {children}
+      </Grade3Screen>
+    </View>
+  );
+}
 
 export function Grade3AdventureHomeScreen() {
   const router = useRouter();
@@ -22,35 +46,32 @@ export function Grade3AdventureHomeScreen() {
 
   if (progressState.status === "loading") {
     return (
-      <Grade3Screen>
+      <Grade3AdventureShell>
         <LoadingState
           label={t("grade3WritingAdventure.states.loadingTitle")}
           description={t("grade3WritingAdventure.states.loadingDescription")}
         />
-      </Grade3Screen>
+      </Grade3AdventureShell>
     );
   }
 
   if (progressState.status === "error") {
     return (
-      <Grade3Screen>
+      <Grade3AdventureShell>
         <ErrorState
           description={t("grade3WritingAdventure.states.errorDescription")}
           onActionPress={progressState.refresh}
           actionLabel={t("common.retry")}
           title={t("grade3WritingAdventure.states.errorTitle")}
         />
-      </Grade3Screen>
+      </Grade3AdventureShell>
     );
   }
 
   const progressValue = progressState.summary.completedDays / progressState.summary.totalDays;
 
   return (
-    <Grade3Screen
-      subtitle={t("grade3WritingAdventure.home.subtitle")}
-      title={t("grade3WritingAdventure.home.title")}
-    >
+    <Grade3AdventureShell subtitle={t("grade3WritingAdventure.home.subtitle")}>
       <Grade3AdventureCard
         icon="🗺️"
         subtitle={t("grade3WritingAdventure.home.heroSubtitle", {
@@ -151,6 +172,6 @@ export function Grade3AdventureHomeScreen() {
           );
         })}
       </View>
-    </Grade3Screen>
+    </Grade3AdventureShell>
   );
 }

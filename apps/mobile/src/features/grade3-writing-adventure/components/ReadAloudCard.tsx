@@ -39,7 +39,6 @@ export function ReadAloudCard({ reading, title }: ReadAloudCardProps) {
       language: "en-US",
       onDone: () => setSpeaking(false),
       onError: () => setSpeaking(false),
-      pitch: 1.05,
       rate: 0.88,
     });
   };

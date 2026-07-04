@@ -29,6 +29,7 @@ export const routes = {
   studentNotificationSettings: "/(student)/notification-settings" as Href,
   studentLanguageSettings: "/(student)/language-settings" as Href,
   studentAccessibilitySettings: "/(student)/accessibility-settings" as Href,
+  studentReadAloudVoiceSettings: "/(student)/read-aloud-voice-settings" as Href,
   parentHome: "/(parent)/home" as Href,
   parentReports: "/(parent)/reports" as Href,
   parentAssignments: "/(parent)/assignments" as Href,

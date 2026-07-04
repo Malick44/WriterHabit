@@ -1,12 +1,9 @@
-import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Speech from "expo-speech";
 
 import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
 import { Button } from "@/shared/components";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
-import { useI18n } from "@/i18n";
 
 import { grade3Theme } from "../../theme/grade3Theme";
 
@@ -19,7 +16,6 @@ type LessonBottomBarProps = {
   nextLoading?: boolean;
   helperText?: string;
   saveLabel?: string;
-  readAloudText?: string;
 };
 
 export function LessonBottomBar({
@@ -30,43 +26,12 @@ export function LessonBottomBar({
   nextLoading = false,
   onBack,
   onNext,
-  readAloudText,
   saveLabel,
 }: LessonBottomBarProps) {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
   const type = typography.gradeBands.elementary;
-  const [speaking, setSpeaking] = useState(false);
-  const isReadBar = Boolean(readAloudText);
-
-  useEffect(() => {
-    return () => {
-      Speech.stop();
-    };
-  }, []);
-
-  const toggleReadAloud = () => {
-    if (!readAloudText) {
-      return;
-    }
-
-    if (speaking) {
-      Speech.stop();
-      setSpeaking(false);
-      return;
-    }
-
-    setSpeaking(true);
-    Speech.speak(readAloudText, {
-      language: "en-US",
-      onDone: () => setSpeaking(false),
-      onError: () => setSpeaking(false),
-      pitch: 1.05,
-      rate: 0.88,
-    });
-  };
 
   return (
     <View
@@ -81,7 +46,7 @@ export function LessonBottomBar({
         ...shadows.raised,
       }}
     >
-      {!isReadBar && (helperText || saveLabel) ? (
+      {helperText || saveLabel ? (
         <View
           style={{
             alignSelf: "center",
@@ -108,40 +73,20 @@ export function LessonBottomBar({
         <Button
           accessibilityLabel={backLabel}
           gradeBand="elementary"
-          label={isReadBar ? "←" : backLabel}
+          label={backLabel}
           onPress={onBack}
-          size={isReadBar ? "md" : "lg"}
-          style={isReadBar ? { borderRadius: radius.full, width: 56 } : { flex: 1 }}
-          textStyle={isReadBar ? { fontSize: 24, lineHeight: 28 } : undefined}
+          size="lg"
+          style={{ flex: 1 }}
           variant="secondary"
         />
-        {isReadBar ? (
-          <Button
-            gradeBand="elementary"
-            label={
-              speaking
-                ? t("grade3WritingAdventure.lesson.stopReading")
-                : t("grade3WritingAdventure.lesson.readAloud")
-            }
-            onPress={toggleReadAloud}
-            size="md"
-            style={{ flex: 1 }}
-            textStyle={{ fontSize: 15, lineHeight: 20 }}
-            variant="secondary"
-          />
-        ) : null}
         <Button
           disabled={nextDisabled}
           gradeBand="elementary"
           label={nextLabel}
           loading={nextLoading}
           onPress={onNext}
-          size={isReadBar ? "md" : "lg"}
-          style={{
-            backgroundColor: isReadBar && !nextDisabled ? grade3Theme.accent.lavenderBright : undefined,
-            flex: isReadBar ? 1.15 : 1,
-          }}
-          textStyle={isReadBar ? { fontSize: 15, lineHeight: 20 } : undefined}
+          size="lg"
+          style={{ flex: 1 }}
         />
       </View>
     </View>

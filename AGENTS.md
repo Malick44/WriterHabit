@@ -161,6 +161,37 @@ Reusable UI rule:
 - Shared UI components must stay localization-ready, accessibility-aware, theme-token based, and covered by focused tests when they include behavior.
 - Do not introduce direct React Native `Modal`, ad hoc top banners/toasts, hardcoded alert UI, custom button variants, duplicate cards, or screen-local feedback patterns unless the shared component layer is insufficient. If it is insufficient, extend the shared component rather than forking the pattern.
 
+Screen layout rule (headers must match the dashboard, always):
+
+- Every top-level screen must use the dashboard's header structure. Canonical
+  reference: `apps/mobile/src/features/student-home/screens/StudentHomeScreen.tsx`;
+  `apps/mobile/src/features/grade3-writing-adventure/screens/Grade3LessonScreen.tsx`
+  shows the same pattern composed with the shared `Screen` component.
+- Required structure, top to bottom:
+  1. root `View` with the screen background color and `flex: 1`
+  2. top-edge-only `SafeAreaView` (`edges={["top"]}`) wrapping the header —
+     the header owns the status-bar inset, nothing else does
+  3. `<AppHeader variant="compact" showSafeArea={false} ...>` pinned there,
+     with `style={{ backgroundColor: <screen background> }}`; titles come
+     from i18n `titleKey`, never literals
+  4. scrollable content below the header (via `Screen` with a small
+     `contentPaddingTop`, or a `ScrollView`); the header must never scroll
+     away with the content
+  5. optional footer (bottom bars) outside the scroll area
+- Never hand-roll a different header arrangement per screen. If a screen needs
+  something the pattern cannot express, extend
+  `apps/mobile/src/shared/components/navigation/app-header/` or
+  `apps/mobile/src/shared/components/layout/Screen.tsx` instead of diverging
+  locally.
+- Do not use `Screen`'s `title`/`subtitle` props as a header-bar substitute on
+  new screens — that renders a large inline heading that scrolls away and does
+  not match the dashboard.
+- Back/close/settings actions go in `AppHeader`'s `leftAction`/`rightActions`
+  (typed `HeaderAction`s), not as ad hoc buttons above the content.
+- Planned: a `header` prop on `Screen` will encapsulate steps 1–3 so screens
+  only declare header content. Once it lands, use it exclusively and update
+  this rule and `CLAUDE.md` together.
+
 ## Stack And State
 
 Mobile stack:

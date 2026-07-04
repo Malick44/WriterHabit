@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useMemo,
   useState,
@@ -21,13 +22,7 @@ import {
   getCanvasCreateRoute,
 } from "@/core/navigation/deepLinks";
 import { routes } from "@/core/navigation/routeNames";
-import {
-  colors,
-  fonts,
-  layout,
-  radius,
-  spacing,
-} from "@/design/tokens";
+import { colors, fonts, layout, radius, spacing } from "@/design/tokens";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { Button } from "@/shared/components/buttons";
 import {
@@ -170,6 +165,9 @@ function isAssignmentWorkStageEnabled({
   }
 }
 
+const STAGE_NODE_SIZE = 28;
+const STAGE_CONNECTOR_HEIGHT = 3;
+
 function AssignmentStageTabs({
   assignment,
   canStartWriting,
@@ -193,6 +191,8 @@ function AssignmentStageTabs({
       {assignmentWorkStages.map((stage, index) => {
         const isCurrent = index === currentIndex;
         const isDone = index < currentIndex;
+        // The line leading into this step lights up once the previous step is done.
+        const isReached = index <= currentIndex;
         const isEnabled = isAssignmentWorkStageEnabled({
           assignment,
           canStartWriting,
@@ -201,53 +201,76 @@ function AssignmentStageTabs({
         });
 
         return (
-          <Pressable
-            accessibilityLabel={t("writingWorkspace.stages.tabAccessibility", {
-              stage: t(stage.labelKey),
-            })}
-            accessibilityRole="tab"
-            accessibilityState={{ disabled: !isEnabled, selected: isCurrent }}
-            disabled={!isEnabled}
-            key={stage.id}
-            onPress={() => onSelectStage(stage.id)}
-            style={({ pressed }) => [
-              styles.assignmentStageTab,
-              isCurrent ? styles.assignmentStageTabActive : null,
-              isDone ? styles.assignmentStageTabDone : null,
-              !isEnabled ? styles.assignmentStageTabDisabled : null,
-              pressed ? styles.assignmentStageTabPressed : null,
-            ]}
-            testID={`assignment-detail-stage-tab-${stage.id}`}
-          >
-            {isDone ? (
-              <Ionicons
-                color={dashboard.secondary}
-                name="checkmark"
-                size={15}
-              />
-            ) : (
-              <Text
-                selectable={false}
+          <Fragment key={stage.id}>
+            {index > 0 ? (
+              <View
+                accessible={false}
+                importantForAccessibility="no"
                 style={[
-                  getAccessibleTextStyle(styles.assignmentStageStep, settings),
-                  isCurrent ? styles.assignmentStageTextActive : null,
+                  styles.assignmentStageConnector,
+                  isReached ? styles.assignmentStageConnectorReached : null,
+                ]}
+              />
+            ) : null}
+            <Pressable
+              accessibilityLabel={t(
+                "writingWorkspace.stages.tabAccessibility",
+                {
+                  stage: t(stage.labelKey),
+                },
+              )}
+              accessibilityRole="tab"
+              accessibilityState={{ disabled: !isEnabled, selected: isCurrent }}
+              disabled={!isEnabled}
+              onPress={() => onSelectStage(stage.id)}
+              style={({ pressed }) => [
+                styles.assignmentStageTab,
+                !isEnabled ? styles.assignmentStageTabDisabled : null,
+                pressed ? styles.assignmentStageTabPressed : null,
+              ]}
+              testID={`assignment-detail-stage-tab-${stage.id}`}
+            >
+              <View
+                style={[
+                  styles.assignmentStageCircle,
+                  isCurrent ? styles.assignmentStageCircleCurrent : null,
+                  isDone ? styles.assignmentStageCircleDone : null,
                 ]}
               >
-                {index + 1}
+                {isDone ? (
+                  <Ionicons
+                    color={dashboard.onPrimary}
+                    name="checkmark"
+                    size={15}
+                  />
+                ) : (
+                  <Text
+                    selectable={false}
+                    style={[
+                      getAccessibleTextStyle(
+                        styles.assignmentStageStep,
+                        settings,
+                      ),
+                      isCurrent ? styles.assignmentStageTextActive : null,
+                    ]}
+                  >
+                    {index + 1}
+                  </Text>
+                )}
+              </View>
+              <Text
+                numberOfLines={1}
+                selectable={false}
+                style={[
+                  getAccessibleTextStyle(styles.assignmentStageLabel, settings),
+                  isCurrent ? styles.assignmentStageLabelCurrent : null,
+                  isDone ? styles.assignmentStageTextDone : null,
+                ]}
+              >
+                {t(stage.labelKey)}
               </Text>
-            )}
-            <Text
-              numberOfLines={1}
-              selectable={false}
-              style={[
-                getAccessibleTextStyle(styles.assignmentStageLabel, settings),
-                isCurrent ? styles.assignmentStageTextActive : null,
-                isDone ? styles.assignmentStageTextDone : null,
-              ]}
-            >
-              {t(stage.labelKey)}
-            </Text>
-          </Pressable>
+            </Pressable>
+          </Fragment>
         );
       })}
     </View>
@@ -296,10 +319,7 @@ function WorkOptionTile({
         </Text>
         <Text
           selectable={false}
-          style={getAccessibleTextStyle(
-            styles.workOptionDescription,
-            settings,
-          )}
+          style={getAccessibleTextStyle(styles.workOptionDescription, settings)}
         >
           {description}
         </Text>
@@ -340,9 +360,7 @@ function FloatingWorkMenu({
       {expanded ? (
         <View style={styles.floatingOptions}>
           <WorkOptionTile
-            accessibilityLabel={t(
-              "assignments.detail.uploadWorkAccessibility",
-            )}
+            accessibilityLabel={t("assignments.detail.uploadWorkAccessibility")}
             description={t("assignments.detail.uploadWorkDescription")}
             disabled={!canUploadWork}
             icon="cloud-upload-outline"
@@ -945,52 +963,68 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     paddingHorizontal: 20,
   },
+  assignmentStageCircle: {
+    alignItems: "center",
+    backgroundColor: dashboard.card,
+    borderColor: dashboard.outlineVariant,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    height: STAGE_NODE_SIZE,
+    justifyContent: "center",
+    width: STAGE_NODE_SIZE,
+  },
+  assignmentStageCircleCurrent: {
+    backgroundColor: dashboard.primary,
+    borderColor: dashboard.primary,
+  },
+  assignmentStageCircleDone: {
+    backgroundColor: colors.feedback.success.border,
+    borderColor: colors.feedback.success.border,
+  },
+  assignmentStageConnector: {
+    backgroundColor: dashboard.outlineVariant,
+    borderRadius: radius.full,
+    flex: 1,
+    height: STAGE_CONNECTOR_HEIGHT,
+    marginHorizontal: spacing.xxs,
+    marginTop: (STAGE_NODE_SIZE - STAGE_CONNECTOR_HEIGHT) / 2,
+    minWidth: spacing.sm,
+  },
+  assignmentStageConnectorReached: {
+    backgroundColor: colors.feedback.success.border,
+  },
   assignmentStageLabel: {
     color: dashboard.onSurfaceVariant,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
-    lineHeight: 15,
+    lineHeight: 14,
     textAlign: "center",
+  },
+  assignmentStageLabelCurrent: {
+    color: dashboard.primary,
   },
   assignmentStageStep: {
     color: dashboard.outline,
-    fontSize: 11,
-    fontWeight: "800",
-    lineHeight: 14,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 16,
     textAlign: "center",
   },
   assignmentStageTab: {
     alignItems: "center",
-    backgroundColor: dashboard.card,
-    borderColor: dashboard.outlineVariant,
-    borderCurve: "continuous",
-    borderRadius: 16,
-    borderWidth: 1,
-    flex: 1,
-    gap: 3,
-    justifyContent: "center",
-    minHeight: 56,
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    ...cardShadow,
-  },
-  assignmentStageTabActive: {
-    backgroundColor: dashboard.primary,
-    borderColor: dashboard.primary,
+    gap: spacing.xs,
+    minWidth: 44,
   },
   assignmentStageTabDisabled: {
     opacity: 0.5,
-  },
-  assignmentStageTabDone: {
-    backgroundColor: dashboard.primarySubtle,
-    borderColor: dashboard.primaryFixedBorder,
   },
   assignmentStageTabPressed: {
     opacity: 0.78,
   },
   assignmentStageTabs: {
+    alignItems: "flex-start",
     flexDirection: "row",
-    gap: 8,
+    justifyContent: "space-between",
     width: "100%",
   },
   assignmentStageTextActive: {

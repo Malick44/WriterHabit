@@ -13,6 +13,9 @@ import type { TextActionBarProps } from "./TextActionBar";
 
 const COPIED_RESET_MS = 2000;
 
+/** idle → loading (downloading voice / synthesizing) → playing → idle. */
+export type ReadAloudStatus = "idle" | "loading" | "playing";
+
 export interface UseTextActionBarInput {
   /** The coaching text the bar acts on (a hint, feedback note, suggestion…). */
   text: string;
@@ -31,12 +34,12 @@ export interface UseTextActionBarInput {
 
 export interface UseTextActionBarResult {
   feedback: TextActionBarFeedback;
-  isReading: boolean;
+  readAloudStatus: ReadAloudStatus;
   isCopied: boolean;
   /** Spread onto `TextActionBar`; only wired actions are included. */
   actionBarProps: Pick<
     TextActionBarProps,
-    "onLike" | "onDislike" | "onReadAloud" | "onCopy" | "onMore" | "activeActions"
+    "onLike" | "onDislike" | "onReadAloud" | "onCopy" | "onMore" | "activeActions" | "loadingActions"
   >;
 }
 
@@ -59,14 +62,14 @@ export function useTextActionBar({
   enableCopy = true,
 }: UseTextActionBarInput): UseTextActionBarResult {
   const [feedback, setFeedback] = useState<TextActionBarFeedback>(null);
-  const [isReading, setIsReading] = useState(false);
+  const [readAloudStatus, setReadAloudStatus] = useState<ReadAloudStatus>("idle");
   const [isCopied, setIsCopied] = useState(false);
-  const isReadingRef = useRef(false);
+  const readAloudStatusRef = useRef<ReadAloudStatus>("idle");
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    isReadingRef.current = isReading;
-  }, [isReading]);
+    readAloudStatusRef.current = readAloudStatus;
+  }, [readAloudStatus]);
 
   const context = useMemo<TextActionBarContext>(
     () => ({ sourceType, text, textId }),
@@ -78,7 +81,7 @@ export function useTextActionBar({
       if (copiedTimeoutRef.current) {
         clearTimeout(copiedTimeoutRef.current);
       }
-      if (isReadingRef.current) {
+      if (readAloudStatusRef.current !== "idle") {
         stopReadAloud();
       }
     },
@@ -104,16 +107,18 @@ export function useTextActionBar({
   }, [context, feedback, onDislike]);
 
   const handleReadAloud = useCallback(() => {
-    if (isReadingRef.current) {
+    // Any tap while preparing or playing cancels.
+    if (readAloudStatusRef.current !== "idle") {
       stopReadAloud();
-      setIsReading(false);
+      setReadAloudStatus("idle");
       return;
     }
 
-    setIsReading(true);
+    setReadAloudStatus("loading");
     readAloud(text, {
-      onDone: () => setIsReading(false),
-      onError: () => setIsReading(false),
+      onStart: () => setReadAloudStatus("playing"),
+      onDone: () => setReadAloudStatus("idle"),
+      onError: () => setReadAloudStatus("idle"),
     });
   }, [text]);
 
@@ -142,7 +147,7 @@ export function useTextActionBar({
   if (feedback === "dislike") {
     activeActions.push("dislike");
   }
-  if (isReading) {
+  if (readAloudStatus === "playing") {
     activeActions.push("readAloud");
   }
   if (isCopied) {
@@ -151,10 +156,11 @@ export function useTextActionBar({
 
   return {
     feedback,
-    isReading,
+    readAloudStatus,
     isCopied,
     actionBarProps: {
       activeActions,
+      loadingActions: readAloudStatus === "loading" ? ["readAloud"] : [],
       onLike: enableFeedback ? handleLike : undefined,
       onDislike: enableFeedback ? handleDislike : undefined,
       onReadAloud: enableReadAloud ? handleReadAloud : undefined,

@@ -10,6 +10,8 @@
 export const storageKeys = {
   accessibilitySettings: "profile-settings.accessibility",
 
+  readAloudVoice: "speech.read-aloud-voice",
+
   onboardingProgress(userId: string): string {
     return `onboarding.progress.${userId}`;
   },

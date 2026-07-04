@@ -1,6 +1,6 @@
-import { Image, Text, View } from "react-native";
+import { Image, ScrollView, Text, View, useWindowDimensions } from "react-native";
 
-import { colors, radius, shadows, spacing, typography } from "@/design/tokens";
+import { colors, fonts, radius, shadows, spacing, typography } from "@/design/tokens";
 import { TextActionBar, useTextActionBar } from "@/shared/components/text";
 import { getAccessibleColors, getAccessibleTextStyle, useAccessibilityContext } from "@/shared/utils/accessibility";
 import { useI18n } from "@/i18n";
@@ -15,11 +15,29 @@ type ReadStepProps = {
   lesson: Grade3WritingDay;
 };
 
+/**
+ * Storybook reading style for Grades 1–3: bigger than the elementary body
+ * token, extra leading, and a touch of letter spacing so early readers can
+ * track lines. Runs through getAccessibleTextStyle so user text-size and
+ * dyslexia settings still apply on top.
+ */
+const storyTextStyle = {
+  fontFamily: fonts.sans,
+  fontSize: 21,
+  fontWeight: "400",
+  letterSpacing: 0.4,
+  lineHeight: 34,
+} as const;
+
 export function ReadStep({ lesson }: ReadStepProps) {
   const { t } = useI18n();
   const { settings } = useAccessibilityContext();
   const accessibleColors = getAccessibleColors(settings);
+  const { height: windowHeight } = useWindowDimensions();
   const type = typography.gradeBands.elementary;
+  // The story panel gets its own bounded scroll area so a long passage
+  // scrolls under the (fixed) scene illustration instead of pushing it away.
+  const storyMaxHeight = Math.max(180, Math.round(windowHeight * 0.32));
   const actionBar = useTextActionBar({
     enableFeedback: false,
     sourceType: "reading",
@@ -33,7 +51,7 @@ export function ReadStep({ lesson }: ReadStepProps) {
           accessibilityRole="header"
           style={[getAccessibleTextStyle(type.title, settings), { color: accessibleColors.text }]}
         >
-          {t("grade3WritingAdventure.lessonFlow.read.cardTitle")}
+          {t("grade3WritingAdventure.lessonFlow.read.title")}
         </Text>
         <Text style={[getAccessibleTextStyle(type.bodySmall, settings), { color: accessibleColors.mutedText }]}>
           {t("grade3WritingAdventure.lessonFlow.read.cardSubtitle")}
@@ -140,12 +158,18 @@ export function ReadStep({ lesson }: ReadStepProps) {
             }}
           />
         </View>
-        <Text
-          selectable
-          style={[getAccessibleTextStyle(type.body, settings), { color: accessibleColors.text }]}
+        <ScrollView
+          nestedScrollEnabled
+          showsVerticalScrollIndicator
+          style={{ maxHeight: storyMaxHeight }}
         >
-          {lesson.reading}
-        </Text>
+          <Text
+            selectable
+            style={[getAccessibleTextStyle(storyTextStyle, settings), { color: accessibleColors.text }]}
+          >
+            {lesson.reading}
+          </Text>
+        </ScrollView>
         <TextActionBar
           {...actionBar.actionBarProps}
           gradeBand="elementary"

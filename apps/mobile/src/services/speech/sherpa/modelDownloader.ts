@@ -122,6 +122,7 @@ async function installModel(
 
     const model = await buildRegisteredModel(descriptor, finalDirUri);
     await registerModel(model);
+    await removeStaleModelDirs(descriptor.id);
 
     report("done", 1);
     return model;
@@ -131,6 +132,25 @@ async function installModel(
   } finally {
     await FileSystem.deleteAsync(archiveUri, { idempotent: true }).catch(() => {});
     await FileSystem.deleteAsync(scratchUri, { idempotent: true }).catch(() => {});
+  }
+}
+
+/**
+ * Delete extracted models other than the one just installed. The catalog id
+ * is bumped whenever the hosted archive changes, so previous installs would
+ * otherwise linger as multi-hundred-MB orphans.
+ */
+async function removeStaleModelDirs(keepModelId: string): Promise<void> {
+  try {
+    const modelsDirUri = `${sherpaBaseDir()}models/`;
+    const entries = await FileSystem.readDirectoryAsync(modelsDirUri);
+    for (const entry of entries) {
+      if (entry !== keepModelId) {
+        await FileSystem.deleteAsync(`${modelsDirUri}${entry}`, { idempotent: true });
+      }
+    }
+  } catch {
+    // Cleanup is best-effort; a leftover directory is not a functional issue.
   }
 }
 

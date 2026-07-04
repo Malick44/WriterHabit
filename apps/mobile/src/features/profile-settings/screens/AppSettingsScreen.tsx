@@ -324,6 +324,14 @@ export function AppSettingsScreen() {
               onPress={() => handleOpenRoute(routes.studentAccessibilitySettings)}
               value={t(textSizeValueKeys[settings.textSize])}
             />
+            <Divider />
+            <SettingsRow
+              icon="volume-medium-outline"
+              iconBackground={settingsColors.primaryContainer}
+              iconColor={settingsColors.onPrimaryContainer}
+              label={t("profileSettings.settings.preferences.coachVoice")}
+              onPress={() => handleOpenRoute(routes.studentReadAloudVoiceSettings)}
+            />
           </Section>
 
           <Section title={t("profileSettings.settings.support.title")}>
